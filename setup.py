@@ -42,3 +42,10 @@ if __name__ == '__main__':
         else:
             return export_(var,string,csh)
     print prepend_('PYTHONPATH',os.path.join(topDir,'python'),options.csh),'\n'
+    
+    LIBDIR = os.path.join(topDir,'lib')
+    #annoying difference between macos and linux...        
+    if sys.platform.lower() in ['darwin']:
+        print prepend_('DYLD_LIBRARY_PATH',LIBDIR,options.csh),'\n'
+    else:
+        print prepend_('LD_LIBRARY_PATH',LIBDIR,options.csh),'\n'
