@@ -4,11 +4,12 @@ import ROOT as rt
 class Analysis(object):
     
     """Baseclass for constructing an analysis"""
-    def __init__(self, name, outputFile):
+    def __init__(self, name, outputFile, config):
         self.name = name
         #use this for storing root objects
         self.rootFile = RootFile.RootFile(outputFile)
         self.workspace = rt.RooWorkspace(self.name)
+        self.config = config
     
     def store(self, o, name = None):
         """Store a ROOT object"""

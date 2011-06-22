@@ -49,17 +49,15 @@ OneDFitFromYi::SingleFitResult OneDFitFromYi::FitWithRCut(
 		const std::string& Filename, double RCut, const int Strategy) {
 
 	TFile F(Filename.c_str());
-	TTree *Tree = (TTree *) F.Get("RMRTree");
-	if (Tree == NULL)
+	RooDataSet *Tree = dynamic_cast<RooDataSet*>(F.Get("RMRTree"));
+	if (!Tree)
 		return OneDFitFromYi::SingleFitResult();
 
-	std::cout << RCut << " --- " << Strategy << std::endl;
-
+	std::cout << "OneDFitFromYi::FitWithRCut: " << RCut << " --- " << Strategy << std::endl;
 	if (Strategy != Strategy_Normal && Strategy != Strategy_IgnoreLeft&& Strategy != Strategy_IgnoreGaussian){
 		std::cerr << "Unknown stratagy in OneDFitFromYi::FitWithRCut: " << Strategy << std::endl;
 		return SingleFitResult();
 	}
-
 
 	RooRealVar* MR = dynamic_cast<RooRealVar*>(workspace_->arg("MR"));
 	RooRealVar* R = dynamic_cast<RooRealVar*>(workspace_->arg("R"));
@@ -70,8 +68,7 @@ OneDFitFromYi::SingleFitResult OneDFitFromYi::FitWithRCut(
 	double MRLowerBound = MR->getMin();
 
 	RooArgSet TreeVarSet(*MR, *R);
-	RooDataSet Dataset("Dataset", "MR Dataset", Tree, TreeVarSet, Form(
-			"GroupPFR > %f", RCut));
+	RooDataSet Dataset("Dataset", "MR Dataset",TreeVarSet,Import(*Tree),Cut(Form("R > %f", RCut)));
 
 	RooRealVar X0("X0", "gaussian mean", 150, 0, 5000, "GeV");
 	RooRealVar SigmaL("SigmaL", "left-hand side gaussian width", 50, 0, 5000,
@@ -97,9 +94,16 @@ OneDFitFromYi::SingleFitResult OneDFitFromYi::FitWithRCut(
 		return SingleFitResult();
 	}
 
-	Model->fitTo(Dataset, Save(true));
+	RooFitResult* fr = Model->fitTo(Dataset, Save(true));
+	std::cout << "OneDFitFromYi::FitWithRCut fit result with R=" << RCut << std::endl;
+	fr->Print("V");
 
 	SingleFitResult result;
+	result.Quality = fr->covQual();
+	result.Status = fr->status();
+	if(result.Quality != 3 || result.Status != 0){
+		std::cerr << "WARNING:: The fit did not converge cleanly." << std::endl;
+	}
 
 	double SafetyMargin = 0;
 
@@ -171,17 +175,17 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 		return;
 	if (RCuts.size() == 1) {
 		std::cout
-				<< "If you want to fit with just one R-cut, use the easy version!"
+				<< "OneDFitFromYi::define: If you want to fit with just one R-cut, use the easy version!"
 				<< std::endl;
 		return;
 	}
 
 	std::sort(RCuts.begin(), RCuts.end());
 
-	std::vector<SingleFitResult> SingleFitResults;
+	std::vector<OneDFitFromYi::SingleFitResult> SingleFitResults;
 	for (unsigned int i = 0; i < RCuts.size(); i++)
 		SingleFitResults.push_back(FitWithRCut(Filename, RCuts[i],
-				Strategy_IgnoreGaussian));
+				OneDFitFromYi::Strategy_IgnoreGaussian));
 	// SingleFitResults.push_back(FitWithRCut(Filename, RCuts[i], Strategy_Normal));   // turning on core
 
 	TGraphErrors SingleCentralValues;
@@ -222,19 +226,21 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 	 */
 
 	TFile F(Filename.c_str());
-	TTree *Tree = (TTree *) F.Get("RMRTree");
-	if (Tree == NULL)
+	RooDataSet* Tree = dynamic_cast<RooDataSet*>(F.Get("RMRTree"));
+	if (!Tree){
+		std::cerr << "OneDFitFromYi::define: RooDataSet can not be read" << std::endl;
 		return;
+	}
 
 	RooRealVar* MR = dynamic_cast<RooRealVar*>(workspace_->arg("MR"));
 	RooRealVar* R = dynamic_cast<RooRealVar*>(workspace_->arg("R"));
 	if( !MR || !R ){
-		std::cerr << "MR or R not defined in config. Exiting..." << std::endl;
+		std::cerr << "OneDFitFromYi::define: MR or R not defined in config. Exiting..." << std::endl;
 		return;
 	}
 
 	RooArgSet TreeVarSet(*MR, *R);
-	RooDataSet Dataset("Dataset", "MR Dataset", Tree, TreeVarSet, Form("R > %f", RCuts[0]));
+	RooDataSet Dataset("Dataset", "MR Dataset", TreeVarSet, Import(*Tree), Cut(Form("R > %f", RCuts[0])) );
 
 	RooRealVar ParameterA("ParameterA", "s = \"a\" + b R^2", ParameterAValue,0, 0.1);
 	RooRealVar ParameterB("ParameterB", "s = a + \"b\" R^2", ParameterBValue,0, 1);
@@ -256,7 +262,7 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 		if (i != RCuts.size() - 1)
 			GuessYield
 					= Dataset.reduce(Cut(Form(
-							"R > %f && GroupPFR <= %f", RCuts[i],
+							"R > %f && R <= %f", RCuts[i],
 							RCuts[i + 1])))->sumEntries();
 		else
 			GuessYield
@@ -411,7 +417,7 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 		YieldList.add(*TopLevelYields[i]);
 	}
 
-	RooAddPdf FinalModel("Final model", "Final model!", ModelList, YieldList);
+	RooAddPdf FinalModel("fitmodel", "Final model!", ModelList, YieldList);
 	workspace_->import(FinalModel);
 
 	//RooFitResult *FitResult = FinalModel.fitTo(Dataset, Save(true),PrintEvalErrors(-1), NumCPU(3));

@@ -36,12 +36,16 @@ public:
 		double S;
 		double SError;
 		int Strategy;
+		int Status;
+		int Quality;
 		SingleFitResult():
 			X0(0),X0Error(0),
 			SigmaL(0),SigmaLError(0),
 			SigmaR(0),SigmaRError(0),
 			S(0),SError(0),
-			Strategy(Strategy_Normal){
+			Strategy(Strategy_Normal),
+			Status(-1),
+			Quality(-1){
 		}
 	};
 
