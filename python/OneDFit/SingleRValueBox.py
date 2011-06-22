@@ -21,8 +21,6 @@ class SingleRValueBox(Box.Box):
         yiFit = OneDFitFromYi(self.workspace,OneDFitFromYi.Strategy_Normal)
         yiFit.define(inputFile, rcuts_vec)
         
-        self.workspace.Print("V")
-        
     def define(self, inputFile, cuts):
         
         if cuts.get('useC++',False):

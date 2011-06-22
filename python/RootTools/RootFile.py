@@ -8,7 +8,9 @@ class RootFile(object):
         
     def add(self, plot, name = None):
         if name is None: name = plot.GetName()
-        self.plots.get(name,[]).append(plot)
+        l = self.plots.get(name,[])
+        l.append(plot)
+        self.plots[name] = l
 
     def write(self):
         out = None
@@ -18,7 +20,7 @@ class RootFile(object):
                 if not plots:
                     continue
                 elif len(plots) == 1:
-                    plots.Write(name)
+                    plots[0].Write(name)
                 else:
                     index = 0
                     for i in xrange(len(plots)):

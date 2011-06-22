@@ -18,5 +18,8 @@ class OneDAnalysis(Analysis.Analysis):
         boxes['Had'].define(fileIndex['Had'],{'rcuts':self.config.getRCuts('Had'),'useC++':True})
         boxes['Had'].workspace.Print('V')
         
-        boxes['Had'].fit(fileIndex['Had'])
+        frHad = boxes['Had'].fit(fileIndex['Had'],None, rt.RooFit.PrintEvalErrors(-1))
+        self.store(frHad)
         
+        for box in boxes.keys():
+            self.store(boxes[box].workspace,'Box%s_workspace' % box)

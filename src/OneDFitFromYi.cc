@@ -104,6 +104,7 @@ OneDFitFromYi::SingleFitResult OneDFitFromYi::FitWithRCut(
 	if(result.Quality != 3 || result.Status != 0){
 		std::cerr << "WARNING:: The fit did not converge cleanly." << std::endl;
 	}
+	workspace_->import(*fr,Form("SingleFitResult_r%f",RCut));
 
 	double SafetyMargin = 0;
 

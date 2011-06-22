@@ -31,6 +31,9 @@ class Box(object):
         pdf = self.getFitPDF()
         result = pdf.fitTo(data, opt)
         result.Print('V')
+        if result.status() != 0 or result.covQual() != 3:
+            print 'WARNING:: The fit did not converge with high quality. Consider this result suspect!'
+        
         return result 
         
     def define(self, inputFile, cuts):
