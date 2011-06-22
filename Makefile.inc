@@ -21,11 +21,6 @@ ROOTCONFIG   := $(ROOTSYS)/bin/root-config
 ROOTCFLAGS   := $(shell $(ROOTCONFIG) --cflags)
 ROOTLDFLAGS  := $(shell $(ROOTCONFIG) --ldflags) $(shell $(ROOTCONFIG) --libs --nonew --glibs)
 
-#find out about the installed Python
-PYTHONCONFIG   := $(shell which python-config)
-PYTHONCFLAGS   := $(shell $(PYTHONCONFIG) --includes)
-PYTHONLDFLAGS  := $(shell $(PYTHONCONFIG) --ldflags)
-
 #append to options
 CXXFLAGS     += $(ROOTCFLAGS)
 LDFLAGS      += $(ROOTLDFLAGS)
@@ -36,10 +31,7 @@ ifneq ($(CMSSW_BASE),)
 	ROOTFIT_INCLUDE := $(shell cd $(CMSSW_BASE); scram tool info roofitcore | grep INCLUDE= | sed 's|INCLUDE=||')
 	ROOTFIT_LIBDIR := $(shell cd $(CMSSW_BASE); scram tool info roofitcore | grep LIBDIR= | sed 's|LIBDIR=||')
 	
-	PYTHON_INCLUDE := $(shell cd $(CMSSW_BASE); scram tool info python | grep INCLUDE= | sed 's|INCLUDE=||')
-	PYTHON_LIBDIR := $(shell cd $(CMSSW_BASE); scram tool info python | grep LIBDIR= | sed 's|LIBDIR=||')
-
 	CINTINCLUDES := -I$(ROOTFIT_INCLUDE)
-	CXXFLAGS     += -I$(ROOTFIT_INCLUDE) -I$(PYTHON_INCLUDE)
-	LDFLAGS      += -L$(ROOTFIT_LIBDIR) -L$(PYTHON_LIBDIR)
+	CXXFLAGS     += -I$(ROOTFIT_INCLUDE)
+	LDFLAGS      += -L$(ROOTFIT_LIBDIR)
 endif

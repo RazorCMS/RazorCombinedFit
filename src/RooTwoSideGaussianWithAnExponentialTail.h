@@ -14,7 +14,7 @@ public:
    RooTwoSideGaussianWithAnExponentialTail() {} ;
    RooTwoSideGaussianWithAnExponentialTail(const char *name, const char *title,
       RooAbsReal &_x, RooAbsReal &_x0,
-      RooAbsReal &_sigma_l, RooAbsReal &_sigma_r, RooAbsReal &_x);
+      RooAbsReal &_sigma_l, RooAbsReal &_sigma_r, RooAbsReal &_s);
    RooTwoSideGaussianWithAnExponentialTail(const RooTwoSideGaussianWithAnExponentialTail& other,
       const char* name = 0);
    virtual TObject* clone(const char* newname) const { return new RooTwoSideGaussianWithAnExponentialTail(*this,newname); }
