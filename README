@@ -1,0 +1,54 @@
+Installation HOWTO
+
+MacOS:
+
+Make sure ROOT is installed, and ROOTSYS is set. You will need pyROOT to be working. I.e. python -c "import ROOT" must not return an error
+
+Then do the following:
+
+export CVSROOT=:gserver:cmssw.cvs.cern.ch:/cvs/CMSSW
+cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit
+cd RazorCombinedFit
+. setup.sh
+make -j 4
+
+Lxplus:
+
+In this case, we use the CMSSW ROOT. In this case, do the following:
+
+cmsrel CMSSW_4_2_3
+cd CMSSW_4_2_3/src
+cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit
+cd RazorCombinedFit
+. setup.sh
+make -j 4
+
+You will need an input with the following format:
+
+root [1] .ls
+TFile**		TTJets_TuneZ2_7TeV-madgraph-tauola_Had.root	
+ TFile*		TTJets_TuneZ2_7TeV-madgraph-tauola_Had.root	
+  KEY: RooDataSet	RMRTree;1	Selected R and MR
+root [2] RMRTree->Print("V")
+DataStore RMRTree (Selected R and MR)
+  Contains 10000 entries
+  Observables: 
+    1)  MR = 284.591  L(250 - 1500)  "MR"
+    2)   R = 0.280028  L(-200 - 200)  "R"
+
+The ranges specified should be the same as used in the relevant box.
+
+You can run the code by doing:
+
+python scripts/runAnalysis.py -a OneDFit TTJets_TuneZ2_7TeV-madgraph-tauola_*.root
+
+The filenames are expected to end with the name of the box:
+
+pb-d-128-141-131-81:RazorCombinedFit wreece$ ls -l TTJets_TuneZ2_7TeV-madgraph-tauola_*.root
+-rw-r--r--  1 wreece  staff  162401 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_Ele.root
+-rw-r--r--  1 wreece  staff   71763 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_EleEle.root
+-rw-r--r--  1 wreece  staff  162553 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_Had.root
+-rw-r--r--  1 wreece  staff  162426 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_Mu.root
+-rw-r--r--  1 wreece  staff  136215 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_MuEle.root
+-rw-r--r--  1 wreece  staff  162511 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_MuMu.root
+  
