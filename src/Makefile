@@ -1,14 +1,14 @@
 include ../Makefile.inc
 
 SHARED = libRazor.so
-INCLUDELIST= RooAtLeast.h RooSameAs.h RooTwoSideGaussianWithAnExponentialTail.h RooTwoSideGaussianWithTwoExponentialTails.h Linkdef.h
+INCLUDELIST= OneDFitFromYi.h RooAtLeast.h RooSameAs.h RooTwoSideGaussianWithAnExponentialTail.h RooTwoSideGaussianWithTwoExponentialTails.h Linkdef.h
 
 all: $(SHARED) FitMRDistribution
 
 rootdict.cc: $(INCLUDELIST)
 	$(ROOTSYS)/bin/rootcint -f $@ -c $(CINTINCLUDES) $^ 
 
-$(SHARED): rootdict.o RooAtLeast.o RooSameAs.o RooTwoSideGaussianWithAnExponentialTail.o RooTwoSideGaussianWithTwoExponentialTails.o
+$(SHARED): rootdict.o OneDFitFromYi.o RooAtLeast.o RooSameAs.o RooTwoSideGaussianWithAnExponentialTail.o RooTwoSideGaussianWithTwoExponentialTails.o
 	$(LD) $(SOFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
 	mv $(SHARED) ../lib
 

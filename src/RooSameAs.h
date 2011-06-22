@@ -3,6 +3,7 @@
 #define ROO_SameAs
 //---------------------------------------------------------------------------
 #include "RooAbsPdf.h"
+#include "RooConstVar.h"
 #include "RooRealProxy.h"
 //---------------------------------------------------------------------------
 class RooRealVar;
@@ -13,7 +14,7 @@ class RooSameAs : public RooAbsPdf
 public:
    RooSameAs() {} ;
    RooSameAs(const char *name, const char *title,
-      RooAbsReal &_x, double _value, double _tolerance = 0.5);
+      RooAbsReal &_x, const RooConstVar& _value, const RooConstVar& _tolerance);
    RooSameAs(const RooSameAs& other, const char* name = 0);
    virtual TObject* clone(const char* newname) const { return new RooSameAs(*this,newname); }
    inline virtual ~RooSameAs() { }

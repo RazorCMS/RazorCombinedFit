@@ -15,6 +15,7 @@ using namespace std;
 #include "TLegend.h"
 #include "TCanvas.h"
 
+#include "RooConstVar.h"
 #include "RooRealVar.h"
 #include "RooDataSet.h"
 #include "RooTwoSideGaussianWithAnExponentialTail.h"
@@ -389,11 +390,11 @@ void FitWithRCut(string Filename, vector<double> RCuts)
             RooArgList(*NormalizedYields[i], *NormalizedNegativeYields[i])));
 
       if(i == RCuts.size() - 1)
-         Constraint.push_back(new RooAtLeast(Form("Constraint_%d", i), "Last bin constraint", R, RCuts[i]));
+         Constraint.push_back(new RooAtLeast(Form("Constraint_%d", i), "Last bin constraint", R, RooConst(RCuts[i])));
       else
          Constraint.push_back(new RooSameAs(Form("Constraint_%d", i),
             Form("Constraint R = %f - %f", RCuts[i], RCuts[i+1]), R,
-            (RCuts[i+1] + RCuts[i]) / 2, (RCuts[i+1] - RCuts[i]) / 2));
+            RooConst((RCuts[i+1] + RCuts[i]) / 2), RooConst((RCuts[i+1] - RCuts[i]) / 2)));
 
       if(i == RCuts.size() - 1)
          TopLevelModels.push_back(new RooProdPdf(Form("TopLevelModel_%d", i),

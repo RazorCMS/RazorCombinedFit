@@ -10,10 +10,10 @@
 ClassImp(RooAtLeast)
 //---------------------------------------------------------------------------
 RooAtLeast::RooAtLeast(const char *name, const char *title,
-      RooAbsReal &_x, double _value) :
+      RooAbsReal &_x, const RooConstVar& _value) :
    RooAbsPdf(name, title),
    X("X", "Dependent", this, _x),
-   Value(_value)
+   Value(_value.getVal())
 {
 }
 //---------------------------------------------------------------------------

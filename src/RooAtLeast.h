@@ -2,6 +2,7 @@
 #ifndef ROO_AtLeast
 #define ROO_AtLeast
 //---------------------------------------------------------------------------
+#include "RooConstVar.h"
 #include "RooAbsPdf.h"
 #include "RooRealProxy.h"
 //---------------------------------------------------------------------------
@@ -13,7 +14,7 @@ class RooAtLeast : public RooAbsPdf
 public:
    RooAtLeast() {} ;
    RooAtLeast(const char *name, const char *title,
-      RooAbsReal &_x, double _value);
+      RooAbsReal &_x, const RooConstVar& _value);
    RooAtLeast(const RooAtLeast& other, const char* name = 0);
    virtual TObject* clone(const char* newname) const { return new RooAtLeast(*this,newname); }
    inline virtual ~RooAtLeast() { }

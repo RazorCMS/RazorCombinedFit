@@ -8,13 +8,14 @@
 #include "RooRealVar.h"
 
 ClassImp(RooSameAs)
+
 //---------------------------------------------------------------------------
 RooSameAs::RooSameAs(const char *name, const char *title,
-      RooAbsReal &_x, double _value, double _tolerance) :
+      RooAbsReal &_x, const RooConstVar& _value, const RooConstVar& _tolerance) :
    RooAbsPdf(name, title),
    X("X", "Dependent", this, _x),
-   Value(_value),
-   Tolerance(_tolerance)
+   Value(_value.getVal()),
+   Tolerance(_tolerance.getVal())
 {
 }
 //---------------------------------------------------------------------------

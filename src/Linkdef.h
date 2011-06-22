@@ -8,6 +8,7 @@
 #pragma link off all functions;
 #pragma link C++ nestedclasses;
 
+#pragma link C++ defined_in "OneDFitFromYi.h";
 #pragma link C++ defined_in "RooAtLeast.h";
 #pragma link C++ defined_in "RooSameAs.h";
 #pragma link C++ defined_in "RooTwoSideGaussianWithAnExponentialTail.h";
