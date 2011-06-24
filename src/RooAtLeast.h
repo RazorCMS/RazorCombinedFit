@@ -12,7 +12,7 @@ class RooAbsReal;
 class RooAtLeast : public RooAbsPdf
 {
 public:
-   RooAtLeast() {} ;
+   RooAtLeast():UpperBound(10000){} ;
    RooAtLeast(const char *name, const char *title,
       RooAbsReal &_x, const RooConstVar& _value);
    RooAtLeast(const RooAtLeast& other, const char* name = 0);
@@ -25,6 +25,7 @@ public:
 protected:
    RooRealProxy X;
    double Value;
+   const double UpperBound;
    
    Double_t evaluate() const;
 private:

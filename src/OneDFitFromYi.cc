@@ -387,8 +387,8 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 		else
 			Constraint.push_back(new RooSameAs(Form("Constraint_%d", i), Form(
 					"Constraint R = %f - %f", RCuts[i], RCuts[i + 1]), *R,
-					RooConst((RCuts[i + 1] + RCuts[i]) / 2), RooConst((RCuts[i
-							+ 1] - RCuts[i]) / 2)));
+					RooConst(0.5*(RCuts[i + 1] + RCuts[i])),
+					RooConst(0.5*(RCuts[i+ 1] - RCuts[i]))));
 
 		if (i == RCuts.size() - 1)
 			TopLevelModels.push_back(new RooProdPdf(
