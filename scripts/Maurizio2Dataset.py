@@ -19,8 +19,12 @@ def convertTree2Dataset(tree, outputFile, config, box, min, max):
     mRmin = args['MR'].getMin()
     mRmax = args['MR'].getMax()
 
+    rcuts = config.getRCuts(box)
+    rcuts.sort()
+    rMin = rcuts[0]
+
     #iterate over selected entries in the input tree    
-    tree.Draw('>>elist','passedPF && PFMR >= %f && PFMR <= %f' % (mRmin,mRmax),'entrylist')
+    tree.Draw('>>elist','passedPF && PFMR >= %f && PFMR <= %f && PFR >= %f' % (mRmin,mRmax,rMin),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;
