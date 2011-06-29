@@ -4,7 +4,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-def convertTree2Dataset(tree, outputFile, config, box, min, max):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
@@ -44,8 +44,8 @@ def convertTree2Dataset(tree, outputFile, config, box, min, max):
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
 
-    output = rt.TFile.Open(outputFile,'RECREATE')
-    print 'Writing',outputFile
+    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+"_"+outputBox,'RECREATE')
+    print 'Writing',outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+"_"+outputBox
     rdata.Write()
     output.Close()
     
@@ -75,12 +75,12 @@ if __name__ == '__main__':
             decorator = f[:-5]
             
             #dump the trees for the different datasets
-            convertTree2Dataset(input.Get('outTreeHad'),'%s_Had.root' % decorator, cfg,'Had',options.min,options.max)
-            convertTree2Dataset(input.Get('outTreeEle'),'%s_Ele.root' % decorator, cfg,'Ele',options.min,options.max)
-            convertTree2Dataset(input.Get('outTreeMu'),'%s_Mu.root' % decorator, cfg,'Mu',options.min,options.max)
-            convertTree2Dataset(input.Get('outTreeMuMu'),'%s_MuMu.root' % decorator, cfg,'MuMu',options.min,options.max)
-            convertTree2Dataset(input.Get('outTreeMuEle'),'%s_MuEle.root' % decorator, cfg,'MuEle',options.min,options.max)
-            convertTree2Dataset(input.Get('outTreeEleEle'),'%s_EleEle.root' % decorator, cfg,'EleEle',options.min,options.max)
+            convertTree2Dataset(input.Get('outTreeHad'), decorator, 'Had.root', cfg,'Had',options.min,options.max)
+            convertTree2Dataset(input.Get('outTreeEle'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max)
+            convertTree2Dataset(input.Get('outTreeMu'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max)
+            convertTree2Dataset(input.Get('outTreeMuMu'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max)
+            convertTree2Dataset(input.Get('outTreeMuEle'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max)
+            convertTree2Dataset(input.Get('outTreeEleEle'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max)
             
         else:
             "File '%s' of unknown type. Looking for .root files only" % f

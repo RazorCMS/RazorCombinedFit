@@ -42,13 +42,24 @@ You can run the code by doing:
 
 python scripts/runAnalysis.py -a OneDFit TTJets_TuneZ2_7TeV-madgraph-tauola_*.root
 
-The filenames are expected to end with the name of the box:
+FILE NAME CONVENTION:
+- The filenames are expected to end with the name of the box.
+- The name includes the MR and R cut used to define the dataset
 
-pb-d-128-141-131-81:RazorCombinedFit wreece$ ls -l TTJets_TuneZ2_7TeV-madgraph-tauola_*.root
--rw-r--r--  1 wreece  staff  162401 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_Ele.root
--rw-r--r--  1 wreece  staff   71763 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_EleEle.root
--rw-r--r--  1 wreece  staff  162553 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_Had.root
--rw-r--r--  1 wreece  staff  162426 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_Mu.root
--rw-r--r--  1 wreece  staff  136215 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_MuEle.root
--rw-r--r--  1 wreece  staff  162511 22 Jun 14:20 TTJets_TuneZ2_7TeV-madgraph-tauola_MuMu.root
+rfdir /castor/cern.ch/user/m/mpierini/CMST3/RazorSamples/MC/TTbar/ 
+-rw-r--r--   1 mpierini zh                      10018 Jun 29 14:43 TTJets_TuneZ2_7TeV-madgraph-tauola_MR250.0_R0.1_Ele.root
+-rw-r--r--   1 mpierini zh                      10024 Jun 29 14:43 TTJets_TuneZ2_7TeV-madgraph-tauola_MR250.0_R0.1_EleEle.root
+-rw-r--r--   1 mpierini zh                      10006 Jun 29 14:44 TTJets_TuneZ2_7TeV-madgraph-tauola_MR250.0_R0.1_Had.root
+-rw-r--r--   1 mpierini zh                      10000 Jun 29 14:44 TTJets_TuneZ2_7TeV-madgraph-tauola_MR250.0_R0.1_Mu.root
+-rw-r--r--   1 mpierini zh                      10014 Jun 29 14:44 TTJets_TuneZ2_7TeV-madgraph-tauola_MR250.0_R0.1_MuEle.root
+-rw-r--r--   1 mpierini zh                      10007 Jun 29 14:44 TTJets_TuneZ2_7TeV-madgraph-tauola_MR250.0_R0.1_MuMu.root
   
+You can create your own files starting from the output of VecBosApp/src/Razor.cc by doing
+
+python scripts/Maurizio2Dataset.py <YOUR INPUT FILE>
+
+A few input files are available at /castor/cern.ch/user/m/mpierini/CMST3/RazorSamples/
+You can get a local copy of the files available on castor by doing (for instance)
+
+python script/castor_copy.py /castor/cern.ch/user/m/mpierini/CMST3/RazorSamples/MC/TTbar/ TTbar
+
