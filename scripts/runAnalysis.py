@@ -30,8 +30,10 @@ if __name__ == '__main__':
     cfg = Config.Config(options.config)
     
     from OneDFit import OneDFit
+    from TwoDFit import TwoDFit
+    
     if options.analysis is not None:
-        a = [OneDFit.OneDAnalysis(options.output, cfg)]
+        a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg)]
         for aa in a:
             if aa.name == options.analysis:
                 print "Running analysis '%s'" % aa.name
