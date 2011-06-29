@@ -13,8 +13,8 @@ RooRazor2DTail::RooRazor2DTail(const char *name, const char *title,
 			       RooAbsReal &_x, 	RooAbsReal &_y, 
 			       RooAbsReal &_x0, RooAbsReal &_y0, 
 			       RooAbsReal &_b) : RooAbsPdf(name, title), 
-  X("X", "X Dependent", this, _x),
-  X("Y", "Y Dependent", this, _y),
+  X("X", "X Observable", this, _x),
+  Y("Y", "Y Observable", this, _y),
   X0("X0", "X Offset", this, _x0),
   Y0("Y0", "Y Offset", this, _y0),
   B("B", "Shape parameter", this, _b)
@@ -41,12 +41,22 @@ Double_t RooRazor2DTail::evaluate() const
 //---------------------------------------------------------------------------
 Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
 {
-   return 0;
+  // is this correct?
+  if (matchArgs(allVars, analVars, X) && matchArgs(allVars, analVars, Y)) return 1;
+  return 0;
 }
 //---------------------------------------------------------------------------
 Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) const
 {
-   return 0;
+
+  assert(code==1) ;
+
+  Double_t xmin = X.min(rangeName); Double_t xmax = X.max(rangeName);
+  Double_t ymin = Y.min(rangeName); Double_t ymax = Y.max(rangeName);
+
+  if(B == 0) return 0.;
+
+  return 1/B*(exp(-B*ymin*xmin) + exp(-B*xmax*ymax) - exp(-B*xmin*ymax) - exp(-B*ymin*xmax));
 }
 //---------------------------------------------------------------------------
 
