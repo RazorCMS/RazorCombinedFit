@@ -11,6 +11,10 @@ class Analysis(object):
         self.workspace = rt.RooWorkspace(self.name)
         self.config = config
     
+    def importToWS(self, *args):
+        """Utility function to call the RooWorkspace::import methods"""
+        return getattr(self.workspace,'import')(*args)
+    
     def store(self, o, name = None):
         """Store a ROOT object"""
         self.rootFile.add(o, name)    

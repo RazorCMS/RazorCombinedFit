@@ -15,6 +15,10 @@ class Box(object):
         pdf.graphVizTree('%s_graphViz.dot' % pdf.GetName())
         return pdf
     
+    def importToWS(self, *args):
+        """Utility function to call the RooWorkspace::import methods"""
+        return getattr(self.workspace,'import')(*args)
+    
     def fit(self, inputFile, reduce = None, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
         
