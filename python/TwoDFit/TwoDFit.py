@@ -14,16 +14,15 @@ class TwoDAnalysis(Analysis.Analysis):
         import TwoDBox
         boxes = {}
         
-        boxes['Had'] = TwoDBox.TwoDBox('Had', self.config.getVariables('Had'))
-        boxes['Had'].define(fileIndex['Had'],{'rcuts':self.config.getRCuts('Had')})
+        boxes['EleEle'] = TwoDBox.TwoDBox('EleEle', self.config.getVariables('EleEle'))
+        boxes['EleEle'].define(fileIndex['EleEle'],{'rcuts':self.config.getRCuts('EleEle')})
         print 'Variables'
-        boxes['Had'].workspace.allVars().Print('V')
+        boxes['EleEle'].workspace.allVars().Print('V')
         print 'Workspace'
-        boxes['Had'].workspace.Print('V')
+        boxes['EleEle'].workspace.Print('V')
         
-        #TODO: Will segfault as no PDF is returned
-        #frHad = boxes['Had'].fit(fileIndex['Had'],None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-        #self.store(frHad)
+        frEleEle = boxes['EleEle'].fit(fileIndex['EleEle'],None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+        self.store(frEleEle)
         
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box)

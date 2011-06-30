@@ -2,6 +2,7 @@
 #include "RooFit.h"
 
 #include "Riostream.h"
+#include <TMath.h>
 #include <math.h>
 
 #include "RooRazor2DTail.h"
@@ -33,30 +34,38 @@ RooRazor2DTail::RooRazor2DTail(const RooRazor2DTail& other, const char* name) :
 //---------------------------------------------------------------------------
 Double_t RooRazor2DTail::evaluate() const
 {
-  double myexp = B*(X-X0)-(Y*Y-Y0*Y0);
-  if(-myexp > 700.) return 0.;
-  else return (myexp-1)*exp(-myexp);
+  double myexp = fabs(B*(X-X0)*(Y*Y-Y0));
+  return fabs(myexp-1)*exp(-myexp);
 }
 
 //---------------------------------------------------------------------------
-Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
-{
-  // is this correct?
-  if (matchArgs(allVars, analVars, X) && matchArgs(allVars, analVars, Y)) return 1;
-  return 0;
-}
-//---------------------------------------------------------------------------
-Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) const
-{
+// Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
+// {
+//   // integral on both X and Y
+//   if (matchArgs(allVars, analVars, X, Y)) return 1;
+//   return 0;
+// }
+// //---------------------------------------------------------------------------
+// Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) const
+// {
 
-  assert(code==1) ;
+//   assert(code==1) ;
 
-  Double_t xmin = X.min(rangeName); Double_t xmax = X.max(rangeName);
-  Double_t ymin = Y.min(rangeName); Double_t ymax = Y.max(rangeName);
+//   Double_t xmin = X.min(rangeName)-X0; Double_t xmax = X.max(rangeName)-X0;
+//   Double_t ymin = Y.min(rangeName); Double_t ymax = Y.max(rangeName);
 
-  if(B == 0) return 0.;
+//   if(B == 0) return 0.;
 
-  return 1/B*(exp(-B*ymin*xmin) + exp(-B*xmax*ymax) - exp(-B*xmin*ymax) - exp(-B*ymin*xmax));
-}
+//   Double_t pihalf = asin(1.);
+
+
+//   return 1./(4.*sqrt(
+
+
+//   // return 
+//   //   sqrt(xmin*pihalf/B)*(TMath::Erf(sqrt(xmin*B)*ymax) - TMath::Erf(sqrt(xmin*B)*ymin)) -
+//   //   sqrt(xmax*pihalf/B)*(TMath::Erf(sqrt(xmax*B)*ymax) - TMath::Erf(sqrt(xmax*B)*ymin)) -
+//   //   (ymax-ymin)/Y0*(TMath::Exp(Y0*xmax)-TMath::Exp(Y0*xmin));
+// }
 //---------------------------------------------------------------------------
 
