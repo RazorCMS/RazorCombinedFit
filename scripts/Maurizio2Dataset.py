@@ -32,7 +32,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
         entry = elist.Next()
         if entry == -1: break
         tree.GetEntry(entry)
-        
+
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
         a.setRealValue('MR',tree.PFMR)
@@ -40,7 +40,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
         data.add(a)
     numEntries = data.numEntries()
     if min < 0: min = 0
-    if max < -1: max = numEntries
+    if max < 0: max = numEntries
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
 
@@ -57,9 +57,9 @@ if __name__ == '__main__':
     parser.add_option('-c','--config',dest="config",type="string",default=None,
                   help="Name of the config file to use")
     parser.add_option('--max',dest="max",type="int",default=-1,
-                  help="The maximum number of events to take from the input Dataset")
+                  help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
-                  help="The maximum number of events to take from the input Dataset")  
+                  help="The first event to take from the input Dataset")  
     (options,args) = parser.parse_args()
     
     if options.config is None:
