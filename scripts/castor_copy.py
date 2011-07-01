@@ -4,7 +4,6 @@ import sys
 ################################################
 # list folder (source and target)
 ################################################
-#castor_folder = "/castor/cern.ch/user/c/crogan/CMST3/SUSY/LM1/root/"
 castor_folder = sys.argv[1]
 target_folder = sys.argv[2]
 

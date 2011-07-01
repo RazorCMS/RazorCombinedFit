@@ -20,9 +20,17 @@ class TwoDAnalysis(Analysis.Analysis):
         boxes['EleEle'].workspace.allVars().Print('V')
         print 'Workspace'
         boxes['EleEle'].workspace.Print('V')
-        
+
+        # perform the fit
         frEleEle = boxes['EleEle'].fit(fileIndex['EleEle'],None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
         self.store(frEleEle)
-        
+
+        # plot the result
+        frameMR = boxes['EleEle'].plotMR(fileIndex['EleEle'])
+        self.store(frameMR)
+        frameR = boxes['EleEle'].plotR(fileIndex['EleEle'])
+        self.store(frameR)
+
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box)
+

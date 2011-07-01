@@ -38,7 +38,10 @@ class TwoDBox(Box.Box):
         #print the workspace
         self.workspace.Print()
 
+        #create the dataset
         data = RootTools.getDataSet(inputFile,'RMRTree')
+        #import the dataset to the workspace
+        self.importToWS(data)
         
         #the parameters of interest are the offsets and shape parameters
         # already created by the PDF 
@@ -46,7 +49,46 @@ class TwoDBox(Box.Box):
         print 'Reduced dataset'
         data.Print("V")
             
-            
-        
-        
+    def plotMR(self, inputFile):
+        # project the data on R
+        frameMR = self.workspace.var("MR").frame(self.workspace.var("MR").getMin(), 3000., 100)
+        frameMR.SetName("MRplot")
+        frameMR.SetTitle("MRplot")
+        #        data = rt.RooDataSet(self.workspace.genobj("RMRTree"))
+        #before I find a better way
+        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data.plotOn(frameMR)
+        # project the full PDF on the data
+        self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 
+        Ntt1 = self.workspace.var("N_ttbar_1st").getVal()
+        Ntt2 = self.workspace.var("N_ttbar_1st").getVal()
+
+        # project the first component
+        self.workspace.pdf("PDF1st").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
+        #, rt.RooFit.Normalization(self.workspace.var("N_ttbar_1st").getVal()))
+        # project the second component
+        self.workspace.pdf("PDF2nd").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(Ntt2/(Ntt1+Ntt2)))
+        #, rt.RooFit.Normalization(self.workspace.var("N_ttbar_2nd").getVal()))
+        return frameMR
+
+    def plotR(self, inputFile):
+        # project the data on R
+        frameR = self.workspace.var("R").frame(self.workspace.var("R").getMin(), 1.5, 100)
+        frameR.SetName("Rplot")
+        frameR.SetTitle("Rplot")
+        #before I find a better way
+        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data.plotOn(frameR)
+
+        Ntt1 = self.workspace.var("N_ttbar_1st").getVal()
+        Ntt2 = self.workspace.var("N_ttbar_1st").getVal()
+        
+        # project the full PDF
+        self.workspace.pdf("fitmodel").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue)) 
+        # project the first component
+        self.workspace.pdf("PDF1st").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
+        # project the second component
+        self.workspace.pdf("PDF2nd").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(Ntt2/(Ntt1+Ntt2)))
+
+        return frameR
