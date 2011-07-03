@@ -41,6 +41,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
         a = rt.RooArgSet(args)
         a.setRealValue('MR',tree.PFMR)
         a.setRealValue('R',tree.PFR)
+        a.setRealValue('Rsq',tree.PFRsq)
         data.add(a)
     numEntries = data.numEntries()
     if min < 0: min = 0

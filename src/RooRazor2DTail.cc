@@ -34,11 +34,11 @@ RooRazor2DTail::RooRazor2DTail(const RooRazor2DTail& other, const char* name) :
 //---------------------------------------------------------------------------
 Double_t RooRazor2DTail::evaluate() const
 {
-  double myexp = fabs(B*(X-X0)*(Y*Y-Y0));
+  double myexp = B*(X-X0)*(Y-Y0);
   return fabs(myexp-1)*exp(-myexp);
 }
 
-//---------------------------------------------------------------------------
+// //---------------------------------------------------------------------------
 // Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
 // {
 //   // integral on both X and Y
@@ -52,20 +52,16 @@ Double_t RooRazor2DTail::evaluate() const
 //   assert(code==1) ;
 
 //   Double_t xmin = X.min(rangeName)-X0; Double_t xmax = X.max(rangeName)-X0;
-//   Double_t ymin = Y.min(rangeName); Double_t ymax = Y.max(rangeName);
+//   Double_t ymin = Y.min(rangeName)-Y0; Double_t ymax = Y.max(rangeName)-Y0;
 
 //   if(B == 0) return 0.;
 
-//   Double_t pihalf = asin(1.);
-
-
-//   return 1./(4.*sqrt(
-
+//   return 1/B*(exp(-B*xmin*ymin)+exp(-B*xmax*ymax)-exp(-B*xmax*ymin)-exp(-B*xmin*ymax));
 
 //   // return 
 //   //   sqrt(xmin*pihalf/B)*(TMath::Erf(sqrt(xmin*B)*ymax) - TMath::Erf(sqrt(xmin*B)*ymin)) -
 //   //   sqrt(xmax*pihalf/B)*(TMath::Erf(sqrt(xmax*B)*ymax) - TMath::Erf(sqrt(xmax*B)*ymin)) -
 //   //   (ymax-ymin)/Y0*(TMath::Exp(Y0*xmax)-TMath::Exp(Y0*xmin));
 // }
-//---------------------------------------------------------------------------
+// //---------------------------------------------------------------------------
 

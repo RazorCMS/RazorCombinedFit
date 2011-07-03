@@ -13,11 +13,11 @@ class TwoDBox(Box.Box):
         rcuts.sort()
 
         # define the two components
-        self.workspace.factory("RooRazor2DTail::PDF1st(MR,R,MR01st[35,-100,200],R01st[-0.12,-1,0],b1st[0.001,0,10])")
-        self.workspace.factory("RooRazor2DTail::PDF2nd(MR,R,MR02nd[-1.48,-100,200],R02nd[-0.22,-1,0],b2nd[0.001,0,10])")
+        self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st[35,-300,200],R01st[-0.22,-1,0],b1st[0.001,0,10])")
+        self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd[-1.48,-300,200],R02nd[-0.22,-1,0],b2nd[0.001,0,10])")
         #define the two yields
-        self.workspace.factory("N_ttbar_1st[2000, -10., 100000]")
-        self.workspace.factory("N_ttbar_2nd[1000, -10., 100000]")
+        self.workspace.factory("N_ttbar_1st[2000, 0., 100000]")
+        self.workspace.factory("N_ttbar_2nd[1000, 0., 100000]")
         # reasonable errors (do we need it?)
         #self.workspace.var("MR01st").setError(10.)
         #self.workspace.var("R01st").setError(0.1)
@@ -51,7 +51,7 @@ class TwoDBox(Box.Box):
             
     def plotMR(self, inputFile):
         # project the data on R
-        frameMR = self.workspace.var("MR").frame(self.workspace.var("MR").getMin(), 3000., 100)
+        frameMR = self.workspace.var("MR").frame(self.workspace.var("MR").getMin(), 3000., 200)
         frameMR.SetName("MRplot")
         frameMR.SetTitle("MRplot")
         #        data = rt.RooDataSet(self.workspace.genobj("RMRTree"))
@@ -73,10 +73,10 @@ class TwoDBox(Box.Box):
         return frameMR
 
     def plotR(self, inputFile):
-        # project the data on R
-        frameR = self.workspace.var("R").frame(self.workspace.var("R").getMin(), 1.5, 100)
-        frameR.SetName("Rplot")
-        frameR.SetTitle("Rplot")
+        # project the data on Rsq
+        frameR = self.workspace.var("Rsq").frame(self.workspace.var("Rsq").getMin(), 1.5, 200)
+        frameR.SetName("Rsqplot")
+        frameR.SetTitle("Rsqplot")
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
         data.plotOn(frameR)
