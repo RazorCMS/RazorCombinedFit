@@ -62,7 +62,7 @@ class TwoDBox(Box.Box):
         self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 
         Ntt1 = self.workspace.var("N_ttbar_1st").getVal()
-        Ntt2 = self.workspace.var("N_ttbar_1st").getVal()
+        Ntt2 = self.workspace.var("N_ttbar_2nd").getVal()
 
         # project the first component
         self.workspace.pdf("PDF1st").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
@@ -82,7 +82,7 @@ class TwoDBox(Box.Box):
         data.plotOn(frameR)
 
         Ntt1 = self.workspace.var("N_ttbar_1st").getVal()
-        Ntt2 = self.workspace.var("N_ttbar_1st").getVal()
+        Ntt2 = self.workspace.var("N_ttbar_2nd").getVal()
         
         # project the full PDF
         self.workspace.pdf("fitmodel").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue)) 
