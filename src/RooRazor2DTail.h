@@ -7,6 +7,11 @@
 //---------------------------------------------------------------------------
 class RooRealVar;
 class RooAbsReal;
+
+#include "TMath.h"
+#include "Math/SpecFuncMathCore.h"
+#include "Math/SpecFuncMathMore.h"
+
 //---------------------------------------------------------------------------
 class RooRazor2DTail : public RooAbsPdf
 {
@@ -21,10 +26,27 @@ public:
    virtual TObject* clone(const char* newname) const { return new RooRazor2DTail(*this,newname); }
    inline virtual ~RooRazor2DTail() { }
 
-   /* Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const; */
-   /* Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const; */
+#if 0
+   Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
+   Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;
+#endif
 
 protected:
+
+   Double_t Chop(const Double_t x) const{
+	   return (TMath::Abs(x - 0) < 1e-10) ? TMath::Sign(0.0,x) : x;
+   }
+   Double_t Power(const Double_t x, const Double_t y) const{
+	   return Chop(TMath::Power(x,y));
+   }
+   Double_t Gamma(const Double_t a, const Double_t x) const{
+	   return Chop(ROOT::Math::inc_gamma(a,x));
+   }
+   Double_t ExpIntegralEi(const Double_t z) const{
+	   return Chop(ROOT::Math::expint(z));
+   }
+
+
    RooRealProxy X;        // dependent variable
    RooRealProxy Y;        // dependent variable
    RooRealProxy X0;       // X offset

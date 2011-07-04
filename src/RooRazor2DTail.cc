@@ -38,30 +38,79 @@ Double_t RooRazor2DTail::evaluate() const
   return fabs(myexp-1)*exp(-myexp);
 }
 
+#if 0
 // //---------------------------------------------------------------------------
-// Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* /*rangeName*/) const 
-// {
-//   // integral on both X and Y
-//   if (matchArgs(allVars, analVars, X, Y)) return 1;
-//   return 0;
-// }
+Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
+
+
+   const Double_t xmin = X.min(rangeName)-X0; const Double_t xmax = X.max(rangeName)-X0;
+   const Double_t ymin = Y.min(rangeName)-Y0; const Double_t ymax = Y.max(rangeName)-Y0;
+
+   std::cout << "RooRazor2DTail::getAnalyticalIntegral" << std::endl;
+   std::cout << "X: " << X << std::endl;
+   std::cout << "Y: " << Y << std::endl;
+   std::cout << "X0: " << X0 << std::endl;
+   std::cout << "Y0: " << Y0 << std::endl;
+   std::cout << "B: " << B << std::endl;
+
+   std::cout << "xmin: " << xmin << "\t xmax: " << xmax << std::endl;
+   std::cout << "ymin: " << ymin << "\t ymax: " << ymax << std::endl;
+
+   std::cout << "Full 1: " << analyticalIntegral(1,rangeName) << std::endl;
+   std::cout << "Proj 2: " << analyticalIntegral(2,rangeName) << std::endl;
+   std::cout << "Proj 3: " << analyticalIntegral(3,rangeName) << std::endl;
+
+   // integral on both X and Y
+   if (matchArgs(allVars, analVars, X, Y)) return 1;
+   // integral over X
+   if (matchArgs(allVars, analVars, X)) return 2;
+   // integral over Y
+   if (matchArgs(allVars, analVars, Y)) return 3;
+	return 0;
+}
+
 // //---------------------------------------------------------------------------
-// Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) const
-// {
+Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) const{
 
-//   assert(code==1) ;
+   const Double_t xmin = X.min(rangeName)-X0; const Double_t xmax = X.max(rangeName)-X0;
+   const Double_t ymin = Y.min(rangeName)-Y0; const Double_t ymax = Y.max(rangeName)-Y0;
+   const Double_t E = TMath::E();
 
-//   Double_t xmin = X.min(rangeName)-X0; Double_t xmax = X.max(rangeName)-X0;
-//   Double_t ymin = Y.min(rangeName)-Y0; Double_t ymax = Y.max(rangeName)-Y0;
+   if(B == 0) return 0.;
 
-//   if(B == 0) return 0.;
+   if(code == 1){
+	   std::cout << "ExpIntegralEi(-(B*(X0 - xmax)*(Y0 - ymax))): " << ExpIntegralEi(-(B*(X0 - xmax)*(Y0 - ymax))) << ": " << -(B*(X0 - xmax)*(Y0 - ymax)) << std::endl;
+	   std::cout << "Power(E,B*(-X0 + xmin)*(Y0 - ymin)): " << Power(E,B*(-X0 + xmin)*(Y0 - ymin)) << std::endl;
+	   std::cout << "Gamma(0,B*(X0 - xmax)*(Y0 - ymax)): " << Gamma(0,B*(X0 - xmax)*(Y0 - ymax)) << std::endl;
+	   return (Power(E,-(B*(X0 - xmax)*(Y0 - ymax))) -
+			   Power(E,B*(-X0 + xmin)*(Y0 - ymax)) -
+			   Power(E,-(B*(X0 - xmax)*(Y0 - ymin))) +
+			   Power(E,B*(-X0 + xmin)*(Y0 - ymin)) +
+			   B*X0*(Y0 - ymax)*ExpIntegralEi(-(B*(X0 - xmax)*(Y0 - ymax))) +
+			   B*X0*(-Y0 + ymax)*ExpIntegralEi(-(B*(X0 - xmin)*(Y0 - ymax))) -
+			   B*X0*(Y0 - ymin)*ExpIntegralEi(-(B*(X0 - xmax)*(Y0 - ymin))) +
+			   B*X0*(Y0 - ymin)*ExpIntegralEi(-(B*(X0 - xmin)*(Y0 - ymin))) +
+			   Gamma(0,B*(X0 - xmax)*(Y0 - ymax)) +
+			   B*X0*(Y0 - ymax)*(Gamma(0,B*(X0 - xmax)*(Y0 - ymax)) -
+					   Gamma(0,B*(X0 - xmin)*(Y0 - ymax))) -
+					   Gamma(0,B*(X0 - xmin)*(Y0 - ymax)) -
+					   Gamma(0,B*(X0 - xmax)*(Y0 - ymin)) -
+					   B*X0*(Y0 - ymin)*(Gamma(0,B*(X0 - xmax)*(Y0 - ymin)) -
+							   Gamma(0,B*(X0 - xmin)*(Y0 - ymin))) +
+							   Gamma(0,B*(X0 - xmin)*(Y0 - ymin)))/B;
+   }else if(code == 2){
+	   return (Power(E,B*(-((xmax + xmin)*Y) + X0*(Y - Y0)))*(Power(E,B*xmin*Y + B*xmax*Y0)*(-1 + B*(X0 - xmax)*(Y - Y0)) +
+		       Power(E,B*xmax*Y + B*xmin*Y0)*(1 - B*(X0 - xmin)*(Y - Y0))))/(B*(Y - Y0));
+   }else if(code == 3){
+	   return (Power(E,B*(X - X0)*(Y0 - ymax - ymin))*(Power(E,B*(X - X0)*ymin)*(-1 + B*(X - X0)*(Y0 - ymax)) +
+		       Power(E,B*(X - X0)*ymax)*(1 - B*(X - X0)*(Y0 - ymin))))/(B*(X - X0));
+   }else{
+	   std::cerr << "Unsupported code" << std::endl;
+	   assert(false);
+   }
+   return 0;
 
-//   return 1/B*(exp(-B*xmin*ymin)+exp(-B*xmax*ymax)-exp(-B*xmax*ymin)-exp(-B*xmin*ymax));
-
-//   // return 
-//   //   sqrt(xmin*pihalf/B)*(TMath::Erf(sqrt(xmin*B)*ymax) - TMath::Erf(sqrt(xmin*B)*ymin)) -
-//   //   sqrt(xmax*pihalf/B)*(TMath::Erf(sqrt(xmax*B)*ymax) - TMath::Erf(sqrt(xmax*B)*ymin)) -
-//   //   (ymax-ymin)/Y0*(TMath::Exp(Y0*xmax)-TMath::Exp(Y0*xmin));
-// }
+}
+#endif
 // //---------------------------------------------------------------------------
 
