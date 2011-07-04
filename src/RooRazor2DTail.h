@@ -26,10 +26,8 @@ public:
    virtual TObject* clone(const char* newname) const { return new RooRazor2DTail(*this,newname); }
    inline virtual ~RooRazor2DTail() { }
 
-#if 0
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;
-#endif
 
 protected:
 

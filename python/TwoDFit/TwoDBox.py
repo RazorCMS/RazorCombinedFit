@@ -16,18 +16,8 @@ class TwoDBox(Box.Box):
         self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st[35,-300,200],R01st[-0.22,-1,0],b1st[0.001,0,10])")
         self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd[-1.48,-300,200],R02nd[-0.22,-1,0],b2nd[0.001,0,10])")
         #define the two yields
-        self.workspace.factory("N_ttbar_1st[2000, 0., 100000]")
-        self.workspace.factory("N_ttbar_2nd[1000, 0., 100000]")
-        # reasonable errors (do we need it?)
-        #self.workspace.var("MR01st").setError(10.)
-        #self.workspace.var("R01st").setError(0.1)
-        #self.workspace.var("b1st").setError(0.1)
-        #self.workspace.var("N_ttbar_1st").setError(100.)
-        #self.workspace.var("MR02nd").setError(10.)
-        #self.workspace.var("R02nd").setError(0.1)
-        #self.workspace.var("b2nd").setError(0.1)
-        #self.workspace.var("N_ttbar_2nd").setError(200.)
-
+        self.workspace.factory("N_ttbar_1st[800, 0., 10000]")
+        self.workspace.factory("N_ttbar_2nd[800, 0., 10000]")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st(PDF1st, N_ttbar_1st)")
         self.workspace.factory("RooExtendPdf::ePDF2nd(PDF2nd, N_ttbar_2nd)")
