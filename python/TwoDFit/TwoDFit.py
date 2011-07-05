@@ -14,22 +14,24 @@ class TwoDAnalysis(Analysis.Analysis):
         import TwoDBox
         boxes = {}
         
-        boxes['EleEle'] = TwoDBox.TwoDBox('EleEle', self.config.getVariables('EleEle'))
-        boxes['EleEle'].define(fileIndex['EleEle'],{'rcuts':self.config.getRCuts('EleEle')})
+        boxes['Mu'] = TwoDBox.TwoDBox('Mu', self.config.getVariables('Mu'))
+        boxes['Mu'].define(fileIndex['Mu'],{'rcuts':self.config.getRCuts('Mu')})
         print 'Variables'
-        boxes['EleEle'].workspace.allVars().Print('V')
+        boxes['Mu'].workspace.allVars().Print('V')
         print 'Workspace'
-        boxes['EleEle'].workspace.Print('V')
+        boxes['Mu'].workspace.Print('V')
 
         # perform the fit
-        frEleEle = boxes['EleEle'].fit(fileIndex['EleEle'],None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-        self.store(frEleEle)
+        frMu = boxes['Mu'].fit(fileIndex['Mu'],None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+        self.store(frMu)
 
         # plot the result
-        frameMR = boxes['EleEle'].plotMR(fileIndex['EleEle'])
+        frameMR = boxes['Mu'].plotMR(fileIndex['Mu'])
         self.store(frameMR)
-        frameR = boxes['EleEle'].plotR(fileIndex['EleEle'])
+        frameR = boxes['Mu'].plotRsq(fileIndex['Mu'])
         self.store(frameR)
+        frame2D = boxes['Mu'].plotRsqMR(fileIndex['Mu'])
+        self.store(frame2D)
 
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box)

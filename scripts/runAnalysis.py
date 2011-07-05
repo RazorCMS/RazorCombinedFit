@@ -37,6 +37,7 @@ if __name__ == '__main__':
         for aa in a:
             if aa.name == options.analysis:
                 print "Running analysis '%s'" % aa.name
+                boxname = 'Mu'
                 aa.analysis(args)
                 aa.final()
         

@@ -35,7 +35,8 @@ RooRazor2DTail::RooRazor2DTail(const RooRazor2DTail& other, const char* name) :
 Double_t RooRazor2DTail::evaluate() const
 {
   double myexp = B*(X-X0)*(Y-Y0);
-  return (myexp-1)*exp(-myexp);
+  if(myexp> 700 ) return myexp =  1e-20;// very bad
+  return max( Chop(myexp-1)*exp(-myexp),  1e-20);
 }
 
 // //---------------------------------------------------------------------------
@@ -60,12 +61,12 @@ Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analV
    // std::cout << "Proj 3: " << analyticalIntegral(3,rangeName) << std::endl;
 
    // integral on both X and Y
-   if (matchArgs(allVars, analVars, X, Y)) return 1;
-   // // integral over X
-   // if (matchArgs(allVars, analVars, X)) return 2;
-   // // integral over Y
-   // if (matchArgs(allVars, analVars, Y)) return 3;
-	return 0;
+  if (matchArgs(allVars, analVars, X, Y)) return 1;
+  // // integral over X
+  // if (matchArgs(allVars, analVars, X)) return 2;
+  // // integral over Y
+  // if (matchArgs(allVars, analVars, Y)) return 3;
+  return 0;
 }
 
 // //---------------------------------------------------------------------------
@@ -76,11 +77,23 @@ Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) c
 
    if(B == 0) return 0.;
 
-   return 1/B*exp(-B*X0*Y0)*(exp(B*(xmax*(Y0-ymax)+X0*ymax))-
-			     exp(B*(xmin*(Y0-ymax)+X0*ymax))-
-			     exp(B*(xmax*(Y0-ymin)+X0*ymin))+
-			     exp(B*(xmin*(Y0-ymin)+X0*ymin)));
+   if(code ==1) // integral on both X and Y
+     return 1/B*exp(-B*X0*Y0)*(exp(B*(xmax*(Y0-ymax)+X0*ymax))-
+			       exp(B*(xmin*(Y0-ymax)+X0*ymax))-
+			       exp(B*(xmax*(Y0-ymin)+X0*ymin))+
+			       exp(B*(xmin*(Y0-ymin)+X0*ymin)));
+   // else if(code == 2) // // integral on X
+   //   return exp(B*(X0-xmax-xmin)*(Y-Y0))*(exp(B*xmin*(Y-Y0))*(X0-xmax)+
+   // 					  exp(B*xmax*(Y-Y0))*(-X0+xmin));
    
+   // else if(code == 3) // // integral on Y
+   //   return exp(B*(Y0-ymax-ymin)*(X-X0))*(exp(B*ymin*(X-X0))*(Y0-ymax)+
+   // 					  exp(B*ymax*(X-X0))*(-Y0+ymin));
+   // else {
+   //   cout << "WARNING IN RooRazor2DTail: integration code is not correct" << endl;
+   //   cout << "                           what are you integrating on?" << endl;
+   // }
+   return 0;
 }
 // //---------------------------------------------------------------------------
 

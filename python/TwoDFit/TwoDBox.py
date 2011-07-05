@@ -13,15 +13,19 @@ class TwoDBox(Box.Box):
         rcuts.sort()
 
         # define the two components
-        self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st[35,-300,200],R01st[-0.22,-1,0],b1st[0.001,0,10])")
-        self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd[-1.48,-300,200],R02nd[-0.22,-1,0],b2nd[0.001,0,10])")
+        self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st[35,-200,200],R01st[-0.22,-1,0.09],b1st[0.09,0,10])")
+        self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd[0.,-400,200],R02nd[-0.22,-1,0.05],b2nd[0.03,0,10])")
         #define the two yields
-        self.workspace.factory("N_ttbar_1st[800, 0., 10000]")
-        self.workspace.factory("N_ttbar_2nd[800, 0., 10000]")
+        #        self.workspace.factory("N_ttbar_1st[1500, 0., 500000]")
+        #        self.workspace.factory("N_ttbar_2nd[800, 0., 200000]")
+        self.workspace.factory("expr::N_ttbar_1st('@0*(1-@1)',N_tt[1500, 0., 500000],f2[0.03,0., 0.5])")
+        self.workspace.factory("expr::N_ttbar_2nd('@0*@1',N_tt,f2)")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st(PDF1st, N_ttbar_1st)")
         self.workspace.factory("RooExtendPdf::ePDF2nd(PDF2nd, N_ttbar_2nd)")
         # build the total PDF
+        #        model = rt.RooAddPdf("totPdf", "totPdf", rt.RooArgList(self.workspace.pdf("PDF1st"),self.workspace.pdf("PDF2nd")), rt.RooArgList(self.workspace.var("f2")))        
+        #        self.workspace.factory("RooExtendPdf::fitmodel(totPdf, N_ttbar)")
         model = rt.RooAddPdf("fitmodel", "fitmodel", rt.RooArgList(self.workspace.pdf("ePDF1st"),self.workspace.pdf("ePDF2nd")))        
         # import the model in the workspace.
         self.importToWS(model)
@@ -51,8 +55,8 @@ class TwoDBox(Box.Box):
         # project the full PDF on the data
         self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 
-        Ntt1 = self.workspace.var("N_ttbar_1st").getVal()
-        Ntt2 = self.workspace.var("N_ttbar_2nd").getVal()
+        Ntt1 = self.workspace.var("N_tt").getVal()*(1-self.workspace.var("f2").getVal())
+        Ntt2 = self.workspace.var("N_tt").getVal()*self.workspace.var("f2").getVal()
 
         # project the first component
         self.workspace.pdf("PDF1st").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
@@ -62,23 +66,42 @@ class TwoDBox(Box.Box):
         #, rt.RooFit.Normalization(self.workspace.var("N_ttbar_2nd").getVal()))
         return frameMR
 
-    def plotR(self, inputFile):
+    def plotRsq(self, inputFile):
         # project the data on Rsq
-        frameR = self.workspace.var("Rsq").frame(self.workspace.var("Rsq").getMin(), 1.5, 200)
-        frameR.SetName("Rsqplot")
-        frameR.SetTitle("Rsqplot")
+        frameRsq = self.workspace.var("Rsq").frame(self.workspace.var("Rsq").getMin(), 1.5, 200)
+        frameRsq.SetName("Rsqplot")
+        frameRsq.SetTitle("Rsqplot")
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
-        data.plotOn(frameR)
+        data.plotOn(frameRsq)
 
-        Ntt1 = self.workspace.var("N_ttbar_1st").getVal()
-        Ntt2 = self.workspace.var("N_ttbar_2nd").getVal()
+        Ntt1 = self.workspace.var("N_tt").getVal()*(1-self.workspace.var("f2").getVal())
+        Ntt2 = self.workspace.var("N_tt").getVal()*self.workspace.var("f2").getVal()
         
         # project the full PDF
-        self.workspace.pdf("fitmodel").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue)) 
+        self.workspace.pdf("fitmodel").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue)) 
         # project the first component
-        self.workspace.pdf("PDF1st").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
+        self.workspace.pdf("PDF1st").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
         # project the second component
-        self.workspace.pdf("PDF2nd").plotOn(frameR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(Ntt2/(Ntt1+Ntt2)))
+        self.workspace.pdf("PDF2nd").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(Ntt2/(Ntt1+Ntt2)))
 
-        return frameR
+        return frameRsq
+
+    def plotRsqMR(self, inputFile):
+        toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet("MR,Rsq")), 10)
+        #before I find a better way
+        data = RootTools.getDataSet(inputFile,'RMRTree')
+
+        # define 2D histograms
+        histoData = rt.TH2D("histoData", "histoData",
+                            100, self.workspace.var("MR").getMin(), 3500.,
+                            100, self.workspace.var("Rsq").getMin(), 1.)
+        histoToy = rt.TH2D("histoToy", "histoToy",
+                            100, self.workspace.var("MR").getMin(), 3500.,
+                            100, self.workspace.var("Rsq").getMin(), 1.)
+        # project the data on the histograms
+        data.tree().Project("histoData","Rsq:MR")
+        toyData.tree().Project("histoToy","Rsq:MR")
+        histoToy.Scale(histoData.Integral()/histoToy.Integral())
+        histoData.Add(histoToy, -1)
+        return histoData
