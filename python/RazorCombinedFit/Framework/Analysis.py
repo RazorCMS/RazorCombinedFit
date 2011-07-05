@@ -15,9 +15,9 @@ class Analysis(object):
         """Utility function to call the RooWorkspace::import methods"""
         return getattr(self.workspace,'import')(*args)
     
-    def store(self, o, name = None):
+    def store(self, o, name = None, dir = None):
         """Store a ROOT object"""
-        self.rootFile.add(o, name)    
+        self.rootFile.add(o, name, dir)    
     
     def getFileTag(self, fileName):
         """Assume filename format is foo_tag.root or whatever"""

@@ -13,26 +13,24 @@ class TwoDAnalysis(Analysis.Analysis):
         
         import TwoDBox
         boxes = {}
-        
-        boxes['Mu'] = TwoDBox.TwoDBox('Mu', self.config.getVariables('Mu'))
-        boxes['Mu'].define(fileIndex['Mu'],{'rcuts':self.config.getRCuts('Mu')})
-        print 'Variables'
-        boxes['Mu'].workspace.allVars().Print('V')
-        print 'Workspace'
-        boxes['Mu'].workspace.Print('V')
 
-        # perform the fit
-        frMu = boxes['Mu'].fit(fileIndex['Mu'],None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-        self.store(frMu)
+        #start by setting all box configs the same
+        for box, fileName in fileIndex.iteritems():
+            print 'Configuring box %s' % box
+            boxes[box] = TwoDBox.TwoDBox(box, self.config.getVariables(box))
+            boxes[box].define(fileName,{'rcuts':self.config.getRCuts(box)})
+            print 'Variables for box %s' % box
+            boxes[box].workspace.allVars().Print('V')
+            print 'Workspace'
+            boxes[box].workspace.Print('V')
 
-        # plot the result
-        frameMR = boxes['Mu'].plotMR(fileIndex['Mu'])
-        self.store(frameMR)
-        frameR = boxes['Mu'].plotRsq(fileIndex['Mu'])
-        self.store(frameR)
-        frame2D = boxes['Mu'].plotRsqMR(fileIndex['Mu'])
-        self.store(frame2D)
+            # perform the fit
+            fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            self.store(fr, dir=box)
+            
+            #make any plots required
+            boxes[box].plot(fileName, self, box)
 
         for box in boxes.keys():
-            self.store(boxes[box].workspace,'Box%s_workspace' % box)
+            self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
 

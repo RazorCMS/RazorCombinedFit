@@ -42,3 +42,7 @@ class Box(object):
         
     def define(self, inputFile, cuts):
         pass
+    
+    def plot(self, inputFile, store, box):
+        pass
+    
