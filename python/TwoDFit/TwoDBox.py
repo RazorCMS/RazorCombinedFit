@@ -40,7 +40,7 @@ class TwoDBox(Box.Box):
         print 'Rcuts',rcuts
         
     def plot(self, inputFile, store, box):
-        print 'plot for box',box
+        super(TwoDBox,self).plot(inputFile, store, box)
         store.store(self.plotMR(inputFile), dir=box)
         store.store(self.plotRsq(inputFile), dir=box)
         store.store(self.plotRsqMR(inputFile), dir=box)
