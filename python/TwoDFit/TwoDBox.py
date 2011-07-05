@@ -90,9 +90,9 @@ class TwoDBox(Box.Box):
         return frameRsq
 
     def plotRsqMR(self, inputFile):
-        toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet("MR,Rsq")), 10)
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
+        toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet("MR,Rsq")), 10*data.numEntries())
 
         # define 2D histograms
         histoData = rt.TH2D("histoData", "histoData",
