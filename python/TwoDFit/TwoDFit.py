@@ -27,6 +27,7 @@ class TwoDAnalysis(Analysis.Analysis):
             # perform the fit
             fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
             self.store(fr, dir=box)
+            self.store(fr.correlationHist("correlation_%s" % box), dir=box)
             
             #make any plots required
             boxes[box].plot(fileName, self, box)
