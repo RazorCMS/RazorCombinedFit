@@ -31,9 +31,10 @@ if __name__ == '__main__':
     
     from OneDFit import OneDFit
     from TwoDFit import TwoDFit
+    from DalglishFit import DalglishFit
     
     if options.analysis is not None:
-        a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg)]
+        a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg),DalglishFit.DalglishAnalysis(options.output, cfg)]
         for aa in a:
             if aa.name == options.analysis:
                 print "Running analysis '%s'" % aa.name
