@@ -7,23 +7,20 @@ class TwoDBox(Box.Box):
     def __init__(self, name, variables):
         super(TwoDBox,self).__init__(name, variables)
 
-    def define(self, inputFile, cuts):
-        
-        rcuts = cuts.get('rcuts',[])
-        rcuts.sort()
+    def define(self, inputFile):
         
         #create the dataset
         data = RootTools.getDataSet(inputFile,'RMRTree')
         #import the dataset to the workspace
         self.importToWS(data)
         print 'Reduced dataset'
-        data.Print("V")
+        #data.Print("V")
 
         # define the two components
-        self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st[35,-200,200],R01st[-0.22,-1,0.09],b1st[0.09,0,10])")
-        self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd[0.,-400,200],R02nd[-0.22,-1,0.05],b2nd[0.03,0,10])")
+        self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st,R01st,b1st)")
+        self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd,R02nd,b2nd)")
         #define the two yields
-        self.workspace.factory("expr::N_ttbar_1st('@0*(1-@1)',N_tt[1500, 0., %d],f2[0.03,0., 0.5])" % data.numEntries())
+        self.workspace.factory("expr::N_ttbar_1st('@0*(1-@1)',N_tt,f2)")
         self.workspace.factory("expr::N_ttbar_2nd('@0*@1',N_tt,f2)")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st(PDF1st, N_ttbar_1st)")
@@ -34,10 +31,6 @@ class TwoDBox(Box.Box):
         self.importToWS(model)
         #print the workspace
         self.workspace.Print()
-        
-        #the parameters of interest are the offsets and shape parameters
-        # already created by the PDF 
-        print 'Rcuts',rcuts
         
     def plot(self, inputFile, store, box):
         super(TwoDBox,self).plot(inputFile, store, box)

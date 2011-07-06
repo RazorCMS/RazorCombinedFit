@@ -17,8 +17,12 @@ class TwoDAnalysis(Analysis.Analysis):
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
-            boxes[box] = TwoDBox.TwoDBox(box, self.config.getVariables(box))
-            boxes[box].define(fileName,{'rcuts':self.config.getRCuts(box)})
+            boxes[box] = TwoDBox.TwoDBox(box, self.config.getVariables(box, "variables"))
+            boxes[box].defineSet("pdf1pars", self.config.getVariables(box, "pdf1"))
+            boxes[box].defineSet("pdf2pars", self.config.getVariables(box, "pdf2"))
+            boxes[box].defineSet("otherpars", self.config.getVariables(box, "others"))
+            boxes[box].define(fileName)
+            
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')
             print 'Workspace'

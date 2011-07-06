@@ -11,6 +11,12 @@ class Box(object):
         for v in variables:
             r = self.workspace.factory(v)
             self.workspace.extendSet('variables',r.GetName())
+
+    def defineSet(self, name, variables):
+        self.workspace.defineSet(name,'')
+        for v in variables:
+            r = self.workspace.factory(v)
+            self.workspace.extendSet(name,r.GetName())            
         
     def getFitPDF(self):
         pdf = self.workspace.pdf('fitmodel')
