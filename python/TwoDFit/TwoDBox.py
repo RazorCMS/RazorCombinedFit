@@ -20,11 +20,11 @@ class TwoDBox(Box.Box):
         self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st,R01st,b1st)")
         self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd,R02nd,b2nd)")
         #define the two yields
-        self.workspace.factory("expr::N_ttbar_1st('@0*(1-@1)',N_tt,f2)")
-        self.workspace.factory("expr::N_ttbar_2nd('@0*@1',N_tt,f2)")
+        self.workspace.factory("expr::N_1st('@0*(1-@1)',Ntot,f2)")
+        self.workspace.factory("expr::N_2nd('@0*@1',Ntot,f2)")
         #associate the yields to the pdfs through extended PDFs
-        self.workspace.factory("RooExtendPdf::ePDF1st(PDF1st, N_ttbar_1st)")
-        self.workspace.factory("RooExtendPdf::ePDF2nd(PDF2nd, N_ttbar_2nd)")
+        self.workspace.factory("RooExtendPdf::ePDF1st(PDF1st, N_1st)")
+        self.workspace.factory("RooExtendPdf::ePDF2nd(PDF2nd, N_2nd)")
         # build the total PDF
         model = rt.RooAddPdf("fitmodel", "fitmodel", rt.RooArgList(self.workspace.pdf("ePDF1st"),self.workspace.pdf("ePDF2nd")))        
         # import the model in the workspace.
@@ -50,15 +50,13 @@ class TwoDBox(Box.Box):
         # project the full PDF on the data
         self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 
-        Ntt1 = self.workspace.var("N_tt").getVal()*(1-self.workspace.var("f2").getVal())
-        Ntt2 = self.workspace.var("N_tt").getVal()*self.workspace.var("f2").getVal()
+        N1 = self.workspace.var("Ntot").getVal()*(1-self.workspace.var("f2").getVal())
+        N2 = self.workspace.var("Ntot").getVal()*self.workspace.var("f2").getVal()
 
         # project the first component
-        self.workspace.pdf("PDF1st").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
-        #, rt.RooFit.Normalization(self.workspace.var("N_ttbar_1st").getVal()))
+        self.workspace.pdf("PDF1st").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1/(N1+N2)))
         # project the second component
-        self.workspace.pdf("PDF2nd").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(Ntt2/(Ntt1+Ntt2)))
-        #, rt.RooFit.Normalization(self.workspace.var("N_ttbar_2nd").getVal()))
+        self.workspace.pdf("PDF2nd").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2/(N1+N2)))
         return frameMR
 
     def plotRsq(self, inputFile):
@@ -70,15 +68,15 @@ class TwoDBox(Box.Box):
         data = RootTools.getDataSet(inputFile,'RMRTree')
         data.plotOn(frameRsq)
 
-        Ntt1 = self.workspace.var("N_tt").getVal()*(1-self.workspace.var("f2").getVal())
-        Ntt2 = self.workspace.var("N_tt").getVal()*self.workspace.var("f2").getVal()
+        N1 = self.workspace.var("Ntot").getVal()*(1-self.workspace.var("f2").getVal())
+        N2 = self.workspace.var("Ntot").getVal()*self.workspace.var("f2").getVal()
         
         # project the full PDF
         self.workspace.pdf("fitmodel").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue)) 
         # project the first component
-        self.workspace.pdf("PDF1st").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(Ntt1/(Ntt1+Ntt2)))
+        self.workspace.pdf("PDF1st").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1/(N1+N2)))
         # project the second component
-        self.workspace.pdf("PDF2nd").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(Ntt2/(Ntt1+Ntt2)))
+        self.workspace.pdf("PDF2nd").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2/(N1+N2)))
 
         return frameRsq
 
