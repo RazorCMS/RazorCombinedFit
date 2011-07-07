@@ -8,7 +8,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
-    variables = config.getVariables(box)
+    variables = config.getVariables(box,"variables")
     for v in variables:
         workspace.factory(v)
 
