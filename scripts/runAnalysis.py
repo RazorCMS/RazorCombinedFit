@@ -24,7 +24,7 @@ if __name__ == '__main__':
         import inspect, os
     
         topDir = os.path.abspath(os.path.dirname(inspect.getsourcefile(Marker)))
-        options.config = os.path.join(topDir,'boxConfig.cfg')    
+        options.config = os.path.join(topDir,'..','config','boxConfig.cfg')    
     
     from RazorCombinedFit.Framework import Config
     cfg = Config.Config(options.config)
