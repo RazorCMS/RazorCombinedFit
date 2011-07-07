@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import ConfigParser
 import os
 import sys
 import ROOT as rt
@@ -11,6 +12,8 @@ rootfile = rt.TFile(filename)
 #open the output file
 outfile = open(sys.argv[2], "w")
 
+config = ConfigParser.ConfigParser()
+
 BoxName = ["MuMu", "MuEle", "Mu", "EleEle", "Ele", "Had"]
 for Box in BoxName:
     
@@ -18,31 +21,30 @@ for Box in BoxName:
     if boxDir is None or not boxDir or not boxDir.InheritsFrom('TDirectory'):
         continue
     
-    # write the Box header
-    outfile.write("["+Box+"]\n")
-    # write the variables
-    outfile.write("variables:	[")
-    # get the Workspace
+    config.add_section(Box)
+    
+    #read the variables from the workspace
     myws = rootfile.Get(Box+"/Box"+Box+"_workspace")
-    MR = myws.var("MR")
-    outfile.write("'MR["+str(MR.getMin())+","+str(MR.getMax())+"]',")
-    R = myws.var("R")
-    outfile.write("'R["+str(R.getMin())+","+str(R.getMax())+"]',")
-    Rsq = myws.var("Rsq")
-    outfile.write("'Rsq["+str(Rsq.getMin())+","+str(Rsq.getMax())+"]']\n")
-    # write the pdf parameters
     fitresult = rootfile.Get(Box+"/fitresult_fitmodel_RMRTree")
-    pdf1 =   "pdf1:           ["
-    pdf2 =   "pdf2:           ["
-    others = "others:         ["
+
+    keys = [('variables','variables'),('pdf1','pdf1pars'),('pdf2','pdf2pars'),('others','otherpars')]
+    
+    #get the final values from the fit
     parlist = fitresult.floatParsFinal()
-    for par in RootTools.RootIterator.RootIterator(parlist):
-        if par.GetName().find("1st") != -1:      pdf1   += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"]',"
-        elif par.GetName().find("2nd") != -1: pdf2   += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"]',"
-        else:                                    others += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"]',"
-        continue
-    outfile.write(pdf1[:-1]+"]\n")
-    outfile.write(pdf2[:-1]+"]\n")
-    outfile.write(others[:-1]+"]\n\n")
-    continue
+    fitPars = {}
+    for p in RootTools.RootIterator.RootIterator(parlist): fitPars[p.GetName()] = p 
+    
+    #set the values in the config
+    for key, namedset in keys:
+        named = myws.set(namedset)
+        
+        vars = []
+        for v in RootTools.RootIterator.RootIterator(named):
+            name = v.GetName()
+            if fitPars.has_key(name): v = fitPars[v.GetName()]
+            vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),v.getVal(),v.getMin(),v.getMax()))
+        config.set(Box,key,str(vars))
+    
+config.write(outfile)
 outfile.close()
+rootfile.Close()
