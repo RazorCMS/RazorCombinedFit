@@ -1,11 +1,19 @@
 import ROOT as rt
 import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
+import RootTools
 
 class TwoDAnalysis(Analysis.Analysis):
     
     def __init__(self, outputFile, config):
         super(TwoDAnalysis,self).__init__('TwoDFit',outputFile, config)
+    
+    def merge(self, workspace, box):
+        """Import the contents of a box workspace into the master workspace while enforcing some namespaceing"""
+        for o in RootTools.RootIterator.RootIterator(workspace.componentIterator()):
+            if hasattr(o,'Class') and o.Class().InheritsFrom('RooRealVar'):
+                continue
+            self.importToWS(o, rt.RooFit.RenameAllNodes(box),rt.RooFit.RenameAllVariables(box)) 
     
     def analysis(self, inputFiles):
         
@@ -35,7 +43,15 @@ class TwoDAnalysis(Analysis.Analysis):
             
             #make any plots required
             boxes[box].plot(fileName, self, box)
-
+            
+            #merge box with top level workspace
+            self.merge(boxes[box].workspace, box)
+        
+        #merge the boxes together in some way
+        import TwoDMultiBoxSim
+        multi = TwoDMultiBoxSim.TwoDMultiBoxSim(self.workspace)
+        multi.combine(boxes, fileIndex)
+        
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
 

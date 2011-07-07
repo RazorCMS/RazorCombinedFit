@@ -3,7 +3,9 @@ import ROOT as rt
 class RootIterator(object):
     """A wrapper around the ROOT iterator so that it can be used in python"""
     def __init__(self, o):
-        if hasattr(o,'createIterator'):
+        if hasattr(o,'Class') and o.Class().InheritsFrom('TIterator'):
+            self.iter = o
+        elif hasattr(o,'createIterator'):
             self.iter = o.createIterator()
         elif hasattr(o,'MakeIterator'):
             self.iter = o.MakeIterator()

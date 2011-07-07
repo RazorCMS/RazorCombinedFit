@@ -3,9 +3,13 @@ import RootTools
 
 class Box(object):
     
-    def __init__(self, name, variables):
+    def __init__(self, name, variables, workspace = None):
         self.name = name
-        self.workspace = rt.RooWorkspace(name)
+        
+        if workspace is None:
+            self.workspace = rt.RooWorkspace(name)
+        else:
+            self.workspace = workspace
         
         self.workspace.defineSet('variables','')
         for v in variables:
