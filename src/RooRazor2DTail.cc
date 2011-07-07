@@ -36,7 +36,7 @@ Double_t RooRazor2DTail::evaluate() const
 {
   double myexp = B*(X-X0)*(Y-Y0);
   if(myexp> 700 ) return myexp =  1e-20;// very bad
-  return max( Chop(myexp-1)*exp(-myexp),  1e-20);
+  return max( Chop(fabs(myexp-1)*exp(-myexp)),  1e-20);
 }
 
 // //---------------------------------------------------------------------------
