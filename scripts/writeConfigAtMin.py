@@ -32,14 +32,14 @@ for Box in BoxName:
     outfile.write("'Rsq["+str(Rsq.getMin())+","+str(Rsq.getMax())+"]']\n")
     # write the pdf parameters
     fitresult = rootfile.Get(Box+"/fitresult_fitmodel_RMRTree")
-    pdf1 = "pdf1:           ["
-    pdf2 = "pdf2:           ["
-    others = "others:           ["
+    pdf1 =   "pdf1:           ["
+    pdf2 =   "pdf2:           ["
+    others = "others:         ["
     parlist = fitresult.floatParsFinal()
     for par in RootTools.RootIterator.RootIterator(parlist):
-        if par.GetName().find("1st") != -1:      pdf1   += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"']',"
-        elif par.GetName().find("2nd") != -1: pdf2   += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"']',"
-        else:                                    others += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"']',"
+        if par.GetName().find("1st") != -1:      pdf1   += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"]',"
+        elif par.GetName().find("2nd") != -1: pdf2   += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"]',"
+        else:                                    others += "'"+par.GetName()+'['+str(par.getVal())+','+str(par.getMin())+','+str(par.getMax())+"]',"
         continue
     outfile.write(pdf1[:-1]+"]\n")
     outfile.write(pdf2[:-1]+"]\n")
