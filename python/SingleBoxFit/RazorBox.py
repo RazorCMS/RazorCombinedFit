@@ -24,6 +24,11 @@ class RazorBox(Box.Box):
         for par in RootTools.RootIterator.RootIterator(parSet):
             if par.GetName().find(label) != -1: par.setConstant(doFix)
 
+    def switchOff(self, species) :
+        self.workspace.var("Ntot_"+species).setVal(0.)
+        self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
+        self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
+
     def define(self, inputFile):
         
         #create the dataset
@@ -58,10 +63,13 @@ class RazorBox(Box.Box):
         # float all the yields and 2nd-component fractions
         self.fixPars("Ntot_", rt.kFALSE)
         self.fixPars("f2_", rt.kFALSE)
-        # fix Znn yields
-        self.fixPars("Ntot_Znn", rt.kTRUE)
-        self.fixPars("f2_Znn", rt.kTRUE)
-
+        # swicth off not-needed components (box by box)
+        if self.name != "Had": self.switchOff("Znn")
+        if self.name == "MuEle":
+            self.switchOff("Wln")
+            self.switchOff("Zll")
+        if self.name == "MuMu" or self.name == "EleEle":
+            self.switchOff("Wln")
          
         # import the model in the workspace.
         self.importToWS(model)
@@ -97,7 +105,7 @@ class RazorBox(Box.Box):
         N1_TTj = self.workspace.var("Ntot_TTj").getVal()*(1-self.workspace.var("f2_TTj").getVal())
         N2_TTj = self.workspace.var("Ntot_TTj").getVal()*self.workspace.var("f2_TTj").getVal()
 
-        Ntot = N1_Wln+N2_Wln+N1_Zll+N1_Zll+N1_Znn+N2_Znn+N2_TTj
+        Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj
 
         # project the first component: Wln
         self.workspace.pdf("PDF1st_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Wln/Ntot))

@@ -11,7 +11,6 @@ filename = sys.argv[1]
 rootfile = rt.TFile(filename)
 #open the output file
 outfile = open(sys.argv[2], "w")
-
 config = ConfigParser.ConfigParser()
 
 BoxName = ["MuMu", "MuEle", "Mu", "EleEle", "Ele", "Had"]

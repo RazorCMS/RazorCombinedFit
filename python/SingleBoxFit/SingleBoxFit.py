@@ -59,7 +59,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].plot(fileName, self, box)
             
             #merge box with top level workspace
-            self.merge(boxes[box].workspace, box)
+            #            self.merge(boxes[box].workspace, box)
         
         #merge the boxes together in some way
         #        import TwoDMultiBoxSim
