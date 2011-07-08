@@ -34,12 +34,13 @@ class Box(object):
     
     def fit(self, inputFile, reduce = None, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
-        
-        if inputFile.__class__.__name__ == 'RooDataSet':
-            data = inputFile
-        else:
-            data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
 
+        data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
+        return self.fitData(self.getFitPDF(), data, *options)
+    
+    def fitData(self, pdf, data, *options):
+        """Take the dataset and fit it with the top level pdf. Return the fitresult"""
+        
         opt = rt.RooLinkedList()
         #always save the fit result
         opt.Add(rt.RooFit.Save(True))
@@ -48,7 +49,6 @@ class Box(object):
         for o in options:
             opt.Add(o)
         
-        pdf = self.getFitPDF()
         result = pdf.fitTo(data, opt)
         result.Print('V')
         if result.status() != 0 or result.covQual() != 3:
@@ -56,11 +56,11 @@ class Box(object):
         
         return result 
 
-    def plotObservables(self, inputFile):
+    def plotObservables(self, inputFile, name = "fitmodel"):
         """Make control plots for variables defined in the 'variables' part of the config"""
 
         data = RootTools.getDataSet(inputFile,'RMRTree')
-        fitmodel = self.workspace.pdf("fitmodel")
+        fitmodel = self.workspace.pdf(name)
         
         plots = []
         
