@@ -35,8 +35,12 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         def fix(var, box, pars, constant = False):
             """Copy the value from the independent box fit to the split var using the fit results"""
             v = ws.var( '%s_%s' % (var, box) )
+            v.setRange(pars[var].getMin(),pars[var].getMax())
             v.setVal(pars[var].getVal())
             v.setConstant(constant)
+            
+        def varstr(var):
+            return '%s:\t %f \pm %s [%f,%f]' % (v.GetName(),v.getVal(),v.getError(),v.getMin(),v.getMax())
         
         for box in boxes:
             pars = {}
@@ -47,7 +51,10 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
             fix('b1st', box, pars, False)
             fix('Ntot', box, pars, True)
             fix('f2', box, pars, False)
-            
+        
+        #print 'Variables for combined box'
+        #for v in RootTools.RootIterator.RootIterator(ws.allVars()): print varstr(v) 
+        
         fr = self.fitData(ws.pdf('fitmodel_sim'),data)
         self.workspace = ws
         self.importToWS(fr,'simultaniousFR')
