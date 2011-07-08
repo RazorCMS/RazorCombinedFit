@@ -22,10 +22,10 @@ class Box(object):
             r = self.workspace.factory(v)
             self.workspace.extendSet(name,r.GetName())            
         
-    def getFitPDF(self):
-        pdf = self.workspace.pdf('fitmodel')
+    def getFitPDF(self, name='fitmodel',graphViz='graphViz'):
+        pdf = self.workspace.pdf(name)
         #save as a dotty file for easy inspection
-        pdf.graphVizTree('%s_graphViz.dot' % pdf.GetName())
+        pdf.graphVizTree('%s_%s.dot' % (pdf.GetName(),graphViz))
         return pdf
     
     def importToWS(self, *args):
@@ -35,7 +35,10 @@ class Box(object):
     def fit(self, inputFile, reduce = None, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
         
-        data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
+        if inputFile.__class__.__name__ == 'RooDataSet':
+            data = inputFile
+        else:
+            data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
 
         opt = rt.RooLinkedList()
         #always save the fit result

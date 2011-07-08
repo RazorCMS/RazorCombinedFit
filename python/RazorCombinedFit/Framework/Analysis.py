@@ -1,4 +1,4 @@
-from RootTools import RootFile
+from RootTools import RootFile, RootIterator
 import ROOT as rt
 
 class Analysis(object):
@@ -44,3 +44,10 @@ class Analysis(object):
         self.store(self.workspace)
         #write out any stored objects at the end
         self.rootFile.write()
+        
+    def merge(self, workspace, box):
+        """Import the contents of a box workspace into the master workspace while enforcing some namespaceing"""
+        for o in RootIterator.RootIterator(workspace.componentIterator()):
+            if hasattr(o,'Class') and o.Class().InheritsFrom('RooRealVar'):
+                continue
+            self.importToWS(o, rt.RooFit.RenameAllNodes(box),rt.RooFit.RenameAllVariables(box))
