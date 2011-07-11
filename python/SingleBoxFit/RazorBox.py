@@ -76,15 +76,22 @@ class RazorBox(Box.Box):
         #print the workspace
         self.workspace.Print()
         
-    def plot(self, inputFile, store, box):
+    def plot(self, inputFile, store, box, nbin=200, xmin=-99, xmax=-99):
         super(RazorBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR"), dir=box)
-        store.store(self.plot1D(inputFile, "R"), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 50, 200., 1500.), dir=box)
+        store.store(self.plot1D(inputFile, "R",50, 0.04, .8), dir=box)
         store.store(self.plot2D(inputFile, "MR", "R"), dir=box)
             
     def plot1D(self, inputFile, varname):
-        # project the data on R
-        frameMR = self.workspace.var(varname).frame(self.workspace.var(varname).getMin(), self.workspace.var(varname).getMax(), 200)
+        # set the integral precision
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
+        # get the max and min (if different thandefault)
+        if xmax==xmin:
+            xmin = self.workspace.var(varname).getMin()
+            xmax = self.workspace.var(varname).getMax()
+        # project the data on the variable
+        frameMR = self.workspace.var(varname).frame(xmin, xmax, nbin)
         frameMR.SetName(varname+"plot")
         frameMR.SetTitle(varname+"plot")
         data = RootTools.getDataSet(inputFile,'RMRTree')

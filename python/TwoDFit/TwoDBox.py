@@ -40,8 +40,8 @@ class TwoDBox(Box.Box):
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
         # set the integral precision
-        rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
-        rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10)
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10)
         # get the max and min (if different thandefault)
         if xmax==xmin:
             xmin = self.workspace.var(varname).getMin()
