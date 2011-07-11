@@ -34,15 +34,22 @@ class TwoDBox(Box.Box):
         
     def plot(self, inputFile, store, box):
         super(TwoDBox,self).plot(inputFile, store, box)
-        store.store(self.plotMR(inputFile), dir=box)
-        store.store(self.plotRsq(inputFile), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 50, 200., 1500.), dir=box)
+        store.store(self.plot1D(inputFile, "Rsq",50, 0.04, .8), dir=box)
         store.store(self.plotRsqMR(inputFile), dir=box)
             
-    def plotMR(self, inputFile):
+    def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
+        # set the integral precision
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
+        # get the max and min (if different thandefault)
+        if xmax==xmin:
+            xmin = self.workspace.var(varname).getMin()
+            xmax = self.workspace.var(varname).getMax()
         # project the data on R
-        frameMR = self.workspace.var("MR").frame(self.workspace.var("MR").getMin(), 3000., 200)
-        frameMR.SetName("MRplot")
-        frameMR.SetTitle("MRplot")
+        frameMR = self.workspace.var(varname).frame(xmin, xmax, nbin)
+        frameMR.SetName(varname+"plot")
+        frameMR.SetTitle(varname+"plot")
         #        data = rt.RooDataSet(self.workspace.genobj("RMRTree"))
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
@@ -58,27 +65,6 @@ class TwoDBox(Box.Box):
         # project the second component
         self.workspace.pdf("PDF2nd").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2/(N1+N2)))
         return frameMR
-
-    def plotRsq(self, inputFile):
-        # project the data on Rsq
-        frameRsq = self.workspace.var("Rsq").frame(self.workspace.var("Rsq").getMin(), 1.5, 200)
-        frameRsq.SetName("Rsqplot")
-        frameRsq.SetTitle("Rsqplot")
-        #before I find a better way
-        data = RootTools.getDataSet(inputFile,'RMRTree')
-        data.plotOn(frameRsq)
-
-        N1 = self.workspace.var("Ntot").getVal()*(1-self.workspace.var("f2").getVal())
-        N2 = self.workspace.var("Ntot").getVal()*self.workspace.var("f2").getVal()
-        
-        # project the full PDF
-        self.workspace.pdf("fitmodel").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue)) 
-        # project the first component
-        self.workspace.pdf("PDF1st").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1/(N1+N2)))
-        # project the second component
-        self.workspace.pdf("PDF2nd").plotOn(frameRsq, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2/(N1+N2)))
-
-        return frameRsq
 
     def plotRsqMR(self, inputFile):
         #before I find a better way
