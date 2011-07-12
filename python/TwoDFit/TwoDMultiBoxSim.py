@@ -58,6 +58,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         fr = self.fitData(ws.pdf('fitmodel_sim'),data)
         self.workspace = ws
         self.importToWS(fr,'simultaniousFR')
+        self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
         fitmodel = self.workspace.pdf('fitmodel_sim')
         parameters = self.workspace.set("variables")
@@ -80,15 +81,23 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
                 hdata = rt.RooDataHist('projData_%s' % box,'projData',hvars,data.reduce('Boxes == Boxes::%s' % box))
                 hdata.plotOn(frame)
                 
+                #for comparison plot the independent fit result (do this first)
+                independent = boxes[box].workspace.pdf('fitmodel')
+                independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.LineColor(rt.kRed))
+                independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+                                rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st"),rt.RooFit.LineStyle(8),rt.RooFit.LineColor(rt.kRed))
+                independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+                                rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd"),rt.RooFit.LineStyle(9),rt.RooFit.LineColor(rt.kRed))
+                
+                #plot the results of the simultanious fits
                 fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
                 fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
                                 rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st_%s" % box),rt.RooFit.LineStyle(8))
                 fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
                                 rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd_%s" % box),rt.RooFit.LineStyle(9))
                 
-                
                 plots.append(frame)
         
-        for p in plots: self.analysis.store(p)
+        for p in plots: self.analysis.store(p, dir='%s_dir' % self.workspace.GetName())
 
         
