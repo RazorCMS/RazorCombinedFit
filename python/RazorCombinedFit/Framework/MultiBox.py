@@ -5,8 +5,9 @@ import RootTools
 class MultiBox(Box.Box):
     """Similar to a box, but we expect several boxes which we combine"""
     
-    def __init__(self, name, workspace):
-        super(MultiBox,self).__init__(name, [], workspace)
+    def __init__(self, name, analysis):
+        super(MultiBox,self).__init__(name, [], analysis.workspace)
+        self.analysis = analysis
     
     def mergeDataSets(self, categories, inputFiles):
         keys = inputFiles.keys()

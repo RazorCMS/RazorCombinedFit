@@ -41,7 +41,7 @@ class TwoDAnalysis(Analysis.Analysis):
         
         #combine the boxes in some way
         import TwoDMultiBoxSim
-        multi = TwoDMultiBoxSim.TwoDMultiBoxSim(self.workspace)
+        multi = TwoDMultiBoxSim.TwoDMultiBoxSim(self)
         multi.combine(boxes, fileIndex)
         self.workspace = multi.workspace
         

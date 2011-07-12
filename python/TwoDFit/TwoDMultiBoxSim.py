@@ -58,5 +58,37 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         fr = self.fitData(ws.pdf('fitmodel_sim'),data)
         self.workspace = ws
         self.importToWS(fr,'simultaniousFR')
+        
+        fitmodel = self.workspace.pdf('fitmodel_sim')
+        parameters = self.workspace.set("variables")
+        Boxes = self.workspace.cat('Boxes')
+        plots = []
+
+        #use a binned dataset to make the plots as it is faster        
+        hvars = rt.RooArgSet(Boxes)
+        for p in RootTools.RootIterator.RootIterator(parameters):
+            p.setBins(100)
+            hvars.add(p)
+
+        #go box by box
+        for box in boxes:
+            for p in RootTools.RootIterator.RootIterator(parameters):
+                frame = p.frame()
+                frame.SetName("autoVarPlotSim_%s_%s" % (p.GetName(), box) )
+             
+                #create a binned dataset in the parameter   
+                hdata = rt.RooDataHist('projData_%s' % box,'projData',hvars,data.reduce('Boxes == Boxes::%s' % box))
+                hdata.plotOn(frame)
+                
+                fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+                fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+                                rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st_%s" % box),rt.RooFit.LineStyle(8))
+                fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+                                rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd_%s" % box),rt.RooFit.LineStyle(9))
+                
+                
+                plots.append(frame)
+        
+        for p in plots: self.analysis.store(p)
 
         
