@@ -54,17 +54,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
             fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
             self.store(fr, dir=box)
             self.store(fr.correlationHist("correlation_%s" % box), dir=box)
+            #store it in the workspace too
+            getattr(boxes[box].workspace,'import')(fr,'independentFR')
             
             #make any plots required
             boxes[box].plot(fileName, self, box)
             
-            #merge box with top level workspace
-            #            self.merge(boxes[box].workspace, box)
         
         #merge the boxes together in some way
-        #        import TwoDMultiBoxSim
-        #        multi = TwoDMultiBoxSim.TwoDMultiBoxSim(self.workspace)
-        #        multi.combine(boxes, fileIndex)
+        import RazorMultiBoxSim
+        multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
+        multi.combine(boxes, fileIndex)
+        self.workspace = multi.workspace
         
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
