@@ -79,10 +79,10 @@ class RazorBox(Box.Box):
     def plot(self, inputFile, store, box, nbin=200, xmin=-99, xmax=-99):
         super(RazorBox,self).plot(inputFile, store, box)
         store.store(self.plot1D(inputFile, "MR", 50, 200., 1500.), dir=box)
-        store.store(self.plot1D(inputFile, "R",50, 0.04, .8), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "R"), dir=box)
+        store.store(self.plot1D(inputFile, "Rsq",50, 0.04, .8), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
             
-    def plot1D(self, inputFile, varname):
+    def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
         # set the integral precision
         rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
         rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
