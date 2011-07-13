@@ -71,10 +71,21 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
             p.setBins(100)
             hvars.add(p)
 
+        #ranges = {'MR':(200,1500),'Rsq':(0.04,0.8)}
+        ranges = {}
+
         #go box by box
         for box in boxes:
             for p in RootTools.RootIterator.RootIterator(parameters):
-                frame = p.frame()
+
+                if p.GetName() == 'R': continue
+
+                #set the ranges to more restrictive ones for plotting
+                if ranges.has_key(p.GetName()):
+                    r = ranges[p.GetName()]
+                    frame = p.frame(r[0],r[1],50)
+                else:
+                    frame = p.frame()
                 frame.SetName("autoVarPlotSim_%s_%s" % (p.GetName(), box) )
              
                 #create a binned dataset in the parameter   
