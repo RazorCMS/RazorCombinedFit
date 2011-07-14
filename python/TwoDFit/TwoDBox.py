@@ -47,7 +47,7 @@ class TwoDBox(Box.Box):
         
     def plot(self, inputFile, store, box):
         super(TwoDBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR", 50, 200., 1500.), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 50, 250., 1500.), dir=box)
         store.store(self.plot1D(inputFile, "Rsq",50, 0.04, .8), dir=box)
         store.store(self.plotRsqMR(inputFile), dir=box)
             
