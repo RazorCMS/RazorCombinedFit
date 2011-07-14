@@ -76,9 +76,9 @@ class RazorBox(Box.Box):
         #print the workspace
         self.workspace.Print()
         
-    def plot(self, inputFile, store, box, nbin=200, xmin=-99, xmax=-99):
+    def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR", 50, 200., 1500.), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 50, 250., 1500.), dir=box)
         store.store(self.plot1D(inputFile, "Rsq",50, 0.04, .8), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
             
@@ -114,22 +114,26 @@ class RazorBox(Box.Box):
 
         Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj
 
-        # project the first component: Wln
-        self.workspace.pdf("PDF1st_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Wln/Ntot))
-        # project the second component: Wln
-        self.workspace.pdf("PDF2nd_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Wln/Ntot))
-        # project the first component: Zll
-        self.workspace.pdf("PDF1st_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Zll/Ntot))
-        # project the second component: Zll
-        self.workspace.pdf("PDF2nd_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Zll/Ntot))
-        # project the first component: Znn
-        self.workspace.pdf("PDF1st_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Znn/Ntot))
-        # project the second component: Znn
-        self.workspace.pdf("PDF2nd_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Znn/Ntot))
-        # project the first component: TTj
-        self.workspace.pdf("PDF1st_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_TTj/Ntot))
-        # project the second component: TTj
-        self.workspace.pdf("PDF2nd_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_TTj/Ntot))
+        if N1_Wln+N2_Wln >0:
+            # project the first component: Wln
+            self.workspace.pdf("PDF1st_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Wln/Ntot))
+            # project the second component: Wln
+            self.workspace.pdf("PDF2nd_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Wln/Ntot))
+        if N1_Zll+N2_Zll >0:
+            # project the first component: Zll
+            self.workspace.pdf("PDF1st_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Zll/Ntot))
+            # project the second component: Zll
+            self.workspace.pdf("PDF2nd_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Zll/Ntot))
+        if N1_Znn+N2_Znn >0:
+            # project the first component: Znn
+            self.workspace.pdf("PDF1st_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Znn/Ntot))
+            # project the second component: Znn
+            self.workspace.pdf("PDF2nd_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Znn/Ntot))
+        if N1_TTj+N2_TTj >0:
+            # project the first component: TTj
+            self.workspace.pdf("PDF1st_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_TTj/Ntot))
+            # project the second component: TTj
+            self.workspace.pdf("PDF2nd_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_TTj/Ntot))
 
         #leg = rt.TLegend("leg", "leg", 0.6, 0.6, 0.9, 0.9)
         #leg.AddEntry("PDF1st_Wln", "W+jets 1st")
