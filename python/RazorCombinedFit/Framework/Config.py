@@ -12,7 +12,7 @@ class Config(object):
         if box not in self.config.sections():
             raise KeyError("The box '%s' was not found" % box)
     
-    def getVariables(self, box, lineTag):
+    def getVariables(self, box, lineTag='variables'):
         self.__checkBox(box)
         return eval(self.config.get(box,lineTag))
     
