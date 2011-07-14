@@ -7,6 +7,15 @@ class TwoDBox(Box.Box):
     def __init__(self, name, variables):
         super(TwoDBox,self).__init__(name, variables)
 
+    def fixVariable(self, var, mean, sigma, model='fitmodel'):
+        """Add a Gaussian penalty term for a semi-fixed parameter"""
+        
+        self.workspace.factory('RooGaussian::%s_penalty(%s,%s,%s)' % (var,var,mean,sigma))
+        fitmodel = self.workspace.pdf(model)
+        fitmodel.SetName('%s_fix%s' % (fitmodel.GetName(),var) )
+        fitmodel.SetTitle(fitmodel.GetName())
+        self.workspace.factory('PROD::%s(%s,%s_penalty)' % (model,fitmodel.GetName(),var))
+
     def define(self, inputFile):
         
         #create the dataset
@@ -29,6 +38,10 @@ class TwoDBox(Box.Box):
         model = rt.RooAddPdf("fitmodel", "fitmodel", rt.RooArgList(self.workspace.pdf("ePDF1st"),self.workspace.pdf("ePDF2nd")))        
         # import the model in the workspace.
         self.importToWS(model)
+        
+        if self.workspace.var('b1st_m') and self.workspace.var('b1st_s'): 
+            self.fixVariable('b1st','b1st_m','b1st_s')
+        
         #print the workspace
         self.workspace.Print()
         

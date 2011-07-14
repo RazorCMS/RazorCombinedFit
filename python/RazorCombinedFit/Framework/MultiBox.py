@@ -47,6 +47,25 @@ class MultiBox(Box.Box):
         
         self.workspace = ws
         
+    def fix(self, boxes, var, box, pars, constant = False):
+        """Copy the value from the independent box fit to the split var using the fit results"""
+
+        v = self.workspace.var( '%s_%s' % (var, box) )
+        if not v:
+            raise Exception('Variable %s_%s not found in the workspace' % (var, box) )
+            
+        if not pars.has_key(var):
+            vv = boxes[box].workspace.var(var)
+            if vv.isConstant():
+                constant = True
+        else:
+            vv = pars[var]
+
+        v.setRange(vv.getMin(),vv.getMax())
+        v.setVal(vv.getVal())
+        v.setConstant(constant)
+
+        
     def combine(self, boxes, inputFiles):
         """Both arguments are dictionaries, where the key is the name of the box"""
         pass
