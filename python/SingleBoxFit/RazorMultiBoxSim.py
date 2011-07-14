@@ -40,41 +40,20 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
                 splits.append(v % f)
         #make a RooSimultanious with a category for each box, splitting the 1st component parameters and the fraction
         ws.factory('SIMCLONE::fitmodel_sim(fitmodel, $SplitParam({%s}, Boxes[%s]))' % ( ','.join(splits), ','.join(boxes.keys()) ) )
-        
-        def fix(var, box, pars, constant = False):
-            """Copy the value from the independent box fit to the split var using the fit results"""
-            v = ws.var( '%s_%s' % (var, box) )
+        self.workspace = ws        
             
-            if not pars.has_key(var):
-                vv = boxes[box].workspace.var(var)
-                if vv.isConstant():
-                    constant = True
-            else:
-                vv = pars[var]
-            
-            v.setRange(v.getMin(),v.getMax())
-            v.setVal(v.getVal())
-            v.setConstant(constant)
-            
-        def varstr(var):
-            return '%s:\t %f \pm %s [%f,%f]' % (v.GetName(),v.getVal(),v.getError(),v.getMin(),v.getMax())
-        
         for box in boxes:
             pars = {}
             for p in RootTools.RootIterator.RootIterator(boxes[box].workspace.obj('independentFR').floatParsFinal()): pars[p.GetName()] = p
             
             for f in flavours:
-                fix('MR01st_%s' % f, box, pars, False)
-                fix('R01st_%s' % f, box, pars, False)
-                fix('b1st_%s' % f, box, pars, False)
-                fix('Ntot_%s' % f, box, pars, True)
-                fix('f2_%s' % f, box, pars, False)
-        
-        #print 'Variables for combined box'
-        #for v in RootTools.RootIterator.RootIterator(ws.allVars()): print varstr(v) 
+                self.fix(boxes,'MR01st_%s' % f, box, pars, False)
+                self.fix(boxes,'R01st_%s' % f, box, pars, False)
+                self.fix(boxes,'b1st_%s' % f, box, pars, False)
+                self.fix(boxes,'Ntot_%s' % f, box, pars, True)
+                self.fix(boxes, 'f2_%s' % f, box, pars, False)
         
         fr = self.fitData(ws.pdf('fitmodel_sim'),data)
-        self.workspace = ws
         self.importToWS(fr,'simultaniousFR')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
