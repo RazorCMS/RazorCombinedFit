@@ -4,7 +4,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax):
     """This defines the format of the RooDataSet"""
     
     boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
@@ -30,7 +30,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
     rMax = rt.TMath.Sqrt(rsqMax)
 
     #iterate over selected entries in the input tree    
-    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i)' % (mRmin,mRmax,rsqMin,rsqMax, boxMap[box]),'entrylist')
+    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;
@@ -38,6 +38,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
         entry = elist.Next()
         if entry == -1: break
         tree.GetEntry(entry)
+        
+        if bMax >= 0 and tree.BTAG_NUM != bMax: continue
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
@@ -53,8 +55,11 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
 
-    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+"_"+outputBox,'RECREATE')
-    print 'Writing',outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+"_"+outputBox
+    if bMax >= 0:
+        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_nBtag_'+str(bMax)+'_'+outputBox,'RECREATE')
+    else:
+        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
+    print output.GetName()
     rdata.Write()
     output.Close()
     
@@ -69,6 +74,8 @@ if __name__ == '__main__':
                   help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
                   help="The first event to take from the input Dataset")  
+    parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
+                  help="The maximum number of Btags to allow")     
     (options,args) = parser.parse_args()
     
     if options.config is None:
@@ -84,12 +91,12 @@ if __name__ == '__main__':
             decorator = f[:-5]
             
             #dump the trees for the different datasets
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.btag)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.btag)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.btag)
             
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
