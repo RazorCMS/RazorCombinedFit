@@ -14,6 +14,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
     for v in variables:
         workspace.factory(v)
     workspace.factory('nBtag[0,0,2.0]')
+    workspace.factory('W[0,0,+INF]')
 
     args = workspace.allVars()
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
@@ -44,6 +45,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max):
         a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
         a.setRealValue('Rsq',tree.RSQ)
         a.setRealValue('nBtag',tree.BTAG_NUM)
+        a.setRealValue('W',tree.WPU)
         data.add(a)
     numEntries = data.numEntries()
     if min < 0: min = 0
