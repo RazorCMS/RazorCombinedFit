@@ -12,6 +12,8 @@ if __name__ == '__main__':
                   help="Name of the config file to use")
     parser.add_option('-o','--output',dest="output",type="string", default='razor_output.root',
                   help="Name of the root file to store everything in")
+    parser.add_option('-t','--toys',dest="toys",type="int", default=0,
+                  help="The number of toys to run")    
     (options,args) = parser.parse_args()
     
     print 'Running analysis %s...' % options.analysis
@@ -40,7 +42,10 @@ if __name__ == '__main__':
         for aa in a:
             if aa.name == options.analysis:
                 print "Running analysis '%s'" % aa.name
-                aa.analysis(args)
+                if options.toys > 0:
+                    aa.runtoys(args, options.toys)
+                else:
+                    aa.analysis(args)
                 aa.final()
         
     else:

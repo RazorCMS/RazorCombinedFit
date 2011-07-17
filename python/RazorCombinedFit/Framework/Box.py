@@ -25,8 +25,28 @@ class Box(object):
     def getFitPDF(self, name='fitmodel',graphViz='graphViz'):
         pdf = self.workspace.pdf(name)
         #save as a dotty file for easy inspection
-        pdf.graphVizTree('%s_%s.dot' % (pdf.GetName(),graphViz))
+        if graphViz is not None:
+            pdf.graphVizTree('%s_%s.dot' % (pdf.GetName(),graphViz))
         return pdf
+    
+    def getMCStudy(self, fitmodel='fitmodel', genmodel = 'fitmodel', *options):
+        fit = self.getFitPDF(fitmodel,graphViz=None)
+        gen = self.getFitPDF(genmodel,graphViz=None)
+        vars = self.workspace.set('variables')
+        
+        #make a list of arguments for FitOptions using unpacking
+        opt = []
+        #always save the fit result
+        opt.append(rt.RooFit.Save(True))
+        #automagically determine the number of cpus
+        opt.append(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+        for o in options:
+            opt.append(o)
+        opt = tuple(opt)
+        
+        study = rt.RooMCStudy(gen,vars,rt.RooFit.Extended(True),rt.RooFit.FitModel(fit),rt.RooFit.FitOptions(*opt))
+        return study
+        
     
     def importToWS(self, *args):
         """Utility function to call the RooWorkspace::import methods"""

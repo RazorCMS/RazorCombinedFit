@@ -14,10 +14,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             if hasattr(o,'Class') and o.Class().InheritsFrom('RooRealVar'):
                 continue
             self.importToWS(o, rt.RooFit.RenameAllNodes(box),rt.RooFit.RenameAllVariables(box)) 
-    
-    def analysis(self, inputFiles):
-        
-        fileIndex = self.indexInputFiles(inputFiles)
+
+    def getboxes(self, fileIndex):
+        """Refactor out the common box def for fitting and simple toys"""
         
         import RazorBox
         boxes = {}
@@ -44,7 +43,50 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
 
             boxes[box].define(fileName)
+
+        return boxes
             
+    def runtoys(self, inputFiles, nToys):
+        
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+        
+        for box in boxes:
+            study = boxes[box].getMCStudy()
+            data = RootTools.getDataSet(fileIndex[box],'RMRTree')
+            
+            print 'ToyStudy for box %s: Running %i with %i entries per toy' % (box,nToys,data.numEntries())
+            study.generateAndFit(nToys,data.numEntries())
+            
+            vars = self.workspace.set('variables')
+            
+            for i in xrange(nToys):
+                fr = study.fitResult(i)
+                if not fr.status() == 0 and fr.covQual() == 3:
+                    print 'WARNING:: The toy fit %i did not converge with high quality. Consider this result suspect!' % i
+                print 'Fit result %d for box %s' % (i,box)
+                fr.Print('V')
+                fr = rt.RooFitResult(fr)
+                self.store(fr,'toyfitresult_%i' % i, dir='%s_Toys' % box)
+            
+            fitPars = study.fitParDataSet()
+            outpars = rt.RooDataSet('fitPars_%s' % box, 'fitPars_%s' % box, fitPars,fitPars.get(0))
+            self.store(outpars, dir='%s_Toys' % box)
+            
+        for box in boxes.keys():
+            self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
+
+        
+    
+    def analysis(self, inputFiles):
+        """Run independent and then simultanious fits"""
+        
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+
+        #start by setting all box configs the same
+        for box, fileName in fileIndex.iteritems():
+
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')
             print 'Workspace'

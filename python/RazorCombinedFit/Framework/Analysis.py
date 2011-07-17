@@ -39,6 +39,9 @@ class Analysis(object):
     
     def analysis(self, inputFiles):
         return None
+    
+    def runtoys(self, inputFiles, nToys):
+        pass
         
     def final(self):
         self.store(self.workspace)
