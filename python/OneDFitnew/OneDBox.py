@@ -11,18 +11,19 @@ class OneDBox(Box.Box):
         data = self.workspace.data(dataset)
         return self.fitData(self.getFitPDF(), data, *options)
 
-    def define(self, inputFile):
+    def defineRsqData(self, inputFile):
         # get the full data
-        mRmin = self.workspace.var("MR").getMin()
-        mRmax = self.workspace.var("MR").getMax()
-        dataBIS = RootTools.getDataSet(inputFile,'RMRTree').reduce("MR>=%f && MR<%f" % (mRmin, mRmax))
+        Rmin = self.workspace.var("Rsq").getMin()
+        Rmax = self.workspace.var("Rsq").getMax()
+        dataBIS = RootTools.getDataSet(inputFile,'RMRTree').reduce("Rsq>=%f && Rsq<%f" % (Rmin, Rmax))
         # create the binned dataset
-        data1 = dataBIS.reduce("Rsq>=0.04 && Rsq<0.06")
-        data2 = dataBIS.reduce("Rsq>=0.06 && Rsq<0.08")
-        data3 = dataBIS.reduce("Rsq>=0.08 && Rsq<0.10")
-        data4 = dataBIS.reduce("Rsq>=0.10 && Rsq<0.12")
-        data5 = dataBIS.reduce("Rsq>=0.12 && Rsq<0.14")
-        data6 = dataBIS.reduce("Rsq>=0.14")
+        mRmin = self.workspace.var("MR").getMin()
+        data1 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin, mRmin+50.))
+        data2 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+50, mRmin+100.))
+        data3 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+100, mRmin+150.))
+        data4 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+150, mRmin+200.))
+        data5 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+200, mRmin+250.))
+        data6 = dataBIS.reduce("MR>=%f" % (mRmin+250.))
         # create the index Category
         c = rt.RooCategory("c","c") ;
         c.defineType("Bin1") ;
@@ -46,8 +47,56 @@ class OneDBox(Box.Box):
         self.workspace.var("N4").setConstant(rt.kTRUE)
         self.workspace.var("N5").setConstant(rt.kTRUE)
         self.workspace.var("N6").setConstant(rt.kTRUE)
+        # Create a dataset that imports contents of all the above datasets mapped by index category 
+        data = rt.RooDataSet("RMRTree2","RMRTree2", rt.RooArgSet(self.workspace.var("Rsq")),rt.RooFit.Index(c),
+                             rt.RooFit.Import("Bin1",data1),
+                             rt.RooFit.Import("Bin2",data2),
+                             rt.RooFit.Import("Bin3",data3),
+                             rt.RooFit.Import("Bin4",data4),
+                             rt.RooFit.Import("Bin5",data5),
+                             rt.RooFit.Import("Bin6",data6))
+        #import the dataset to the workspace
+        self.importToWS(data)
+        print 'Reduced dataset'
+        #data.Print("V")
+            
 
+    def defineMRData(self, inputFile):
+        # get the full data
+        mRmin = self.workspace.var("MR").getMin()
+        mRmax = self.workspace.var("MR").getMax()
+        dataBIS = RootTools.getDataSet(inputFile,'RMRTree').reduce("MR>=%f && MR<%f" % (mRmin, mRmax))
+        # create the binned dataset
+        rsqmin = self.workspace.var("Rsq").getMin()
+        data1 = dataBIS.reduce("Rsq>=%f && Rsq<%f" % (rsqmin, rsqmin+0.02))
+        data2 = dataBIS.reduce("Rsq>=%f && Rsq<%f" % (rsqmin+0.02, rsqmin+0.04))
+        data3 = dataBIS.reduce("Rsq>=%f && Rsq<%f" % (rsqmin+0.04, rsqmin+0.06))
+        data4 = dataBIS.reduce("Rsq>=%f && Rsq<%f" % (rsqmin+0.06, rsqmin+0.08))
+        data5 = dataBIS.reduce("Rsq>=%f && Rsq<%f" % (rsqmin+0.08, rsqmin+0.10))
+        data6 = dataBIS.reduce("Rsq>=%f" % (rsqmin+0.10))
+        # create the index Category
+        c = rt.RooCategory("c","c") ;
+        c.defineType("Bin1") ;
+        c.defineType("Bin2") ;
+        c.defineType("Bin3") ;
+        c.defineType("Bin4") ;
+        c.defineType("Bin5") ;
+        c.defineType("Bin6") ;
+        self.importToWS(c)
 
+        #initialize the inclusive yields to right values and fix them
+        self.workspace.var("N6").setVal(data6.numEntries())
+        self.workspace.var("N5").setVal(data5.numEntries()+self.workspace.var("N6").getVal())
+        self.workspace.var("N4").setVal(data4.numEntries()+self.workspace.var("N5").getVal())
+        self.workspace.var("N3").setVal(data3.numEntries()+self.workspace.var("N4").getVal())
+        self.workspace.var("N2").setVal(data2.numEntries()+self.workspace.var("N3").getVal())
+        self.workspace.var("N1").setVal(data1.numEntries()+self.workspace.var("N2").getVal())
+        self.workspace.var("N1").setConstant(rt.kTRUE)
+        self.workspace.var("N2").setConstant(rt.kTRUE)
+        self.workspace.var("N3").setConstant(rt.kTRUE)
+        self.workspace.var("N4").setConstant(rt.kTRUE)
+        self.workspace.var("N5").setConstant(rt.kTRUE)
+        self.workspace.var("N6").setConstant(rt.kTRUE)
         # Create a dataset that imports contents of all the above datasets mapped by index category 
         data = rt.RooDataSet("RMRTree2","RMRTree2", rt.RooArgSet(self.workspace.var("MR")),rt.RooFit.Index(c),
                              rt.RooFit.Import("Bin1",data1),
@@ -56,11 +105,16 @@ class OneDBox(Box.Box):
                              rt.RooFit.Import("Bin4",data4),
                              rt.RooFit.Import("Bin5",data5),
                              rt.RooFit.Import("Bin6",data6))
-    
         #import the dataset to the workspace
         self.importToWS(data)
         print 'Reduced dataset'
         #data.Print("V")
+
+    def define(self, inputFile, useMR = rt.kTRUE):
+        if useMR == rt.kTRUE: self.defineMRData(inputFile)
+        else : self.defineRsqData(inputFile)
+        var = "MR"
+        if useMR != rt.kTRUE: var = "Rsq"
 
         # build the exponent parameters
         self.workspace.factory("expr::k1_1('-@0-@1*0.04',a1,b1)")
@@ -78,19 +132,19 @@ class OneDBox(Box.Box):
         self.workspace.factory("expr::k2_6('-@0-@1*0.14',a2,b2)")
 
         # buld the two components
-        self.workspace.factory("Exponential::Expo1_1(MR,k1_1)")
-        self.workspace.factory("Exponential::Expo1_2(MR,k1_2)")
-        self.workspace.factory("Exponential::Expo1_3(MR,k1_3)")
-        self.workspace.factory("Exponential::Expo1_4(MR,k1_4)")
-        self.workspace.factory("Exponential::Expo1_5(MR,k1_5)")
-        self.workspace.factory("Exponential::Expo1_6(MR,k1_6)")
+        self.workspace.factory("Exponential::Expo1_1(%s,k1_1)" % var)
+        self.workspace.factory("Exponential::Expo1_2(%s,k1_2)" % var)
+        self.workspace.factory("Exponential::Expo1_3(%s,k1_3)" % var)
+        self.workspace.factory("Exponential::Expo1_4(%s,k1_4)" % var)
+        self.workspace.factory("Exponential::Expo1_5(%s,k1_5)" % var)
+        self.workspace.factory("Exponential::Expo1_6(%s,k1_6)" % var)
         
-        self.workspace.factory("Exponential::Expo2_1(MR,k2_1)")
-        self.workspace.factory("Exponential::Expo2_2(MR,k2_2)")
-        self.workspace.factory("Exponential::Expo2_3(MR,k2_3)")
-        self.workspace.factory("Exponential::Expo2_4(MR,k2_4)")
-        self.workspace.factory("Exponential::Expo2_5(MR,k2_5)")
-        self.workspace.factory("Exponential::Expo2_6(MR,k2_6)")
+        self.workspace.factory("Exponential::Expo2_1(%s,k2_1)" % var)
+        self.workspace.factory("Exponential::Expo2_2(%s,k2_2)" % var)
+        self.workspace.factory("Exponential::Expo2_3(%s,k2_3)" % var)
+        self.workspace.factory("Exponential::Expo2_4(%s,k2_4)" % var)
+        self.workspace.factory("Exponential::Expo2_5(%s,k2_5)" % var)
+        self.workspace.factory("Exponential::Expo2_6(%s,k2_6)" % var)
 
         #self.workspace.factory("RooRazor1D::Expo1_1(MR,m1,s1,k1_1)")
         #self.workspace.factory("RooRazor1D::Expo1_2(MR,m2,s2,k1_2)")
@@ -207,7 +261,7 @@ class OneDBox(Box.Box):
         self.importToWS(ePDF_6)
 
         # build the total PDF
-        model = rt.RooSimultaneous("fitmodel", "fitmodel", c)
+        model = rt.RooSimultaneous("fitmodel", "fitmodel", self.workspace.cat("c"))
         model.addPdf(self.workspace.pdf("ePDF_1"),"Bin1")
         model.addPdf(self.workspace.pdf("ePDF_2"),"Bin2")
         model.addPdf(self.workspace.pdf("ePDF_3"),"Bin3")
