@@ -6,6 +6,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
     
     def __init__(self, workspace):
         super(RazorMultiBoxSim,self).__init__('RazorMultiBoxSim',workspace)
+        self.fitmodel = 'fitmodel_sim'
         
     def combine(self, boxes, inputFiles):
         print 'Combining boxes...',self.name
@@ -39,7 +40,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             for f in flavours:
                 splits.append(v % f)
         #make a RooSimultanious with a category for each box, splitting the 1st component parameters and the fraction
-        ws.factory('SIMCLONE::fitmodel_sim(fitmodel, $SplitParam({%s}, Boxes[%s]))' % ( ','.join(splits), ','.join(boxes.keys()) ) )
+        ws.factory('SIMCLONE::%s(%s, $SplitParam({%s}, Boxes[%s]))' % (self.fitmodel, boxes[masterBox].fitmodel, ','.join(splits), ','.join(boxes.keys()) ) )
         self.workspace = ws        
             
         for box in boxes:
@@ -53,11 +54,11 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
                 self.fix(boxes,'Ntot_%s' % f, box, pars, True)
                 self.fix(boxes, 'f2_%s' % f, box, pars, False)
         
-        fr = self.fitData(ws.pdf('fitmodel_sim'),data)
+        fr = self.fitData(ws.pdf(self.fitmodel),data)
         self.importToWS(fr,'simultaniousFR')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
-        fitmodel = self.workspace.pdf('fitmodel_sim')
+        fitmodel = self.workspace.pdf(self.fitmodel)
         parameters = self.workspace.set("variables")
         Boxes = self.workspace.cat('Boxes')
         plots = []
@@ -90,7 +91,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
                 hdata.plotOn(frame)
                 
                 #for comparison plot the independent fit result (do this first)
-                independent = boxes[box].workspace.pdf('fitmodel')
+                independent = boxes[box].workspace.pdf(boxes[box].fitmodel)
                 independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.LineColor(rt.kRed))
                 for f in flavours:
                     independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),

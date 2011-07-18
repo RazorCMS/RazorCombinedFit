@@ -18,12 +18,6 @@ class RazorBox(Box.Box):
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
 
-    def fixPars(self, label, doFix=rt.kTRUE):
-        parSet = self.workspace.allVars()
-        parSet.Print()
-        for par in RootTools.RootIterator.RootIterator(parSet):
-            if par.GetName().find(label) != -1: par.setConstant(doFix)
-
     def switchOff(self, species) :
         self.workspace.var("Ntot_"+species).setVal(0.)
         self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
@@ -53,28 +47,47 @@ class RazorBox(Box.Box):
                                                                    self.workspace.pdf("ePDF1st_Zll"),self.workspace.pdf("ePDF2nd_Zll"),
                                                                    self.workspace.pdf("ePDF1st_Znn"),self.workspace.pdf("ePDF2nd_Znn"),
                                                                    self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj")))        
+        
+        # import the model in the workspace.
+        self.importToWS(model)
+        #print the workspace
+        self.workspace.Print()
 
         ##### THIS IS A SIMPLIFIED FIT
         # fix all pdf parameters to the initial value
         self.fixPars("Zll")
         self.fixPars("Znn")
         self.fixPars("Wln")
-        self.fixPars("TTj")        
+        self.fixPars("TTj")   
+        
+        #add penalty terms and float
+        def float1stComponentWithPenalty(flavour):
+            self.fixParsPenalty("MR01st_%s" % flavour)
+            self.fixParsPenalty("R01st_%s" % flavour)
+            self.fixParsPenalty("b1st_%s" % flavour)
+
         # float all the yields and 2nd-component fractions
         self.fixPars("Ntot_", rt.kFALSE)
         self.fixPars("f2_", rt.kFALSE)
-        # swicth off not-needed components (box by box)
-        if self.name != "Had": self.switchOff("Znn")
-        if self.name == "MuEle":
-            self.switchOff("Wln")
-            self.switchOff("Zll")
-        if self.name == "MuMu" or self.name == "EleEle":
-            self.switchOff("Wln")
-         
-        # import the model in the workspace.
-        self.importToWS(model)
-        #print the workspace
-        self.workspace.Print()
+        
+        zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        fixed = []
+        for z in zeros:
+            if self.name in zeros[z]:
+                self.switchOff(z)
+            else:
+                if not z in fixed:
+                    float1stComponentWithPenalty(z)
+                    fixed.append(z)
+        
+        # switch off not-needed components (box by box)
+#        if self.name != "Had": self.switchOff("Znn")
+#        if self.name == "MuEle":
+#            self.switchOff("Wln")
+#            self.switchOff("Zll")
+#        if self.name == "MuMu" or self.name == "EleEle":
+#            self.switchOff("Wln")
+
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)

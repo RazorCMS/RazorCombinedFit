@@ -15,6 +15,8 @@ class Box(object):
         for v in variables:
             r = self.workspace.factory(v)
             self.workspace.extendSet('variables',r.GetName())
+            
+        self.fitmodel = 'fitmodel'
 
     def defineSet(self, name, variables):
         self.workspace.defineSet(name,'')
@@ -22,14 +24,22 @@ class Box(object):
             r = self.workspace.factory(v)
             self.workspace.extendSet(name,r.GetName())            
         
-    def getFitPDF(self, name='fitmodel',graphViz='graphViz'):
-        pdf = self.workspace.pdf(name)
+    def getFitPDF(self, name=None,graphViz='graphViz'):
+        if name is None:
+            pdf = self.workspace.pdf(self.fitmodel)
+        else:
+            pdf = self.workspace.pdf(name)
         #save as a dotty file for easy inspection
         if graphViz is not None:
             pdf.graphVizTree('%s_%s.dot' % (pdf.GetName(),graphViz))
         return pdf
     
-    def getMCStudy(self, fitmodel='fitmodel', genmodel = 'fitmodel', *options):
+    def getMCStudy(self, fitmodel=None, genmodel=None, *options):
+        if fitmodel is None:
+            fitmodel = self.fitmodel
+        if genmodel is None:
+            genmodel = self.fitmodel
+        
         fit = self.getFitPDF(fitmodel,graphViz=None)
         gen = self.getFitPDF(genmodel,graphViz=None)
         vars = self.workspace.set('variables')
@@ -76,8 +86,11 @@ class Box(object):
         
         return result 
 
-    def plotObservables(self, inputFile, name = "fitmodel"):
+    def plotObservables(self, inputFile, name = None):
         """Make control plots for variables defined in the 'variables' part of the config"""
+
+        if name is None:
+            name = self.fitmodel
 
         data = RootTools.getDataSet(inputFile,'RMRTree')
         fitmodel = self.workspace.pdf(name)
@@ -95,7 +108,36 @@ class Box(object):
             plots.append(frame)
             
         return plots
+
+    def fixVariable(self, var, mean, sigma, model=None):
+        """Add a Gaussian penalty term for a semi-fixed parameter"""
         
+        if model is None:
+            model = self.fitmodel
+        
+        self.workspace.factory('RooGaussian::%s_penalty(%s,%s,%s)' % (var,var,mean,sigma))
+        fitmodel = self.workspace.pdf(model)
+        modelName = '%s_fix%s' % (model, var)
+        self.workspace.factory('PROD::%s(%s,%s_penalty)' % (modelName,model,var))
+        self.fitmodel = modelName
+
+    def fixPars(self, label, doFix=rt.kTRUE):
+        parSet = self.workspace.allVars()
+        for par in RootTools.RootIterator.RootIterator(parSet):
+            if label in par.GetName(): par.setConstant(doFix)
+    
+    def fixParsPenalty(self, label):
+        
+        allVars = self.workspace.allVars()
+        pars = {}
+        for p in RootTools.RootIterator.RootIterator(allVars): pars[p.GetName()] = p
+        for name, par in pars.iteritems():
+            if label in par.GetName():
+                if pars.has_key('%s_s' % name):
+                    sigma = pars['%s_s' % name].getVal() 
+                    self.fixVariable(par.GetName(), par.getVal(),sigma)
+                    par.setConstant(False)
+    
         
     def define(self, inputFile, cuts):
         pass
