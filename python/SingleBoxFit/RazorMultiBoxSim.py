@@ -17,7 +17,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         self.workspace.factory('Boxes[%s]' % ','.join(boxes.keys()))
         #this is a merged dataset with each box as a category
         data = self.mergeDataSets(self.workspace.cat('Boxes'),inputFiles)
-        
+
         #start with box with largest yields
         masterBox = None
         maximumYield = -1e6
@@ -29,6 +29,13 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             if sum > maximumYield:
                 maximumYield = sum
                 masterBox = box
+        
+        #remove the signal region
+        before = data.numEntries()
+        data = data.reduce(boxes[masterBox].cut)
+        after = data.numEntries()
+        print "The cut '%s' removed %i entries" % (boxes[masterBox].cut,before-after)
+        self.cut = boxes[masterBox].cut 
 
         #we produce a new workspace from the box with the largest statistics
         ws = rt.RooWorkspace(boxes[masterBox].workspace)
@@ -41,7 +48,23 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
                 splits.append(v % f)
         #make a RooSimultanious with a category for each box, splitting the 1st component parameters and the fraction
         ws.factory('SIMCLONE::%s(%s, $SplitParam({%s}, Boxes[%s]))' % (self.fitmodel, boxes[masterBox].fitmodel, ','.join(splits), ','.join(boxes.keys()) ) )
-        self.workspace = ws        
+        self.workspace = ws
+        
+        self.fixPars('b2nd_Wln',False)                                                                                                                                                         
+        self.fixPars('b2nd_Zll',False)                                                                                                                                                         
+        self.fixPars('b2nd_TTj',False)
+
+        self.fixPars('b1st_Wln',False)                                                                                                                                                         
+        self.fixPars('b1st_Zll',False)                                                                                                                                                         
+        self.fixPars('b1st_TTj',False)
+        self.fixPars('b1st_Wln_mean',True)                                                                                                                                                         
+        self.fixPars('b1st_Zll_mean',True)                                                                                                                                                         
+        self.fixPars('b1st_TTj_mean',True)
+        self.fixPars('b1st_Wln_s',True)                                                                                                                                                         
+        self.fixPars('b1st_Zll_s',True)                                                                                                                                                         
+        self.fixPars('b1st_TTj_s',True)
+
+
             
         for box in boxes:
             pars = {}

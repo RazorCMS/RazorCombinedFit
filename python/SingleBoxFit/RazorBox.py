@@ -7,7 +7,8 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Had','Ele'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Ele'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        self.cut = 'MR <= 750'
 
     def addTailPdf(self, label):
         # define the two components
@@ -64,13 +65,15 @@ class RazorBox(Box.Box):
         
         #add penalty terms and float
         def float1stComponentWithPenalty(flavour):
-            self.fixParsPenalty("MR01st_%s" % flavour)
-            self.fixParsPenalty("R01st_%s" % flavour)
+            #self.fixParsPenalty("MR01st_%s" % flavour)
+            #self.fixParsPenalty("R01st_%s" % flavour)
             self.fixParsPenalty("b1st_%s" % flavour)
+        def floatFractionWithPenalty(flavour):
+            self.fixParsPenalty("f2_%s" % flavour)
 
         # float all the yields and 2nd-component fractions
         self.fixPars("Ntot_", rt.kFALSE)
-        self.fixPars("f2_", rt.kFALSE)
+        #self.fixPars("f2_", rt.kFALSE)
         
         
         fixed = []
@@ -79,7 +82,8 @@ class RazorBox(Box.Box):
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    #float1stComponentWithPenalty(z)
+                    floatFractionWithPenalty(z)
+                    if self.name != 'Had': float1stComponentWithPenalty(z)
                     fixed.append(z)
         
         # switch off not-needed components (box by box)

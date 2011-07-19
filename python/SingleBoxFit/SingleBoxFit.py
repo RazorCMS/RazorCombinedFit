@@ -93,7 +93,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.Print('V')
 
             # perform the fit
-            fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
             self.store(fr, dir=box)
             self.store(fr.correlationHist("correlation_%s" % box), dir=box)
             #store it in the workspace too
@@ -101,13 +101,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #make any plots required
             boxes[box].plot(fileName, self, box)
-            
         
-        #merge the boxes together in some way
-        import RazorMultiBoxSim
-        multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
-        multi.combine(boxes, fileIndex)
-        self.workspace = multi.workspace
+        if len(boxes) > 1:
+            #merge the boxes together in some way
+            import RazorMultiBoxSim
+            multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
+            multi.combine(boxes, fileIndex)
+            multi.predictBackground(multi.workspace.obj('simultaniousFR'), fileIndex)
+            self.workspace = multi.workspace
+
+        for box, fileName in fileIndex.iteritems():
+            boxes[box].predictBackground(boxes[box].workspace.obj('independentFR'), fileName)
         
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)

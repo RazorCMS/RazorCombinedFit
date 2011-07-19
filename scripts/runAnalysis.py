@@ -1,4 +1,5 @@
 from optparse import OptionParser
+import ROOT as rt
 
 class Marker(object):
     pass
@@ -14,6 +15,8 @@ if __name__ == '__main__':
                   help="Name of the root file to store everything in")
     parser.add_option('-t','--toys',dest="toys",type="int", default=0,
                   help="The number of toys to run")    
+    parser.add_option('-s','--seed',dest="seed",type="int", default=0,
+                  help="The random seed to start with")    
     (options,args) = parser.parse_args()
     
     print 'Running analysis %s...' % options.analysis
@@ -21,6 +24,8 @@ if __name__ == '__main__':
     
 
     (options,args) = parser.parse_args()
+    
+    rt.RooRandom.randomGenerator().SetSeed(options.seed)
     
     if options.config is None:
         import inspect, os

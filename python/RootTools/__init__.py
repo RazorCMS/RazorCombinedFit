@@ -13,8 +13,10 @@ def getDataSet(fileName, dsName, cut = None):
         result = input.Get(dsName)
         result.Print('V')
         if result is not None and cut is not None:
-            print cut
+            before = result.numEntries()
             result = result.reduce(rt.RooFit.Cut(cut))
+            after = result.numEntries()
+            print "Cut '%s' removed %i entries from %s" % (cut,before-after,dsName)
     finally:
         if input is not None: input.Close()
     return result

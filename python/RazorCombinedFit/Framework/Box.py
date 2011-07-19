@@ -146,7 +146,43 @@ class Box(object):
                     sigma = pars['%s_s' % name].getVal() 
                     self.fixVariable(par.GetName(), par.getVal(),sigma)
                     par.setConstant(False)
-    
+                    
+    def predictBackground(self, fr, inputFile, nRepeats = 100):
+        if fr.status() != 0 or fr.covQual() != 3:
+            print 'Skipping background prediction for box %s as the fit did not converge properly' % self.name
+            return
+
+        total_yield = RootTools.getDataSet(inputFile,'RMRTree').numEntries()
+        background_yield = RootTools.getDataSet(inputFile,'RMRTree',self.cut).numEntries()
+        
+        pdf = self.workspace.pdf(self.fitmodel)
+        vars = self.workspace.set('variables')
+        
+        background_prediction = 0
+        
+        parSet = self.workspace.allVars()
+        for i in xrange(nRepeats):
+            pars = {}
+            for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
+            for name, value in pars.iteritems():
+                self.fixPars(name,value.isConstant(),value.getVal())
+            ds = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(total_yield))
+            before = ds.numEntries()
+            ds = ds.reduce(self.cut)
+            after = ds.numEntries()
+            
+            background_prediction += (before-after)
+            
+        background_prediction /= (1.0*nRepeats)
+        print 'Background observed in the %s box: %i' % (self.name,total_yield-background_yield)
+        print 'Background prediction after %i repeats: %f' % (nRepeats,background_prediction)
+        
+        #now set the parameters back
+        pars = {}
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): pars[p.GetName()] = p
+        for name, value in pars.iteritems():
+            self.fixPars(name,value.isConstant(),value.getVal())
+
         
     def define(self, inputFile, cuts):
         pass
