@@ -115,16 +115,25 @@ class Box(object):
         if model is None:
             model = self.fitmodel
         
-        self.workspace.factory('RooGaussian::%s_penalty(%s,%s,%s)' % (var,var,mean,sigma))
+        var_m = '%s_mean[%f]' % (var,mean)
+        if self.workspace.var('%s_s' % var):
+            var_s = '%s_s' % var
+        else:
+            var_s = '%s_s[%f]' % (var,sigma)
+        
+        self.workspace.factory('RooGaussian::%s_penalty(%s,%s,%s)' % (var,var,var_m,var_s))
         fitmodel = self.workspace.pdf(model)
         modelName = '%s_fix%s' % (model, var)
         self.workspace.factory('PROD::%s(%s,%s_penalty)' % (modelName,model,var))
         self.fitmodel = modelName
+        print 'Added a Gaussian penalty term for %s: %f\pm %f' % (var,mean,sigma)
 
-    def fixPars(self, label, doFix=rt.kTRUE):
+    def fixPars(self, label, doFix=rt.kTRUE, setVal=None):
         parSet = self.workspace.allVars()
         for par in RootTools.RootIterator.RootIterator(parSet):
-            if label in par.GetName(): par.setConstant(doFix)
+            if label in par.GetName():
+                par.setConstant(doFix)
+                if setVal is not None: par.setVal(setVal)
     
     def fixParsPenalty(self, label):
         

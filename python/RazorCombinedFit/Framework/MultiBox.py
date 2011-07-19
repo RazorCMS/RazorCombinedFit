@@ -9,19 +9,56 @@ class MultiBox(Box.Box):
         super(MultiBox,self).__init__(name, [], analysis.workspace)
         self.analysis = analysis
     
-    def mergeDataSets(self, categories, inputFiles):
+    def mergeDataSets(self, categories, inputFiles, lepton = None, dilepton = None):
         keys = inputFiles.keys()
         
         data = RootTools.getDataSet(inputFiles[keys[0]],'RMRTree')
         args = data.get(0)
         
+        if lepton is not None:
+            args.add(lepton)
+        if dilepton is not None:
+            args.add(dilepton)
+
         args = ['MergedDataSet','MergedDataSet',args,rt.RooFit.Index(categories),rt.RooFit.Import(keys[0],data)]
         for k in keys[1:]:
             d = RootTools.getDataSet(inputFiles[k],'RMRTree')
             args.append(rt.RooFit.Import(k,d))
         
         a = tuple(args)
-        return rt.RooDataSet(*a)
+        data = rt.RooDataSet(*a)
+        
+        if lepton is not None:
+            a = rt.RooArgSet(lepton)
+            aa = rt.RooDataSet('Leptons','Leptons',a)
+            
+            for i in xrange(data.numEntries()):
+                row = data.get(i)
+                box = row.getCatLabel('Boxes')
+                if box in ['Mu','Ele','MuMu','EleEle','MuEle']:
+                    lepton.setLabel('Lepton')
+                else:
+                    lepton.setLabel('Hadron')
+                aa.add(rt.RooArgSet(lepton))
+            data.merge(aa)
+        
+        if dilepton is not None:
+            a = rt.RooArgSet(dilepton)
+            aa = rt.RooDataSet('DiLeptons','DiLeptons',a)
+            for i in xrange(data.numEntries()):
+                row = data.get(i)
+                box = row.getCatLabel('Boxes')
+                if box in ['MuMu','EleEle','MuEle']:
+                    dilepton.setLabel('DiLepton')
+                elif box in ['Mu','Ele']:
+                    dilepton.setLabel('SingleLepton')
+                else:
+                    dilepton.setLabel('NonLepton')
+                aa.add(rt.RooArgSet(dilepton))
+            data.merge(aa)
+        
+        return data
+
                     
     def linkRealVar(self, var1, var2, expression = None, vars = None):
         """Not very nice: Replace var1 with a RooFormulaVar linking it with var2"""
