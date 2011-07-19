@@ -47,7 +47,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
         a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
         a.setRealValue('Rsq',tree.RSQ)
         a.setRealValue('nBtag',tree.BTAG_NUM)
-        a.setRealValue('W',tree.WPU)
+        try:
+            a.setRealValue('W',tree.WPU)
+        except AttributeError:
+            a.setRealValue('W',1.0)
         data.add(a)
     numEntries = data.numEntries()
     if min < 0: min = 0
