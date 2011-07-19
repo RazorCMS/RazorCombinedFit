@@ -6,6 +6,8 @@ class RazorBox(Box.Box):
     
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
+        
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Had','Ele'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
 
     def addTailPdf(self, label):
         # define the two components
@@ -70,14 +72,14 @@ class RazorBox(Box.Box):
         self.fixPars("Ntot_", rt.kFALSE)
         self.fixPars("f2_", rt.kFALSE)
         
-        zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        
         fixed = []
-        for z in zeros:
-            if self.name in zeros[z]:
+        for z in self.zeros:
+            if self.name in self.zeros[z]:
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    float1stComponentWithPenalty(z)
+                    #float1stComponentWithPenalty(z)
                     fixed.append(z)
         
         # switch off not-needed components (box by box)
