@@ -32,7 +32,7 @@ def writeCocktail(box, files):
     for d in ds:
         wData.append(d)
 
-    output = rt.TFile.Open("Cocktail_MR"+str(mRmin)+"_R"+str(rMin)+"_"+box,'RECREATE')
+    output = rt.TFile.Open("Cocktail_MR"+str(mRmin)+"_R"+str(rMin)+"_"+box+'.root','RECREATE')
     print 'Writing',output.GetName()
     wData.Write()
     output.Close()
