@@ -103,7 +103,7 @@ class MultiBox(Box.Box):
         v.setConstant(constant)
 
     
-    def predictBackground(self, fr, fileIndex, nRepeats = 100):
+    def predictBackground(self, boxes, fr, fileIndex, nRepeats = 100):
         if fr.status() != 0 or fr.covQual() != 3:
             print 'Skipping background prediction for box %s as the fit did not converge properly' % self.name
             return
@@ -112,12 +112,14 @@ class MultiBox(Box.Box):
         data = self.mergeDataSets(self.workspace.cat('Boxes'),fileIndex)
 
         total_yield = data.numEntries()
-        background_yield = data.reduce(self.cut).numEntries()
         
         pdf = self.workspace.pdf(self.fitmodel)
         vars = self.workspace.set('variables')
+        vars.add(Boxes)
         
-        background_prediction = 0
+        background_prediction = {}
+        for box in boxes:
+            background_prediction[box] = 0
         
         parSet = self.workspace.allVars()
         for i in xrange(nRepeats):
@@ -126,15 +128,24 @@ class MultiBox(Box.Box):
             for name, value in pars.iteritems():
                 self.fixPars(name,value.isConstant(),value.getVal())
             ds = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(total_yield))
-            before = ds.numEntries()
-            ds = ds.reduce(self.cut)
-            after = ds.numEntries()
             
-            background_prediction += (before-after)
+            for box in boxes:
+                box_data = ds.reduce('Boxes == Boxes::%s' % box)
+                before = box_data.numEntries()    
+                box_data = box_data.reduce(self.cut)
+                after = box_data.numEntries()
             
-        background_prediction /= (1.0*nRepeats)
-        print 'Background observed in the %s box: %i' % (self.name,total_yield-background_yield)
-        print 'Background prediction after %i repeats: %f' % (nRepeats,background_prediction)
+                background_prediction[box] += (before-after)
+        
+        for box in boxes:
+            background_prediction[box] /= (1.0*nRepeats)
+            
+            data_box = data.reduce('Boxes == Boxes::%s' % box)
+            total_yield_box = data_box.numEntries()
+            background_yield = data_box.reduce(self.cut).numEntries()
+            
+            print 'Sim: Background observed in the %s box: %i' % (box,total_yield_box-background_yield)
+            print 'Sim: Background prediction after %i repeats: %f' % (nRepeats,background_prediction[box])
         
         #now set the parameters back
         pars = {}
