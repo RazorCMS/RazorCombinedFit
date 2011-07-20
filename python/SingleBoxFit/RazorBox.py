@@ -32,8 +32,6 @@ class RazorBox(Box.Box):
         data = RootTools.getDataSet(inputFile,'RMRTree')
         #import the dataset to the workspace
         self.importToWS(data)
-        print 'Reduced dataset'
-        #data.Print("V")
 
         # add the different components:
         # - W+jets
@@ -114,7 +112,9 @@ class RazorBox(Box.Box):
         frameMR.SetName(varname+"plot")
         frameMR.SetTitle(varname+"plot")
         data = RootTools.getDataSet(inputFile,'RMRTree')
-        data.plotOn(frameMR)
+        data_cut = data.reduce(self.cut)
+        data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed))
+        data_cut.plotOn(frameMR)
         # project the full PDF on the data
         self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 

@@ -79,6 +79,10 @@ class Box(object):
         opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
         for o in options:
             opt.Add(o)
+            
+        if data.isWeighted():
+            print 'The dataset is weighted: Performing a SumW2 fit'
+            opt.Add(rt.RooFit.SumW2Error(True))
         
         result = pdf.fitTo(data, opt)
         result.Print('V')

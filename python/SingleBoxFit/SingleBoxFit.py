@@ -107,7 +107,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             import RazorMultiBoxSim
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
             multi.combine(boxes, fileIndex)
-            multi.predictBackground(multi.workspace.obj('simultaniousFR'), fileIndex)
+            multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaniousFR'), fileIndex)
             self.workspace = multi.workspace
 
         for box, fileName in fileIndex.iteritems():

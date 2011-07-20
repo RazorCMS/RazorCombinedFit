@@ -92,8 +92,8 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             p.setBins(100)
             hvars.add(p)
 
-        #ranges = {'MR':(200,1500),'Rsq':(0.04,0.8)}
-        ranges = {}
+        ranges = {'MR':(200,1500),'Rsq':(0.04,1.0)}
+        #ranges = {}
 
         #go box by box
         for box in boxes:
