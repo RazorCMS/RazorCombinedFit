@@ -36,7 +36,8 @@ if __name__ == '__main__':
     from RazorCombinedFit.Framework import Config
     cfg = Config.Config(options.config)
     
-    from OneDFit import OneDFit
+    #from OneDFit import OneDFit
+    from OneDFitnew import OneDFit
     from TwoDFit import TwoDFit
     from DalglishFit import DalglishFit
     from SingleBoxFit import SingleBoxFit
