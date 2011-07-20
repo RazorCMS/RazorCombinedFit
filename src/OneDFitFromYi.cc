@@ -60,7 +60,7 @@ OneDFitFromYi::SingleFitResult OneDFitFromYi::FitWithRCut(
 	}
 
 	RooRealVar* MR = dynamic_cast<RooRealVar*>(workspace_->arg("MR"));
-	RooRealVar* R = dynamic_cast<RooRealVar*>(workspace_->arg("R"));
+	RooRealVar* R = dynamic_cast<RooRealVar*>(workspace_->arg("Rsq"));
 	if( !MR || !R ){
 		std::cerr << "MR or R not defined in config. Exiting..." << std::endl;
 		return SingleFitResult();
@@ -68,7 +68,7 @@ OneDFitFromYi::SingleFitResult OneDFitFromYi::FitWithRCut(
 	double MRLowerBound = MR->getMin();
 
 	RooArgSet TreeVarSet(*MR, *R);
-	RooDataSet Dataset("Dataset", "MR Dataset",TreeVarSet,Import(*Tree),Cut(Form("R > %f", RCut)));
+	RooDataSet Dataset("Dataset", "MR Dataset",TreeVarSet,Import(*Tree),Cut(Form("Rsq > %f", RCut*RCut)));
 
 	RooRealVar X0("X0", "gaussian mean", 150, 0, 5000, "GeV");
 	RooRealVar SigmaL("SigmaL", "left-hand side gaussian width", 50, 0, 5000,
@@ -234,14 +234,14 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 	}
 
 	RooRealVar* MR = dynamic_cast<RooRealVar*>(workspace_->arg("MR"));
-	RooRealVar* R = dynamic_cast<RooRealVar*>(workspace_->arg("R"));
+	RooRealVar* R = dynamic_cast<RooRealVar*>(workspace_->arg("Rsq"));
 	if( !MR || !R ){
 		std::cerr << "OneDFitFromYi::define: MR or R not defined in config. Exiting..." << std::endl;
 		return;
 	}
 
 	RooArgSet TreeVarSet(*MR, *R);
-	RooDataSet Dataset("Dataset", "MR Dataset", TreeVarSet, Import(*Tree), Cut(Form("R > %f", RCuts[0])) );
+	RooDataSet Dataset("Dataset", "MR Dataset", TreeVarSet, Import(*Tree), Cut(Form("Rsq > %f", RCuts[0]*RCuts[0])) );
 
 	RooRealVar ParameterA("ParameterA", "s = \"a\" + b R^2", ParameterAValue,0, 0.1);
 	RooRealVar ParameterB("ParameterB", "s = a + \"b\" R^2", ParameterBValue,0, 1);
@@ -263,11 +263,11 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 		if (i != RCuts.size() - 1)
 			GuessYield
 					= Dataset.reduce(Cut(Form(
-							"R > %f && R <= %f", RCuts[i],
-							RCuts[i + 1])))->sumEntries();
+							"Rsq > %f && Rsq <= %f", RCuts[i]*RCuts[i],
+							RCuts[i + 1]*RCuts[i + 1])))->sumEntries();
 		else
 			GuessYield
-					= Dataset.reduce(Cut(Form("R > %f", RCuts[i])))->sumEntries();
+					= Dataset.reduce(Cut(Form("Rsq > %f", RCuts[i]* RCuts[i])))->sumEntries();
 
 		cout << "Guess yield for bin " << i << " is " << GuessYield << endl;
 
@@ -279,42 +279,42 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 	for (unsigned int i = 0; i < RCuts.size(); i++) {
 		if (SingleFitResults[i].Strategy == Strategy_Normal) {
 			X0.push_back(new RooRealVar(Form("X0_%d", i), Form(
-					"gaussian mean, R > %f", RCuts[i]), SingleFitResults[i].X0,
+					"gaussian mean, Rsq > %f", RCuts[i]*RCuts[i]), SingleFitResults[i].X0,
 					0, 400, "GeV"));
 			// X0[i]->setError(SingleFitResults[i].X0Error * 5);
 			SigmaL.push_back(new RooRealVar(Form("SigmaL_%d", i), Form(
-					"left-hand side gaussian width, R > %f", RCuts[i]),
+					"left-hand side gaussian width, Rsq > %f", RCuts[i]*RCuts[i]),
 					SingleFitResults[i].SigmaL, 0, 500, "GeV"));
 			// SigmaL[i]->setError(SingleFitResults[i].SigmaLError * 5);
 			SigmaR.push_back(new RooRealVar(Form("SigmaR_%d", i), Form(
-					"right-hand side gaussian width, R > %f", RCuts[i]),
+					"right-hand side gaussian width, Rsq > %f", RCuts[i]*RCuts[i]),
 					SingleFitResults[i].SigmaR, 0, 500, "GeV"));
 			// SigmaR[i]->setError(SingleFitResults[i].SigmaRError * 5);
 			S.push_back(new RooFormulaVar(Form("S_%d", i), Form(
-					"exponent of the tail, R > %f", RCuts[i]), Form(
-					"@0 + %f * @1", RCuts[i] * RCuts[i]), RooArgList(
+					"exponent of the tail, Rsq > %f", RCuts[i]*RCuts[i]), 
+						      Form("@0 + %f * @1", RCuts[i] * RCuts[i]), RooArgList(
 					ParameterA, ParameterB)));
 
 			Models.push_back(new RooTwoSideGaussianWithAnExponentialTail(Form(
-					"Model_%d", i), Form("Model for R > %f", RCuts[i]), *MR,
+					"Model_%d", i), Form("Model for Rs1 > %f", RCuts[i]*RCuts[i]), *MR,
 					*X0[i], *SigmaL[i], *SigmaR[i], *S[i]));
 		} else if (SingleFitResults[i].Strategy == Strategy_IgnoreLeft) {
 			X0.push_back(new RooRealVar(Form("X0_%d", i), Form(
-					"gaussian mean, R > %f", RCuts[i]), SingleFitResults[i].X0,
+					"gaussian mean, Rsq > %f", RCuts[i]*RCuts[i]), SingleFitResults[i].X0,
 					0, 500, "GeV"));
 			X0[i]->setError(SingleFitResults[i].X0Error * 5);
 			SigmaL.push_back(NULL);
 			SigmaR.push_back(new RooRealVar(Form("SigmaR_%d", i), Form(
-					"right-hand side gaussian width, R > %f", RCuts[i]),
+					"right-hand side gaussian width, Rsq > %f", RCuts[i]* RCuts[i]),
 					SingleFitResults[i].SigmaR, 0, 1000, "GeV"));
 			SigmaR[i]->setError(SingleFitResults[i].SigmaRError * 5);
 			S.push_back(new RooFormulaVar(Form("S_%d", i), Form(
-					"exponent of the tail, R > %f", RCuts[i]), Form(
-					"@0 + %f * @1", RCuts[i] * RCuts[i]), RooArgList(
+					"exponent of the tail, Rsq > %f", RCuts[i]*RCuts[i]), Form(
+					"@0* + %f * @1", RCuts[i] * RCuts[i]), RooArgList(
 					ParameterA, ParameterB)));
 
 			Models.push_back(new RooTwoSideGaussianWithAnExponentialTail(Form(
-					"Model_%d", i), Form("Model for R > %f", RCuts[i]), *MR,
+					"Model_%d", i), Form("Model for Rsq > %f", RCuts[i]*RCuts[i]), *MR,
 					*X0[i], *SigmaR[i], *SigmaR[i], *S[i]));
 		} else // if SingleFitResults[i].Strategy == Strategy_IgnoreGaussian
 		{
@@ -322,12 +322,12 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 			SigmaL.push_back(NULL);
 			SigmaR.push_back(NULL);
 			S.push_back(new RooFormulaVar(Form("S_%d", i), Form(
-					"exponent of the tail, R > %f", RCuts[i]), Form(
+					"exponent of the tail, Rsq > %f", RCuts[i]*RCuts[i]), Form(
 					"-1 * @0 - %f * @1", RCuts[i] * RCuts[i]), RooArgList(
 					ParameterA, ParameterB)));
 
 			Models.push_back(new RooExponential(Form("Model_%d", i), Form(
-					"Model for R > %f", RCuts[i]), *MR, *S[i]));
+					"Model for Rsq > %f", RCuts[i]*RCuts[i]), *MR, *S[i]));
 		}
 	}
 
@@ -336,7 +336,7 @@ void OneDFitFromYi::define(const std::string& Filename, std::vector<double>& RCu
 					*SingleBinYields[SingleBinYields.size() - 1])));
 	for (int i = RCuts.size() - 1 - 1; i >= 0; i--)
 		Yields.push_back(new RooFormulaVar(Form("Yield_%d", i), Form(
-				"Yield with R above %f", RCuts[i]), "@0 + @1", RooArgList(
+				"Yield with Rsq above %f", RCuts[i]*RCuts[i]), "@0 + @1", RooArgList(
 				*Yields[Yields.size() - 1], *SingleBinYields[i])));
 	reverse(Yields.begin(), Yields.end());
 
