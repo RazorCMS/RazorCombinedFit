@@ -8,9 +8,13 @@ class TwoDBox(Box.Box):
         super(TwoDBox,self).__init__(name, variables)
 
     def define(self, inputFile):
+        xmin = self.workspace.var("MR").getMin()
+        xmax = self.workspace.var("MR").getMax()
+        ymin = self.workspace.var("Rsq").getMin()
+        ymax = self.workspace.var("Rsq").getMax()
         
         #create the dataset
-        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data = RootTools.getDataSet(inputFile,'RMRTree').reduce("MR >= %f && MR <= %f" %(xmin, xmax)).reduce("Rsq >= %f && Rsq < %f" %(ymin, ymax))
         #import the dataset to the workspace
         self.importToWS(data)
         print 'Reduced dataset'
@@ -55,8 +59,7 @@ class TwoDBox(Box.Box):
         frameMR.SetName(varname+"plot")
         frameMR.SetTitle(varname+"plot")
         #        data = rt.RooDataSet(self.workspace.genobj("RMRTree"))
-        #before I find a better way
-        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data = self.workspace.data("RMRTree")
         data.plotOn(frameMR)
         # project the full PDF on the data
         self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
@@ -71,8 +74,7 @@ class TwoDBox(Box.Box):
         return frameMR
 
     def plotRsqMR(self, inputFile):
-        #before I find a better way
-        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data = self.workspace.data("RMRTree")
         toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet("MR,Rsq")), 10*data.numEntries())
 
         # define 2D histograms
