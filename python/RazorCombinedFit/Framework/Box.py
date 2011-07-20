@@ -65,7 +65,8 @@ class Box(object):
     def fit(self, inputFile, reduce = None, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
 
-        data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
+        #data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
+        data = self.workspace.data("RMRTree")
         return self.fitData(self.getFitPDF(), data, *options)
     
     def fitData(self, pdf, data, *options):
