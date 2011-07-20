@@ -27,7 +27,7 @@ class OneDAnalysis(Analysis.Analysis):
             #boxes[box].defineSet("sigma", self.config.getVariables(box, "sigma"))
 
             # switch to kFALSE to fit for R^2 in slices of MR
-            boxes[box].define(fileName, rt.kTRUE)
+            boxes[box].define(fileName, rt.kFALSE)
             
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')

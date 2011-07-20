@@ -18,12 +18,12 @@ class OneDBox(Box.Box):
         dataBIS = RootTools.getDataSet(inputFile,'RMRTree').reduce("Rsq>=%f && Rsq<%f" % (Rmin, Rmax))
         # create the binned dataset
         mRmin = self.workspace.var("MR").getMin()
-        data1 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin, mRmin+50.))
-        data2 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+50, mRmin+100.))
-        data3 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+100, mRmin+150.))
-        data4 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+150, mRmin+200.))
-        data5 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+200, mRmin+250.))
-        data6 = dataBIS.reduce("MR>=%f" % (mRmin+250.))
+        data1 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin, mRmin+25.))
+        data2 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+25, mRmin+50.))
+        data3 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+50, mRmin+75.))
+        data4 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+75, mRmin+100.))
+        data5 = dataBIS.reduce("MR>=%f && MR<%f" % (mRmin+100, mRmin+125.))
+        data6 = dataBIS.reduce("MR>=%f" % (mRmin+125.))
         # create the index Category
         c = rt.RooCategory("c","c") ;
         c.defineType("Bin1") ;
