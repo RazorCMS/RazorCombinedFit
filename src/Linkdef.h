@@ -15,7 +15,6 @@
 #pragma link C++ defined_in "RooTwoSideGaussianWithTwoExponentialTails.h";
 #pragma link C++ defined_in "RooRazor2DTail.h";
 #pragma link C++ defined_in "RooRazorLShape.h";
-#pragma link C++ defined_in "RooRazor1D.h";
 #pragma link C++ defined_in "RooDalglish.h";
 
 #endif
