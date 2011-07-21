@@ -80,7 +80,7 @@ class RazorBox(Box.Box):
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    #floatFractionWithPenalty(z)
+                    floatFractionWithPenalty(z)
                     if self.name != 'Had': float1stComponentWithPenalty(z)
                     fixed.append(z)
         
