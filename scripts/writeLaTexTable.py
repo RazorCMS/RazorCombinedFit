@@ -64,8 +64,7 @@ for Box in BoxName:
             if fitPars.has_key(name): v = fitPars[v.GetName()]
             vars.append(' $%.3f \\pm %.3f$ ' % (v.getVal(),v.getError()))
                   
-    vars.append('\\\\')    
-    print '&'.join(vars)
+    print '&'.join(vars)+'\\\\'
 
 #outfile.close()
 rootfile.Close()
