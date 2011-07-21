@@ -7,8 +7,8 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Ele'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
-        self.cut = 'MR <= 750'
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        self.cut = 'MR <= 100000'
 
     def addTailPdf(self, label):
         # define the two components
@@ -29,7 +29,7 @@ class RazorBox(Box.Box):
     def define(self, inputFile):
         
         #create the dataset
-        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
         #import the dataset to the workspace
         self.importToWS(data)
 
@@ -73,25 +73,16 @@ class RazorBox(Box.Box):
         self.fixPars("Ntot_", rt.kFALSE)
         #self.fixPars("f2_", rt.kFALSE)
         
-        
+        # switch off not-needed components (box by box)
         fixed = []
         for z in self.zeros:
             if self.name in self.zeros[z]:
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    floatFractionWithPenalty(z)
+                    #floatFractionWithPenalty(z)
                     if self.name != 'Had': float1stComponentWithPenalty(z)
                     fixed.append(z)
-        
-        # switch off not-needed components (box by box)
-#        if self.name != "Had": self.switchOff("Znn")
-#        if self.name == "MuEle":
-#            self.switchOff("Wln")
-#            self.switchOff("Zll")
-#        if self.name == "MuMu" or self.name == "EleEle":
-#            self.switchOff("Wln")
-
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)
