@@ -30,7 +30,7 @@ rootfile = rt.TFile(filename)
 #open the output file
 #outfile = open(sys.argv[2], "w")
 
-BoxName = ["MuMu", "MuEle", "Mu", "EleEle", "Ele", "Had"]
+BoxName = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
 
 for Box in BoxName:
     vars=[]
