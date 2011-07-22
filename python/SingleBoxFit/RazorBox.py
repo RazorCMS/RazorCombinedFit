@@ -8,7 +8,8 @@ class RazorBox(Box.Box):
         super(RazorBox,self).__init__(name, variables)
         
         self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
-        self.cut = 'MR <= 100000'
+        self.cut = 'MR <= 800 && Rsq <= 0.8'
+        #self.cut = 'MR >= 0.0'
 
     def addTailPdf(self, label):
         # define the two components
@@ -161,6 +162,7 @@ class RazorBox(Box.Box):
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
         toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 10*data.numEntries())
+        toyData = toyData.reduce(self.getVarRangeCut())
 
         # define 2D histograms
         histoData = rt.TH2D("histoData", "histoData",

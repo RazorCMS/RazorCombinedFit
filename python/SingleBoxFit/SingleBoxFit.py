@@ -48,30 +48,51 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
     def runtoys(self, inputFiles, nToys):
         
+        random = rt.RooRandom.randomGenerator()
+        
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
-        
+
         for box in boxes:
+            
+            pdf = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None)
+            vars = boxes[box].workspace.set('variables')
+            
+            #use an MCStudy to store everything
             study = boxes[box].getMCStudy()
-            data = RootTools.getDataSet(fileIndex[box],'RMRTree')
+            #get the data yield without cuts
+            data_yield = RootTools.getDataSet(fileIndex[box],'RMRTree').numEntries()
             
-            print 'ToyStudy for box %s: Running %i with %i entries per toy' % (box,nToys,data.numEntries())
-            study.generateAndFit(nToys,data.numEntries())
-            
-            vars = self.workspace.set('variables')
+            pre_ = rt.RooRealVar('predicted','predicted',-1)
+            obs_ = rt.RooRealVar('observed','observed',-1)
+            qual_ = rt.RooRealVar('quality','quality',-1)
+            status_ = rt.RooRealVar('status','status',-1)
+            args = rt.RooArgSet(pre_,obs_,qual_,status_)
+            yields = rt.RooDataSet('Yields','Yields',args)
             
             for i in xrange(nToys):
-                fr = study.fitResult(i)
+                gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(data_yield))
+                gdata_cut = gdata.reduce(boxes[box].cut)
+                
+                fr = boxes[box].fitData(pdf, gdata_cut)
+                predictions = boxes[box].predictBackgroundData(fr, gdata, nRepeats = 5, verbose = False)
                 if not fr.status() == 0 and fr.covQual() == 3:
                     print 'WARNING:: The toy fit %i did not converge with high quality. Consider this result suspect!' % i
                 print 'Fit result %d for box %s' % (i,box)
-                fr.Print('V')
-                fr = rt.RooFitResult(fr)
+                study.addFitResult(fr)
                 self.store(fr,'toyfitresult_%i' % i, dir='%s_Toys' % box)
+
+                args.setRealValue('predicted',predictions[0])
+                args.setRealValue('observed',predictions[1])
+                args.setRealValue('quality',fr.covQual())
+                args.setRealValue('status',fr.status())
+                yields.add(args)
             
             fitPars = study.fitParDataSet()
             outpars = rt.RooDataSet('fitPars_%s' % box, 'fitPars_%s' % box, fitPars,fitPars.get(0))
+            
             self.store(outpars, dir='%s_Toys' % box)
+            self.store(yields, dir='%s_Toys' % box)
             
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
