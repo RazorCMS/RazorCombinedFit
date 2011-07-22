@@ -140,6 +140,13 @@ class Box(object):
                 par.setConstant(doFix)
                 if setVal is not None: par.setVal(setVal)
     
+    def fixParsExact(self, label, doFix=rt.kTRUE, setVal=None):
+        parSet = self.workspace.allVars()
+        for par in RootTools.RootIterator.RootIterator(parSet):
+            if label == par.GetName():
+                par.setConstant(doFix)
+                if setVal is not None: par.setVal(setVal)
+    
     def fixParsPenalty(self, label):
         
         allVars = self.workspace.allVars()
@@ -151,14 +158,16 @@ class Box(object):
                     sigma = pars['%s_s' % name].getVal() 
                     self.fixVariable(par.GetName(), par.getVal(),sigma)
                     par.setConstant(False)
-                    
-    def predictBackground(self, fr, inputFile, nRepeats = 100):
+
+    def predictBackgroundData(self, fr, data, nRepeats = 100, verbose = True):
+        
         if fr.status() != 0 or fr.covQual() != 3:
             print 'Skipping background prediction for box %s as the fit did not converge properly' % self.name
-            return
+            return (-1,-1)
 
-        total_yield = RootTools.getDataSet(inputFile,'RMRTree').numEntries()
-        background_yield = RootTools.getDataSet(inputFile,'RMRTree',self.cut).numEntries()
+        total_yield = data.numEntries()
+        data_cut = data.reduce(self.cut)
+        background_yield = data_cut.numEntries()
         
         pdf = self.workspace.pdf(self.fitmodel)
         vars = self.workspace.set('variables')
@@ -170,7 +179,7 @@ class Box(object):
             pars = {}
             for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
             for name, value in pars.iteritems():
-                self.fixPars(name,value.isConstant(),value.getVal())
+                self.fixParsExact(name,value.isConstant(),value.getVal())
             ds = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(total_yield))
             before = ds.numEntries()
             ds = ds.reduce(self.cut)
@@ -179,14 +188,23 @@ class Box(object):
             background_prediction += (before-after)
             
         background_prediction /= (1.0*nRepeats)
-        print 'Background observed in the %s box: %i' % (self.name,total_yield-background_yield)
-        print 'Background prediction after %i repeats: %f' % (nRepeats,background_prediction)
+        if verbose:
+            print 'Background observed in the %s box: %i' % (self.name,total_yield-background_yield)
+            print 'Background prediction after %i repeats: %f' % (nRepeats,background_prediction)
         
         #now set the parameters back
         pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): pars[p.GetName()] = p
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()): pars[p.GetName()] = p
         for name, value in pars.iteritems():
-            self.fixPars(name,value.isConstant(),value.getVal())
+            self.fixParsExact(name,value.isConstant(),value.getVal())
+            
+        return (background_prediction,total_yield-background_yield)
+
+
+
+    def predictBackground(self, fr, inputFile, nRepeats = 100):
+        data = RootTools.getDataSet(inputFile,'RMRTree')
+        return self.predictBackgroundData(fr, data, nRepeats)
 
         
     def define(self, inputFile, cuts):
