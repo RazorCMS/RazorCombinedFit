@@ -24,7 +24,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         for box in boxes:
             sum = 0
             for f in flavours:
-                Ntot = boxes[box].workspace.var('Ntot_%s' % f).getVal()
+                Ntot = boxes[box].workspace.function('Ntot_%s' % f).getVal()
                 sum += Ntot
             if sum > maximumYield:
                 maximumYield = sum
@@ -43,28 +43,21 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         ws.SetTitle(ws.GetName())
         
         splits = []
-        for v in ['MR01st_%s','R01st_%s','b1st_%s','Ntot_%s','f2_%s']:
+        for v in ['MR01st_%s','R01st_%s','b1st_%s','Epsilon_%s','f2_%s']:
             for f in flavours:
                 splits.append(v % f)
+        splits.append('Lumi')
         #make a RooSimultanious with a category for each box, splitting the 1st component parameters and the fraction
         ws.factory('SIMCLONE::%s(%s, $SplitParam({%s}, Boxes[%s]))' % (self.fitmodel, boxes[masterBox].fitmodel, ','.join(splits), ','.join(boxes.keys()) ) )
         self.workspace = ws
         
-        self.fixPars('b2nd_Wln',False)                                                                                                                                                         
-        self.fixPars('b2nd_Zll',False)                                                                                                                                                         
-        self.fixPars('b2nd_TTj',False)
+        self.fixParsExact('b2nd_Wln',False)                                                                                                                                                         
+        self.fixParsExact('b2nd_Zll',False)                                                                                                                                                         
+        self.fixParsExact('b2nd_TTj',False)
 
-        self.fixPars('b1st_Wln',False)                                                                                                                                                         
-        self.fixPars('b1st_Zll',False)                                                                                                                                                         
-        self.fixPars('b1st_TTj',False)
-        self.fixPars('b1st_Wln_mean',True)                                                                                                                                                         
-        self.fixPars('b1st_Zll_mean',True)                                                                                                                                                         
-        self.fixPars('b1st_TTj_mean',True)
-        self.fixPars('b1st_Wln_s',True)                                                                                                                                                         
-        self.fixPars('b1st_Zll_s',True)                                                                                                                                                         
-        self.fixPars('b1st_TTj_s',True)
-
-
+        self.fixParsExact('b1st_Wln',False)                                                                                                                                                         
+        self.fixParsExact('b1st_Zll',False)                                                                                                                                                         
+        self.fixParsExact('b1st_TTj',False)
             
         for box in boxes:
             pars = {}
@@ -74,8 +67,10 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
                 self.fix(boxes,'MR01st_%s' % f, box, pars, False)
                 self.fix(boxes,'R01st_%s' % f, box, pars, False)
                 self.fix(boxes,'b1st_%s' % f, box, pars, False)
-                self.fix(boxes,'Ntot_%s' % f, box, pars, True)
+                self.fix(boxes,'Epsilon_%s' % f, box, pars, True)
                 self.fix(boxes, 'f2_%s' % f, box, pars, False)
+            
+            self.workspace.var('Lumi_%s' % box).setVal(boxes[box].workspace.var('Lumi').getVal())
         
         fr = self.fitData(ws.pdf(self.fitmodel),data)
         self.importToWS(fr,'simultaniousFR')

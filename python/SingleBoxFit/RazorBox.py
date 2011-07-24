@@ -11,7 +11,12 @@ class RazorBox(Box.Box):
         self.cut = 'MR <= 800 && Rsq <= 0.8'
         #self.cut = 'MR >= 0.0'
 
-    def addTailPdf(self, label):
+    def addTailPdf(self, flavour):
+        
+        label = '_%s' % flavour
+
+        #define a flavour specific yield
+        self.yieldToCrossSection(flavour)
         # define the two components
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
@@ -21,10 +26,12 @@ class RazorBox(Box.Box):
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
+        #float the efficiency with a penalty term if a sigma is provided
+
 
     def switchOff(self, species) :
-        self.workspace.var("Ntot_"+species).setVal(0.)
-        self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
+        self.workspace.var("Epsilon_"+species).setVal(0.)
+        self.workspace.var("Epsilon_"+species).setConstant(rt.kTRUE)
         self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
 
     def define(self, inputFile):
@@ -33,19 +40,20 @@ class RazorBox(Box.Box):
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
         #import the dataset to the workspace
         self.importToWS(data)
+        self.workspace.Print('V')
 
         # add the different components:
         # - W+jets
         # - Zll+jets
         # - Znn+jets
         # - ttbar+jets
-        self.addTailPdf("_Wln")
-        self.addTailPdf("_Zll")
-        self.addTailPdf("_Znn")
-        self.addTailPdf("_TTj")
+        self.addTailPdf("Wln")    
+        self.addTailPdf("Zll")
+        self.addTailPdf("Znn")
+        self.addTailPdf("TTj")
 
         # build the total PDF
-        model = rt.RooAddPdf("fitmodel", "fitmodel", rt.RooArgList(self.workspace.pdf("ePDF1st_Wln"),self.workspace.pdf("ePDF2nd_Wln"),
+        model = rt.RooAddPdf(self.fitmodel, self.fitmodel, rt.RooArgList(self.workspace.pdf("ePDF1st_Wln"),self.workspace.pdf("ePDF2nd_Wln"),
                                                                    self.workspace.pdf("ePDF1st_Zll"),self.workspace.pdf("ePDF2nd_Zll"),
                                                                    self.workspace.pdf("ePDF1st_Znn"),self.workspace.pdf("ePDF2nd_Znn"),
                                                                    self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj")))        
@@ -60,7 +68,7 @@ class RazorBox(Box.Box):
         self.fixPars("Zll")
         self.fixPars("Znn")
         self.fixPars("Wln")
-        self.fixPars("TTj")   
+        self.fixPars("TTj")
         
         #add penalty terms and float
         def float1stComponentWithPenalty(flavour):
@@ -68,6 +76,8 @@ class RazorBox(Box.Box):
             #self.fixParsPenalty("R01st_%s" % flavour)
             self.fixParsPenalty("b1st_%s" % flavour)
         def floatFractionWithPenalty(flavour):
+            self.fixParsPenalty("Epsilon_%s" % flavour, floatIfNoPenalty = True)
+            self.fixPars("Epsilon_%s_s" % flavour)
             self.fixParsPenalty("f2_%s" % flavour)
 
         # float all the yields and 2nd-component fractions
@@ -108,20 +118,20 @@ class RazorBox(Box.Box):
         data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed))
         data_cut.plotOn(frameMR)
         # project the full PDF on the data
-        self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
+        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 
         # plot each individual component: Wln
-        N1_Wln = self.workspace.var("Ntot_Wln").getVal()*(1-self.workspace.var("f2_Wln").getVal())
-        N2_Wln = self.workspace.var("Ntot_Wln").getVal()*self.workspace.var("f2_Wln").getVal()
+        N1_Wln = self.workspace.function("Ntot_Wln").getVal()*(1-self.workspace.var("f2_Wln").getVal())
+        N2_Wln = self.workspace.function("Ntot_Wln").getVal()*self.workspace.var("f2_Wln").getVal()
         # plot each individual component: Zll
-        N1_Zll = self.workspace.var("Ntot_Zll").getVal()*(1-self.workspace.var("f2_Zll").getVal())
-        N2_Zll = self.workspace.var("Ntot_Zll").getVal()*self.workspace.var("f2_Zll").getVal()
+        N1_Zll = self.workspace.function("Ntot_Zll").getVal()*(1-self.workspace.var("f2_Zll").getVal())
+        N2_Zll = self.workspace.function("Ntot_Zll").getVal()*self.workspace.var("f2_Zll").getVal()
         # plot each individual component: Znn
-        N1_Znn = self.workspace.var("Ntot_Znn").getVal()*(1-self.workspace.var("f2_Znn").getVal())
-        N2_Znn = self.workspace.var("Ntot_Znn").getVal()*self.workspace.var("f2_Znn").getVal()
+        N1_Znn = self.workspace.function("Ntot_Znn").getVal()*(1-self.workspace.var("f2_Znn").getVal())
+        N2_Znn = self.workspace.function("Ntot_Znn").getVal()*self.workspace.var("f2_Znn").getVal()
         # plot each individual component: TTj
-        N1_TTj = self.workspace.var("Ntot_TTj").getVal()*(1-self.workspace.var("f2_TTj").getVal())
-        N2_TTj = self.workspace.var("Ntot_TTj").getVal()*self.workspace.var("f2_TTj").getVal()
+        N1_TTj = self.workspace.function("Ntot_TTj").getVal()*(1-self.workspace.var("f2_TTj").getVal())
+        N2_TTj = self.workspace.function("Ntot_TTj").getVal()*self.workspace.var("f2_TTj").getVal()
 
         Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj
 

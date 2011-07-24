@@ -15,8 +15,31 @@ class Box(object):
         for v in variables:
             r = self.workspace.factory(v)
             self.workspace.extendSet('variables',r.GetName())
+
+        #the SM cross-sections from Chris            
+        self.cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
+                               'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
+                               'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
+                               }
+        self.workspace.factory('Lumi[1000.0]')
+        for name, value in self.cross_sections.iteritems():
+            self.workspace.factory('%s[%f]' % (name, value) )
             
         self.fitmodel = 'fitmodel'
+        
+    def yieldToCrossSection(self, flavour):
+        self.workspace.factory("expr::Ntot_%s('@0*@1*@2',Lumi,%s,Epsilon_%s)" % (flavour, flavour, flavour))
+        
+    def getVarRangeCut(self):
+        cut = ''
+        def var_cut(v):
+            return '( (%s >= %f) && (%s < %f) )' % (v.GetName(),v.getMin(),v.GetName(),v.getMax())
+        vars = [v for v in RootTools.RootIterator.RootIterator(self.workspace.set('variables'))]
+        if vars:
+            cut = var_cut(vars[0])
+            for v in vars[1:]:
+                cut = '%s && %s' % (cut, var_cut(v))
+        return cut
 
     def defineSet(self, name, variables):
         self.workspace.defineSet(name,'')
@@ -147,7 +170,7 @@ class Box(object):
                 par.setConstant(doFix)
                 if setVal is not None: par.setVal(setVal)
     
-    def fixParsPenalty(self, label):
+    def fixParsPenalty(self, label, floatIfNoPenalty = False):
         
         allVars = self.workspace.allVars()
         pars = {}
@@ -158,6 +181,8 @@ class Box(object):
                     sigma = pars['%s_s' % name].getVal() 
                     self.fixVariable(par.GetName(), par.getVal(),sigma)
                     par.setConstant(False)
+                elif floatIfNoPenalty:
+                    self.fixParsExact(par.GetName(),False)
 
     def predictBackgroundData(self, fr, data, nRepeats = 100, verbose = True):
         
