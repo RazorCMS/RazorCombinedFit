@@ -8,7 +8,7 @@ def getCrossSections():
     return {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173,
-                               'QCD':1
+                               'QCD':600000
                                }
 
 class Box(object):
