@@ -4,10 +4,26 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax):
-    """This defines the format of the RooDataSet"""
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
+cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
+                               'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
+                               'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
+                               }
+lumi = 1.0
+
+def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMax):
     
-    boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
+    if bMax >= 0:
+        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_nBtag_'+str(bMax)+'_'+outputBox,'RECREATE')
+    else:
+        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
+    print output.GetName()
+    rdata.Write()
+    output.Close()
+    return data.numEntries()
+
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax, write = True):
+    """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
     variables = config.getVariables(box,"variables")
@@ -57,17 +73,25 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
     if max < 0: max = numEntries
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
+    if write:
+        writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, bMax)
+    return rdata
 
-    if bMax >= 0:
-        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_nBtag_'+str(bMax)+'_'+outputBox,'RECREATE')
-    else:
-        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
-    print output.GetName()
-    rdata.Write()
-    output.Close()
+def printEfficiencies(tree, outputFile, config, flavour):
+    """Backout the MC efficiency from the weights"""
+    print 'ERROR:: This functionality produces incorrect results as we\'re missing a factor somewhere...'
     
-    return rdata.numEntries()
+    cross_section = cross_sections[flavour]
     
+    for box in boxMap:
+        ds = convertTree2Dataset(tree, outputFile, 'Dummy', config, box, 0, -1, -1, write = False)
+        row = ds.get(0)
+        W = ds.mean(row['W'])
+        n_i = (cross_section*lumi)/W
+        n_f = ds.numEntries()
+        print 'Efficienty: %s: %f (n_i=%f; n_f=%i)' % (box,n_f/n_i,n_i, n_f)
+    
+
 if __name__ == '__main__':
     
     parser = OptionParser()
@@ -79,6 +103,10 @@ if __name__ == '__main__':
                   help="The first event to take from the input Dataset")  
     parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
                   help="The maximum number of Btags to allow")     
+    parser.add_option('-e','--eff',dest="eff",default=False,action='store_true',
+                  help="Calculate the MC efficiencies")
+    parser.add_option('-f','--flavour',dest="flavour",default='TTj',
+                  help="The flavour of MC used as input")
     (options,args) = parser.parse_args()
     
     if options.config is None:
@@ -93,13 +121,16 @@ if __name__ == '__main__':
             input = rt.TFile(f)
             decorator = f[:-5]
             
-            #dump the trees for the different datasets
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.btag)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.btag)
-            convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.btag)
+            if not options.eff:
+                #dump the trees for the different datasets
+                convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag)
+                convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag)
+                convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag)
+                convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.btag)
+                convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.btag)
+                convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.btag)
+            else:
+                printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
