@@ -58,6 +58,8 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         self.fixParsExact('b1st_Wln',False)                                                                                                                                                         
         self.fixParsExact('b1st_Zll',False)                                                                                                                                                         
         self.fixParsExact('b1st_TTj',False)
+        
+        self.fixParsExact('Epsilon',False)
             
         for box in boxes:
             pars = {}

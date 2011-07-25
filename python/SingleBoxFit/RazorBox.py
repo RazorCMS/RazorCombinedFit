@@ -7,7 +7,7 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle'],'QCD':['MuEle']}
         self.cut = 'MR <= 750'
         #self.cut = 'MR >= 0.0'
 
@@ -51,12 +51,16 @@ class RazorBox(Box.Box):
         self.addTailPdf("Zll")
         self.addTailPdf("Znn")
         self.addTailPdf("TTj")
+        self.addTailPdf("QCD")
 
         # build the total PDF
-        model = rt.RooAddPdf(self.fitmodel, self.fitmodel, rt.RooArgList(self.workspace.pdf("ePDF1st_Wln"),self.workspace.pdf("ePDF2nd_Wln"),
-                                                                   self.workspace.pdf("ePDF1st_Zll"),self.workspace.pdf("ePDF2nd_Zll"),
-                                                                   self.workspace.pdf("ePDF1st_Znn"),self.workspace.pdf("ePDF2nd_Znn"),
-                                                                   self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj")))        
+        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_Wln"),self.workspace.pdf("ePDF2nd_Wln"),
+                                  self.workspace.pdf("ePDF1st_Zll"),self.workspace.pdf("ePDF2nd_Zll"),
+                                                                    self.workspace.pdf("ePDF1st_Znn"),self.workspace.pdf("ePDF2nd_Znn"),
+                                                                    self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"))
+        myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
+        myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))    
+        model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)        
         
         # import the model in the workspace.
         self.importToWS(model)
@@ -69,6 +73,7 @@ class RazorBox(Box.Box):
         self.fixPars("Znn")
         self.fixPars("Wln")
         self.fixPars("TTj")
+        self.fixPars("QCD")
         
         #add penalty terms and float
         def float1stComponentWithPenalty(flavour):
@@ -105,7 +110,7 @@ class RazorBox(Box.Box):
         # set the integral precision
         rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
         rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
-        # get the max and min (if different thandefault)
+        # get the max and min (if different than default)
         if xmax==xmin:
             xmin = self.workspace.var(varname).getMin()
             xmax = self.workspace.var(varname).getMax()
@@ -132,8 +137,11 @@ class RazorBox(Box.Box):
         # plot each individual component: TTj
         N1_TTj = self.workspace.function("Ntot_TTj").getVal()*(1-self.workspace.var("f2_TTj").getVal())
         N2_TTj = self.workspace.function("Ntot_TTj").getVal()*self.workspace.var("f2_TTj").getVal()
+        # plot each individual component: QCD
+        N1_QCD = self.workspace.function("Ntot_QCD").getVal()*(1-self.workspace.var("f2_QCD").getVal())
+        N2_QCD = self.workspace.function("Ntot_QCD").getVal()*self.workspace.var("f2_QCD").getVal()        
 
-        Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj
+        Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj+N1_QCD+N2_QCD
 
         if N1_Wln+N2_Wln >0:
             # project the first component: Wln
@@ -155,6 +163,11 @@ class RazorBox(Box.Box):
             self.workspace.pdf("PDF1st_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_TTj/Ntot))
             # project the second component: TTj
             self.workspace.pdf("PDF2nd_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_TTj/Ntot))
+        if N1_QCD+N2_QCD >0:
+            # project the first component: TTj
+            self.workspace.pdf("PDF1st_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_QCD/Ntot))
+            # project the second component: TTj
+            self.workspace.pdf("PDF2nd_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_QCD/Ntot))            
 
         #leg = rt.TLegend("leg", "leg", 0.6, 0.6, 0.9, 0.9)
         #leg.AddEntry("PDF1st_Wln", "W+jets 1st")
@@ -171,7 +184,7 @@ class RazorBox(Box.Box):
     def plot2D(self, inputFile, xvarname, yvarname):
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
-        toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 10*data.numEntries())
+        toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 20*data.numEntries())
         toyData = toyData.reduce(self.getVarRangeCut())
 
         # define 2D histograms

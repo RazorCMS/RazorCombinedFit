@@ -1,6 +1,16 @@
 import ROOT as rt
 import RootTools
 
+def getCrossSections():
+    """Return the NLO cross-sections used in the normalsation"""
+    
+    #the QCD cross-section is basically a junk value
+    return {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
+                               'TTj':157.5,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
+                               'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173,
+                               'QCD':1
+                               }
+
 class Box(object):
     
     def __init__(self, name, variables, workspace = None):
@@ -17,10 +27,7 @@ class Box(object):
             self.workspace.extendSet('variables',r.GetName())
 
         #the SM cross-sections from Chris - NB for W and Z we take the per-flavour cross-sections            
-        self.cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
-                               'TTj':157.5,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
-                               'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
-                               }
+        self.cross_sections = getCrossSections()
         for name, value in self.cross_sections.iteritems():
             self.workspace.factory('%s[%f]' % (name, value) )
             
