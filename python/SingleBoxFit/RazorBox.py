@@ -102,8 +102,8 @@ class RazorBox(Box.Box):
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR", 50, 250., 1500.), dir=box)
-        store.store(self.plot1D(inputFile, "Rsq",50, 0.04, .8), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 50, 300., 1500.), dir=box)
+        store.store(self.plot1D(inputFile, "Rsq",50, 0.09, .8), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
