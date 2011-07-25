@@ -7,8 +7,8 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
-        self.cut = 'MR <= 800 && Rsq <= 0.8'
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle']}
+        self.cut = 'MR <= 750'
         #self.cut = 'MR >= 0.0'
 
     def addTailPdf(self, flavour):
@@ -72,8 +72,8 @@ class RazorBox(Box.Box):
         
         #add penalty terms and float
         def float1stComponentWithPenalty(flavour):
-            #self.fixParsPenalty("MR01st_%s" % flavour)
-            #self.fixParsPenalty("R01st_%s" % flavour)
+            self.fixParsPenalty("MR01st_%s" % flavour)
+            self.fixParsPenalty("R01st_%s" % flavour)
             self.fixParsPenalty("b1st_%s" % flavour)
         def floatFractionWithPenalty(flavour):
             self.fixParsPenalty("Epsilon_%s" % flavour, floatIfNoPenalty = True)

@@ -16,12 +16,11 @@ class Box(object):
             r = self.workspace.factory(v)
             self.workspace.extendSet('variables',r.GetName())
 
-        #the SM cross-sections from Chris            
+        #the SM cross-sections from Chris - NB for W and Z we take the per-flavour cross-sections            
         self.cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
-                               'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
+                               'TTj':157.5,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
-        self.workspace.factory('Lumi[1000.0]')
         for name, value in self.cross_sections.iteritems():
             self.workspace.factory('%s[%f]' % (name, value) )
             
@@ -214,7 +213,7 @@ class Box(object):
             
         background_prediction /= (1.0*nRepeats)
         if verbose:
-            print 'Background observed in the %s box: %i' % (self.name,total_yield-background_yield)
+            #print 'Background observed in the %s box: %i' % (self.name,total_yield-background_yield)
             print 'Background prediction after %i repeats: %f' % (nRepeats,background_prediction)
         
         #now set the parameters back
