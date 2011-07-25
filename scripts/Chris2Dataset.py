@@ -18,7 +18,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMax):
     else:
         output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
-    rdata.Write()
+    data.Write()
     output.Close()
     return data.numEntries()
 
