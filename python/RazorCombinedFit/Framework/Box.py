@@ -8,7 +8,7 @@ def getCrossSections():
     return {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173,
-                               'QCD':600000
+                               'QCD':26456
                                }
 
 class Box(object):
@@ -154,13 +154,14 @@ class Box(object):
             var_s = '%s_s' % var
         else:
             var_s = '%s_s[%f]' % (var,sigma)
+        var_ref = self.workspace.var(var)
         
         self.workspace.factory('RooGaussian::%s_penalty(%s,%s,%s)' % (var,var,var_m,var_s))
         fitmodel = self.workspace.pdf(model)
         modelName = '%s_fix%s' % (model, var)
         self.workspace.factory('PROD::%s(%s,%s_penalty)' % (modelName,model,var))
         self.fitmodel = modelName
-        print 'Added a Gaussian penalty term for %s: %f\pm %f' % (var,mean,sigma)
+        print 'Added a Gaussian penalty term for %s: %f\pm %f [%f,%f]' % (var,mean,sigma,var_ref.getMin(),var_ref.getMax())
 
     def fixPars(self, label, doFix=rt.kTRUE, setVal=None):
         parSet = self.workspace.allVars()

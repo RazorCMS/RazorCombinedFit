@@ -7,9 +7,9 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle'],'QCD':['MuEle']}
-        self.cut = 'MR <= 750'
-        #self.cut = 'MR >= 0.0'
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['MuEle','MuMu','EleEle']}
+        #self.cut = 'MR <= 750 && Rsq <= 0.2'
+        self.cut = 'MR >= 0.0'
 
     def addTailPdf(self, flavour):
         
@@ -80,15 +80,16 @@ class RazorBox(Box.Box):
             self.fixParsPenalty("MR01st_%s" % flavour)
             self.fixParsPenalty("R01st_%s" % flavour)
             self.fixParsPenalty("b1st_%s" % flavour)
+        def float2ndComponentWithPenalty(flavour):
+            self.fixParsPenalty("MR02nd_%s" % flavour)
+            self.fixParsPenalty("R02nd_%s" % flavour)
+            self.fixParsPenalty("b2nd_%s" % flavour)
         def floatFractionWithPenalty(flavour):
             self.fixParsPenalty("Epsilon_%s" % flavour, floatIfNoPenalty = True)
             self.fixPars("Epsilon_%s_s" % flavour)
             self.fixParsPenalty("f2_%s" % flavour)
+            self.fixPars("f2_%s_s" % flavour)
 
-        # float all the yields and 2nd-component fractions
-        self.fixPars("Ntot_", rt.kFALSE)
-        #self.fixPars("f2_", rt.kFALSE)
-        
         # switch off not-needed components (box by box)
         fixed = []
         for z in self.zeros:
@@ -96,14 +97,15 @@ class RazorBox(Box.Box):
                 self.switchOff(z)
             else:
                 if not z in fixed:
+                    float1stComponentWithPenalty(z)
+                    #float2ndComponentWithPenalty(z)
                     floatFractionWithPenalty(z)
-                    if self.name != 'Had': float1stComponentWithPenalty(z)
                     fixed.append(z)
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)
         store.store(self.plot1D(inputFile, "MR", 50, 300., 1500.), dir=box)
-        store.store(self.plot1D(inputFile, "Rsq",50, 0.09, .8), dir=box)
+        store.store(self.plot1D(inputFile, "Rsq",50, 0.09, .5), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
