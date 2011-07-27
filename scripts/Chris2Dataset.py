@@ -46,7 +46,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
     rMax = rt.TMath.Sqrt(rsqMax)
 
     #iterate over selected entries in the input tree    
-    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && (RUN_NUM >= %f)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box], run),'entrylist')
+    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;
@@ -56,6 +56,11 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
         tree.GetEntry(entry)
         
         if bMax >= 0 and tree.BTAG_NUM != bMax: continue
+        
+        try:
+            if tree.RUN_NUMBER <= run: continue
+        except AttributeError:
+            pass
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
