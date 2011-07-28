@@ -9,7 +9,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         super(SingleBoxAnalysis,self).__init__('SingleBoxFit',outputFile, config)
     
     def merge(self, workspace, box):
-        """Import the contents of a box workspace into the master workspace while enforcing some namespaceing"""
+        """Import the contents of a box workspace into the master workspace while enforcing some name-spaceing"""
         for o in RootTools.RootIterator.RootIterator(workspace.componentIterator()):
             if hasattr(o,'Class') and o.Class().InheritsFrom('RooRealVar'):
                 continue
@@ -59,13 +59,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         for box in boxes:
             
+            if self.options.input is not None:
+                wsName = '%s/Box%s_workspace' % (box,box)
+                print "Restoring the workspace from %s" % self.options.input
+                boxes[box].restoreWorkspace(self.options.input, wsName)
+            
             pdf = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None)
             vars = boxes[box].workspace.set('variables')
             
             #use an MCStudy to store everything
             study = boxes[box].getMCStudy()
             #get the data yield without cuts
-            data_yield = RootTools.getDataSet(fileIndex[box],'RMRTree').numEntries()
+            data_yield = boxes[box].workspace.data('RMRTree').numEntries()
             
             pre_ = rt.RooRealVar('predicted','predicted',-1)
             obs_ = rt.RooRealVar('observed','observed',-1)
@@ -112,22 +117,36 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
 
-            print 'Variables for box %s' % box
-            boxes[box].workspace.allVars().Print('V')
-            print 'Workspace'
-            boxes[box].workspace.Print('V')
+            if self.options.input is None:
 
-            # perform the fit
-            fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-            self.store(fr, dir=box)
-            self.store(fr.correlationHist("correlation_%s" % box), dir=box)
-            #store it in the workspace too
-            getattr(boxes[box].workspace,'import')(fr,'independentFR')
+                print 'Variables for box %s' % box
+                boxes[box].workspace.allVars().Print('V')
+                print 'Workspace'
+                boxes[box].workspace.Print('V')
+
+                # perform the fit
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+                self.store(fr, dir=box)
+                self.store(fr.correlationHist("correlation_%s" % box), dir=box)
+                #store it in the workspace too
+                getattr(boxes[box].workspace,'import')(fr,'independentFR')
+                #store the name of the PDF used
+                getattr(boxes[box].workspace,'import')(rt.TString(boxes[box].fitmodel),'independentFRPDF')
             
-            #make any plots required
-            boxes[box].plot(fileName, self, box)
-        
-        if len(boxes) > 1:
+                #make any plots required
+                boxes[box].plot(fileName, self, box)
+                
+            else:
+                
+                wsName = '%s/Box%s_workspace' % (box,box)
+                print "Restoring the workspace from %s" % self.options.input
+                boxes[box].restoreWorkspace(self.options.input, wsName)
+                print 'Variables for box %s' % box
+                boxes[box].workspace.allVars().Print('V')
+                print 'Workspace'
+                boxes[box].workspace.Print('V')
+            
+        if len(boxes) > 1 and self.options.simultaneous:
             #merge the boxes together in some way
             import RazorMultiBoxSim
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
@@ -140,4 +159,38 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
+            
+    def limit(self, inputFiles):
+        """Set a limit based on the model dependent method"""
+                
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+        
+        if self.options.input is None:
+            raise Exception('Limit setting code needs a fit result file as input. None given')
+
+        #start by setting all box configs the same
+        for box, fileName in fileIndex.iteritems():
+            
+                
+            wsName = '%s/Box%s_workspace' % (box,box)
+            print "Restoring the workspace from %s" % self.options.input
+            boxes[box].restoreWorkspace(self.options.input, wsName)
+            # add signal specific parameters 
+            boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "others_Signal"))
+            #need to fix all parameters to their restored values
+            boxes[box].fixAllPars()
+            print 'Variables for box %s' % box
+            boxes[box].workspace.allVars().Print('V')
+            print 'Workspace'
+            boxes[box].workspace.Print('V')
+            
+            fr = boxes[box].workspace.obj('independentFR')
+            toy = boxes[box].generateToy()
+            signalModel = boxes[box].addSignalModel('/Users/wreece/Documents/workspace/RazorCombinedFit/SignalShape.root')
+            fr2 = boxes[box].fit(boxes[box].getFitPDF(),rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            fr_toy = boxes[box].fitData(boxes[box].getFitPDF(), toy, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            fr_toy2 = boxes[box].fitData(boxes[box].getFitPDF(name=signalModel), toy, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            print 'NLL: ',fr.minNll(),fr2.minNll(),fr_toy.minNll(),fr_toy2.minNll()
+
 

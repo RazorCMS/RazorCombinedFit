@@ -40,7 +40,6 @@ class RazorBox(Box.Box):
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
         #import the dataset to the workspace
         self.importToWS(data)
-        self.workspace.Print('V')
 
         # add the different components:
         # - W+jets
@@ -101,6 +100,25 @@ class RazorBox(Box.Box):
                     #float2ndComponentWithPenalty(z)
                     floatFractionWithPenalty(z)
                     fixed.append(z)
+                    
+    def addSignalModel(self, inputFile, modelName = None):
+        
+        if modelName is None:
+            modelName = 'Signal'
+        
+        data = self.workspace.data('RMRTree')
+        signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
+        
+        nS = self.yieldToCrossSection(modelName)
+        nBG = self.workspace.factory("expr::n%sBG('%i - @0',Ntot_%s)" % (modelName,data.numEntries(),modelName))
+        
+        add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
+                           rt.RooArgList(self.workspace.pdf(signalModel),self.workspace.pdf(self.fitmodel)),
+                           rt.RooArgList(nS,nBG)
+                           )
+        self.importToWS(add)
+        self.signalmodel = add.GetName()
+
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)

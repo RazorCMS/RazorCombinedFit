@@ -16,7 +16,13 @@ if __name__ == '__main__':
     parser.add_option('-t','--toys',dest="toys",type="int", default=0,
                   help="The number of toys to run")    
     parser.add_option('-s','--seed',dest="seed",type="int", default=0,
-                  help="The random seed to start with")    
+                  help="The random seed to start with")
+    parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
+                  help="An input file to read fit results and workspaces from")
+    parser.add_option('--simultaneous',dest="simultaneous", default=False,action='store_true',
+                  help="Run the simultaneous fit")
+    parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',
+                  help="Run the model-dependent limit setting code")
     (options,args) = parser.parse_args()
     
     print 'Running analysis %s...' % options.analysis
@@ -47,11 +53,14 @@ if __name__ == '__main__':
              DalglishFit.DalglishAnalysis(options.output, cfg), SingleBoxFit.SingleBoxAnalysis(options.output, cfg)]
         for aa in a:
             if aa.name == options.analysis:
+                aa.options = options
                 print "Running analysis '%s'" % aa.name
                 if options.toys > 0:
                     aa.runtoys(args, options.toys)
                 else:
                     aa.analysis(args)
+                    if options.limit:    
+                        aa.limit(args)
                 aa.final()
         
     else:

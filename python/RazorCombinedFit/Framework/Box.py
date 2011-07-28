@@ -32,9 +32,10 @@ class Box(object):
             self.workspace.factory('%s[%f]' % (name, value) )
             
         self.fitmodel = 'fitmodel'
+        self.signalmodel = self.fitmodel
         
     def yieldToCrossSection(self, flavour):
-        self.workspace.factory("expr::Ntot_%s('@0*@1*@2',Lumi,%s,Epsilon_%s)" % (flavour, flavour, flavour))
+        return self.workspace.factory("expr::Ntot_%s('@0*@1*@2',Lumi,%s,Epsilon_%s)" % (flavour, flavour, flavour))
         
     def getVarRangeCut(self):
         cut = ''
@@ -51,13 +52,42 @@ class Box(object):
         self.workspace.defineSet(name,'')
         for v in variables:
             r = self.workspace.factory(v)
-            self.workspace.extendSet(name,r.GetName())            
+            self.workspace.extendSet(name,r.GetName())     
+            
+    def restoreWorkspace(self, inputFile, workspace):
+        input = rt.TFile.Open(inputFile)
+        ws = input.Get(workspace)
+        if ws:
+            self.workspace = ws
+        input.Close()
+        pdfs = self.workspace.allPdfs()
+        
+        #set the name of the fitmodel from the workspace
+        master = 'fitmodel'
+        for p in RootTools.RootIterator.RootIterator(pdfs):
+            if 'fitmodel' in p.GetName():
+                if len(p.GetName().split('_')) > len(master.split('_')):
+                    master = p.GetName()
+        self.fitmodel = master
+        if not self.workspace.pdf(self.fitmodel):
+            print 'Master PDF not found... in workspace'
+    
+    def setFitModelName(self, name):
+        if name is not None:
+            self.fitmodel = '%s_%s' % (self.fitmodel,name)
+        else:
+            print 'WARNING:: Name decorator provided for fitmodel was None'
+        return self.fitmodel
         
     def getFitPDF(self, name=None,graphViz='graphViz'):
         if name is None:
-            pdf = self.workspace.pdf(self.fitmodel)
-        else:
-            pdf = self.workspace.pdf(name)
+            name = self.fitmodel
+        pdf = self.workspace.pdf(name)        
+
+        if not pdf:
+            print 'WARNING:: Failed to get pdf "%s"' % name
+            return pdf 
+
         #save as a dotty file for easy inspection
         if graphViz is not None:
             pdf.graphVizTree('%s_%s.dot' % (pdf.GetName(),graphViz))
@@ -85,7 +115,24 @@ class Box(object):
         
         study = rt.RooMCStudy(gen,vars,rt.RooFit.Extended(True),rt.RooFit.FitModel(fit),rt.RooFit.FitOptions(*opt))
         return study
+    
+    def makeRooHistPdf(self, inputFile, modelName):
         
+        signal = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+        vars = self.workspace.set('variables')
+        
+        hvars = rt.RooArgSet()
+        for p in RootTools.RootIterator.RootIterator(vars):
+            p.setBins(100)
+            hvars.add(p)
+        
+        #create a binned dataset in the parameter   
+        hdata = rt.RooDataHist('%sHist' % modelName,'%sHist' % modelName,hvars)
+        self.importToWS(hdata)
+        hpdf = rt.RooHistPdf('%sPdf' % modelName,'%sPdf' % modelName,vars,hdata)
+        self.importToWS(hpdf)
+        return (hpdf.GetName(),signal.numEntries())
+
     
     def importToWS(self, *args):
         """Utility function to call the RooWorkspace::import methods"""
@@ -93,8 +140,6 @@ class Box(object):
     
     def fit(self, inputFile, reduce = None, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
-
-        #data = RootTools.getDataSet(inputFile,'RMRTree', reduce)
         data = self.workspace.data("RMRTree")
         return self.fitData(self.getFitPDF(), data, *options)
     
@@ -119,6 +164,16 @@ class Box(object):
             print 'WARNING:: The fit did not converge with high quality. Consider this result suspect!'
         
         return result 
+    
+    def generateToy(self, *options):
+        
+        vars = self.workspace.set('variables')
+        data = self.workspace.data('RMRTree')
+        pdf = self.workspace.pdf(self.fitmodel)
+        
+        gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(data.numEntries()),*options)
+        gdata_cut = gdata.reduce(self.cut)
+        return gdata_cut
 
     def plotObservables(self, inputFile, name = None):
         """Make control plots for variables defined in the 'variables' part of the config"""
@@ -126,7 +181,7 @@ class Box(object):
         if name is None:
             name = self.fitmodel
 
-        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data = RootTools.getDataSet(inputFile,'RMRTree',self.cut)
         fitmodel = self.workspace.pdf(name)
         
         plots = []
@@ -169,6 +224,17 @@ class Box(object):
             if label in par.GetName():
                 par.setConstant(doFix)
                 if setVal is not None: par.setVal(setVal)
+    
+    def fixAllPars(self):
+        """Fix all the parameters and return a list of which ones were fixed"""
+        
+        fixed_pars = []
+        parSet = self.workspace.allVars()
+        for par in RootTools.RootIterator.RootIterator(parSet):
+            if not par.isConstant():
+                fixed_pars.append(par.GetName())
+                par.setConstant(True)
+        return fixed_pars
     
     def fixParsExact(self, label, doFix=rt.kTRUE, setVal=None):
         parSet = self.workspace.allVars()
@@ -240,6 +306,10 @@ class Box(object):
 
         
     def define(self, inputFile, cuts):
+        pass
+    
+    def addSignalModel(self, inputFile, modelName):
+        """Add a signal model for model dependent limits"""
         pass
     
     def plot(self, inputFile, store, box):

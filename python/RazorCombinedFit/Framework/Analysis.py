@@ -36,6 +36,9 @@ class Analysis(object):
             index[tag] = f
         return index
         
+    def limit(self, inputFiles):
+        """Set a limit based on the model dependent method"""
+        return None
     
     def analysis(self, inputFiles):
         return None
