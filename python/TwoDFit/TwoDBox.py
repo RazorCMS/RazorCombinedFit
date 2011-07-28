@@ -15,17 +15,22 @@ class TwoDBox(Box.Box):
         
         #create the dataset
         data = RootTools.getDataSet(inputFile,'RMRTree').reduce("MR >= %f && MR <= %f" %(xmin, xmax)).reduce("Rsq >= %f && Rsq < %f" %(ymin, ymax))
+        #use weights
+        data
         #import the dataset to the workspace
         self.importToWS(data)
         print 'Reduced dataset'
         #data.Print("V")
 
+        #define the yield as eps*r*L*sigma
+        self.yieldToCrossSection()
+
         # define the two components
         self.workspace.factory("RooRazor2DTail::PDF1st(MR,Rsq,MR01st,R01st,b1st)")
         self.workspace.factory("RooRazor2DTail::PDF2nd(MR,Rsq,MR02nd,R02nd,b2nd)")
         #define the two yields
-        self.workspace.factory("expr::N_1st('@0*(1-@1)',Ntot,f2)")
-        self.workspace.factory("expr::N_2nd('@0*@1',Ntot,f2)")
+        self.workspace.factory("expr::N_1st('@0*(1-@1*@2)',Ntot,f2,rf)")
+        self.workspace.factory("expr::N_2nd('@0*@1*@2',Ntot,f2,rf)")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st(PDF1st, N_1st)")
         self.workspace.factory("RooExtendPdf::ePDF2nd(PDF2nd, N_2nd)")
@@ -42,8 +47,8 @@ class TwoDBox(Box.Box):
         
     def plot(self, inputFile, store, box):
         super(TwoDBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR", 50, 250., 1500.), dir=box)
-        store.store(self.plot1D(inputFile, "Rsq",50, 0.04, .8), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 50, 300., 2000.), dir=box)
+        store.store(self.plot1D(inputFile, "Rsq",50, 0.09, .5), dir=box)
         store.store(self.plotRsqMR(inputFile), dir=box)
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
@@ -64,8 +69,8 @@ class TwoDBox(Box.Box):
         # project the full PDF on the data
         self.workspace.pdf("fitmodel").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
 
-        N1 = self.workspace.var("Ntot").getVal()*(1-self.workspace.var("f2").getVal())
-        N2 = self.workspace.var("Ntot").getVal()*self.workspace.var("f2").getVal()
+        N1 = self.workspace.function("N_1st").getVal()
+        N2 = self.workspace.function("N_2nd").getVal()
 
         # project the first component
         self.workspace.pdf("PDF1st").plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1/(N1+N2)))

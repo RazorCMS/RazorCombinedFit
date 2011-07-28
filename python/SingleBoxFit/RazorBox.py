@@ -21,13 +21,30 @@ class RazorBox(Box.Box):
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
         #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)',Ntot"+label+",f2"+label+")")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1',Ntot"+label+",f2"+label+")")
+        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1*@2)',Ntot"+label+",f2"+label+",rf"+label+")")
+        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rf"+label+")")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
         #float the efficiency with a penalty term if a sigma is provided
 
+    def addTailPdfVjets(self, flavour, flavorW):
+        
+        label = '_%s' % flavour
+        labelW = '_%s' % flavourW
+
+        #define a flavour specific yield
+        self.yieldToCrossSection(flavour)
+        # define the two components
+        self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
+        self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+labelW+",R02nd"+labelW+",b2nd"+labelW+")")
+        #define the two yields
+        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1*@2)',Ntot"+label+",f2"+label+",rf"+label+")")
+        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rf"+label+")")
+        #associate the yields to the pdfs through extended PDFs
+        self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
+        self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
+        #float the efficiency with a penalty term if a sigma is provided
 
     def switchOff(self, species) :
         self.workspace.var("Epsilon_"+species).setVal(0.)
@@ -47,8 +64,10 @@ class RazorBox(Box.Box):
         # - Znn+jets
         # - ttbar+jets
         self.addTailPdf("Wln")    
-        self.addTailPdf("Zll")
-        self.addTailPdf("Znn")
+        #self.addTailPdf("Zll")
+        #self.addTailPdf("Znn")
+        self.addTailPdfVjets("Zll", "Wln")
+        self.addTailPdfVjets("Znn", "Wln")
         self.addTailPdf("TTj")
         self.addTailPdf("QCD")
 

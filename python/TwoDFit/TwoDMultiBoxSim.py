@@ -18,7 +18,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         masterBox = None
         maximumYield = -1e6
         for box in boxes:
-            Ntot = boxes[box].workspace.var('Ntot').getVal()
+            Ntot = boxes[box].workspace.function('Ntot').getVal()
             if Ntot > maximumYield:
                 maximumYield = Ntot
                 masterBox = box
@@ -29,7 +29,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         ws.SetName('Combined_%s' % '_'.join(boxes.keys()))
         ws.SetTitle(ws.GetName())
         
-        splits = ['MR01st','R01st','b1st','Ntot','f2']
+        splits = ['MR01st','R01st','b1st','Epsilon','f2']
         #splits.extend(['b1st_m','b1st_s'])
         #make a RooSimultanious with a category for each box, splitting the 1st component parameters and the fraction
         ws.factory('SIMCLONE::fitmodel_sim(fitmodel, $SplitParam({%s}, Boxes[%s]))' % ( ','.join(splits), ','.join(boxes.keys()) ) )
@@ -42,10 +42,13 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
             self.fix(boxes,'MR01st', box, pars, False)
             self.fix(boxes,'R01st', box, pars, False)
             self.fix(boxes,'b1st', box, pars, False)
-            #self.fix(boxes,'b1st_m', box, pars, True)
-            #self.fix(boxes,'b1st_s', box, pars, True)
-            self.fix(boxes,'Ntot', box, pars, True)
+            self.fix(boxes,'Epsilon', box, pars, True)
             self.fix(boxes,'f2', box, pars, False)
+
+        # float the universal second component
+        self.workspace.var("MR02nd").setConstant(rt.kFALSE)
+        self.workspace.var("R02nd").setConstant(rt.kFALSE)
+        self.workspace.var("b2nd").setConstant(rt.kFALSE)
 
         fr = self.fitData(ws.pdf('fitmodel_sim'),data)
    

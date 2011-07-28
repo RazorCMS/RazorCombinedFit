@@ -12,6 +12,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         print 'Combining boxes...',self.name
         
         flavours = ['Wln','Zll','Znn','TTj']
+        #flavoursToSplit = ['Zll','TTj']
         
         #create the RooCategory for the different boxes
         self.workspace.factory('Boxes[%s]' % ','.join(boxes.keys()))

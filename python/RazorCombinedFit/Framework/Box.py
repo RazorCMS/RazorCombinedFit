@@ -34,8 +34,9 @@ class Box(object):
         self.fitmodel = 'fitmodel'
         self.signalmodel = self.fitmodel
         
-    def yieldToCrossSection(self, flavour):
-        return self.workspace.factory("expr::Ntot_%s('@0*@1*@2',Lumi,%s,Epsilon_%s)" % (flavour, flavour, flavour))
+    def yieldToCrossSection(self, flavour="none"):
+        if flavour != "none": self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',Lumi,%s,Epsilon_%s, rEps_%s)" % (flavour, flavour, flavour, flavour))
+        else: self.workspace.factory("expr::Ntot('@0*@1*@2*@3',Lumi,Sigma,Epsilon, rEps)")
         
     def getVarRangeCut(self):
         cut = ''
