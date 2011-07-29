@@ -42,7 +42,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
             self.fix(boxes,'MR01st', box, pars, False)
             self.fix(boxes,'R01st', box, pars, False)
             self.fix(boxes,'b1st', box, pars, False)
-            self.fix(boxes,'Epsilon', box, pars, True)
+            self.fix(boxes,'Epsilon', box, pars, False)
             self.fix(boxes,'f2', box, pars, False)
 
         # float the universal second component
@@ -50,7 +50,8 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         self.workspace.var("R02nd").setConstant(rt.kFALSE)
         self.workspace.var("b2nd").setConstant(rt.kFALSE)
 
-        fr = self.fitData(ws.pdf('fitmodel_sim'),data)
+        fr = self.fitData(ws.pdf('fitmodel_sim'),data, rt.RooFit.Range("B1,B2,B3"))
+        #fr = self.fitData(ws.pdf('fitmodel_sim'),data, rt.RooFit.Range("FULL"))
    
         self.importToWS(fr,'simultaniousFR')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())

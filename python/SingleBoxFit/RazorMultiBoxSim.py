@@ -52,15 +52,29 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         ws.factory('SIMCLONE::%s(%s, $SplitParam({%s}, Boxes[%s]))' % (self.fitmodel, boxes[masterBox].fitmodel, ','.join(splits), ','.join(boxes.keys()) ) )
         self.workspace = ws
         
-        self.fixParsExact('b2nd_Wln',False)                                                                                                                                                         
-        self.fixParsExact('b2nd_Zll',False)                                                                                                                                                         
-        self.fixParsExact('b2nd_TTj',False)
+        self.fixParsExact('b2nd_Wln',True)                                                                                                                                                         
+        self.fixParsExact('b2nd_Zll',True)                                                                                                                                                         
+        self.fixParsExact('b2nd_TTj',True)
 
-        self.fixParsExact('b1st_Wln',False)                                                                                                                                                         
-        self.fixParsExact('b1st_Zll',False)                                                                                                                                                         
-        self.fixParsExact('b1st_TTj',False)
+        self.fixParsExact('b1st_Wln',True)                                                                                                                                                         
+        self.fixParsExact('b1st_Zll',True)                                                                                                                                                         
+        self.fixParsExact('b1st_TTj',True)
+
+        # normalization fixed
+        self.fixPars('Epsilon',True)
+        # 1st component fixed
+        self.fixPars('1st', True)
+        # 2nd component floated
+        #self.fixPars('MR02nd_Wln', False)
+        #self.fixPars('MR02nd_TTj', False)
+        #self.fixPars('R02nd_Wln', False)
+        #self.fixPars('R02nd_TTj', False)
+        #self.fixPars('b2nd_Wln', False)
+        #self.fixPars('b2nd_TTj', False)
+        # for data
+        # self.fixPars('rf_', False)
+        # self.fixPars('rEps_', False)
         
-        self.fixParsExact('Epsilon',False)
             
         for box in boxes:
             pars = {}
@@ -75,7 +89,8 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             
             self.workspace.var('Lumi_%s' % box).setVal(boxes[box].workspace.var('Lumi').getVal())
         
-        fr = self.fitData(ws.pdf(self.fitmodel),data)
+        fr = self.fitData(ws.pdf(self.fitmodel),data, rt.RooFit.Range("B1,B2,B3"))
+        #fr = self.fitData(ws.pdf(self.fitmodel),data,)
         self.importToWS(fr,'simultaniousFR')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
@@ -90,7 +105,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             p.setBins(100)
             hvars.add(p)
 
-        ranges = {'MR':(200,1500),'Rsq':(0.04,1.0)}
+        ranges = {'MR':(300,2000),'Rsq':(0.09,0.5)}
         #ranges = {}
 
         #go box by box

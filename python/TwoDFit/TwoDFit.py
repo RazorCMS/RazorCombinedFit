@@ -30,15 +30,16 @@ class TwoDAnalysis(Analysis.Analysis):
             boxes[box].workspace.Print('V')
 
             # perform the fit
-            fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("B1,B2,B3"))
+            #fr = boxes[box].fit(fileName,None, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("FULL"))
+
             self.store(fr, dir=box)
             self.store(fr.correlationHist("correlation_%s" % box), dir=box)
             #store it in the workspace too
             getattr(boxes[box].workspace,'import')(fr,'independentFR')
-            
             #make any plots required
-            boxes[box].plot(fileName, self, box)
-        
+            #boxes[box].plot(fileName, self, box)
+
         #combine the boxes in some way
         import TwoDMultiBoxSim
         multi = TwoDMultiBoxSim.TwoDMultiBoxSim(self)
@@ -47,4 +48,4 @@ class TwoDAnalysis(Analysis.Analysis):
         
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
-
+            

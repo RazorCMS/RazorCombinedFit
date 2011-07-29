@@ -7,7 +7,8 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['MuEle','MuMu','EleEle']}
+        #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['MuEle','MuMu','EleEle']}
+        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['Mu', 'Ele', 'Had', 'MuEle','MuMu','EleEle']}
         #self.cut = 'MR <= 750 && Rsq <= 0.2'
         self.cut = 'MR >= 0.0'
 
@@ -55,6 +56,21 @@ class RazorBox(Box.Box):
         
         #create the dataset
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+        
+        #define the ranges
+        mR  = self.workspace.var("MR")
+        Rsq = self.workspace.var("Rsq")
+        
+        # TIGHT
+        mR.setRange("B1", 300, 650.)
+        Rsq.setRange("B1", 0.09, 0.2)
+        mR.setRange("B2", 300, 450.)
+        Rsq.setRange("B2", 0.2, 0.3)
+        mR.setRange("B3", 300, 350.)
+        Rsq.setRange("B3", 0.3, 0.5)
+        mR.setRange("FULL", 300, 3500.)
+        Rsq.setRange("FULL", 0.09, 0.5)       
+        
         #import the dataset to the workspace
         self.importToWS(data)
 
@@ -107,6 +123,9 @@ class RazorBox(Box.Box):
             self.fixPars("Epsilon_%s_s" % flavour)
             self.fixParsPenalty("f2_%s" % flavour)
             self.fixPars("f2_%s_s" % flavour)
+        def floatFraction(flavour):
+            self.fixParsExact("Epsilon_%s" % flavour, True)
+            self.fixParsExact("f2_%s" % flavour, False)
 
         # switch off not-needed components (box by box)
         fixed = []
@@ -115,9 +134,10 @@ class RazorBox(Box.Box):
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    float1stComponentWithPenalty(z)
+                    #float1stComponentWithPenalty(z)
                     #float2ndComponentWithPenalty(z)
-                    floatFractionWithPenalty(z)
+                    #floatFractionWithPenalty(z)
+                    floatFraction(z)
                     fixed.append(z)
                     
     def addSignalModel(self, inputFile, modelName = None):
@@ -141,9 +161,9 @@ class RazorBox(Box.Box):
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR", 50, 300., 1500.), dir=box)
-        store.store(self.plot1D(inputFile, "Rsq",50, 0.09, .5), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
+        store.store(self.plot1D(inputFile, "MR", 100), dir=box)
+        store.store(self.plot1D(inputFile, "Rsq",100), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
         # set the integral precision
@@ -159,7 +179,7 @@ class RazorBox(Box.Box):
         frameMR.SetTitle(varname+"plot")
         data = RootTools.getDataSet(inputFile,'RMRTree')
         data_cut = data.reduce(self.cut)
-        data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed))
+        data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed)) 
         data_cut.plotOn(frameMR)
         # project the full PDF on the data
         self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))

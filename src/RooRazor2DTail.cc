@@ -84,10 +84,10 @@ Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) c
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y
-     integral = 1/B*exp(-B*X0*Y0)*(exp(B*(xmax*(Y0-ymax)+X0*ymax))-
-				   exp(B*(xmin*(Y0-ymax)+X0*ymax))-
-				   exp(B*(xmax*(Y0-ymin)+X0*ymin))+
-				   exp(B*(xmin*(Y0-ymin)+X0*ymin)));
+     integral = fabs(1/B*exp(-B*X0*Y0)*(exp(B*(xmax*(Y0-ymax)+X0*ymax))-
+					exp(B*(xmin*(Y0-ymax)+X0*ymax))-
+					exp(B*(xmax*(Y0-ymin)+X0*ymin))+
+					exp(B*(xmin*(Y0-ymin)+X0*ymin))));
    } else if(code == 2) { // integral on X
      integral = exp(B*(X0-xmax-xmin)*(Y-Y0))*(exp(B*xmin*(Y-Y0))*(X0-xmax)-exp(B*xmax*(Y-Y0))*(X0-xmin));
    } else if(code == 3) { // integral on X

@@ -128,7 +128,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("B1,B2,B3"))
+                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
                 self.store(fr, dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
                 #store it in the workspace too
@@ -154,7 +155,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             import RazorMultiBoxSim
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
             multi.combine(boxes, fileIndex)
-            multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaniousFR'), fileIndex)
+            #multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaniousFR'), fileIndex)
             self.workspace = multi.workspace
 
         for box, fileName in fileIndex.iteritems():
