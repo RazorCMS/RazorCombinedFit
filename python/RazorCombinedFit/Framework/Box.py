@@ -35,8 +35,12 @@ class Box(object):
         self.signalmodel = self.fitmodel
         
     def yieldToCrossSection(self, flavour="none"):
-        if flavour != "none": self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',Lumi,%s,Epsilon_%s, rEps_%s)" % (flavour, flavour, flavour, flavour))
-        else: self.workspace.factory("expr::Ntot('@0*@1*@2*@3',Lumi,Sigma,Epsilon, rEps)")
+        result = None
+        if flavour != "none": 
+            result = self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',Lumi,%s,Epsilon_%s, rEps_%s)" % (flavour, flavour, flavour, flavour))
+        else:
+            result = self.workspace.factory("expr::Ntot('@0*@1*@2*@3',Lumi,Sigma,Epsilon, rEps)")
+        return result
         
     def getVarRangeCut(self):
         cut = ''
@@ -63,13 +67,16 @@ class Box(object):
         input.Close()
         pdfs = self.workspace.allPdfs()
         
-        #set the name of the fitmodel from the workspace
-        master = 'fitmodel'
-        for p in RootTools.RootIterator.RootIterator(pdfs):
-            if 'fitmodel' in p.GetName():
-                if len(p.GetName().split('_')) > len(master.split('_')):
-                    master = p.GetName()
-        self.fitmodel = master
+        if self.workspace.obj('independentFRPDF'):
+            self.fitmodel = self.workspace.obj('independentFRPDF').GetName()
+        else:
+            #set the name of the fitmodel from the workspace
+            master = 'fitmodel'
+            for p in RootTools.RootIterator.RootIterator(pdfs):
+                if 'fitmodel' in p.GetName():
+                    if len(p.GetName().split('_')) > len(master.split('_')):
+                        master = p.GetName()
+                self.fitmodel = master
         if not self.workspace.pdf(self.fitmodel):
             print 'Master PDF not found... in workspace'
     
@@ -128,7 +135,7 @@ class Box(object):
             hvars.add(p)
         
         #create a binned dataset in the parameter   
-        hdata = rt.RooDataHist('%sHist' % modelName,'%sHist' % modelName,hvars)
+        hdata = rt.RooDataHist('%sHist' % modelName,'%sHist' % modelName,hvars, signal)
         self.importToWS(hdata)
         hpdf = rt.RooHistPdf('%sPdf' % modelName,'%sPdf' % modelName,vars,hdata)
         self.importToWS(hpdf)
@@ -143,8 +150,8 @@ class Box(object):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
         data = self.workspace.data("RMRTree")
         return self.fitData(self.getFitPDF(), data, *options)
-    
-    def fitData(self, pdf, data, *options):
+
+    def fitDataSilent(self, pdf, data, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
         
         opt = rt.RooLinkedList()
@@ -156,25 +163,40 @@ class Box(object):
             opt.Add(o)
             
         if data.isWeighted():
-            print 'The dataset is weighted: Performing a SumW2 fit'
             opt.Add(rt.RooFit.SumW2Error(True))
         
         result = pdf.fitTo(data, opt)
+        return result 
+
+    
+    def fitData(self, pdf, data, *options):
+        """Take the dataset and fit it with the top level pdf. Return the fitresult"""
+        
+        if data.isWeighted():
+            print 'The dataset is weighted: Performing a SumW2 fit'
+
+        result = self.fitDataSilent(pdf, data, *options)
         result.Print('V')
         if result.status() != 0 or result.covQual() != 3:
             print 'WARNING:: The fit did not converge with high quality. Consider this result suspect!'
         
         return result 
-    
-    def generateToy(self, *options):
+
+    def generateToyWithYield(self, genmodel, number, *options):
+        """Generate a toy dataset with the specified number of events"""
         
         vars = self.workspace.set('variables')
-        data = self.workspace.data('RMRTree')
-        pdf = self.workspace.pdf(self.fitmodel)
-        
-        gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(data.numEntries()),*options)
+        pdf = self.workspace.pdf(genmodel)
+
+        gdata = pdf.generate(vars,number,*options)
         gdata_cut = gdata.reduce(self.cut)
         return gdata_cut
+    
+    def generateToy(self, genmodel, *options):
+        """Generate a toy dataset with the number of events the same as that in the workspace"""
+        data = self.workspace.data('RMRTree')
+        return self.generateToyWithYield(genmodel, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), *options)
+
 
     def plotObservables(self, inputFile, name = None):
         """Make control plots for variables defined in the 'variables' part of the config"""

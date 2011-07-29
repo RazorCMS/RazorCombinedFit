@@ -10,6 +10,9 @@ class Analysis(object):
         self.rootFile = RootFile.RootFile(outputFile)
         self.workspace = rt.RooWorkspace(self.name)
         self.config = config
+        
+        #the sigma bounds of a Gaussian
+        self.sigmas = {1:0.6826894921,2:0.9544997361,3:0.9973002039,4:0.9999366575,5:0.9999994267}
     
     def importToWS(self, *args):
         """Utility function to call the RooWorkspace::import methods"""
