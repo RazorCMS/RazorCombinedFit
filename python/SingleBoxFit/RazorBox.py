@@ -28,7 +28,7 @@ class RazorBox(Box.Box):
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
         #float the efficiency with a penalty term if a sigma is provided
 
-    def addTailPdfVjets(self, flavour, flavorW):
+    def addTailPdfVjets(self, flavour, flavourW):
         
         label = '_%s' % flavour
         labelW = '_%s' % flavourW
