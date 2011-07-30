@@ -40,9 +40,13 @@ for Box in BoxName:
         vars = []
         for v in RootTools.RootIterator.RootIterator(named):
             name = v.GetName()
+            if name.find("_s") != -1: continue
             if fitPars.has_key(name): v = fitPars[v.GetName()]
             if v.getMin() < -1.E10 or v.getMax() > 1.E10: vars.append('%s[%.5f]' % (v.GetName(),v.getVal()))                
-            else : vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),v.getVal(),v.getMin(),v.getMax()))
+            else :
+                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),v.getVal(),v.getMin(),v.getMax()))
+                if name != "MR" and name != "Rsq":
+                    vars.append('%s_s[%.5f]' % (v.GetName(),v.getError()))
         config.set(Box,key,str(vars))
     
 config.write(outfile)
