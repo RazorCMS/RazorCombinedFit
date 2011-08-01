@@ -23,6 +23,8 @@ if __name__ == '__main__':
                   help="Run the simultaneous fit")
     parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',
                   help="Run the model-dependent limit setting code")
+    parser.add_option('-m','--model-independent-limit',dest="model_independent_limit", default=False,action='store_true',
+                  help="Run the model-independent limit setting code")
     (options,args) = parser.parse_args()
     
     print 'Running analysis %s...' % options.analysis

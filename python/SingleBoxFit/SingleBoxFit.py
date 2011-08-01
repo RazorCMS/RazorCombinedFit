@@ -155,12 +155,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
             import RazorMultiBoxSim
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
             multi.combine(boxes, fileIndex)
-            #multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaniousFR'), fileIndex)
+            if self.options.model_independent_limit:
+                multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaniousFR'), fileIndex)
             self.workspace = multi.workspace
 
-        for box, fileName in fileIndex.iteritems():
-            pass
-            #boxes[box].predictBackground(boxes[box].workspace.obj('independentFR'), fileName)
+        if self.options.model_independent_limit:
+            for box, fileName in fileIndex.iteritems():
+                boxes[box].predictBackground(boxes[box].workspace.obj('independentFR'), fileName)
         
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
