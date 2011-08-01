@@ -156,7 +156,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
             multi.combine(boxes, fileIndex)
             if self.options.model_independent_limit:
-                multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaniousFR'), fileIndex)
+                multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaneousFR'), fileIndex)
             self.workspace = multi.workspace
 
         if self.options.model_independent_limit:

@@ -53,7 +53,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         fr = self.fitData(ws.pdf('fitmodel_sim'),data, rt.RooFit.Range("B1,B2,B3"))
         #fr = self.fitData(ws.pdf('fitmodel_sim'),data, rt.RooFit.Range("FULL"))
    
-        self.importToWS(fr,'simultaniousFR')
+        self.importToWS(fr,'simultaneousFR')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
         fitmodel = self.workspace.pdf('fitmodel_sim')
