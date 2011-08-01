@@ -5,8 +5,8 @@ import os
 import sys
 import subprocess
 
-def runLocal(scriptFile, output, options):
-    print 'Running the script locally...'
+def runLocal(scriptFile, output, options, jobName):
+    print 'Running the script locally...', jobName
     stdout, stderr = subprocess.Popen(["sh", scriptFile], stdout=subprocess.PIPE,stderr=subprocess.PIPE).communicate()
     out = file(output,'w')
     out.write('STDOUT::\n')
@@ -15,9 +15,9 @@ def runLocal(scriptFile, output, options):
     out.write(stderr)
     out.close()
     
-def runLSF(scriptFile, output, options):
+def runLSF(scriptFile, output, options, jobName):
     print 'Running the script on LSF'
-    cmd = 'bsub -q %s -o %s %s' % (options.queue_name,output,scriptFile)
+    cmd = 'bsub -q %s -o %s -J %s %s' % (options.queue_name,output,jobName,scriptFile)
     os.system(cmd)
 
 if __name__ == '__main__':
@@ -79,7 +79,7 @@ popd
         os.mkdir(options.job_dir)
         
     for i in xrange(options.number_of_toys):
-        jobDir = os.path.join(options.job_dir,'Job_%i' % i)
+        jobDir = os.path.join(pwd,options.job_dir,'Job_%i' % i)
         if not os.path.exists(jobDir):
             os.mkdir(jobDir)
         scriptFile = os.path.join(jobDir,'run.sh')
@@ -93,9 +93,10 @@ popd
         sc.close()
         
         std_out = os.path.join(jobDir,'STDOUT')
+        jobName = '%s_%i' % (options.job_dir,i)
         
         if options.local:
-            runLocal(scriptFile, std_out, options)
+            runLocal(scriptFile, std_out, options, jobName)
         else:
-            runLSF(scriptFile, std_out, options)
+            runLSF(scriptFile, std_out, options, jobName)
         
