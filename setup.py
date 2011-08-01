@@ -41,6 +41,7 @@ if __name__ == '__main__':
                 return 'export %s=%s:${%s};' % (var,string,var)
         else:
             return export_(var,string,csh)
+    print export_('RAZORFIT_BASE',topDir,options.csh),'\n'
     print prepend_('PYTHONPATH',os.path.join(topDir,'python'),options.csh),'\n'
     
     LIBDIR = os.path.join(topDir,'lib')
