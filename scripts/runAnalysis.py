@@ -4,8 +4,7 @@ import ROOT as rt
 class Marker(object):
     pass
 
-if __name__ == '__main__':
-
+def defineParser():
     parser = OptionParser()
     parser.add_option('-a','--analysis',dest="analysis",type="string",
                   help="Name of the analysis to run")
@@ -25,8 +24,12 @@ if __name__ == '__main__':
                   help="Run the model-dependent limit setting code")
     parser.add_option('-m','--model-independent-limit',dest="model_independent_limit", default=False,action='store_true',
                   help="Run the model-independent limit setting code")
-    (options,args) = parser.parse_args()
-    
+    return parser
+
+if __name__ == '__main__':
+
+    parser = defineParser()
+    (options,args) = parser.parse_args()    
     print 'Running analysis %s...' % options.analysis
     print '\t with the files %s' % ', '.join(args)
     
