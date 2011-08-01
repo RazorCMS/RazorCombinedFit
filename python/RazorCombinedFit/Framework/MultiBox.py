@@ -153,6 +153,16 @@ class MultiBox(Box.Box):
         for name, value in pars.iteritems():
             self.fixPars(name,value.isConstant(),value.getVal())
 
+    def generateToyWithYield(self, genmodel, number, *options):
+        """Generate a toy dataset with the specified number of events"""
+        
+        vars = self.workspace.set('variables')
+        vars.add(self.workspace.cat('Boxes'))
+        pdf = self.workspace.pdf(genmodel)
+
+        gdata = pdf.generate(vars,number,*options)
+        gdata_cut = gdata.reduce(self.cut)
+        return gdata_cut
 
         
     def combine(self, boxes, inputFiles):

@@ -57,6 +57,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
 
+        totalYield = 0
+        simName = None
+
         for box in boxes:
             
             if self.options.input is not None:
@@ -64,13 +67,38 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "Restoring the workspace from %s" % self.options.input
                 boxes[box].restoreWorkspace(self.options.input, wsName)
             
-            pdf = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None)
-            vars = boxes[box].workspace.set('variables')
+            totalYield += boxes[box].workspace.data('RMRTree').numEntries()
             
+        if len(boxes) > 1 and self.options.simultaneous:
+            #merge the boxes together in some way
+            import RazorMultiBoxSim
+            multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
+            #restore the simultaneous fits if required
+            if self.options.input is None:
+                multi.combine(boxes, fileIndex)
+                self.store(rt.TObjString(multi.workspace.GetName()),'simultaneousName')
+            else:
+                print "Restoring the workspace from %s" % self.options.input
+                multi.restoreWorkspace(self.options.input, multi.name, name='simultaneousFRPDF')
+                multi.setCombinedCut(boxes)
+            self.workspace = multi.workspace
+            
+            #just append the sim pdf to the boxes
+            simName = multi.name
+            boxes[multi.name] = multi
+            
+        for box in boxes:    
+            pdf = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None)
+            vars = rt.RooArgSet(boxes[box].workspace.set('variables'))
+
             #use an MCStudy to store everything
             study = boxes[box].getMCStudy()
             #get the data yield without cuts
-            data_yield = boxes[box].workspace.data('RMRTree').numEntries()
+            if box != simName:
+                data_yield = boxes[box].workspace.data('RMRTree').numEntries()
+            else:
+                data_yield = totalYield
+                vars.add(boxes[box].workspace.cat('Boxes'))
             
             pre_ = rt.RooRealVar('predicted','predicted',-1)
             obs_ = rt.RooRealVar('observed','observed',-1)
@@ -107,8 +135,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             self.store(outpars, dir='%s_Toys' % box)
             self.store(yields, dir='%s_Toys' % box)
             
-        for box in boxes.keys():
-            self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
+
 
         
     
@@ -162,6 +189,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             else:
                 print "Restoring the workspace from %s" % self.options.input
                 multi.restoreWorkspace(self.options.input, multi.name, name='simultaneousFRPDF')
+                multi.setCombinedCut(boxes)
             self.workspace = multi.workspace
             
             #run the model independent limit setting code if needed

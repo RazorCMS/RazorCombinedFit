@@ -7,6 +7,18 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
     def __init__(self, workspace):
         super(RazorMultiBoxSim,self).__init__('RazorMultiBoxSim',workspace)
         self.fitmodel = 'fitmodel_sim'
+    
+    def setCombinedCut(self, boxes):
+        
+        box_keys = boxes.keys()
+        
+        #make a cut per box:
+        cut = '( (Boxes == Boxes::%s) && (%s) )' % (box_keys[0],boxes[box_keys[0]].cut)
+        for box in box_keys[1:]:
+            cut = '%s || ( (Boxes == Boxes::%s) && (%s) )' % (cut,box,boxes[box].cut)
+        print 'Overall cut was',cut
+        self.cut = cut
+
         
     def combine(self, boxes, inputFiles):
         print 'Combining boxes...',self.name
@@ -18,6 +30,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         self.workspace.factory('Boxes[%s]' % ','.join(boxes.keys()))
         #this is a merged dataset with each box as a category
         data = self.mergeDataSets(self.workspace.cat('Boxes'),inputFiles)
+        self.setCombinedCut(boxes)
 
         #start with box with largest yields
         masterBox = None
@@ -33,10 +46,9 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         
         #remove the signal region
         before = data.numEntries()
-        data = data.reduce(boxes[masterBox].cut)
+        data = data.reduce(self.cut)
         after = data.numEntries()
-        print "The cut '%s' removed %i entries" % (boxes[masterBox].cut,before-after)
-        self.cut = boxes[masterBox].cut 
+        print "The cut '%s' removed %i entries" % (self.cut,before-after)
 
         #we produce a new workspace from the box with the largest statistics
         ws = rt.RooWorkspace(boxes[masterBox].workspace)
@@ -90,7 +102,6 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             self.workspace.var('Lumi_%s' % box).setVal(boxes[box].workspace.var('Lumi').getVal())
         
         fr = self.fitData(ws.pdf(self.fitmodel),data, rt.RooFit.Range("B1,B2,B3"))
-        #fr = self.fitData(ws.pdf(self.fitmodel),data,)
         self.importToWS(fr,'simultaneousFR')
         self.importToWS(rt.TObjString(self.fitmodel),'simultaneousFRPDF')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())

@@ -33,6 +33,7 @@ class Box(object):
             
         self.fitmodel = 'fitmodel'
         self.signalmodel = self.fitmodel
+        self.cut = 'MR >= 0.0'
         
     def yieldToCrossSection(self, flavour="none"):
         result = None
@@ -291,7 +292,9 @@ class Box(object):
         background_yield = data_cut.numEntries()
         
         pdf = self.workspace.pdf(self.fitmodel)
-        vars = self.workspace.set('variables')
+        vars = rt.RooArgSet(self.workspace.set('variables'))
+        if self.workspace.cat('Boxes'):
+            vars.add(self.workspace.cat('Boxes'))
         
         background_prediction = 0
         
