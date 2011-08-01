@@ -32,7 +32,13 @@ if __name__ == '__main__':
     parser.add_option('--local',dest="local",action="store_true", default=False,
                   help="Run the script locally rather than on the batch")
     parser.add_option('--number-of-toys',dest="number_of_toys",type="int", default=1,
-                  help="The number of toys to run")        
+                  help="The number of toys to run")
+    parser.add_option('--tree',dest="tree",type="string", default='',
+                  help="A TTree to in the Chris2Dataset format")
+    parser.add_option('--tree-config',dest="tree_config",type="string", default=None, metavar='FILE',
+                  help="The config for Chris2Dataset")
+    parser.add_option('--output-file',dest="output_file",type="string", default='razor_output.root', metavar='FILE',
+                  help="The output file for the job")
     (options,args) = parser.parse_args()
 
     pwd = os.getcwd()
@@ -64,12 +70,15 @@ which python
 python -c "import ROOT"
 
 cd $WORKDIR
+
+%s
+
 echo "Running the command:"
 echo "%s"
 echo
 `%s`
 
-tar cfvz output.tar.gz *.root *.log *.txt
+tar cfvz output.tar.gz %s *.log *.txt
 rm -f *.root *.log *.txt
 
 popd
@@ -85,9 +94,16 @@ popd
         scriptFile = os.path.join(jobDir,'run.sh')
         
         #set the random seen per toy
-        cmd = '%s --seed=%i' % (cmd,i*997)
+        cmd = '%s --seed=%i -o %s' % (cmd,i*997,options.output_file)
         
-        script = batch_script % (topdir, jobDir, cmd, cmd)
+        hook = '#NO HOOK Defined'
+        if options.tree != '':
+            hook = """
+#make the RooDataSets directly from the tree in the local directory
+$RAZORFIT_BASE/scripts/Chris2Dataset.py -c %s %s        
+            """ % (options.tree_config, options.tree)
+        
+        script = batch_script % (topdir, jobDir, hook, cmd, cmd, options.output_file)
         sc = file(scriptFile,'w')
         sc.write(script)
         sc.close()
