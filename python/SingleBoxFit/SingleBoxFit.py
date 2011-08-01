@@ -155,10 +155,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #merge the boxes together in some way
             import RazorMultiBoxSim
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
-            multi.combine(boxes, fileIndex)
+            #restore the simultaneous fits if required
+            if self.options.input is None:
+                multi.combine(boxes, fileIndex)
+                self.store(rt.TObjString(multi.workspace.GetName()),'simultaneousName')
+            else:
+                print "Restoring the workspace from %s" % self.options.input
+                multi.restoreWorkspace(self.options.input, multi.name, name='simultaneousFRPDF')
+            self.workspace = multi.workspace
+            
+            #run the model independent limit setting code if needed
             if self.options.model_independent_limit:
                 multi.predictBackground(boxes.keys(), multi.workspace.obj('simultaneousFR'), fileIndex)
-            self.workspace = multi.workspace
 
         if self.options.model_independent_limit:
             for box, fileName in fileIndex.iteritems():
@@ -206,7 +214,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print 'Workspace'
             boxes[box].workspace.Print('V')
             
-            hist_H0 = rt.TH1D('hist_H0','H0',120,-11,11)
             hist_H1 = rt.TH1D('hist_H1','H1',120,-11,11)
             
             lzData = getLz(boxes[box],boxes[box].workspace.data('RMRTree'))
@@ -214,51 +221,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
-#                #generate a toy assuming only the background model
-#                bg_toy = boxes[box].generateToy(boxes[box].fitmodel)
-#                #L(H0|H0)
-#                fr_H0H0 = boxes[box].fitDataSilent(boxes[box].getFitPDF(name=boxes[box].fitmodel), bg_toy, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-#                #L(H1|H0)
-#                fr_H1H0 = boxes[box].fitDataSilent(boxes[box].getFitPDF(name=boxes[box].signalmodel), bg_toy, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-#             
-#                LH1H0 = fr_H1H0.minNll()
-#                LH0H0 = fr_H0H0.minNll()
-#                LzH0 = LH0H0/LH1H0
-#                print 'LzH0',LzH0
-#                hist_H0.Fill(LzH0)
-#                
-#                frame_MR_bg = boxes[box].workspace.var('MR').frame()
-#                bg_toy.plotOn(frame_MR_bg)
-#                boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_bg, rt.RooFit.LineColor(rt.kBlue))
-#                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_bg, rt.RooFit.LineColor(rt.kGreen))
-#                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_bg, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
-#                self.store(frame_MR_bg,name='MR_%i_bg'%i, dir=box)
-#
-#                #delete the background toy data as its taking up memory for no reason
-#                entries = bg_toy.numEntries()
-#                del bg_toy
              
                 #generate a toy assuming only the signal model (same number of events as background only toy)
                 sig_toy = boxes[box].generateToy(boxes[box].signalmodel)
                 Lz = getLz(boxes[box],sig_toy)
                 lzValues.append(Lz)
                 
-#                #L(H0|H1)
-#                fr_H0H1 = boxes[box].fitDataSilent(boxes[box].getFitPDF(name=boxes[box].fitmodel), sig_toy, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-#                #L(H1|H1)
-#                fr_H1H1 = boxes[box].fitDataSilent(boxes[box].getFitPDF(name=boxes[box].signalmodel), sig_toy, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-#                
                 frame_MR_sig = boxes[box].workspace.var('MR').frame()
                 sig_toy.plotOn(frame_MR_sig)
                 boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
                 boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
                 boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
                 self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
-#
-#                LH1H1 = fr_H1H1.minNll()
-#                LH0H1 = fr_H0H1.minNll()
-#                LzH1 = LH0H1-LH1H1
-#                print 'LzH1',LzH1
+
                 hist_H1.Fill(Lz)
             
             #calculate the area integral of the distribution    

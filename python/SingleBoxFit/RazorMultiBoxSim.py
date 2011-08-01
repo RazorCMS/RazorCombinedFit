@@ -40,7 +40,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
 
         #we produce a new workspace from the box with the largest statistics
         ws = rt.RooWorkspace(boxes[masterBox].workspace)
-        ws.SetName('Combined_%s' % '_'.join(boxes.keys()))
+        ws.SetName(self.name)
         ws.SetTitle(ws.GetName())
         
         splits = []
@@ -92,6 +92,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         fr = self.fitData(ws.pdf(self.fitmodel),data, rt.RooFit.Range("B1,B2,B3"))
         #fr = self.fitData(ws.pdf(self.fitmodel),data,)
         self.importToWS(fr,'simultaneousFR')
+        self.importToWS(rt.TObjString(self.fitmodel),'simultaneousFRPDF')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
         fitmodel = self.workspace.pdf(self.fitmodel)

@@ -59,7 +59,7 @@ class Box(object):
             r = self.workspace.factory(v)
             self.workspace.extendSet(name,r.GetName())     
             
-    def restoreWorkspace(self, inputFile, workspace):
+    def restoreWorkspace(self, inputFile, workspace, name = 'independentFRPDF'):
         input = rt.TFile.Open(inputFile)
         ws = input.Get(workspace)
         if ws:
@@ -67,8 +67,8 @@ class Box(object):
         input.Close()
         pdfs = self.workspace.allPdfs()
         
-        if self.workspace.obj('independentFRPDF'):
-            self.fitmodel = self.workspace.obj('independentFRPDF').GetName()
+        if self.workspace.obj(name):
+            self.fitmodel = self.workspace.obj(name).GetName()
         else:
             #set the name of the fitmodel from the workspace
             master = 'fitmodel'
