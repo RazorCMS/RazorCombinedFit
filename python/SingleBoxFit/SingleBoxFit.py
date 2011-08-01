@@ -83,8 +83,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(data_yield))
                 gdata_cut = gdata.reduce(boxes[box].cut)
                 
-                #data_write = 'toydata_%s_%i.txt' % (box,i)
-                #gdata.write(data_write)
+                if self.options.save_toys:
+                    data_write = 'toydata_%s_%i.txt' % (box,i)
+                    gdata.write(data_write)
                 
                 fr = boxes[box].fitData(pdf, gdata_cut)
                 predictions = boxes[box].predictBackgroundData(fr, gdata, nRepeats = 5, verbose = False)

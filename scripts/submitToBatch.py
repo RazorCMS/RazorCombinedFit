@@ -65,7 +65,7 @@ python -c "import ROOT"
 
 cd $WORKDIR
 echo "Running the command:"
-echo %s
+echo "%s"
 echo
 `%s`
 

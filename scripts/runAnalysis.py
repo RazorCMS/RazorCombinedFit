@@ -13,7 +13,9 @@ def defineParser():
     parser.add_option('-o','--output',dest="output",type="string", default='razor_output.root',
                   help="Name of the root file to store everything in")
     parser.add_option('-t','--toys',dest="toys",type="int", default=0,
-                  help="The number of toys to run")    
+                  help="The number of toys to run")
+    parser.add_option('--save-toys',dest="save_toys",action="store_true", default=False,
+                  help="Save the toys as text files for future use.")
     parser.add_option('-s','--seed',dest="seed",type="int", default=0,
                   help="The random seed to start with")
     parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
