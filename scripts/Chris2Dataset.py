@@ -1,4 +1,5 @@
 from optparse import OptionParser
+import os
 
 import ROOT as rt
 import RootTools
@@ -125,8 +126,8 @@ if __name__ == '__main__':
     print 'Input files are %s' % ', '.join(args)
     for f in args:
         if f.lower().endswith('.root'):
-            input = rt.TFile(f)
-            decorator = f[:-5]
+            input = rt.TFile.Open(f)
+            decorator = os.path.basename(f)[:-5]
             
             if not options.eff:
                 #dump the trees for the different datasets
