@@ -91,6 +91,7 @@ popd
         sc = file(scriptFile,'w')
         sc.write(script)
         sc.close()
+        os.system('chmod +x %s' % scriptFile)
         
         std_out = os.path.join(jobDir,'STDOUT')
         jobName = '%s_%i' % (options.job_dir,i)
