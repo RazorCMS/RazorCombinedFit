@@ -26,7 +26,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
 
         #we produce a new workspace from the box with the largest statistics
         ws = rt.RooWorkspace(boxes[masterBox].workspace)
-        ws.SetName('Combined_%s' % '_'.join(boxes.keys()))
+        ws.SetName(self.name)
         ws.SetTitle(ws.GetName())
         
         splits = ['MR01st','R01st','b1st','Epsilon','f2']
@@ -54,6 +54,7 @@ class TwoDMultiBoxSim(MultiBox.MultiBox):
         #fr = self.fitData(ws.pdf('fitmodel_sim'),data, rt.RooFit.Range("FULL"))
    
         self.importToWS(fr,'simultaneousFR')
+        self.importToWS(rt.TObjString(self.fitmodel),'simultaneousFRPDF')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
         fitmodel = self.workspace.pdf('fitmodel_sim')
