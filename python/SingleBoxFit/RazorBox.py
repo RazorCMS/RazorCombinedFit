@@ -155,14 +155,14 @@ class RazorBox(Box.Box):
         #store.store(self.plot1D(inputFile, "MR", 50, range = 'B1,B2,B3'), dir=box)
         #store.store(self.plot1D(inputFile, "Rsq",50, range = 'B1,B2,B3'), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1','B2','B3']), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1']), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B2']), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B3']), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1']), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B2']), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B3']), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['B1','B2','B3'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['B1','B2','B3'])]
-        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
-        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['FULL'])]
+        #[store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
+        #[store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['FULL'])]
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99, range = ''):
         
