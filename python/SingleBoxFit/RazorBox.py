@@ -159,6 +159,10 @@ class RazorBox(Box.Box):
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B2']), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B3']), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
+        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['B1','B2','B3'])]
+        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['B1','B2','B3'])]
+        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
+        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['FULL'])]
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99, range = ''):
         
@@ -269,3 +273,43 @@ class RazorBox(Box.Box):
         histoData.Add(histoToy, -1)
         histoData.SetName('Compare_Data_MC_%s' % '_'.join(ranges) )
         return histoData
+    
+    def plot1DHisto(self, inputFile, xvarname, ranges=None):
+        
+        if ranges is None:
+            ranges = ['']
+        
+        #before I find a better way
+        data = RootTools.getDataSet(inputFile,'RMRTree')
+        toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
+        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
+
+        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
+        xmax = min([self.workspace.var(xvarname).getMax(r) for r in ranges])
+        #nbins = rt.TMath.Nint(abs(xmax-xmin)/2.5)
+        nbins = 50
+
+        def setName(h, name):
+            h.SetName('%s_%s_%s' % (h.GetName(),name,'_'.join(ranges)) )
+            h.GetXaxis().SetTitle(name)
+
+        # define 1D histograms
+        histoData = rt.TH1D("histoData", "histoData",nbins, xmin, xmax)
+        histoToy = rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax)
+
+        # project the data on the histograms
+        data.tree().Project("histoData",xvarname)
+        toyData.tree().Project("histoToy",xvarname)
+        histoToy.Scale(histoData.Integral()/histoToy.Integral())
+
+        setName(histoData,xvarname)
+        setName(histoToy,xvarname)
+
+        histoData.SetOption('e1')
+        histoData.SetMarkerStyle(20)
+        histoToy.SetLineColor(rt.kBlue)
+        histoToy.SetLineWidth(2)
+        histoToy.SetOption('e3')
+
+        return [histoData,histoToy]
+
