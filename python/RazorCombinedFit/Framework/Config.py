@@ -1,4 +1,5 @@
 import ConfigParser, os
+import ROOT as rt
 
 class Config(object):
     
@@ -15,6 +16,29 @@ class Config(object):
     def getVariables(self, box, lineTag='variables'):
         self.__checkBox(box)
         return eval(self.config.get(box,lineTag))
+    
+    def getVariablesRange(self, box, lineTag, workspace):
+        #first define the variables
+        workspace.defineSet(lineTag,'')
+        vars = self.getVariables(box, lineTag)
+        for v in vars:
+            r = workspace.factory(v)
+            workspace.extendSet(lineTag,r.GetName())
+
+        #use a temporary RooWorkspace to process the ranges
+        ws = rt.RooWorkspace('TMP')
+        vars_ranges = self.getVariables(box, '%s_range' % lineTag)
+        for v in vars_ranges:
+            a = ws.factory(v)
+            
+            #format must be VAR_RANGE
+            name = a.GetName()
+            var_name, range_name = name.split('_')
+            if workspace.var(var_name):
+                workspace.var(var_name).setRange(range_name, a.getMin(), a.getMax())
+            else:
+                print "WARNING:: No variable found for range '%s'" % name
+        return workspace
     
     def getRCuts(self, box):
         self.__checkBox(box)

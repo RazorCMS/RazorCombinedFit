@@ -27,9 +27,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
-    variables = config.getVariables(box,"variables")
-    for v in variables:
-        workspace.factory(v)
+    variables = config.getVariablesRange(box,"variables",workspace)
     workspace.factory('nBtag[0,0,2.0]')
     workspace.factory('W[0,0,+INF]')
 

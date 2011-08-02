@@ -25,6 +25,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
             boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
+            self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             # Wln
             boxes[box].defineSet("pdf1pars_Wln", self.config.getVariables(box, "pdf1_Wln"))
             boxes[box].defineSet("pdf2pars_Wln", self.config.getVariables(box, "pdf2_Wln"))
@@ -236,7 +237,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             # add signal specific parameters 
-            boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "others_Signal"))
+            boxes[box].defineSet("others_Signal", self.config.getVariables(box, "others_Signal"))
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box])
             #need to fix all parameters to their restored values

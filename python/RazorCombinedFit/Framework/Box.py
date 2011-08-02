@@ -20,11 +20,6 @@ class Box(object):
             self.workspace = rt.RooWorkspace(name)
         else:
             self.workspace = workspace
-        
-        self.workspace.defineSet('variables','')
-        for v in variables:
-            r = self.workspace.factory(v)
-            self.workspace.extendSet('variables',r.GetName())
 
         #the SM cross-sections from Chris - NB for W and Z we take the per-flavour cross-sections            
         self.cross_sections = getCrossSections()
