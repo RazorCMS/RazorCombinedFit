@@ -151,12 +151,17 @@ class RazorBox(Box.Box):
 
         
     def plot(self, inputFile, store, box):
-        super(RazorBox,self).plot(inputFile, store, box)
-        #store.store(self.plot1D(inputFile, "MR", 100), dir=box)
-        #store.store(self.plot1D(inputFile, "Rsq",100), dir=box)
-        #store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
+        #[store.store(p, dir = box) for p in self.plotObservables(inputFile, range = 'B1,B2,B3')]
+        #store.store(self.plot1D(inputFile, "MR", 50, range = 'B1,B2,B3'), dir=box)
+        #store.store(self.plot1D(inputFile, "Rsq",50, range = 'B1,B2,B3'), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1','B2','B3']), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1']), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B2']), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B3']), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
             
-    def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
+    def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99, range = ''):
+        
         # set the integral precision
         rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
         rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
@@ -164,16 +169,20 @@ class RazorBox(Box.Box):
         if xmax==xmin:
             xmin = self.workspace.var(varname).getMin()
             xmax = self.workspace.var(varname).getMax()
+        data = RootTools.getDataSet(inputFile,'RMRTree')
+        data = data.reduce(rt.RooFit.CutRange(range))
+        data_cut = data.reduce(self.cut)
+        
         # project the data on the variable
-        frameMR = self.workspace.var(varname).frame(xmin, xmax, nbin)
+        frameMR = self.workspace.var(varname).frame(rt.RooFit.AutoSymRange(data_cut),rt.RooFit.Bins(nbin))
         frameMR.SetName(varname+"plot")
         frameMR.SetTitle(varname+"plot")
-        data = RootTools.getDataSet(inputFile,'RMRTree')
-        data_cut = data.reduce(self.cut)
+        
         data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed)) 
         data_cut.plotOn(frameMR)
+        
         # project the full PDF on the data
-        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue))
+        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.Range(range))
 
         # plot each individual component: Wln
         N1_Wln = self.workspace.function("Ntot_Wln").getVal()*(1-self.workspace.var("f2_Wln").getVal())
@@ -195,29 +204,29 @@ class RazorBox(Box.Box):
 
         if N1_Wln+N2_Wln >0:
             # project the first component: Wln
-            self.workspace.pdf("PDF1st_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Wln/Ntot))
+            self.workspace.pdf("PDF1st_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Wln/Ntot), rt.RooFit.Range(range))
             # project the second component: Wln
-            self.workspace.pdf("PDF2nd_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Wln/Ntot))
+            self.workspace.pdf("PDF2nd_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Wln/Ntot), rt.RooFit.Range(range))
         if N1_Zll+N2_Zll >0:
             # project the first component: Zll
-            self.workspace.pdf("PDF1st_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Zll/Ntot))
+            self.workspace.pdf("PDF1st_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Zll/Ntot), rt.RooFit.Range(range))
             # project the second component: Zll
-            self.workspace.pdf("PDF2nd_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Zll/Ntot))
+            self.workspace.pdf("PDF2nd_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Zll/Ntot), rt.RooFit.Range(range))
         if N1_Znn+N2_Znn >0:
             # project the first component: Znn
-            self.workspace.pdf("PDF1st_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Znn/Ntot))
+            self.workspace.pdf("PDF1st_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Znn/Ntot), rt.RooFit.Range(range))
             # project the second component: Znn
-            self.workspace.pdf("PDF2nd_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Znn/Ntot))
+            self.workspace.pdf("PDF2nd_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Znn/Ntot), rt.RooFit.Range(range))
         if N1_TTj+N2_TTj >0:
             # project the first component: TTj
-            self.workspace.pdf("PDF1st_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_TTj/Ntot))
+            self.workspace.pdf("PDF1st_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_TTj/Ntot), rt.RooFit.Range(range))
             # project the second component: TTj
-            self.workspace.pdf("PDF2nd_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_TTj/Ntot))
+            self.workspace.pdf("PDF2nd_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_TTj/Ntot), rt.RooFit.Range(range))
         if N1_QCD+N2_QCD >0:
             # project the first component: TTj
-            self.workspace.pdf("PDF1st_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_QCD/Ntot))
+            self.workspace.pdf("PDF1st_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_QCD/Ntot), rt.RooFit.Range(range))
             # project the second component: TTj
-            self.workspace.pdf("PDF2nd_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_QCD/Ntot))            
+            self.workspace.pdf("PDF2nd_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_QCD/Ntot), rt.RooFit.Range(range))            
 
         #leg = rt.TLegend("leg", "leg", 0.6, 0.6, 0.9, 0.9)
         #leg.AddEntry("PDF1st_Wln", "W+jets 1st")
@@ -231,22 +240,32 @@ class RazorBox(Box.Box):
         
         return frameMR
 
-    def plot2D(self, inputFile, xvarname, yvarname):
+    def plot2D(self, inputFile, xvarname, yvarname, ranges=None):
+        
+        if ranges is None:
+            ranges = ['']
+        
         #before I find a better way
         data = RootTools.getDataSet(inputFile,'RMRTree')
-        toyData = self.workspace.pdf("fitmodel").generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 20*data.numEntries())
-        toyData = toyData.reduce(self.getVarRangeCut())
+        toyData = self.workspace.pdf(self.fitmodel).generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 20*data.numEntries())
+        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
+
+        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
+        xmax = min([self.workspace.var(xvarname).getMax(r) for r in ranges])
+        ymin = min([self.workspace.var(yvarname).getMin(r) for r in ranges])
+        ymax = min([self.workspace.var(yvarname).getMax(r) for r in ranges])
 
         # define 2D histograms
         histoData = rt.TH2D("histoData", "histoData",
-                            100, self.workspace.var(xvarname).getMin(), self.workspace.var(xvarname).getMax(), 
-                            100, self.workspace.var(yvarname).getMin(), self.workspace.var(yvarname).getMax())
+                            100, xmin, xmax, 
+                            100, ymin, ymax)
         histoToy = rt.TH2D("histoToy", "histoToy",
-                            100, self.workspace.var(xvarname).getMin(), self.workspace.var(xvarname).getMax(), 
-                            100, self.workspace.var(yvarname).getMin(), self.workspace.var(yvarname).getMax())
+                            100, xmin, xmax, 
+                            100, ymin, ymax)
         # project the data on the histograms
         data.tree().Project("histoData",yvarname+":"+xvarname)
         toyData.tree().Project("histoToy",yvarname+":"+xvarname)
         histoToy.Scale(histoData.Integral()/histoToy.Integral())
         histoData.Add(histoToy, -1)
+        histoData.SetName('Compare_Data_MC_%s' % '_'.join(ranges) )
         return histoData

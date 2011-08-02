@@ -38,15 +38,22 @@ class Box(object):
             result = self.workspace.factory("expr::Ntot('@0*@1*@2*@3',Lumi,Sigma,Epsilon, rEps)")
         return result
         
-    def getVarRangeCut(self):
+    def getVarRangeCut(self, range = ''):
         cut = ''
         def var_cut(v):
-            return '( (%s >= %f) && (%s < %f) )' % (v.GetName(),v.getMin(),v.GetName(),v.getMax())
+            return '( (%s >= %f) && (%s < %f) )' % (v.GetName(),v.getMin(range),v.GetName(),v.getMax(range))
         vars = [v for v in RootTools.RootIterator.RootIterator(self.workspace.set('variables'))]
         if vars:
             cut = var_cut(vars[0])
             for v in vars[1:]:
                 cut = '%s && %s' % (cut, var_cut(v))
+        return cut
+    
+    def getVarRangeCutNamed(self, ranges):
+        vars = [v for v in RootTools.RootIterator.RootIterator(self.workspace.set('variables'))]
+        cut = self.getVarRangeCut(ranges[0])
+        for r in ranges[1:]:
+            cut = '%s || %s' % (cut, self.getVarRangeCut(r) )
         return cut
 
     def defineSet(self, name, variables):
@@ -194,7 +201,7 @@ class Box(object):
         return self.generateToyWithYield(genmodel, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), *options)
 
 
-    def plotObservables(self, inputFile, name = None):
+    def plotObservables(self, inputFile, name = None, range = ''):
         """Make control plots for variables defined in the 'variables' part of the config"""
 
         if name is None:
@@ -204,14 +211,25 @@ class Box(object):
         fitmodel = self.workspace.pdf(name)
         
         plots = []
-        
         parameters = self.workspace.set("variables")
+        #use a binned dataset to make the plots as it is faster        
+        hvars = rt.RooArgSet()
         for p in RootTools.RootIterator.RootIterator(parameters):
-            frame = p.frame()
-            frame.SetName("autoVarPlot_%s" % p.GetName())
-
-            data.plotOn(frame)
-            fitmodel.plotOn(frame, rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+            p.setBins(100)
+            hvars.add(p)
+        hdata = rt.RooDataHist('projData_%s' % self.name,'projData',hvars,data.reduce(rt.RooFit.CutRange(range)))
+        hdata = hdata.reduce(self.getVarRangeCutNamed(ranges=range.split(',')))
+        
+        for p in RootTools.RootIterator.RootIterator(parameters):
+            
+            xmin = min([p.getMin(r) for r in range.split(',')])
+            xmax = max([p.getMax(r) for r in range.split(',')])
+            
+            frame = p.frame(xmin,xmax)
+            frame.SetName("autoVarPlot_%s_%s" % (p.GetName(), '_'.join(range.split(',')) ) )
+            #
+            hdata.plotOn(frame)
+            fitmodel.plotOn(frame, rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Range(xmin,xmax),rt.RooFit.ProjWData(hdata))
             fitmodel.paramOn(frame)
             plots.append(frame)
             
