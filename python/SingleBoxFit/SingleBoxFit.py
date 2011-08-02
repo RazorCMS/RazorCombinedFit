@@ -68,19 +68,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].restoreWorkspace(self.options.input, wsName)
             
             totalYield += boxes[box].workspace.data('RMRTree').numEntries()
-            
-        if len(boxes) > 1 and self.options.simultaneous:
+        
+        #we only include the simultaneous fit if we're restoring
+        if len(boxes) > 1 and self.options.simultaneous and self.options.input is not None:
             #merge the boxes together in some way
             import RazorMultiBoxSim
             multi = RazorMultiBoxSim.RazorMultiBoxSim(self)
-            #restore the simultaneous fits if required
-            if self.options.input is None:
-                multi.combine(boxes, fileIndex)
-                self.store(rt.TObjString(multi.workspace.GetName()),'simultaneousName')
-            else:
-                print "Restoring the workspace from %s" % self.options.input
-                multi.restoreWorkspace(self.options.input, multi.name, name='simultaneousFRPDF')
-                multi.setCombinedCut(boxes)
+            print "Restoring the workspace from %s" % self.options.input
+            multi.restoreWorkspace(self.options.input, multi.name, name='simultaneousFRPDF')
+            multi.setCombinedCut(boxes)
             self.workspace = multi.workspace
             
             #just append the sim pdf to the boxes
@@ -91,17 +87,24 @@ class SingleBoxAnalysis(Analysis.Analysis):
             pdf = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None)
             vars = rt.RooArgSet(boxes[box].workspace.set('variables'))
 
-            #use an MCStudy to store everything
-            study = boxes[box].getMCStudy()
-            #get the data yield without cuts
             if box != simName:
-                fix = boxes[box].workspace.obj('independentFR')
+                #get the data yield without cuts
                 data_yield = boxes[box].workspace.data('RMRTree').numEntries()
             else:
                 data_yield = totalYield
-                vars.add(boxes[box].workspace.cat('Boxes'))
-                fix = boxes[box].workspace.obj('simultaneousFR')
 
+            #if we just need to write out toys then skip everything else
+            if self.options.save_toys_from_fit:
+                if box != simName:
+                    f = boxes[box].workspace.obj('independentFR')
+                else:
+                    f = boxes[box].workspace.obj('simultaneousFR')
+                boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys)
+                continue
+
+            #use an MCStudy to store everything
+            study = boxes[box].getMCStudy()
+            
             pre_ = rt.RooRealVar('predicted','predicted',-1)
             obs_ = rt.RooRealVar('observed','observed',-1)
             qual_ = rt.RooRealVar('quality','quality',-1)
@@ -110,27 +113,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             yields = rt.RooDataSet('Yields','Yields',args)
             
             for i in xrange(nToys):
-                if fix:
-                    #randomise the toy parameters
-                    pars = {}
-                    for p in RootTools.RootIterator.RootIterator(fix.randomizePars()): pars[p.GetName()] = p
-                    for name, value in pars.iteritems():
-                        boxes[box].fixParsExact(name,value.isConstant(),value.getVal())
-                
-                #generate the toy data according to the radomized pars
                 gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(data_yield))
                 gdata_cut = gdata.reduce(boxes[box].cut)
                 
                 if self.options.save_toys:
                     data_write = 'toydata_%s_%i.txt' % (box,i)
                     gdata.write(data_write)
-                
-                if fix:
-                    #set the parameters to their initial values
-                    pars = {}
-                    for p in RootTools.RootIterator.RootIterator(fix.floatParsInit()): pars[p.GetName()] = p
-                    for name, value in pars.iteritems():
-                        boxes[box].fixParsExact(name,value.isConstant(),value.getVal())
                 
                 fr = boxes[box].fitData(pdf, gdata_cut)
                 predictions = boxes[box].predictBackgroundData(fr, gdata, nRepeats = 5, verbose = False)
@@ -145,13 +133,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 args.setRealValue('quality',fr.covQual())
                 args.setRealValue('status',fr.status())
                 yields.add(args)
-            
-            if fix:
-                #now set the parameters back
-                pars = {}
-                for p in RootTools.RootIterator.RootIterator(fix.floatParsFinal()): pars[p.GetName()] = p
-                for name, value in pars.iteritems():
-                    boxes[box].fixParsExact(name,value.isConstant(),value.getVal())
             
             fitPars = study.fitParDataSet()
             outpars = rt.RooDataSet('fitPars_%s' % box, 'fitPars_%s' % box, fitPars,fitPars.get(0))

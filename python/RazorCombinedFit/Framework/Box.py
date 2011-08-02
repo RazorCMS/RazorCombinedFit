@@ -281,6 +281,29 @@ class Box(object):
                 elif floatIfNoPenalty:
                     self.fixParsExact(par.GetName(),False)
 
+    def writeBackgroundDataToys(self, fr, total_yield, box, nToys):
+        """Write out toys which have been sampled from a fit result"""
+
+        pdf = self.workspace.pdf(self.fitmodel)
+        vars = rt.RooArgSet(self.workspace.set('variables'))
+        if self.workspace.cat('Boxes'):
+            vars.add(self.workspace.cat('Boxes'))
+        
+        parSet = self.workspace.allVars()
+        for i in xrange(nToys):
+            pars = {}
+            for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
+            for name, value in pars.iteritems():
+                self.fixParsExact(name,value.isConstant(),value.getVal())
+            ds = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(total_yield))
+            ds.write('frtoydata_%s_%i.txt' % (box,i))
+        
+        #now set the parameters back
+        pars = {}
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()): pars[p.GetName()] = p
+        for name, value in pars.iteritems():
+            self.fixParsExact(name,value.isConstant(),value.getVal())
+
     def predictBackgroundData(self, fr, data, nRepeats = 100, verbose = True):
         
         if fr.status() != 0 or fr.covQual() != 3:

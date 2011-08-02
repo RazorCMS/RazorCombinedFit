@@ -16,6 +16,8 @@ def defineParser():
                   help="The number of toys to run")
     parser.add_option('--save-toys',dest="save_toys",action="store_true", default=False,
                   help="Save the toys as text files for future use.")
+    parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",action="store_true", default=False,
+                  help="Save the toys as text files for future use. Sample from covariance matrix.")
     parser.add_option('-s','--seed',dest="seed",type="int", default=0,
                   help="The random seed to start with")
     parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
