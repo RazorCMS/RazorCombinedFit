@@ -61,16 +61,6 @@ class RazorBox(Box.Box):
         mR  = self.workspace.var("MR")
         Rsq = self.workspace.var("Rsq")
         
-        # TIGHT
-        mR.setRange("B1", 300, 650.)
-        Rsq.setRange("B1", 0.09, 0.2)
-        mR.setRange("B2", 300, 450.)
-        Rsq.setRange("B2", 0.2, 0.3)
-        mR.setRange("B3", 300, 350.)
-        Rsq.setRange("B3", 0.3, 0.5)
-        mR.setRange("FULL", 300, 3500.)
-        Rsq.setRange("FULL", 0.09, 0.5)       
-        
         #import the dataset to the workspace
         self.importToWS(data)
 
@@ -135,7 +125,7 @@ class RazorBox(Box.Box):
             else:
                 if not z in fixed:
                     #float1stComponentWithPenalty(z)
-                    #float2ndComponentWithPenalty(z)
+                    float2ndComponentWithPenalty(z)
                     #floatFractionWithPenalty(z)
                     floatFraction(z)
                     fixed.append(z)
@@ -148,21 +138,22 @@ class RazorBox(Box.Box):
         data = self.workspace.data('RMRTree')
         signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
         
-        nS = self.yieldToCrossSection(modelName)
-        nBG = self.workspace.factory("expr::n%sBG('%i - @0',Ntot_%s)" % (modelName,data.numEntries(),modelName))
-        
+        #set the MC efficiency relative to the number of events generated
+        epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
+        self.yieldToCrossSection(modelName) #define Ntot
+        extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
-                           rt.RooArgList(self.workspace.pdf(signalModel),self.workspace.pdf(self.fitmodel)),
-                           rt.RooArgList(nS,nBG)
+                           rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
                            )
         self.importToWS(add)
         self.signalmodel = add.GetName()
+        return extended.GetName()
 
         
     def plot(self, inputFile, store, box):
         super(RazorBox,self).plot(inputFile, store, box)
-        store.store(self.plot1D(inputFile, "MR", 100), dir=box)
-        store.store(self.plot1D(inputFile, "Rsq",100), dir=box)
+        #store.store(self.plot1D(inputFile, "MR", 100), dir=box)
+        #store.store(self.plot1D(inputFile, "Rsq",100), dir=box)
         #store.store(self.plot2D(inputFile, "MR", "Rsq"), dir=box)
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99):
