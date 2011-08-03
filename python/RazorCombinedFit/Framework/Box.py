@@ -53,7 +53,7 @@ class Box(object):
         vars = [v for v in RootTools.RootIterator.RootIterator(self.workspace.set('variables'))]
         cut = self.getVarRangeCut(ranges[0])
         for r in ranges[1:]:
-            cut = '%s || %s' % (cut, self.getVarRangeCut(r) )
+            cut = '(%s) || (%s)' % (cut, self.getVarRangeCut(r) )
         return cut
 
     def defineSet(self, name, variables):
@@ -373,7 +373,85 @@ class Box(object):
     def addSignalModel(self, inputFile, modelName):
         """Add a signal model for model dependent limits"""
         pass
+
+    def plot2D(self, inputFile, xvarname, yvarname, ranges=None, data = None):
+        
+        if ranges is None:
+            ranges = ['']
+        
+        #before I find a better way
+        if data is None:
+            data = RootTools.getDataSet(inputFile,'RMRTree')
+        #data = data.reduce(self.getVarRangeCutNamed(ranges=ranges))
+        toyData = self.workspace.pdf(self.fitmodel).generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 50*data.numEntries())
+        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
+
+        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
+        xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
+        ymin = min([self.workspace.var(yvarname).getMin(r) for r in ranges])
+        ymax = max([self.workspace.var(yvarname).getMax(r) for r in ranges])
+
+        # define 2D histograms
+        histoData = rt.TH2D("histoData", "histoData",
+                            100, xmin, xmax, 
+                            100, ymin, ymax)
+        histoToy = rt.TH2D("histoToy", "histoToy",
+                            100, xmin, xmax, 
+                            100, ymin, ymax)
+        # project the data on the histograms
+        data.tree().Project("histoData",yvarname+":"+xvarname)
+        toyData.tree().Project("histoToy",yvarname+":"+xvarname)
+        histoToy.Scale(histoData.Integral()/histoToy.Integral())
+        histoData.Add(histoToy, -1)
+        histoData.SetName('Compare_Data_MC_%s' % '_'.join(ranges) )
+        return histoData
     
+    def plot1DHisto(self, inputFile, xvarname, ranges=None, data = None):
+        
+        if ranges is None:
+            ranges = ['']
+        
+        #before I find a better way
+        if data is None:
+            data = RootTools.getDataSet(inputFile,'RMRTree')
+        toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
+        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
+
+        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
+        xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
+        #nbins = rt.TMath.Nint(abs(xmax-xmin)/2.5)
+        nbins = 25
+
+        def setName(h, name):
+            h.SetName('%s_%s_%s' % (h.GetName(),name,'_'.join(ranges)) )
+            h.GetXaxis().SetTitle(name)
+
+        # define 1D histograms
+        histoData = rt.TH1D("histoData", "histoData",nbins, xmin, xmax)
+        histoToy = rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax)
+
+        # project the data on the histograms
+        data.tree().Project("histoData",xvarname)
+        toyData.tree().Project("histoToy",xvarname)
+        histoToy.Scale(histoData.Integral()/histoToy.Integral())
+
+        setName(histoData,xvarname)
+        setName(histoToy,xvarname)
+
+        histoData.SetOption('e1')
+        histoData.SetMarkerStyle(20)
+        histoToy.SetLineColor(rt.kBlue)
+        histoToy.SetLineWidth(2)
+        histoToy.SetOption('e3')
+        
+        c = rt.TCanvas()
+        c.SetName('DataMC_%s_%s' % (xvarname,'_'.join(ranges)) )
+        histoData.Draw()
+        histoToy.Draw('same')
+
+        return [histoData,histoToy,c]
+
+
     def plot(self, inputFile, store, box):
         [store.store(p, dir = box) for p in self.plotObservables(inputFile)]
     

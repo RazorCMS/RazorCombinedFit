@@ -8,7 +8,8 @@ class RazorBox(Box.Box):
         super(RazorBox,self).__init__(name, variables)
         
         #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['MuEle','MuMu','EleEle']}
-        self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['Mu', 'Ele', 'Had', 'MuEle','MuMu','EleEle']}
+        #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['Mu', 'Ele', 'Had', 'MuEle','MuMu','EleEle']}
+        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle']}
         #self.cut = 'MR <= 750 && Rsq <= 0.2'
         self.cut = 'MR >= 0.0'
 
@@ -116,6 +117,8 @@ class RazorBox(Box.Box):
         def floatFraction(flavour):
             self.fixParsExact("Epsilon_%s" % flavour, True)
             self.fixParsExact("f2_%s" % flavour, False)
+        def floatScaleFactors(flavour):
+            self.fixParsExact("rEps_%s" % flavour, False)
 
         # switch off not-needed components (box by box)
         fixed = []
@@ -124,10 +127,11 @@ class RazorBox(Box.Box):
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    #float1stComponentWithPenalty(z)
-                    float2ndComponentWithPenalty(z)
+                    float1stComponentWithPenalty(z)
+                    #float2ndComponentWithPenalty(z)
                     #floatFractionWithPenalty(z)
-                    floatFraction(z)
+                    floatScaleFactors(z)
+                    #floatFraction(z)
                     fixed.append(z)
                     
     def addSignalModel(self, inputFile, modelName = None):
@@ -243,73 +247,4 @@ class RazorBox(Box.Box):
         #leg.AddEntry("PDF2nd_TTj", "t#bar{t}+jets 2nd")
         
         return frameMR
-
-    def plot2D(self, inputFile, xvarname, yvarname, ranges=None):
-        
-        if ranges is None:
-            ranges = ['']
-        
-        #before I find a better way
-        data = RootTools.getDataSet(inputFile,'RMRTree')
-        toyData = self.workspace.pdf(self.fitmodel).generate(rt.RooArgSet(self.workspace.argSet(xvarname+","+yvarname)), 20*data.numEntries())
-        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
-
-        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
-        xmax = min([self.workspace.var(xvarname).getMax(r) for r in ranges])
-        ymin = min([self.workspace.var(yvarname).getMin(r) for r in ranges])
-        ymax = min([self.workspace.var(yvarname).getMax(r) for r in ranges])
-
-        # define 2D histograms
-        histoData = rt.TH2D("histoData", "histoData",
-                            100, xmin, xmax, 
-                            100, ymin, ymax)
-        histoToy = rt.TH2D("histoToy", "histoToy",
-                            100, xmin, xmax, 
-                            100, ymin, ymax)
-        # project the data on the histograms
-        data.tree().Project("histoData",yvarname+":"+xvarname)
-        toyData.tree().Project("histoToy",yvarname+":"+xvarname)
-        histoToy.Scale(histoData.Integral()/histoToy.Integral())
-        histoData.Add(histoToy, -1)
-        histoData.SetName('Compare_Data_MC_%s' % '_'.join(ranges) )
-        return histoData
-    
-    def plot1DHisto(self, inputFile, xvarname, ranges=None):
-        
-        if ranges is None:
-            ranges = ['']
-        
-        #before I find a better way
-        data = RootTools.getDataSet(inputFile,'RMRTree')
-        toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
-        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
-
-        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
-        xmax = min([self.workspace.var(xvarname).getMax(r) for r in ranges])
-        #nbins = rt.TMath.Nint(abs(xmax-xmin)/2.5)
-        nbins = 50
-
-        def setName(h, name):
-            h.SetName('%s_%s_%s' % (h.GetName(),name,'_'.join(ranges)) )
-            h.GetXaxis().SetTitle(name)
-
-        # define 1D histograms
-        histoData = rt.TH1D("histoData", "histoData",nbins, xmin, xmax)
-        histoToy = rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax)
-
-        # project the data on the histograms
-        data.tree().Project("histoData",xvarname)
-        toyData.tree().Project("histoToy",xvarname)
-        histoToy.Scale(histoData.Integral()/histoToy.Integral())
-
-        setName(histoData,xvarname)
-        setName(histoToy,xvarname)
-
-        histoData.SetOption('e1')
-        histoData.SetMarkerStyle(20)
-        histoToy.SetLineColor(rt.kBlue)
-        histoToy.SetLineWidth(2)
-        histoToy.SetOption('e3')
-
-        return [histoData,histoToy]
 

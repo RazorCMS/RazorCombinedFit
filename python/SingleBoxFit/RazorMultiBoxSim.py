@@ -106,57 +106,61 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
         self.importToWS(rt.TObjString(self.fitmodel),'simultaneousFRPDF')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
         
-        fitmodel = self.workspace.pdf(self.fitmodel)
-        parameters = self.workspace.set("variables")
-        Boxes = self.workspace.cat('Boxes')
-        plots = []
+#        fitmodel = self.workspace.pdf(self.fitmodel)
+#        parameters = self.workspace.set("variables")
+#        Boxes = self.workspace.cat('Boxes')
+#        plots = []
+#
+#        #use a binned dataset to make the plots as it is faster        
+#        hvars = rt.RooArgSet(Boxes)
+#        for p in RootTools.RootIterator.RootIterator(parameters):
+#            p.setBins(100)
+#            hvars.add(p)
+#
+#        ranges = {'MR':(300,2000),'Rsq':(0.09,0.5)}
+#        #ranges = {}
+#
+#        #go box by box
+#        for box in boxes:
+#            for p in RootTools.RootIterator.RootIterator(parameters):
+#
+#                if p.GetName() == 'R': continue
+#
+#                #set the ranges to more restrictive ones for plotting
+#                if ranges.has_key(p.GetName()):
+#                    r = ranges[p.GetName()]
+#                    frame = p.frame(r[0],r[1],50)
+#                else:
+#                    frame = p.frame()
+#                frame.SetName("autoVarPlotSim_%s_%s" % (p.GetName(), box) )
+#             
+#                #create a binned dataset in the parameter   
+#                hdata = rt.RooDataHist('projData_%s' % box,'projData',hvars,data.reduce('Boxes == Boxes::%s' % box))
+#                hdata.plotOn(frame)
+#                
+#                #for comparison plot the independent fit result (do this first)
+#                independent = boxes[box].workspace.pdf(boxes[box].fitmodel)
+#                independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.LineColor(rt.kRed))
+#                for f in flavours:
+#                    independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+#                                       rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st_%s" % f),rt.RooFit.LineStyle(8),rt.RooFit.LineColor(rt.kRed))
+#                    independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+#                                       rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd_%s" % f),rt.RooFit.LineStyle(9),rt.RooFit.LineColor(rt.kRed))
+#                
+#                #plot the results of the simultanious fits
+#                fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+#                for f in flavours:
+#                    fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+#                                    rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st_%s_%s" % (f,box) ),rt.RooFit.LineStyle(8))
+#                    fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
+#                                    rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd_%s_%s" % (f,box) ),rt.RooFit.LineStyle(9))
+#                
+#                plots.append(frame)
+#        
+#        for p in plots: self.analysis.store(p, dir='%s_dir' % self.workspace.GetName())
 
-        #use a binned dataset to make the plots as it is faster        
-        hvars = rt.RooArgSet(Boxes)
-        for p in RootTools.RootIterator.RootIterator(parameters):
-            p.setBins(100)
-            hvars.add(p)
-
-        ranges = {'MR':(300,2000),'Rsq':(0.09,0.5)}
-        #ranges = {}
-
-        #go box by box
-        for box in boxes:
-            for p in RootTools.RootIterator.RootIterator(parameters):
-
-                if p.GetName() == 'R': continue
-
-                #set the ranges to more restrictive ones for plotting
-                if ranges.has_key(p.GetName()):
-                    r = ranges[p.GetName()]
-                    frame = p.frame(r[0],r[1],50)
-                else:
-                    frame = p.frame()
-                frame.SetName("autoVarPlotSim_%s_%s" % (p.GetName(), box) )
-             
-                #create a binned dataset in the parameter   
-                hdata = rt.RooDataHist('projData_%s' % box,'projData',hvars,data.reduce('Boxes == Boxes::%s' % box))
-                hdata.plotOn(frame)
-                
-                #for comparison plot the independent fit result (do this first)
-                independent = boxes[box].workspace.pdf(boxes[box].fitmodel)
-                independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.LineColor(rt.kRed))
-                for f in flavours:
-                    independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
-                                       rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st_%s" % f),rt.RooFit.LineStyle(8),rt.RooFit.LineColor(rt.kRed))
-                    independent.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
-                                       rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd_%s" % f),rt.RooFit.LineStyle(9),rt.RooFit.LineColor(rt.kRed))
-                
-                #plot the results of the simultanious fits
-                fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
-                for f in flavours:
-                    fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
-                                    rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF1st_%s_%s" % (f,box) ),rt.RooFit.LineStyle(8))
-                    fitmodel.plotOn(frame,rt.RooFit.ProjWData(rt.RooArgSet(p),hdata),
-                                    rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()),rt.RooFit.Components("ePDF2nd_%s_%s" % (f,box) ),rt.RooFit.LineStyle(9))
-                
-                plots.append(frame)
-        
-        for p in plots: self.analysis.store(p, dir='%s_dir' % self.workspace.GetName())
-
+#    def plot(self, inputFile, store, box):
+#        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1','B2','B3']), dir=box)
+#        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['B1','B2','B3'])]
+#        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['B1','B2','B3'])]
         

@@ -191,6 +191,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #restore the simultaneous fits if required
             if self.options.input is None:
                 multi.combine(boxes, fileIndex)
+                multi.plot(fileName, self, 'Simultaneous')
                 self.store(rt.TObjString(multi.workspace.GetName()),'simultaneousName')
             else:
                 print "Restoring the workspace from %s" % self.options.input
