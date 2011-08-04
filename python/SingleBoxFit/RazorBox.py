@@ -72,9 +72,9 @@ class RazorBox(Box.Box):
         # - ttbar+jets
         self.addTailPdf("Wln")    
         #self.addTailPdf("Zll")
-        #self.addTailPdf("Znn")
+        self.addTailPdf("Znn")
         self.addTailPdfVjets("Zll", "Wln")
-        self.addTailPdfVjets("Znn", "Wln")
+        #self.addTailPdfVjets("Znn", "Wln")
         self.addTailPdf("TTj")
         self.addTailPdf("QCD")
 
@@ -109,13 +109,18 @@ class RazorBox(Box.Box):
             self.fixParsPenalty("MR02nd_%s" % flavour)
             self.fixParsPenalty("R02nd_%s" % flavour)
             self.fixParsPenalty("b2nd_%s" % flavour)
+        def float2ndComponent(flavour):
+            self.fixParsExact("MR02nd_%s" % flavour, False)
+            self.fixParsExact("R02nd_%s" % flavour, False)
+            self.fixParsExact("b2nd_%s" % flavour, False)        
         def floatFractionWithPenalty(flavour):
             self.fixParsPenalty("Epsilon_%s" % flavour, floatIfNoPenalty = True)
-            self.fixPars("Epsilon_%s_s" % flavour)
+            self.fixParsExact("Epsilon_%s_s" % flavour)
+            self.fixParsExact("Epsilon_%s_mean" % flavour)
             self.fixParsPenalty("f2_%s" % flavour)
             self.fixPars("f2_%s_s" % flavour)
         def floatFraction(flavour):
-            self.fixParsExact("Epsilon_%s" % flavour, True)
+            self.fixParsExact("Epsilon_%s" % flavour, False)
             self.fixParsExact("f2_%s" % flavour, False)
         def floatScaleFactors(flavour):
             self.fixParsExact("rEps_%s" % flavour, False)
@@ -128,11 +133,24 @@ class RazorBox(Box.Box):
             else:
                 if not z in fixed:
                     float1stComponentWithPenalty(z)
-                    #float2ndComponentWithPenalty(z)
-                    #floatFractionWithPenalty(z)
-                    floatScaleFactors(z)
+                    float2ndComponentWithPenalty(z)
+                    floatFractionWithPenalty(z)
+                    #floatScaleFactors(z)
                     #floatFraction(z)
                     fixed.append(z)
+
+        if self.name == 'Had':
+            self.fixPars('1st_Znn')
+            self.fixPars('1st_QCD')
+            self.fixPars('1st_Wln')        
+
+        if self.name == 'Had':
+            self.fixPars('1st_Znn')
+            self.fixPars('1st_QCD')
+            self.fixPars('1st_Wln')        
+            self.fixPars('2nd_Znn')
+            self.fixPars('2nd_Wln')
+            self.fixPars('2nd_QCD')
                     
     def addSignalModel(self, inputFile, modelName = None):
         
