@@ -6,6 +6,8 @@ class Marker(object):
 
 def defineParser():
     parser = OptionParser()
+    parser.add_option('-b','--batch',dest="batch",action="store_true", default=True,
+                  help="Run in batch mode for plotting")    
     parser.add_option('-a','--analysis',dest="analysis",type="string",
                   help="Name of the analysis to run")
     parser.add_option('-c','--config',dest="config",type="string",default=None,
