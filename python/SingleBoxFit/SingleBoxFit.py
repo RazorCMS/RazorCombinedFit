@@ -162,7 +162,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("B1,B2,B3"))
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"))
                 #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
                 self.store(fr, dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)

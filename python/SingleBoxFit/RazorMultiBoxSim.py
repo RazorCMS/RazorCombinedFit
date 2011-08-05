@@ -101,7 +101,7 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
             
             self.workspace.var('Lumi_%s' % box).setVal(boxes[box].workspace.var('Lumi').getVal())
         
-        fr = self.fitData(ws.pdf(self.fitmodel),data, rt.RooFit.Range("B1,B2,B3"))
+        fr = self.fitData(ws.pdf(self.fitmodel),data, rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"))
         self.importToWS(fr,'simultaneousFR')
         self.importToWS(rt.TObjString(self.fitmodel),'simultaneousFRPDF')
         self.analysis.store(fr, dir='%s_dir' % self.workspace.GetName())
@@ -161,6 +161,6 @@ class RazorMultiBoxSim(MultiBox.MultiBox):
 
 #    def plot(self, inputFile, store, box):
 #        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1','B2','B3']), dir=box)
-#        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['B1','B2','B3'])]
-#        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['B1','B2','B3'])]
+#        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['B1','B2','B3','hC1','hC2','hC3'])]
+#        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['B1','B2','B3','hC1','hC2','hC3'])]
         
