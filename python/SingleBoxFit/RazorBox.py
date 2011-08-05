@@ -71,9 +71,9 @@ class RazorBox(Box.Box):
         # - Znn+jets
         # - ttbar+jets
         self.addTailPdf("Wln")    
-        #self.addTailPdf("Zll")
+        self.addTailPdf("Zll")
         self.addTailPdf("Znn")
-        self.addTailPdfVjets("Zll", "Wln")
+        #self.addTailPdfVjets("Zll", "Wln")
         #self.addTailPdfVjets("Znn", "Wln")
         self.addTailPdf("TTj")
         self.addTailPdf("QCD")
@@ -134,17 +134,14 @@ class RazorBox(Box.Box):
                 if not z in fixed:
                     float1stComponentWithPenalty(z)
                     float2ndComponentWithPenalty(z)
+                    #float2ndComponent(z)
                     floatFractionWithPenalty(z)
                     #floatScaleFactors(z)
                     #floatFraction(z)
                     fixed.append(z)
 
         if self.name == 'Had':
-            self.fixPars('1st_Znn')
-            self.fixPars('1st_QCD')
-            self.fixPars('1st_Wln')        
-
-        if self.name == 'Had':
+            self.fixPars('f2_QCD')
             self.fixPars('1st_Znn')
             self.fixPars('1st_QCD')
             self.fixPars('1st_Wln')        
