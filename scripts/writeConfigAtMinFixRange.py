@@ -28,7 +28,7 @@ for Box in BoxName:
     fitresult = rootfile.Get(Box+"/fitresult_fitmodel_RMRTree")
 
     keys = [('variables','variables'),('pdf1','pdf1pars'),('pdf2','pdf2pars'),('others','otherpars')]
-    
+    myws.Print()
     #get the final values from the fit
     parlist = fitresult.floatParsFinal()
     fitPars = {}
@@ -41,10 +41,12 @@ for Box in BoxName:
         vars = []
         for v in RootTools.RootIterator.RootIterator(named):
             name = v.GetName()
+            print Box 
+            print name
             if fitPars.has_key(name): v = fitPars[v.GetName()]
             # for now hardcode the ranges of MR, R, Rsq to the loose range
             if name == 'MR':
-                vars.append('%s[%.0f,%.0f]' % (v.GetName(),200,3500))
+                vars.append('%s[%.0f,%.0f]' % (v.GetName(),v.getMin(),3500))
             elif name == 'R':
                 vars.append('%s[%.2f,%.0f]' % (v.GetName(),0.2,2))
             elif name == 'Rsq':
@@ -52,14 +54,16 @@ for Box in BoxName:
             # also adjust the ranges of the parameters MR01st, MR02nd, R01st, R02nd 
             elif name == 'MR01st':
                 maxi = 200
+                mini = -900
                 lastVal = v.getVal()
                 if lastVal>maxi: lastVal = 190
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,v.getMin(),maxi))
+                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,mini,maxi))
             elif name == 'MR02nd':
                 maxi = 200
+                mini = -900
                 lastVal = v.getVal()
                 if lastVal>maxi: lastVal = 190
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,v.getMin(),maxi))
+                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,mini,maxi))
             elif name == 'R01st':
                 maxi = .04
                 lastVal = v.getVal()
@@ -69,7 +73,13 @@ for Box in BoxName:
                 maxi = .04
                 lastVal = v.getVal()
                 if lastVal>maxi: lastVal = .03
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,v.getMin(),maxi))                
+                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,v.getMin(),maxi))
+            elif name == 'N_tt':
+                vars.append('%s[%.5f,%.3f,%.3f]' % ('Ntot',v.getVal(),v.getMin(),10000000))            
+            elif name == 'Ntot':
+                vars.append('%s[%.5f,%.3f,%.3f]' % ('Ntot',v.getVal(),v.getMin(),10000000))        
+            elif name == 'f2':
+                vars.append('%s[%.5f,%.3f,%.3f]' % ('f2',v.getVal(),v.getMin(),1.00))
             else:
                 vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),v.getVal(),v.getMin(),v.getMax()))
         config.set(Box,key,str(vars))

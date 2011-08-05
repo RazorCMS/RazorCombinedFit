@@ -22,8 +22,11 @@ for descriptor in filelist:
         flavor = '$Z$+jets'
     elif descriptor=='Znunu' or descriptor=='Znn':
         flavor = '$Z(\\nu\\bar{\\nu})$+jets'
+    elif descriptor=='cocktail' or descriptor=='SMCocktail':
+        flavor = 'SM Cocktail'
     if descriptor=='nBtag' or descriptor=='nBtags':
         btags = filelist[count+1]
+        if btags =='geq1': btags='$\\geq1$'
     count = count+1
 
 rootfile = rt.TFile(filename)
@@ -62,7 +65,8 @@ for Box in BoxName:
             if name=='Ntot': continue
             if checkIfErr[len(checkIfErr)-1]=='s': continue
             if fitPars.has_key(name): v = fitPars[v.GetName()]
-            vars.append(' $%.3f \\pm %.3f$ ' % (v.getVal(),v.getError()))
+            if v.getError()==0: vars.append(' $%.2f$ ' % v.getVal())
+            else: vars.append(' $%.2f \\pm %.3f$ ' % (v.getVal(),v.getError()))
                   
     print '&'.join(vars)+'\\\\'
 

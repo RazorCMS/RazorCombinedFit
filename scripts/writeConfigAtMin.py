@@ -23,7 +23,26 @@ for Box in BoxName:
     config.add_section(Box)
     
     #read the variables from the workspace
-    myws = rootfile.Get(Box+"/Box"+Box+"_workspace")
+    myws = rootfile.Get(Box+"/SingleBoxFit")
+
+    keylist = (rootfile.Get(Box))).GetListOfKeys();
+    keylist.Print();
+    iter= keylist.MakeIterator();
+
+    #TKey *key;
+    while key= iter.Next():
+        print "Attempt to read "+ key.GetName()
+        RooFitResult *res= dynamic_cast<RooFitResult*>( key->ReadObjectAny( RooFitResult::Class() ) );
+
+        if  !res :
+            print "Couldn't read object " + key.GetName()
+            continue
+        else :
+            res->Print();
+            print "Deleting... "
+            delete res;
+            print "Done."
+                                
     fitresult = rootfile.Get(Box+"/fitresult_fitmodel_RMRTree")
 
     keys = [('variables','variables'),('pdf1','pdf1pars'),('pdf2','pdf2pars'),('others','otherpars')]
