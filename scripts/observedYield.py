@@ -30,37 +30,17 @@ if __name__ == '__main__':
     #lepSigRegions.append(["hC2",  450., 1000., 0.20, 0.30])
     #lepSigRegions.append(["hC3",  350.,  800., 0.30, 0.45])
     #lepSigRegions.append(["hC4",  350.,  450., 0.45, 0.49])
-
+    
+    myfile = rt.TFile.Open(sys.argv[2])
     Box = sys.argv[1]
     Regions = sigRegions
-    if Box == "Had" : Regions = hadSigRegions
+    if Box == "Had": Regions = hadSigRegions
     if Box == "Ele" or  Box == "Mu": Regions = lepSigRegions
-    histos = []
-    for Region in Regions:
-        if Region[0].find("hS") != -1:
-            histos.append([Box, Region, rt.TH1D("%s_%s" %(Region[0], Box), "%s_%s" %(Region[0], Box), 80, 0., 80.)])
-        else:
-            histos.append([Box, Region, rt.TH1D("%s_%s" %(Region[0], Box), "%s_%s" %(Region[0], Box), 1000, 0., 1000.)])
-            
-    treeName = "RMRTree"
-    argc = len(sys.argv)
-    for i in range(2,argc):
-        myfile = rt.TFile(sys.argv[i])
-        gdata = myfile.Get(treeName)
-        if gdata == None: continue
-        if gdata.InheritsFrom("RooDataSet") != True: continue
-        for histo in histos:
-            histo[2].Fill(gdata.reduce("MR>%s" %histo[1][1]).reduce("MR<=%s" %histo[1][2]).reduce("Rsq>%s" %histo[1][3]).reduce("Rsq<=%s" %histo[1][4]).numEntries())
-            continue
-        continue
 
-    print "Box        Expected Range"
-    # print the result and write it to out
-    fileOut = rt.TFile.Open("expectedYield_%s.root" %Box, "recreate")
-    for histo in histos:
-        print "%s_%s        %f +/- %f" %(histo[1][0], histo[0], histo[2].GetMean(), histo[2].GetRMS())
-        histo[2].Write()
-    fileOut.Close()
-
+    tree = myfile.Get("RMRTree")
+    for region in Regions:
+        nEv = tree.reduce("MR > %f && MR < %f && Rsq > %f && Rsq < %f" % (region[1], region[2], region[3], region[4])).numEntries()
+        print "%s_%s  %i" %(region[0], Box, nEv)
+                          
         
         
