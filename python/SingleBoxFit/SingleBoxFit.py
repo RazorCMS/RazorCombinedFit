@@ -296,7 +296,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     break
                 
             reject = (lzData>lzSig90,lzData>lzSig95)
-            print 'Result: lambda_{data}=%f,lambda_{critical}(90,95)=%s, reject(90,95)=%s; ' % (lzData,str((lzSig90,lzSig95)),str(reject))
+            print 'Result for box %s: lambda_{data}=%f,lambda_{critical}(90,95)=%s, reject(90,95)=%s; ' % (box,lzData,str((lzSig90,lzSig95)),str(reject))
 
             self.store(hist_H1, dir=box)
 
