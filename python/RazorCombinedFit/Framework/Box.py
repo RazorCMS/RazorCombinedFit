@@ -273,12 +273,13 @@ class Box(object):
                 par.setConstant(True)
         return fixed_pars
     
-    def fixParsExact(self, label, doFix=rt.kTRUE, setVal=None):
+    def fixParsExact(self, label, doFix=rt.kTRUE, setVal=None, setError=None):
         parSet = self.workspace.allVars()
         for par in RootTools.RootIterator.RootIterator(parSet):
             if label == par.GetName():
                 par.setConstant(doFix)
                 if setVal is not None: par.setVal(setVal)
+                if setError is not None: par.setError(setError)
     
     def fixParsPenalty(self, label, floatIfNoPenalty = False):
         
@@ -294,28 +295,43 @@ class Box(object):
                 elif floatIfNoPenalty:
                     self.fixParsExact(par.GetName(),False)
 
-    def writeBackgroundDataToys(self, fr, total_yield, box, nToys):
-        """Write out toys which have been sampled from a fit result"""
-
-        pdf = self.workspace.pdf(self.fitmodel)
+    def generateToyFRWithYield(self, genmodel, fr, number, *options):
+        """Generate a toy dataset with the specified number of events"""
+        
+        pdf = self.workspace.pdf(genmodel)
         vars = rt.RooArgSet(self.workspace.set('variables'))
         if self.workspace.cat('Boxes'):
             vars.add(self.workspace.cat('Boxes'))
         
         parSet = self.workspace.allVars()
-        for i in xrange(nToys):
-            pars = {}
-            for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
-            for name, value in pars.iteritems():
-                self.fixParsExact(name,value.isConstant(),value.getVal())
-            ds = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(total_yield))
-            ds.write('frtoydata_%s_%i.txt' % (box,i))
+        #set the parameter values
+        pars = {}
+        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
+        for name, value in pars.iteritems():
+            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+        gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(number),*options)
         
         #now set the parameters back
         pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()): pars[p.GetName()] = p
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): pars[p.GetName()] = p
         for name, value in pars.iteritems():
-            self.fixParsExact(name,value.isConstant(),value.getVal())
+            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+
+        gdata_cut = gdata.reduce(self.cut)
+        return gdata_cut
+    
+    def generateToyFR(self, genmodel, fr, *options):
+        """Generate a toy dataset with the number of events the same as that in the workspace"""
+        data = self.workspace.data('RMRTree')
+        return self.generateToyFRWithYield(genmodel, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), fr, *options)
+
+
+    def writeBackgroundDataToys(self, fr, total_yield, box, nToys):
+        """Write out toys which have been sampled from a fit result"""
+        
+        for i in xrange(nToys):
+            ds = self.generateToyFRWithYield(self.fitmodel, fr, total_yield)
+            ds.write('frtoydata_%s_%i.txt' % (box,i))
 
     def predictBackgroundData(self, fr, data, nRepeats = 100, verbose = True):
         
@@ -339,7 +355,7 @@ class Box(object):
             pars = {}
             for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
             for name, value in pars.iteritems():
-                self.fixParsExact(name,value.isConstant(),value.getVal())
+                self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
             ds = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(total_yield))
             before = ds.numEntries()
             ds = ds.reduce(self.cut)
@@ -354,9 +370,9 @@ class Box(object):
         
         #now set the parameters back
         pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()): pars[p.GetName()] = p
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): pars[p.GetName()] = p
         for name, value in pars.iteritems():
-            self.fixParsExact(name,value.isConstant(),value.getVal())
+            self.fixParsExact(name,value.isConstant(),value.getVal(), value.getError())
             
         return (background_prediction,total_yield-background_yield)
 
