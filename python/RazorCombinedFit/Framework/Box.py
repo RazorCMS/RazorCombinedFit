@@ -323,7 +323,7 @@ class Box(object):
     def generateToyFR(self, genmodel, fr, *options):
         """Generate a toy dataset with the number of events the same as that in the workspace"""
         data = self.workspace.data('RMRTree')
-        return self.generateToyFRWithYield(genmodel, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), fr, *options)
+        return self.generateToyFRWithYield(genmodel, fr, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), *options)
 
 
     def writeBackgroundDataToys(self, fr, total_yield, box, nToys):
