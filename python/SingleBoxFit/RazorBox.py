@@ -124,20 +124,26 @@ class RazorBox(Box.Box):
             self.fixParsExact("f2_%s" % flavour, False)
         def floatScaleFactors(flavour):
             self.fixParsExact("rEps_%s" % flavour, False)
-
+            
+        def floatSomething(z):
+            """Switch on or off whatever you want here"""
+            float1stComponentWithPenalty(z)
+            float2ndComponentWithPenalty(z)
+            #float2ndComponent(z)
+            floatFractionWithPenalty(z)
+            #floatScaleFactors(z)
+            #floatFraction(z)
+            
         # switch off not-needed components (box by box)
         fixed = []
         for z in self.zeros:
             if self.name in self.zeros[z]:
+                floatSomething(z)
+                self.fixPars(z)
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    float1stComponentWithPenalty(z)
-                    float2ndComponentWithPenalty(z)
-                    #float2ndComponent(z)
-                    floatFractionWithPenalty(z)
-                    #floatScaleFactors(z)
-                    #floatFraction(z)
+                    floatSomething(z)
                     fixed.append(z)
 
         if self.name == 'Had':
@@ -145,8 +151,8 @@ class RazorBox(Box.Box):
             self.fixPars('1st_Znn')
             self.fixPars('1st_QCD')
             self.fixPars('1st_Wln')        
-            self.fixPars('2nd_Znn')
-            self.fixPars('2nd_Wln')
+            #self.fixPars('2nd_Znn')
+            #self.fixPars('2nd_Wln')
             self.fixPars('2nd_QCD')
                     
     def addSignalModel(self, inputFile, modelName = None):

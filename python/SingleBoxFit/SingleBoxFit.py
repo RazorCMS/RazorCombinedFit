@@ -164,7 +164,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # perform the fit
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"))
                 #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
-                self.store(fr, dir=box)
+                self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
                 #store it in the workspace too
                 getattr(boxes[box].workspace,'import')(fr,'independentFR')
@@ -210,7 +210,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 10):
+    def limit(self, inputFiles, nToys = 1000):
         """Set a limit based on the model dependent method"""
                 
         fileIndex = self.indexInputFiles(inputFiles)
@@ -250,24 +250,33 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.Print('V')
             
             hist_H1 = rt.TH1D('hist_H1','H1',120,-11,11)
-            
+
+            fr_central = boxes[box].workspace.obj('independentFR')            
             lzData = getLz(boxes[box],boxes[box].workspace.data('RMRTree'))
             lzValues = []
+
+            #float some 2nd components            
+#            for z in boxes[box].zeros:
+#                if boxes[box].name not in boxes[box].zeros[z]:
+#                    #float the second component slopes
+#                    boxes[box].fixParsExact("b2nd_%s" % z, False)
             
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
              
                 #generate a toy assuming only the signal model (same number of events as background only toy)
-                sig_toy = boxes[box].generateToy(boxes[box].signalmodel)
+                sig_toy = boxes[box].generateToyFR(boxes[box].signalmodel,fr_central)
+                boxes[box].fixAllPars()
+
                 Lz = getLz(boxes[box],sig_toy)
                 lzValues.append(Lz)
                 
-                frame_MR_sig = boxes[box].workspace.var('MR').frame()
-                sig_toy.plotOn(frame_MR_sig)
-                boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
-                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
-                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
-                self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
+#                frame_MR_sig = boxes[box].workspace.var('MR').frame()
+#                sig_toy.plotOn(frame_MR_sig)
+#                boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
+#                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
+#                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
+#                self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
 
                 hist_H1.Fill(Lz)
             
@@ -289,7 +298,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             reject = (lzData>lzSig90,lzData>lzSig95)
             print 'Result: lambda_{data}=%f,lambda_{critical}(90,95)=%s, reject(90,95)=%s; ' % (lzData,str((lzSig90,lzSig95)),str(reject))
 
-            self.store(hist_H0, dir=box)
             self.store(hist_H1, dir=box)
 
 
