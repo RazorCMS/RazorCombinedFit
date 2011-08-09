@@ -424,32 +424,54 @@ class Box(object):
     
     def plot1DHisto(self, inputFile, xvarname, ranges=None, data = None):
         
+        rangeNone = False
         if ranges is None:
+            rangeNone = True
             ranges = ['']
-        
+            
         #before I find a better way
+        rangeCut = self.getVarRangeCutNamed(ranges=ranges)
         if data is None:
-            data = RootTools.getDataSet(inputFile,'RMRTree')
+            data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+            data = data.reduce(rangeCut)
         toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
         toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
 
         xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
-        #nbins = rt.TMath.Nint(abs(xmax-xmin)/2.5)
         nbins = 25
-
-        def setName(h, name):
-            h.SetName('%s_%s_%s' % (h.GetName(),name,'_'.join(ranges)) )
-            h.GetXaxis().SetTitle(name)
 
         # define 1D histograms
         histoData = rt.TH1D("histoData", "histoData",nbins, xmin, xmax)
         histoToy = rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax)
 
-        # project the data on the histograms
-        data.tree().Project("histoData",xvarname)
-        toyData.tree().Project("histoToy",xvarname)
-        histoToy.Scale(histoData.Integral()/histoToy.Integral())
+        def setName(h, name):
+            h.SetName('%s_%s_%s' % (h.GetName(),name,'_'.join(ranges)) )
+            h.GetXaxis().SetTitle(name)
+        
+        #this code works, but plots range by range (which looks a bit weird)
+        if False:
+            #go over the ranges one by one
+            for r in ranges:
+                cut = self.getVarRangeCut(r)
+            
+                hD = rt.TH1D("histoData_%s" % r, "histoData",nbins, xmin, xmax)
+                hT = rt.TH1D("histoToy_%s" % r, "histoToy",nbins, xmin, xmax)
+            
+                # project the data on the histograms just in the current range
+                data.tree().Project("histoData_%s" % r, xvarname, cut)
+                toyData.tree().Project("histoToy_%s" % r, xvarname, cut)
+                hT.Scale(hD.Integral()/hT.Integral())
+                
+                w = data.reduce(cut).numEntries()/(data.numEntries()*1.0)
+                histoToy.Add(hT,w)
+                histoData.Add(hD,w)
+
+        else:
+                # project the data on the histograms
+                data.tree().Project("histoData",xvarname)
+                toyData.tree().Project("histoToy",xvarname)
+                histoToy.Scale(histoData.Integral()/histoToy.Integral())
 
         setName(histoData,xvarname)
         setName(histoToy,xvarname)
