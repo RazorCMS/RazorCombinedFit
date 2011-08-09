@@ -35,7 +35,7 @@ for Box in BoxName:
         if not fitresult.InheritsFrom('RooFitResult') : continue
         
         #print "success"
-        fitresult.Print()
+        fitresult.Print("v")
         if Box =="RazorMultiBoxSim_dir": continue
         
         keys = [('variables','variables'),('pdf1_QCD','pdf1pars_QCD'),('pdf1_TTj','pdf1pars_TTj'),('pdf1_Wln','pdf1pars_Wln'),('pdf1_Zll','pdf1pars_Zll'),('pdf1_Znn','pdf1pars_Znn'),('pdf2_QCD','pdf2pars_QCD'),('pdf2_TTj','pdf2pars_TTj'),('pdf2_Wln','pdf2pars_Wln'),('pdf2_Zll','pdf2pars_Zll'),('pdf2_Znn','pdf2pars_Znn'),('others_QCD','otherpars_QCD'),('others_TTj','otherpars_TTj'),('others_Wln','otherpars_Wln'),('others_Zll','otherpars_Zll'),('others_Znn','otherpars_Znn')]
