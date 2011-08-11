@@ -102,7 +102,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     f = boxes[box].workspace.obj('simultaneousFR')
                 if self.options.save_toys_from_fit.find("/") != -1:
                     boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys, self.options.save_toys_from_fit)
-                else
+                else:
                     boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys)
                 continue
 

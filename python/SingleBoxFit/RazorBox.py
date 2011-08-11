@@ -49,8 +49,8 @@ class RazorBox(Box.Box):
         #float the efficiency with a penalty term if a sigma is provided
 
     def switchOff(self, species) :
-        self.workspace.var("Epsilon_"+species).setVal(0.)
-        self.workspace.var("Epsilon_"+species).setConstant(rt.kTRUE)
+        self.workspace.var("Ntot_"+species).setVal(0.)
+        self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
         self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
 
     def define(self, inputFile):
