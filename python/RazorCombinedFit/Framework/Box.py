@@ -326,12 +326,12 @@ class Box(object):
         return self.generateToyFRWithYield(genmodel, fr, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), *options)
 
 
-    def writeBackgroundDataToys(self, fr, total_yield, box, nToys):
+    def writeBackgroundDataToys(self, fr, total_yield, box, nToys, label="./"):
         """Write out toys which have been sampled from a fit result"""
         
         for i in xrange(nToys):
             ds = self.generateToyFRWithYield(self.fitmodel, fr, total_yield)
-            ds.write('frtoydata_%s_%i.txt' % (box,i))
+            ds.write('%s/frtoydata_%s_%i.txt' % (label, box,i))
 
     def predictBackgroundData(self, fr, data, nRepeats = 100, verbose = True):
         

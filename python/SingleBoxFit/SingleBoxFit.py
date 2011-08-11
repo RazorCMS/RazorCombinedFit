@@ -95,12 +95,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 data_yield = totalYield
 
             #if we just need to write out toys then skip everything else
-            if self.options.save_toys_from_fit:
+            if self.options.save_toys_from_fit != "none":
                 if box != simName:
                     f = boxes[box].workspace.obj('independentFR')
                 else:
                     f = boxes[box].workspace.obj('simultaneousFR')
-                boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys)
+                if self.options.save_toys_from_fit.find("/") != -1:
+                    boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys, self.options.save_toys_from_fit)
+                else
+                    boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys)
                 continue
 
             #use an MCStudy to store everything
