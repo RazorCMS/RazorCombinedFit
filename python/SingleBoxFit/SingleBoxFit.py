@@ -165,7 +165,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"))
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
                 #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
@@ -238,10 +238,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             self.fixPars("Wln")
             self.fixPars("TTj")
             self.fixPars("QCD")
-            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"),rt.RooFit.Extended(True))
+            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(True))
             #L(H1|x)
             reset(box, fr)
-            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"),rt.RooFit.Extended(True))
+            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(True))
 
             LH1x = fr_H1x.minNll()
             LH0x = fr_H0x.minNll()
