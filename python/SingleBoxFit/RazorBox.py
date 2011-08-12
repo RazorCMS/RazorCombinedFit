@@ -7,10 +7,7 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['MuEle','MuMu','EleEle']}
-        #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['Mu', 'Ele', 'Had', 'MuEle','MuMu','EleEle']}
         self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
-        #self.cut = 'MR <= 750 && Rsq <= 0.2'
         self.cut = 'MR >= 0.0'
 
     def addTailPdf(self, flavour):
@@ -115,30 +112,28 @@ class RazorBox(Box.Box):
             self.fixPars("MR02nd_%s_s" % flavour)
             self.fixPars("R02nd_%s_s" % flavour)
             self.fixPars("b2nd_%s_s" % flavour)
+        def float1stComponent(flavour):
+            self.fixParsExact("MR01st_%s" % flavour, False)
+            self.fixParsExact("R01st_%s" % flavour, False)
+            self.fixParsExact("b1st_%s" % flavour, False)
         def float2ndComponent(flavour):
             self.fixParsExact("MR02nd_%s" % flavour, False)
             self.fixParsExact("R02nd_%s" % flavour, False)
             self.fixParsExact("b2nd_%s" % flavour, False)        
         def floatFractionWithPenalty(flavour):
-            #self.fixParsExact("Epsilon_%s_mean" % flavour)
             self.fixParsPenalty("f2_%s" % flavour)
             self.fixPars("f2_%s_s" % flavour)
         def floatFraction(flavour):
             self.fixParsExact("f2_%s" % flavour, False)
         def floatYield(flavour):
             self.fixParsExact("Ntot_%s" % flavour, False)
-        def floatScaleFactors(flavour):
-            self.fixParsExact("rEps_%s" % flavour, False)
             
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             float1stComponentWithPenalty(z)
             if self.name != "Had": float2ndComponentWithPenalty(z)
-            #float2ndComponent(z)
             floatYield(z)
             if self.name != "Had": floatFractionWithPenalty(z)
-            #floatScaleFactors(z)
-            #floatFraction(z)
             
         # switch off not-needed components (box by box)
         fixed = []
@@ -175,10 +170,6 @@ class RazorBox(Box.Box):
     def plot(self, inputFile, store, box):
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1', 'fR2','fR3','fR4']), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
-        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1']), dir=box)
-        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B2']), dir=box)
-        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B3']), dir=box)
-        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['fR1', 'fR2','fR3','fR4'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['fR1', 'fR2','fR3','fR4'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
