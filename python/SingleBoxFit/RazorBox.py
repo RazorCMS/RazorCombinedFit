@@ -9,7 +9,7 @@ class RazorBox(Box.Box):
         
         #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['MuEle','MuMu','EleEle']}
         #self.zeros = {'TTj':[],'Wln':['MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Mu','Ele','MuMu','EleEle','MuEle','Had'],'QCD':['Mu', 'Ele', 'Had', 'MuEle','MuMu','EleEle']}
-        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle']}
+        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
         #self.cut = 'MR <= 750 && Rsq <= 0.2'
         self.cut = 'MR >= 0.0'
 
@@ -18,7 +18,7 @@ class RazorBox(Box.Box):
         label = '_%s' % flavour
 
         #define a flavour specific yield
-        self.yieldToCrossSection(flavour)
+        #self.yieldToCrossSection(flavour)
         # define the two components
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
@@ -105,32 +105,38 @@ class RazorBox(Box.Box):
             self.fixParsPenalty("MR01st_%s" % flavour)
             self.fixParsPenalty("R01st_%s" % flavour)
             self.fixParsPenalty("b1st_%s" % flavour)
+            self.fixPars("MR01st_%s_s" % flavour)
+            self.fixPars("R01st_%s_s" % flavour)
+            self.fixPars("b1st_%s_s" % flavour)
         def float2ndComponentWithPenalty(flavour):
             self.fixParsPenalty("MR02nd_%s" % flavour)
             self.fixParsPenalty("R02nd_%s" % flavour)
             self.fixParsPenalty("b2nd_%s" % flavour)
+            self.fixPars("MR02nd_%s_s" % flavour)
+            self.fixPars("R02nd_%s_s" % flavour)
+            self.fixPars("b2nd_%s_s" % flavour)
         def float2ndComponent(flavour):
             self.fixParsExact("MR02nd_%s" % flavour, False)
             self.fixParsExact("R02nd_%s" % flavour, False)
             self.fixParsExact("b2nd_%s" % flavour, False)        
         def floatFractionWithPenalty(flavour):
-            self.fixParsPenalty("Epsilon_%s" % flavour, floatIfNoPenalty = True)
-            self.fixParsExact("Epsilon_%s_s" % flavour)
-            self.fixParsExact("Epsilon_%s_mean" % flavour)
+            #self.fixParsExact("Epsilon_%s_mean" % flavour)
             self.fixParsPenalty("f2_%s" % flavour)
             self.fixPars("f2_%s_s" % flavour)
         def floatFraction(flavour):
-            self.fixParsExact("Epsilon_%s" % flavour, False)
             self.fixParsExact("f2_%s" % flavour, False)
+        def floatYield(flavour):
+            self.fixParsExact("Ntot_%s" % flavour, False)
         def floatScaleFactors(flavour):
             self.fixParsExact("rEps_%s" % flavour, False)
             
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             float1stComponentWithPenalty(z)
-            float2ndComponentWithPenalty(z)
+            if self.name != "Had": float2ndComponentWithPenalty(z)
             #float2ndComponent(z)
-            floatFractionWithPenalty(z)
+            floatYield(z)
+            if self.name != "Had": floatFractionWithPenalty(z)
             #floatScaleFactors(z)
             #floatFraction(z)
             
@@ -138,7 +144,7 @@ class RazorBox(Box.Box):
         fixed = []
         for z in self.zeros:
             if self.name in self.zeros[z]:
-                floatSomething(z)
+                #floatSomething(z)
                 self.fixPars(z)
                 self.switchOff(z)
             else:
@@ -146,15 +152,6 @@ class RazorBox(Box.Box):
                     floatSomething(z)
                     fixed.append(z)
 
-        if self.name == 'Had':
-            self.fixPars('f2_QCD')
-            self.fixPars('1st_Znn')
-            self.fixPars('1st_QCD')
-            self.fixPars('1st_Wln')        
-            #self.fixPars('2nd_Znn')
-            #self.fixPars('2nd_Wln')
-            self.fixPars('2nd_QCD')
-                    
     def addSignalModel(self, inputFile, modelName = None):
         
         if modelName is None:
@@ -176,17 +173,14 @@ class RazorBox(Box.Box):
 
         
     def plot(self, inputFile, store, box):
-        #[store.store(p, dir = box) for p in self.plotObservables(inputFile, range = 'B1,B2,B3,hC1,hC2,hC3')]
-        #store.store(self.plot1D(inputFile, "MR", 50, range = 'B1,B2,B3,hC1,hC2,hC3'), dir=box)
-        #store.store(self.plot1D(inputFile, "Rsq",50, range = 'B1,B2,B3,hC1,hC2,hC3'), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1','B2','B3','hC1','hC2','hC3']), dir=box)
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1', 'fR2','fR3','fR4']), dir=box)
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
         #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B1']), dir=box)
         #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B2']), dir=box)
         #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['B3']), dir=box)
         #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
-        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['B1','B2','B3','hC1','hC2','hC3'])]
-        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['B1','B2','B3','hC1','hC2','hC3'])]
+        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['fR1', 'fR2','fR3','fR4'])]
+        [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['fR1', 'fR2','fR3','fR4'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['FULL'])]
             
