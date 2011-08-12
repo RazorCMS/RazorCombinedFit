@@ -213,7 +213,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 10):
+    def limit(self, inputFiles, nToys = 1):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -241,7 +241,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     box.switchOff(z)
                 else:
                     box.fixPars(z)
-                    floatYield(z)
+                    box.floatYield(z)
 
             fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
             #L(H1|x)

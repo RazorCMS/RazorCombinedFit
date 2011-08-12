@@ -50,6 +50,37 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
         self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
 
+    #add penalty terms and float
+    def float1stComponentWithPenalty(self,flavour):
+        self.fixParsPenalty("MR01st_%s" % flavour)
+        self.fixParsPenalty("R01st_%s" % flavour)
+        self.fixParsPenalty("b1st_%s" % flavour)
+        self.fixPars("MR01st_%s_s" % flavour)
+        self.fixPars("R01st_%s_s" % flavour)
+        self.fixPars("b1st_%s_s" % flavour)
+    def float2ndComponentWithPenalty(self,flavour):
+        self.fixParsPenalty("MR02nd_%s" % flavour)
+        self.fixParsPenalty("R02nd_%s" % flavour)
+        self.fixParsPenalty("b2nd_%s" % flavour)
+        self.fixPars("MR02nd_%s_s" % flavour)
+        self.fixPars("R02nd_%s_s" % flavour)
+        self.fixPars("b2nd_%s_s" % flavour)
+    def float1stComponent(self,flavour):
+        self.fixParsExact("MR01st_%s" % flavour, False)
+        self.fixParsExact("R01st_%s" % flavour, False)
+        self.fixParsExact("b1st_%s" % flavour, False)
+    def float2ndComponent(self,flavour):
+        self.fixParsExact("MR02nd_%s" % flavour, False)
+        self.fixParsExact("R02nd_%s" % flavour, False)
+        self.fixParsExact("b2nd_%s" % flavour, False)        
+    def floatFractionWithPenalty(self,flavour):
+        self.fixParsPenalty("f2_%s" % flavour)
+        self.fixPars("f2_%s_s" % flavour)
+    def floatFraction(self,flavour):
+        self.fixParsExact("f2_%s" % flavour, False)
+    def floatYield(self,flavour):
+        self.fixParsExact("Ntot_%s" % flavour, False)
+            
     def define(self, inputFile):
         
         #create the dataset
@@ -97,43 +128,12 @@ class RazorBox(Box.Box):
         self.fixPars("TTj")
         self.fixPars("QCD")
         
-        #add penalty terms and float
-        def float1stComponentWithPenalty(flavour):
-            self.fixParsPenalty("MR01st_%s" % flavour)
-            self.fixParsPenalty("R01st_%s" % flavour)
-            self.fixParsPenalty("b1st_%s" % flavour)
-            self.fixPars("MR01st_%s_s" % flavour)
-            self.fixPars("R01st_%s_s" % flavour)
-            self.fixPars("b1st_%s_s" % flavour)
-        def float2ndComponentWithPenalty(flavour):
-            self.fixParsPenalty("MR02nd_%s" % flavour)
-            self.fixParsPenalty("R02nd_%s" % flavour)
-            self.fixParsPenalty("b2nd_%s" % flavour)
-            self.fixPars("MR02nd_%s_s" % flavour)
-            self.fixPars("R02nd_%s_s" % flavour)
-            self.fixPars("b2nd_%s_s" % flavour)
-        def float1stComponent(flavour):
-            self.fixParsExact("MR01st_%s" % flavour, False)
-            self.fixParsExact("R01st_%s" % flavour, False)
-            self.fixParsExact("b1st_%s" % flavour, False)
-        def float2ndComponent(flavour):
-            self.fixParsExact("MR02nd_%s" % flavour, False)
-            self.fixParsExact("R02nd_%s" % flavour, False)
-            self.fixParsExact("b2nd_%s" % flavour, False)        
-        def floatFractionWithPenalty(flavour):
-            self.fixParsPenalty("f2_%s" % flavour)
-            self.fixPars("f2_%s_s" % flavour)
-        def floatFraction(flavour):
-            self.fixParsExact("f2_%s" % flavour, False)
-        def floatYield(flavour):
-            self.fixParsExact("Ntot_%s" % flavour, False)
-            
         def floatSomething(z):
             """Switch on or off whatever you want here"""
-            float1stComponentWithPenalty(z)
+            self.float1stComponentWithPenalty(z)
             if self.name != "Had": float2ndComponentWithPenalty(z)
-            floatYield(z)
-            if self.name != "Had": floatFractionWithPenalty(z)
+            self.floatYield(z)
+            if self.name != "Had": self.floatFractionWithPenalty(z)
             
         # switch off not-needed components (box by box)
         fixed = []
