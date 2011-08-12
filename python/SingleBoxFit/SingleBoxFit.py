@@ -213,7 +213,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 1000):
+    def limit(self, inputFiles, nToys = 10):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -233,10 +233,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
         def getLz(box, ds, fr, testForQuality = True):
             #L(H0|x)
             reset(box, fr)
-            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            self.fixPars("Zll")
+            self.fixPars("Znn")
+            self.fixPars("Wln")
+            self.fixPars("TTj")
+            self.fixPars("QCD")
+            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"),rt.RooFit.Extended(True))
             #L(H1|x)
             reset(box, fr)
-            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("B1,B2,B3,hC1,hC2,hC3"),rt.RooFit.Extended(True))
 
             LH1x = fr_H1x.minNll()
             LH0x = fr_H0x.minNll()
@@ -284,9 +289,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
-             
-                #generate a toy assuming only the signal model (same number of events as background only toy)
-                sig_toy = boxes[box].generateToyFR(boxes[box].signalmodel,fr_central)
+
+                sig_toy = rt.RooDataSet()
+                if self.options.expectedlimit == False:
+                    #generate a toy assuming only the signal model (same number of events as background only toy)
+                    sig_toy = boxes[box].generateToyFR(boxes[box].signalmodel,fr_central)
+                else:
+                    #generate a toy assuming only the bkg model (same number of events as background only toy)
+                    sig_toy = boxes[box].generateToyFR(boxes[box].fitmodel,fr_central)
                 #boxes[box].fixAllPars()
                 #floatPars(box)
 

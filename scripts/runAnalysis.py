@@ -30,6 +30,8 @@ def defineParser():
                   help="Run the simultaneous fit")
     parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',
                   help="Run the model-dependent limit setting code")
+    parser.add_option('-e','--expected-limit',dest="expectedlimit", default=False,action='store_true',
+                      help="Run the model-dependent bkg-only toy MC to compute the expected limit")
     parser.add_option('-m','--model-independent-limit',dest="model_independent_limit", default=False,action='store_true',
                   help="Run the model-independent limit setting code")
     return parser
