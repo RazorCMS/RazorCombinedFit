@@ -233,15 +233,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
         def getLz(box, ds, fr, testForQuality = True):
             #L(H0|x)
             reset(box, fr)
-            self.fixPars("Zll")
-            self.fixPars("Znn")
-            self.fixPars("Wln")
-            self.fixPars("TTj")
-            self.fixPars("QCD")
-            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(True))
+
+            # fix all parameters
+            for z in box.zeros:
+                if box.name in box.zeros[z]:
+                    box.fixPars(z)
+                    box.switchOff(z)
+                else:
+                    box.fixPars(z)
+                    floatYield(z)
+
+            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
             #L(H1|x)
             reset(box, fr)
-            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(True))
+            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
 
             LH1x = fr_H1x.minNll()
             LH0x = fr_H0x.minNll()
