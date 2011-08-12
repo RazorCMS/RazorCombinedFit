@@ -20,6 +20,8 @@ def defineParser():
                   help="Save the toys as text files for future use.")
     parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",type="string", default="none",
                   help="Save the toys as text files for future use. Sample from covariance matrix.")
+    parser.add_option('--scale-lumi',dest="scale_lumi",type="int", default=1,
+                  help="[ONLY when saving toys] scale the toys statistics by a specificed lumi scale factor")
     parser.add_option('-s','--seed',dest="seed",type="int", default=0,
                   help="The random seed to start with")
     parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
