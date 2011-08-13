@@ -113,6 +113,11 @@ if __name__ == '__main__':
                   help="The flavour of MC used as input")
     parser.add_option('-r','--run',dest="run",default=-1,type=float,
                   help="The minimum run number")
+    parser.add_option('-d','--dir',dest="outdir",default="./",type="string",
+                  help="Output directory to store datasets")
+    parser.add_option('-x','--box',dest="box",default=None,type="string",
+                  help="Specify only one box")
+    
     (options,args) = parser.parse_args()
     
     if options.config is None:
@@ -125,16 +130,19 @@ if __name__ == '__main__':
     for f in args:
         if f.lower().endswith('.root'):
             input = rt.TFile.Open(f)
-            decorator = os.path.basename(f)[:-5]
-            
+            decorator = options.outdir+"/"+os.path.basename(f)[:-5]
+            print decorator
             if not options.eff:
                 #dump the trees for the different datasets
-                convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag,options.run)
-                convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag,options.run)
-                convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag,options.run)
-                convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.btag,options.run)
-                convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.btag,options.run)
-                convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.btag,options.run)
+                if options.box != None:
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.btag,options.run)
+                else:
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.btag,options.run)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
