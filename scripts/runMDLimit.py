@@ -51,18 +51,23 @@ for box in boxes:
     outputfile.write("source setup.sh\n")
     outputfile.write("cp %s /tmp/woodson/ \n" %signalfilename)
     # convert original signal file to box-by-box datasets
-    outputfile.write("python scripts/Chris2Dataset.py  -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -d /tmp/woodson /tmp/woodson/%s\n" %signalfilename)
+    outputfile.write("python scripts/Chris2Dataset.py -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -x %s -d /tmp/woodson /tmp/woodson/%s\n" %(box,signalfilename))
     # fit on a single box dataset 
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root /afs/cern.ch/user/m/mpierini/public/RAZOR2011_FitSamples/*_%s.root -b >& /tmp/woodson/fitoutput_%s_%s.txt \n" %(MR,R,box,box,signal,box))
     # perform limit toys(signal + bkgd) setting fits
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root -i /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root /tmp/woodson/%s_MR%s_R%s_%s.root -b --limit >& /tmp/woodson/output_%s_%s.txt \n" %(MR,R,signal,box,MR,R,box,signal,MR,R,box,signal,box))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o /tmp/woodson/LimitBkgSigToys_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root -i /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root /tmp/woodson/%s_MR%s_R%s_%s.root -b --limit >& /tmp/woodson/LimitBkgSigToys_output_%s_%s.txt \n" %(MR,R,signal,box,MR,R,box,signal,MR,R,box,signal,box))
     # perform limit toys(bkgd only) setting fits
-    outputfile.write("scp /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root woodson@lxcms133:/data/woodson/SIGNALMODELTOYS/\n" %(MR,R,signal,box))
-    outputfile.write("scp /tmp/woodson/output_%s_%s.txt woodson@lxcms133:/data/woodson/SIGNALMODELTOYS/\n" %(signal,box))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o /tmp/woodson/LimitBkgToys_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root -i /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root /tmp/woodson/%s_MR%s_R%s_%s.root -b -e --limit >& /tmp/woodson/LimitBkgToys_output_%s_%s.txt \n" %(MR,R,signal,box,MR,R,box,signal,MR,R,box,signal,box))
+    outputfile.write("scp /tmp/woodson/LimitBkgSigToys_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root woodson@lxcms133:/data/woodson/SIGNALMODELTOYS/\n" %(MR,R,signal,box))
+    outputfile.write("scp /tmp/woodson/LimitBkgToys_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root woodson@lxcms133:/data/woodson/SIGNALMODELTOYS/\n" %(MR,R,signal,box))
+    outputfile.write("scp /tmp/woodson/LimitBkgSigToys_output_%s_%s.txt woodson@lxcms133:/data/woodson/SIGNALMODELTOYS/\n" %(signal,box))
+    outputfile.write("scp /tmp/woodson/LimitBkgToys_output_%s_%s.txt woodson@lxcms133:/data/woodson/SIGNALMODELTOYS/\n" %(signal,box))
     outputfile.write("rm /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root\n" %(MR,R,box))
-    outputfile.write("rm /tmp/woodson/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root\n" %(MR,R,signal,box))
+    outputfile.write("rm /tmp/woodson/LimitBkgSigToys_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root\n" %(MR,R,signal,box))
+    outputfile.write("rm /tmp/woodson/LimitBkgToys_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s_%s.root\n" %(MR,R,signal,box))
     outputfile.write("rm /tmp/woodson/fitoutput_%s_%s.txt \n" %(signal,box))
-    outputfile.write("rm /tmp/woodson/output_%s_%s.txt" %(signal,box))
+    outputfile.write("rm /tmp/woodson/LimitBkgSigToys_output_%s_%s.txt\n" %(signal,box))
+    outputfile.write("rm /tmp/woodson/LimitBkgToys_output_%s_%s.txt" %(signal,box))
     outputfile.close
     # submit to batch
     os.system("echo bsub -q "+queue+" -o log_"+signal+"_"+box+".log source "+pwd+"/"+outputname)

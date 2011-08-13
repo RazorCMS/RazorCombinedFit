@@ -213,7 +213,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 5):
+    def limit(self, inputFiles, nToys = 1000):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -236,11 +236,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             # fix all parameters
             for z in box.zeros:
+                box.fixPars(z)
                 if box.name in box.zeros[z]:
-                    box.fixPars(z)
                     box.switchOff(z)
                 else:
-                    box.fixPars(z)
                     box.floatYield(z)
 
             fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
@@ -296,10 +295,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print 'Setting limit %i experiment' % i
 
                 sig_toy = rt.RooDataSet()
+                print "what is self.options.expectedlimit?"
                 if self.options.expectedlimit == False:
                     #generate a toy assuming only the signal model (same number of events as background only toy)
+                    print "It was False!"
                     sig_toy = boxes[box].generateToyFR(boxes[box].signalmodel,fr_central)
                 else:
+                    print "It was True!"
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     sig_toy = boxes[box].generateToyFR(boxes[box].fitmodel,fr_central)
                 #boxes[box].fixAllPars()
@@ -318,7 +320,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
                 boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
                 boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
-                self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
+                #self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
             
             #calculate the area integral of the distribution    
             lzValues.sort()#smallest to largest
