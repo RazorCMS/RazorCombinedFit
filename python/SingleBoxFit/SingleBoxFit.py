@@ -213,7 +213,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 1):
+    def limit(self, inputFiles, nToys = 5):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)

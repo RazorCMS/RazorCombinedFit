@@ -131,7 +131,7 @@ class RazorBox(Box.Box):
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             self.float1stComponentWithPenalty(z)
-            if self.name != "Had": float2ndComponentWithPenalty(z)
+            if self.name != "Had": self.float2ndComponentWithPenalty(z)
             self.floatYield(z)
             if self.name != "Had": self.floatFractionWithPenalty(z)
             
