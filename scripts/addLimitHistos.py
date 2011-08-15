@@ -1,5 +1,5 @@
-# Script to produce S
-# example usage: python scripts/addLimitHistos.py -x Had -o Limit__Had.root /data/woodson/SIGNALMODELTOYS/LimitBkgSigToys_*_Had_*.root
+# Script to produce two histograms in a ROOT file hlz_b (lz values with b-only toys) and hlz_sb (lz values with s+b toys)
+# example usage (on lxcms132) : python scripts/addLimitHistos.py -x Had -o Limit_Had.root /data/woodson/SIGNALMODELTOYS/*_Had_*.root
 
 from optparse import OptionParser
 import os
