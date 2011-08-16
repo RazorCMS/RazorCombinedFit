@@ -33,11 +33,11 @@ if __name__ == '__main__':
             outputname = "%s_%i.src" %(signal,i)
             outputfile = open(outputname,'w')
             outputfile.write('#!/bin/bash\n')
-            outputfile.write("cd /afs/cern.ch/user/m/mpierini/scratch0/CMSSW_4_2_0/src; eval `scramv1 run -sh`\n")
             outputfile.write('cd '+pwd+'\n')
+            outputfile.write("eval `scramv1 run -sh`\n")
             outputfile.write("source setup.sh\n")
-            mydir = "/tmp/mpierini/%s_%i" %(signal,i)
-            outputfile.write("rm /tmp/mpierini/*\n")
+            mydir = "/tmp/smaria/%s_%i" %(signal,i)
+            outputfile.write("rm /tmp/smaria/*\n")
             outputfile.write("mkdir %s\n" % mydir)
             outputfile.write("cp %s %s \n" %(signalpath, mydir))
             # convert original signal file to box-by-box datasets
@@ -63,8 +63,8 @@ if __name__ == '__main__':
                 # perform limit toys(bkgd only) setting fits
                 outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_SignalTemplate.cfg -o %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/m/mpierini/public/RAZORFITS/%sBox_NOMINAL.root %s/%s_MR%s_R%s_%s.root -b --limit -e >& /dev/null \n" %(seed,mydir,MR,R,signal,box,i,box,mydir,signal,MR,R,box))
                 # copy output files
-                outputfile.write("scp %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root mpierini@lxcms132:/data1/mpierini/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
-                outputfile.write("scp %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root mpierini@lxcms132:/data1/mpierini/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
+                outputfile.write("scp %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root smaria@lxcms132:/data1/smaria/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
+                outputfile.write("scp %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root smaria@lxcms132:/data1/smaria/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
                 outputfile.write("rm -r %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root\n" %(mydir,MR,R,signal,box,i))
                 outputfile.write("rm -r %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root\n" %(mydir,MR,R,signal,box,i))
             # remove output files
