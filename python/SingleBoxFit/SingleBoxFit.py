@@ -227,9 +227,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
         def reset(box, fr):
-            for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()):
+            #for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()):
+            for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()):
                 box.workspace.var(p.GetName()).setVal(p.getVal())
                 box.workspace.var(p.GetName()).setError(p.getError())
+                
             # fix all parameters
             for z in box.zeros:
                 box.fixPars(z)
