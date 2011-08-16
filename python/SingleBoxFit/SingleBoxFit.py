@@ -47,6 +47,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
             boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
 
+            if not self.options.limit: boxes[box].addDataSet(fileName)
             boxes[box].define(fileName)
 
         return boxes
@@ -213,7 +214,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 1000):
+    def limit(self, inputFiles, nToys = 20):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -229,11 +230,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()):
                 box.workspace.var(p.GetName()).setVal(p.getVal())
                 box.workspace.var(p.GetName()).setError(p.getError())
-        
-        def getLz(box, ds, fr, testForQuality = True):
-            #L(H0|x)
-            reset(box, fr)
-
             # fix all parameters
             for z in box.zeros:
                 box.fixPars(z)
@@ -242,6 +238,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:
                     box.floatYield(z)
 
+        def getLz(box, ds, fr, testForQuality = True):
+            #L(H0|x)
+            reset(box, fr)
             fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
             #L(H1|x)
             reset(box, fr)
@@ -291,6 +290,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
             values = rt.RooDataSet('Lz_%s' % box, 'Lz_values', rt.RooArgSet(lzV,lzD))
             lzD.setVal(lzData)
 
+            myTree = rt.TTree("myTree", "myTree")
+    
+            # THIS IS CRAZY !!!!
+            rt.gROOT.ProcessLine(
+                "struct MyStruct{\
+                Double_t var1;\
+                };")
+            from ROOT import MyStruct
+
+            s = MyStruct()
+            myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
+
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
 
@@ -298,14 +309,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "what is self.options.expectedlimit?"
                 if self.options.expectedlimit == False:
                     #generate a toy assuming only the signal model (same number of events as background only toy)
-                    print "It was False!"
                     sig_toy = boxes[box].generateToyFR(boxes[box].signalmodel,fr_central)
                 else:
                     print "It was True!"
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     sig_toy = boxes[box].generateToyFR(boxes[box].fitmodel,fr_central)
-                #boxes[box].fixAllPars()
-                #floatPars(box)
+ 
 
                 Lz = getLz(boxes[box],sig_toy, fr_central)
                 if Lz is None:
@@ -314,12 +323,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 lzValues.append(Lz)
                 lzV.setVal(Lz)
                 values.add(rt.RooArgSet(lzV,lzD))
-                
-                frame_MR_sig = boxes[box].workspace.var('MR').frame()
-                sig_toy.plotOn(frame_MR_sig)
-                boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
-                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
-                boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
+                s.var1 = Lz
+                myTree.Fill()
+                ### plotting:
+                #frame_MR_sig = boxes[box].workspace.var('MR').frame()
+                #sig_toy.plotOn(frame_MR_sig)
+                #boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
+                #boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
+                #boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
                 #self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
             
             #calculate the area integral of the distribution    
@@ -348,5 +359,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             self.store(hist_H1, dir=box)
             self.store(values, dir=box)
+            self.store(myTree, dir=box)
 
 

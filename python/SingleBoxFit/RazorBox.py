@@ -80,19 +80,19 @@ class RazorBox(Box.Box):
         self.fixParsExact("f2_%s" % flavour, False)
     def floatYield(self,flavour):
         self.fixParsExact("Ntot_%s" % flavour, False)
-            
-    def define(self, inputFile):
-        
+
+    def addDataSet(self, inputFile):
         #create the dataset
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+        #import the dataset to the workspace
+        self.importToWS(data)
+
+    def define(self, inputFile):
         
         #define the ranges
         mR  = self.workspace.var("MR")
         Rsq = self.workspace.var("Rsq")
         
-        #import the dataset to the workspace
-        self.importToWS(data)
-
         # add the different components:
         # - W+jets
         # - Zll+jets
@@ -152,12 +152,13 @@ class RazorBox(Box.Box):
         if modelName is None:
             modelName = 'Signal'
         
-        data = self.workspace.data('RMRTree')
+        #data = self.workspace.data('RMRTree')
         signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
-        
+
         #set the MC efficiency relative to the number of events generated
-        epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
-        self.yieldToCrossSection(modelName) #define Ntot
+        #epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
+        #self.yieldToCrossSection(modelName) #define Ntot
+        self.workspace.factory("expr::Ntot_%s('%f*@0/1000.', Lumi)" %(modelName,nSig))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
                            rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)

@@ -129,20 +129,21 @@ class Box(object):
     
     def makeRooHistPdf(self, inputFile, modelName):
         
-        signal = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
         vars = self.workspace.set('variables')
+        #signal = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
         
-        hvars = rt.RooArgSet()
-        for p in RootTools.RootIterator.RootIterator(vars):
-            p.setBins(100)
-            hvars.add(p)
+        #hvars = rt.RooArgSet()
+        #for p in RootTools.RootIterator.RootIterator(vars):
+        #    p.setBins(100)
+        #    hvars.add(p)
         
         #create a binned dataset in the parameter   
-        hdata = rt.RooDataHist('%sHist' % modelName,'%sHist' % modelName,hvars, signal)
+        #hdata = rt.RooDataHis(t'%sHist' % modelName,'%sHist' % modelName,hvars, signal)
+        hdata = RootTools.getDataSet(inputFile,'RMRHistTree')
         self.importToWS(hdata)
         hpdf = rt.RooHistPdf('%sPdf' % modelName,'%sPdf' % modelName,vars,hdata)
         self.importToWS(hpdf)
-        return (hpdf.GetName(),signal.numEntries())
+        return (hpdf.GetName(),hdata.sum(False))
 
     
     def importToWS(self, *args):
