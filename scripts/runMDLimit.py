@@ -19,14 +19,14 @@ if __name__ == '__main__':
     queue= options.queue
 
     for signalfilename in args:
-        signal = signalfilename.split('.root')[0]
+        signal = signalfilename.split('.root')[0].split('/')[-1]
 
         M0 = int(signal.split('_')[-2].split('-')[-1])
         M12 = int(signal.split('_')[-1].split('-')[-1])
 
         print "\nNow scanning mSUGRA (M0,M12)=("+str(M0)+","+str(M12)+")\n"
 
-        for i in range(200,202):
+        for i in range(0,1):
 
             for box in boxes:
         
@@ -61,8 +61,8 @@ if __name__ == '__main__':
                 # perform limit toys(bkgd only) setting fits
                 outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root %s/%s_MR%s_R%s_%s.root -b --limit -e >& /dev/null \n" %(seed,mydir,MR,R,signal,box,i,MR,R,box,mydir,signal,MR,R,box))
                 # copy output files
-                outputfile.write("scp %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
-                outputfile.write("scp %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
+                outputfile.write("scp %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data1/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
+                outputfile.write("scp %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data1/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
                 # remove output files
                 outputfile.write("rm -r %s\n" %(mydir))
                 outputfile.close
