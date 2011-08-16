@@ -40,7 +40,7 @@ else:
     hadBkgPdf = rt.RooHistPdf("%sBkgPdf" %Box, "%sBkgPdf" %Box, rt.RooArgSet(ws.var("b_%s_S1" %Box), ws.var("b_%s_S2" %Box), ws.var("b_%s_S3" %Box)), hadHistDataset)
 
 myOutFile = rt.TFile.Open("bkg_%s.root" %Box,"recreate")
-#data.Write()
+data.Write()
 hadHistDataset.Write()
 hadBkgPdf.Write()
 myOutFile.Close()
