@@ -57,18 +57,16 @@ if __name__ == '__main__':
                 # convert original signal file to box-by-box datasets
                 outputfile.write("python scripts/Chris2BinnedDataset.py -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -x %s -d %s %s/%s\n" %(box,mydir, mydir, signalfilename))
                 # perform limit toys(signal + bkgd) setting fits
-                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root %s/%s_MR%s_R%s_%s.root -b --limit >& %s/LimitBkgSigToys_output_%s_%s_%i.txt \n" %(seed,mydir,MR,R,signal,box,i,MR,R,box,mydir,signal,MR,R,box,mydir,signal,box,i))
+                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root %s/%s_MR%s_R%s_%s.root -b --limit >& /dev/null\n" %(seed,mydir,MR,R,signal,box,i,MR,R,box,mydir,signal,MR,R,box))
                 # perform limit toys(bkgd only) setting fits
-                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root %s/%s_MR%s_R%s_%s.root -b --limit -e >& %s/LimitBkgToys_output_%s_%s_%i.txt \n" %(seed,mydir,MR,R,signal,box,i,MR,R,box,mydir,signal,MR,R,box,mydir,signal,box,i))
+                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4_Signal.cfg -o %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/SingleBoxFit_Prompt_MR%s_R%s_fR1fR2fR3fR4_%s.root %s/%s_MR%s_R%s_%s.root -b --limit -e >& /dev/null \n" %(seed,mydir,MR,R,signal,box,i,MR,R,box,mydir,signal,MR,R,box))
                 # copy output files
                 outputfile.write("scp %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
                 outputfile.write("scp %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
-                outputfile.write("scp %s/LimitBkgSigToys_output_%s_%s_%i.txt woodson@lxcms132:/data/woodson/SIGNALMODELTOYS/\n" %(mydir,signal,box,i))
-                outputfile.write("scp %s/LimitBkgToys_output_%s_%s_%i.txt woodson@lxcms132:/data/woodson/SIGNALMODELTOYS/\n" %(mydir,signal,box,i))
                 # remove output files
                 outputfile.write("rm -r %s\n" %(mydir))
                 outputfile.close
                 # submit to batch
                 os.system("echo bsub -q "+queue+" -o log_"+signal+"_"+box+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o log_"+signal+"_"+box+".log source "+pwd+"/"+outputname)
+                #os.system("bsub -q "+queue+" -o log_"+signal+"_"+box+".log source "+pwd+"/"+outputname)
                 continue
