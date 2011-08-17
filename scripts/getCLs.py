@@ -37,7 +37,7 @@ def getQdist(m0, m12, BoxName):
     critValueData = -99999999
     FirstFile = True
 
-    for spbFile in glob.glob("/Users/maurizio/PIPPO/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB10_M0-%s_M12-%s_%s_*.root" %(MR, R, m0, m12, BoxName)):
+    for spbFile in glob.glob("/Users/maurizio/SIGNALMODELTOYS/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB10_M0-%s_M12-%s_%s_*.root" %(MR, R, m0, m12, BoxName)):
         input = rt.TFile.Open(spbFile)
         if FirstFile:
             critValueData  = input.Get("%s/Lz_%s" %(BoxName, BoxName)).get().getRealValue("LzData")
@@ -53,7 +53,7 @@ def getQdist(m0, m12, BoxName):
             lzValues_sb.append(tSpB.Lz)
         input.Close()
 
-    for bFile in glob.glob("/Users/maurizio//PIPPO/LimitBkgToys_MR%s_R%s_mSUGRA_tanB10_M0-%s_M12-%s_%s_*.root" %(MR, R, m0, m12, BoxName)):
+    for bFile in glob.glob("/Users/maurizio//SIGNALMODELTOYS/LimitBkgToys_MR%s_R%s_mSUGRA_tanB10_M0-%s_M12-%s_%s_*.root" %(MR, R, m0, m12, BoxName)):
         input = rt.TFile.Open(bFile)
         tB=input.Get("%s/myTree" %BoxName)
         tB.Draw('>>elistB','','entrylist')
