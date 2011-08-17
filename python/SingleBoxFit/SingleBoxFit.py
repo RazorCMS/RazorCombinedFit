@@ -43,9 +43,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("pdf2pars_TTj", self.config.getVariables(box, "pdf2_TTj"))
             boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
             # QCD
-            boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
-            boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
-            boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
+            #boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
+            #boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
+            #boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
 
             if not self.options.limit: boxes[box].addDataSet(fileName)
             boxes[box].define(fileName)

@@ -7,7 +7,8 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
         
-        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
+        #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
+        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
         self.cut = 'MR >= 0.0'
 
     def addTailPdf(self, flavour):
@@ -104,15 +105,15 @@ class RazorBox(Box.Box):
         #self.addTailPdfVjets("Zll", "Wln")
         #self.addTailPdfVjets("Znn", "Wln")
         self.addTailPdf("TTj")
-        self.addTailPdf("QCD")
+        #self.addTailPdf("QCD")
 
         # build the total PDF
         myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_Wln"),self.workspace.pdf("ePDF2nd_Wln"),
                                   self.workspace.pdf("ePDF1st_Zll"),self.workspace.pdf("ePDF2nd_Zll"),
                                                                     self.workspace.pdf("ePDF1st_Znn"),self.workspace.pdf("ePDF2nd_Znn"),
                                                                     self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"))
-        myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
-        myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))    
+        #myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
+        #myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))    
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)        
         
         # import the model in the workspace.
@@ -126,7 +127,7 @@ class RazorBox(Box.Box):
         self.fixPars("Znn")
         self.fixPars("Wln")
         self.fixPars("TTj")
-        self.fixPars("QCD")
+        #self.fixPars("QCD")
         
         def floatSomething(z):
             """Switch on or off whatever you want here"""
@@ -213,8 +214,8 @@ class RazorBox(Box.Box):
         N1_TTj = self.workspace.function("Ntot_TTj").getVal()*(1-self.workspace.var("f2_TTj").getVal())
         N2_TTj = self.workspace.function("Ntot_TTj").getVal()*self.workspace.var("f2_TTj").getVal()
         # plot each individual component: QCD
-        N1_QCD = self.workspace.function("Ntot_QCD").getVal()*(1-self.workspace.var("f2_QCD").getVal())
-        N2_QCD = self.workspace.function("Ntot_QCD").getVal()*self.workspace.var("f2_QCD").getVal()        
+        N1_QCD = 0 #self.workspace.function("Ntot_QCD").getVal()*(1-self.workspace.var("f2_QCD").getVal())
+        N2_QCD = 0 #self.workspace.function("Ntot_QCD").getVal()*self.workspace.var("f2_QCD").getVal()        
 
         Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj+N1_QCD+N2_QCD
 
