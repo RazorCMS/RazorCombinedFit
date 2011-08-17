@@ -94,124 +94,232 @@ if __name__ == '__main__':
             varName = "bin_%i_%i" %(ix, iy) 
             binList.append(myBin)
             # only the signal-region bins go in the Tree
-            if ix >= minMR[iy]: myTree.Branch(myBin[0], rt.AddressOf(s,varName),'%s/D' %varName)
+            #if ix >= minMR[iy]:
+            myTree.Branch(myBin[0], rt.AddressOf(s,varName),'%s/D' %varName)
     
     treeName = "RMRTree"
     for i in range(4,len(sys.argv)):
-        print sys.argv[i]
         myfile = rt.TFile(sys.argv[i])
         gdata = myfile.Get(treeName)
         if gdata == None: continue
         if gdata.InheritsFrom("RooDataSet") != True: continue
         iBin = 0
         # fill the tree. THIS SUCKS!!!
-        s.bin_0_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_0_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_0_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_0_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_0_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_0_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_0_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_0_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_0_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_0_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_0_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_0_5 = float(dataTMP.numEntries())/ScaleFactor
+        iBin = iBin +1  
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_1_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_1_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_1_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_1_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_1_2 = float(dataTMP.numEntries())/ScaleFactor
+        iBin = iBin +1  
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_1_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_1_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_1_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_1_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_1_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_1_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_2_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_1_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_2_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_2_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_2_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_2_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_2_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_2_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_2_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_2_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_2_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_2_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_3_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_2_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_3_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_3_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_3_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_3_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_3_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_3_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_3_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_3_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_3_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_3_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_4_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_3_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_4_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_4_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_4_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_4_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_4_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_4_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_4_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_4_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_4_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_4_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_5_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_4_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_5_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_5_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_5_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_5_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_5_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_5_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_5_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_5_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_5_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_5_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_6_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_5_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_6_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_6_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_6_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_6_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_6_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_6_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_6_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_6_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_6_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_6_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_7_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_6_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_7_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_7_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_7_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_7_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_7_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_7_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_7_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_7_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_7_5 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_7_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_8_0 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_7_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_8_1 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_8_0 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_8_2 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_8_1 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_8_3 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_8_2 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_8_4 = float(dataTMP.numEntries())/ScaleFactor
         iBin = iBin +1 
-        s.bin_8_3 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
-        iBin = iBin +1 
-        s.bin_8_4 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
-        iBin = iBin +1 
-        s.bin_8_5 = float(gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4]).numEntries()/ScaleFactor)
+        del dataTMP
+        dataTMP = gdata.reduce("MR>%f" %binList[iBin][1]).reduce("MR<=%f" %binList[iBin][2]).reduce("Rsq>%f" %binList[iBin][3]).reduce("Rsq<=%f" %binList[iBin][4])
+        s.bin_8_5 = float(dataTMP.numEntries())/ScaleFactor
+        del dataTMP
         myTree.Fill()
         del gdata
         myfile.Close()
