@@ -159,7 +159,9 @@ class RazorBox(Box.Box):
         #set the MC efficiency relative to the number of events generated
         #epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
         #self.yieldToCrossSection(modelName) #define Ntot
-        self.workspace.factory("expr::Ntot_%s('%f*@0/1000.', Lumi)" %(modelName,nSig))
+        self.workspace.factory("rSig[1.]")
+        self.workspace.var("rSig").setConstant(rt.kTRUE)
+        self.workspace.factory("expr::Ntot_%s('%f*@0/1000.*@1', Lumi, rSig)" %(modelName,nSig))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
                            rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)

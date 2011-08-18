@@ -214,7 +214,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 20):
+    def limit(self, inputFiles, nToys = 150):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -243,9 +243,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         def getLz(box, ds, fr, testForQuality = True):
 
             # smear the signal yield by 17% to take systematics into account
-            oldYield = box.workspace.var("Ntot_Signal").getVal()
-            newYield = oldYield*rt.RooRandom.randomGenerator().Gaus(1., 0.17)
-            box.workspace.var("Ntot_Signal").setVal(newYield)
+            box.workspace.var("rSig").setVal(rt.RooRandom.randomGenerator().Gaus(1., 0.17))
 
             #L(H0|x)
             reset(box, fr)
@@ -258,7 +256,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             LH0x = fr_H0x.minNll()
             Lz = LH0x-LH1x
             # restore the nominal yield value
-            box.workspace.var("Ntot_Signal").setVal(oldYield)
+            box.workspace.var("rSig").setVal(1.)
             if testForQuality and ( (fr_H0x.status() != 0 or fr_H0x.covQual() != 3) or (fr_H1x.status() != 0 or fr_H1x.covQual() != 3) ):
                 return None 
             return Lz
