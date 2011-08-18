@@ -241,6 +241,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     box.floatYield(z)
 
         def getLz(box, ds, fr, testForQuality = True):
+
+            # smear the signal yield by 17% to take systematics into account
+            oldYield = box.workspace.var("Ntot_Signal").getVal()
+            newYield = oldYield*rt.RooRandom.randomGenerator().Gaus(1., 0.17)
+            box.workspace.var("Ntot_Signal").setVal(newYield)
+
             #L(H0|x)
             reset(box, fr)
             fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
@@ -251,6 +257,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             LH1x = fr_H1x.minNll()
             LH0x = fr_H0x.minNll()
             Lz = LH0x-LH1x
+            # restore the nominal yield value
+            box.workspace.var("Ntot_Signal").setVal(oldYield)
             if testForQuality and ( (fr_H0x.status() != 0 or fr_H0x.covQual() != 3) or (fr_H1x.status() != 0 or fr_H1x.covQual() != 3) ):
                 return None 
             return Lz
