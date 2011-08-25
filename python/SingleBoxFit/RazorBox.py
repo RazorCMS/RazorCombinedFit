@@ -121,7 +121,6 @@ class RazorBox(Box.Box):
         #print the workspace
         self.workspace.Print()
 
-        ##### THIS IS A SIMPLIFIED FIT
         # fix all pdf parameters to the initial value
         self.fixPars("Zll")
         self.fixPars("Znn")
@@ -134,7 +133,8 @@ class RazorBox(Box.Box):
             self.float1stComponentWithPenalty(z)
             if self.name != "Had": self.float2ndComponentWithPenalty(z)
             self.floatYield(z)
-            if self.name != "Had": self.floatFractionWithPenalty(z)
+            #if self.name != "Had": self.floatFractionWithPenalty(z)
+            if self.name != "Had": self.floatFraction(z)
             
         # switch off not-needed components (box by box)
         fixed = []
@@ -178,6 +178,10 @@ class RazorBox(Box.Box):
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['fR1', 'fR2','fR3','fR4'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
         [store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['FULL'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['FULL'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['FULL'])]
             
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99, range = ''):
         
