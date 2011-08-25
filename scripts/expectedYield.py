@@ -1,7 +1,7 @@
 from optparse import OptionParser
 import ROOT as rt
 import sys
-    
+
 if __name__ == '__main__':
 
     myTree = rt.TTree("myTree", "myTree")
