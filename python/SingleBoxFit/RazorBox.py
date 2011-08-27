@@ -21,8 +21,8 @@ class RazorBox(Box.Box):
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
         #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1*@2)',Ntot"+label+",f2"+label+",rf"+label+")")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rf"+label+")")
+        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)*@2',Ntot"+label+",f2"+label+",rNtot)")
+        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rNtot)")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
@@ -34,13 +34,13 @@ class RazorBox(Box.Box):
         labelW = '_%s' % flavourW
 
         #define a flavour specific yield
-        self.yieldToCrossSection(flavour)
+        #self.yieldToCrossSection(flavour)
         # define the two components
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+labelW+",R02nd"+labelW+",b2nd"+labelW+")")
         #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1*@2)',Ntot"+label+",f2"+label+",rf"+label+")")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rf"+label+")")
+        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)*@2',Ntot"+label+",f2"+label+",rNtot)")
+        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rNtot)")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
@@ -121,19 +121,20 @@ class RazorBox(Box.Box):
         #print the workspace
         self.workspace.Print()
 
+        ##### THIS IS A SIMPLIFIED FIT
         # fix all pdf parameters to the initial value
         self.fixPars("Zll")
         self.fixPars("Znn")
         self.fixPars("Wln")
         self.fixPars("TTj")
         #self.fixPars("QCD")
-        
+        self.fixParsExact("rNtot")
+
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             self.float1stComponentWithPenalty(z)
             if self.name != "Had": self.float2ndComponentWithPenalty(z)
             self.floatYield(z)
-            #if self.name != "Had": self.floatFractionWithPenalty(z)
             if self.name != "Had": self.floatFraction(z)
             
         # switch off not-needed components (box by box)
@@ -182,7 +183,7 @@ class RazorBox(Box.Box):
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['FULL'])]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['FULL'])]
-            
+                                        
     def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99, range = ''):
         
         # set the integral precision
