@@ -166,8 +166,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
-                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
                 #store it in the workspace too
@@ -214,7 +214,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 150):
+    def limit(self, inputFiles, nToys = 1):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -237,40 +237,26 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 box.fixPars(z)
                 if box.name in box.zeros[z]:
                     box.switchOff(z)
-                else:
-                    box.floatYield(z)
+
+            box.fixParsExact("rSig",True)
+            box.workspace.var("rSig").setVal(1.)
 
         def getLz(box, ds, fr, testForQuality = True):
-
-            # smear the signal yield by 17% to take systematics into account
-            box.workspace.var("rSig").setVal(rt.RooRandom.randomGenerator().Gaus(1., 0.17))
-
+            reset(box, fr)
             #L(H0|x)
-            reset(box, fr)
-            fr_H0x = box.fitDataSilent(box.getFitPDF(name=box.fitmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
+            print "retrieving L(H0|x = %s)"%ds.GetName()
+            H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
+            LH0x = H0xNLL.getVal()
             #L(H1|x)
-            reset(box, fr)
-            fr_H1x = box.fitDataSilent(box.getFitPDF(name=box.signalmodel), ds, rt.RooFit.PrintEvalErrors(-1), rt.RooFit.Extended(True))
+            print "retrieving L(H1|x = %s)"%ds.GetName()
+            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds)
+            LH1x = H1xNLL.getVal()
 
-            LH1x = fr_H1x.minNll()
-            LH0x = fr_H0x.minNll()
             Lz = LH0x-LH1x
-            # restore the nominal yield value
-            box.workspace.var("rSig").setVal(1.)
-            if testForQuality and ( (fr_H0x.status() != 0 or fr_H0x.covQual() != 3) or (fr_H1x.status() != 0 or fr_H1x.covQual() != 3) ):
-                return None 
+            print "L(H0|x = %s) = %f" %(ds.GetName(),LH0x)
+            print "L(H1|x = %s) = %f" %(ds.GetName(),LH1x)
+            print "Lz = L(H0|x = %s) - L(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
             return Lz
-        
-        def floatPars(b):
-            #float some 2nd components            
-            for z in boxes[b].zeros:
-                if boxes[b].name not in boxes[box].zeros[z]:
-                    #float the second component slopes
-                    boxes[b].fixParsExact("b2nd_%s" % z, False)
-                    boxes[b].fixParsExact("MR02nd_%s" % z, False)
-                    boxes[b].fixParsExact("R02nd_%s" % z, False)
-                    boxes[b].fixParsExact("f2_%s" % z, False)
-                    
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
@@ -280,7 +266,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             # add signal specific parameters 
-            boxes[box].defineSet("others_Signal", self.config.getVariables(box, "others_Signal"))
+            #boxes[box].defineSet("others_Signal", self.config.getVariables(box, "others_Signal"))
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box])
             #need to fix all parameters to their restored values
@@ -292,6 +278,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.Print('V')
 
             fr_central = boxes[box].workspace.obj('independentFR')    
+            
+            vars = boxes[box].workspace.set('variables')
+            data = boxes[box].workspace.data('RMRTree')
+            print "get Lz for data"
             lzData = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzValues = []
             
@@ -309,22 +299,42 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             s = MyStruct()
             myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
+           
+            print "calculate number of bkg events to generate"
+            bkgGenNum = boxes[box].workspace.function("Ntot_TTj").getVal()+boxes[box].workspace.function("Ntot_Wln").getVal()+boxes[box].workspace.function("Ntot_Zll").getVal()+boxes[box].workspace.function("Ntot_Znn").getVal()
+            print "bkgGenNum = %f" % bkgGenNum
+            print "numEntriesData = %i" % data.numEntries()
 
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
 
-                sig_toy = rt.RooDataSet()
-                print "what is self.options.expectedlimit?"
+                tot_toy = rt.RooDataSet()
                 if self.options.expectedlimit == False:
-                    #generate a toy assuming only the signal model (same number of events as background only toy)
-                    sig_toy = boxes[box].generateToyFR(boxes[box].signalmodel,fr_central)
-                else:
-                    print "It was True!"
-                    #generate a toy assuming only the bkg model (same number of events as background only toy)
-                    sig_toy = boxes[box].generateToyFR(boxes[box].fitmodel,fr_central)
- 
+                    #generate a toy assuming signal + bkg model (same number of events as background only toy)             
+                    print "generate a toy assuming signal + bkg model"              
+                    sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree')
+                    #sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree%i'%i)
+                    sigGenPdf = rt.RooHistPdf('%sPdf%i' % ('Signal',i),'%sPdf%i' % ('Signal',i),vars,sigData)
+                    #get nominal number of entries, including 13% SIGNAL NORMALIZATION SYSTEMATIC                
+                    print "calculate number of sig events to generate"
+                    sigGenNum = rt.RooRandom.randomGenerator().Gaus(1., 0.13)*boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
+                    print "sigGenNum =  %f" % sigGenNum
 
-                Lz = getLz(boxes[box],sig_toy, fr_central)
+                    sig_toy = sigGenPdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(sigGenNum))
+                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,rt.RooRandom.randomGenerator().Poisson(bkgGenNum))
+
+                    #sum the toys
+                    tot_toy = bkg_toy.Clone()
+                    tot_toy.append(sig_toy)
+                    tot_toy.SetName("sigbkg")
+                else:                    
+                    #generate a toy assuming only the bkg model (same number of events as background only toy)
+                    print "generate a toy assuming bkg model"
+                    tot_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,rt.RooRandom.randomGenerator().Poisson(bkgGenNum))
+                    tot_toy.SetName("bkg")
+
+                #print "get Lz for toys"
+                Lz = getLz(boxes[box],tot_toy, fr_central)
                 if Lz is None:
                     print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
                     continue
@@ -343,7 +353,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #calculate the area integral of the distribution    
             lzValues.sort()#smallest to largest
-            lzValuesSum = sum(map(abs,lzValues))
+            #lzValuesSum = sum(map(abs,lzValues))
             
             zMin = min(lzValues)
             zMax = max(lzValues)
@@ -351,19 +361,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
             for z in lzValues:
                 hist_H1.Fill(z)
             
-            lzSum = 0
-            lzSig90 = 1e-12+(2*lzData)
-            lzSig95 = 1e-12+(2*lzData)
-            for lz in lzValues:
-                lzSum += abs(lz)
-                if lzSum >= 0.1*lzValuesSum:
-                    lz90 = lz
-                if lzSum >= 0.05*lzValuesSum:
-                    lz95 = lz
-                    break
-                
-            reject = (lzData>lzSig90,lzData>lzSig95)
-            print 'Result for box %s: lambda_{data}=%f,lambda_{critical}(90,95)=%s, reject(90,95)=%s; ' % (box,lzData,str((lzSig90,lzSig95)),str(reject))
+            #lzSum = 0
+            #lzSig90 = 1e-12+(2*lzData)
+            #lzSig95 = 1e-12+(2*lzData)
+            #for lz in lzValues:
+            #    lzSum += abs(lz)
+            #    if lzSum >= 0.1*lzValuesSum:
+            #        lz90 = lz
+            #    if lzSum >= 0.05*lzValuesSum:
+            #        lz95 = lz
+            #        break
+            #    
+            #reject = (lzData>lzSig90,lzData>lzSig95)
+            #print 'Result for box %s: lambda_{data}=%f,lambda_{critical}(90,95)=%s, reject(90,95)=%s; ' % (box,lzData,str((lzSig90,lzSig95)),str(reject))
 
             self.store(hist_H1, dir=box)
             self.store(values, dir=box)
