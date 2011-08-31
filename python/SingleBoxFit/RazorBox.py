@@ -21,8 +21,9 @@ class RazorBox(Box.Box):
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
         #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)*@2',Ntot"+label+",f2"+label+",rNtot)")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rNtot)")
+        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)',Ntot"+label+",f2"+label+")")
+        self.workspace.factory("expr::N_2nd"+label+"('@0*@1',Ntot"+label+",f2"+label+")")
+
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
@@ -39,8 +40,8 @@ class RazorBox(Box.Box):
         self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
         self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+labelW+",R02nd"+labelW+",b2nd"+labelW+")")
         #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)*@2',Ntot"+label+",f2"+label+",rNtot)")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+",rNtot)")
+        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)*@2',Ntot"+label+",f2"+label+")")
+        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+")")
         #associate the yields to the pdfs through extended PDFs
         self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
         self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
@@ -128,15 +129,15 @@ class RazorBox(Box.Box):
         self.fixPars("Wln")
         self.fixPars("TTj")
         #self.fixPars("QCD")
-        self.fixParsExact("rNtot")
 
         def floatSomething(z):
             """Switch on or off whatever you want here"""
-            self.float1stComponentWithPenalty(z)
+            if z == "Wln" and self.name == "Had": self.float1stComponent(z)
+            else : self.float1stComponentWithPenalty(z)
             if self.name != "Had": self.float2ndComponentWithPenalty(z)
             self.floatYield(z)
             if self.name != "Had": self.floatFraction(z)
-            
+
         # switch off not-needed components (box by box)
         fixed = []
         for z in self.zeros:
