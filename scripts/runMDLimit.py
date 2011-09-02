@@ -40,7 +40,6 @@ if __name__ == '__main__':
             outputfile.write('#!/bin/bash\n')
             outputfile.write('cd '+pwd+'\n')
             outputfile.write("eval `scramv1 run -sh`\n")
-            outputfile.write("cd /tmp/woodson/*\n")
             mydir = "/tmp/woodson/%s_%i" %(signal,i)
             outputfile.write("mkdir %s\n" %mydir)
             outputfile.write("cd %s\n" %mydir)

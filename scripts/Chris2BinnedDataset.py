@@ -166,7 +166,7 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
-    parser.add_option('-t',dest="toys",type="int",default=1000,
+    parser.add_option('-t','--toys',dest="toys",type="int",default=1000,
                   help="Number of toys")
     
     (options,args) = parser.parse_args()
