@@ -1,5 +1,6 @@
 from optparse import OptionParser
 import os
+from pdfShit import *
 
 import ROOT as rt
 import RootTools
@@ -16,11 +17,10 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
-    data.Write()
+    for mydata in data: mydata.Write()
     output.Close()
-    return data.numEntries()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, write = True):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToys, write = True):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
@@ -39,20 +39,97 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, writ
     rMin = rt.TMath.Sqrt(rsqMin)
     rMax = rt.TMath.Sqrt(rsqMax)
 
-    #iterate over selected entries in the input tree    
-    wHisto = rt.TH2D("wHisto","wHisto", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
-    tree.Project("wHisto", "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
-
     # set the same binning for the RooRealVars
     MR =  workspace.var("MR")
     Rsq =  workspace.var("Rsq")
 
-    data=rt.RooDataHist("RMRHistTree","RMRHistTree",rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto)
-    print data.sum(False)
-    	
+    #this is the nominal histogram
+    wHisto = rt.TH2D("wHisto","wHisto", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+    tree.Project("wHisto", "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    data = [rt.RooDataHist("RMRHistTree","RMRHistTree",rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto),wHisto]
+
+    # JES correctiobns UP
+    wHisto_JESup = rt.TH2D("wHisto_JESup","wHisto_JESup", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+    tree.Project("wHisto_JESup", "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    data.append(wHisto_JESup)
+
+    # JES correctiobns DOWN
+    wHisto_JESdown = rt.TH2D("wHisto_JESdown","wHisto_JESdown", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+    tree.Project("wHisto_JESdown",  "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*W*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    data.append(wHisto_JESdown)
+
+    # xsec UP
+    wHisto_xsecup = rt.TH2D("wHisto_xsecup","wHisto_xsecup", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+    tree.Project("wHisto_xsecup", "RSQ:MR",  'LEP_W*W_UP*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    data.append(wHisto_xsecup)
+    
+    # xsec correctiobns DOWN
+    wHisto_xsecdown = rt.TH2D("wHisto_xsecdown","wHisto_xsecdown", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+    tree.Project("wHisto_xsecdown", "RSQ:MR",  'LEP_W*W_DOWN*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    data.append(wHisto_xsecdown)
+    
+    # PDF central (new nominal) and error (for systematics)
+    wHisto_pdfCEN, wHisto_pdfSYS = makePDFPlot(tree, wHisto, 100, mRmin, mRmax, 100, rsqMin, rsqMax, boxMap[box])
+    wHisto_pdfCEN.SetName("wHisto_pdfCEN")
+    wHisto_pdfSYS.SetName("wHisto_pdfSYS")
+    data.append(wHisto_pdfCEN)
+    data.append(wHisto_pdfSYS)
+
+    # random number generator
+    pid = os.getpid()
+    now = rt.TDatime()
+    today = now.GetDate()
+    clock = now.GetTime()
+    seed = today+clock+pid+137
+    gRnd = rt.TRandom3(seed)
+
+    for i in xrange(nToys):
+        # create a copy of the histogram
+        wHisto_i = rt.TH2D("wHisto_%i" %i,"wHisto_%i" %i, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+        # correlated systematics: LUMI 6.5% MULTIPLICATIVE
+        lumiFactor = gRnd.Gaus(1., 0.045)
+        # correlated systematics: xsection ADDITIVE (scaled bin by bin)
+        xsecFactor = gRnd.Gaus(0., 1.)
+        # correlated systematics: JES corrections ADDITIVE (scaled bin by bin)
+        jesFactor  = gRnd.Gaus(0., 1.)
+        for ix in range(1,101):
+            for iy in range(1,101):
+                # starting value
+                nominal = wHisto.GetBinContent(ix,iy)
+                if nominal != 0:
+                    # uncorrelated systematics: lepton efficiency data/MC 1% [to check with Emanuele]
+                    lepFactor = gRnd.Gaus(1., 0.01)
+                    # compute the total
+                    # add lumi systematics
+                    newvalue = nominal*lumiFactor
+                    if box != "Had": newvalue = newvalue*lepFactor
+                    # add xsec systematics
+                    if xsecFactor > 0: newvalue = newvalue + xsecFactor*(wHisto_xsecup.GetBinContent(ix,iy)-nominal)
+                    else: newvalue = newvalue + xsecFactor*(wHisto_xsecdown.GetBinContent(ix,iy)-nominal)
+                    # add jes systematics
+                    if jesFactor > 0: newvalue = newvalue + jesFactor*(wHisto_JESup.GetBinContent(ix,iy)-nominal)
+                    else: newvalue = newvalue + jesFactor*(wHisto_JESdown.GetBinContent(ix,iy)-nominal)               
+                    # apply the systematic correction to the pdf value
+                    # the pdf code return the efficiency in each bin, with an error
+                    # that includes the systematic effect. We use this to get a
+                    # new value for the content of the bin
+                    newEff = gRnd.Gaus(wHisto_pdfCEN.GetBinContent(ix,iy), wHisto_pdfSYS.GetBinContent(ix,iy))
+                    oldEff = nominal/wHisto.Integral()
+                    newvalue = newvalue * newEff/oldEff 
+                    # fill histogram
+                    wHisto_i.SetBinContent(ix,iy,newvalue)
+                else:
+                    wHisto_i.SetBinContent(ix,iy,nominal)                    
+                continue
+            continue
+        data.append(wHisto_i)
+        data.append(rt.RooDataHist("RMRHistTree_%i" %i,"RMRHistTree_%i" %i,rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i))
+        del wHisto_i
+        #print data.sum(False)
 
     if write:
         writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin)
+                    
     return data
 
 def printEfficiencies(tree, outputFile, config, flavour):
@@ -63,7 +140,7 @@ def printEfficiencies(tree, outputFile, config, flavour):
     
     for box in boxMap:
         ds = convertTree2Dataset(tree, outputFile, 'Dummy', config, box, 0, -1, -1, write = False)
-        row = ds.get(0)
+        row = ds[0].get(0)
         W = ds.mean(row['W'])
         n_i = (cross_section*lumi)/W
         n_f = ds.numEntries()
@@ -89,6 +166,8 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
+    parser.add_option('-t',dest="toys",type="int",default=1000,
+                  help="Number of toys")
     
     (options,args) = parser.parse_args()
     
@@ -106,14 +185,14 @@ if __name__ == '__main__':
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
             if not options.eff:
                 if options.box != None:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.toys)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.toys)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
