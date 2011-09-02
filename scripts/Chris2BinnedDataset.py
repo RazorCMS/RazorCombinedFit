@@ -86,19 +86,19 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToy
     for i in xrange(nToys):
         # create a copy of the histogram
         wHisto_i = rt.TH2D("wHisto_%i" %i,"wHisto_%i" %i, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
-        # correlated systematics: LUMI 4.5% MULTIPLICATIVE
-        lumiFactor = gRnd.Gaus(1., 0.045)
+        # correlated systematics: LUMI 4.5% MULTIPLICATIVE sumInQuadrature triggerLepton 3%  sumInQuadrature RvsMR trigger 2% = 5.7%
+        lumiFactor = gRnd.Gaus(1., 0.057)
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         xsecFactor = gRnd.Gaus(0., 1.)
-        # correlated systematics: JES corrections ADDITIVE (scaled bin by bin)
-        jesFactor  = gRnd.Gaus(0., 1.)
         for ix in range(1,101):
             for iy in range(1,101):
                 # starting value
                 nominal = wHisto.GetBinContent(ix,iy)
                 if nominal != 0:
-                    # uncorrelated systematics: lepton efficiency data/MC 1% [to check with Emanuele]
+                    # uncorrelated systematics: lepton efficiency data/MC 1%
                     lepFactor = gRnd.Gaus(1., 0.01)
+                    # uncorrelated systematics: JES corrections ADDITIVE (scaled bin by bin)
+                    jesFactor  = gRnd.Gaus(0., 1.)
                     # compute the total
                     # add lumi systematics
                     newvalue = nominal*lumiFactor
