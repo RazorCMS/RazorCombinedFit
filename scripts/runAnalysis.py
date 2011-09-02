@@ -70,12 +70,12 @@ if __name__ == '__main__':
             if aa.name == options.analysis:
                 aa.options = options
                 print "Running analysis '%s'" % aa.name
-                if options.toys > 0:
+                if options.toys > 0 and not options.limit:
                     aa.runtoys(args, options.toys)
                 else:
                     aa.analysis(args)
                     if options.limit:    
-                        aa.limit(args)
+                        aa.limit(args,options.toys)
                 aa.final()
         
     else:

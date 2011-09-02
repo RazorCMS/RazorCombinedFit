@@ -192,14 +192,14 @@ class Box(object):
         vars = self.workspace.set('variables')
         pdf = self.workspace.pdf(genmodel)
 
-        gdata = pdf.generate(vars,number,*options)
+        gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(number),*options)
         gdata_cut = gdata.reduce(self.cut)
         return gdata_cut
     
     def generateToy(self, genmodel, *options):
         """Generate a toy dataset with the number of events the same as that in the workspace"""
         data = self.workspace.data('RMRTree')
-        return self.generateToyWithYield(genmodel, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), *options)
+        return self.generateToyWithYield(genmodel, data.numEntries(), *options)
 
 
     def plotObservables(self, inputFile, name = None, range = ''):
@@ -301,21 +301,31 @@ class Box(object):
         
         pdf = self.workspace.pdf(genmodel)
         vars = rt.RooArgSet(self.workspace.set('variables'))
+        #print "expectedEvents = %f" % pdf.expectedEvents(vars)
         if self.workspace.cat('Boxes'):
             vars.add(self.workspace.cat('Boxes'))
         
         parSet = self.workspace.allVars()
         #set the parameter values
         pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): pars[p.GetName()] = p
+        #print "call fr.randomizePars()"
+        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): 
+            pars[p.GetName()] = p
+            #print "RANDOMIZE PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())
         for name, value in pars.iteritems():
+            #print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
-        gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(number),*options)
+        #print "GENERATE: "
+        Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
+        gdata = pdf.generate(vars,Pnumber,*options)
         
         #now set the parameters back
         pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): pars[p.GetName()] = p
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
+            pars[p.GetName()] = p
+            #print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
         for name, value in pars.iteritems():
+            #print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
 
         gdata_cut = gdata.reduce(self.cut)
@@ -324,7 +334,7 @@ class Box(object):
     def generateToyFR(self, genmodel, fr, *options):
         """Generate a toy dataset with the number of events the same as that in the workspace"""
         data = self.workspace.data('RMRTree')
-        return self.generateToyFRWithYield(genmodel, fr, rt.RooRandom.randomGenerator().Poisson(data.numEntries()), *options)
+        return self.generateToyFRWithYield(genmodel, fr, data.numEntries(), *options)
 
 
     def writeBackgroundDataToys(self, fr, total_yield, box, nToys, label="./"):

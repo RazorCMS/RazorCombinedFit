@@ -214,7 +214,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes.keys():
             self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys = 150):
+    def limit(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
         
         lzV = rt.RooRealVar('Lz','Lz',0)
@@ -243,6 +243,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         def getLz(box, ds, fr, testForQuality = True):
             reset(box, fr)
+            
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
             H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
@@ -253,9 +254,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             LH1x = H1xNLL.getVal()
 
             Lz = LH0x-LH1x
+            print "**************************************************"
             print "L(H0|x = %s) = %f" %(ds.GetName(),LH0x)
             print "L(H1|x = %s) = %f" %(ds.GetName(),LH1x)
             print "Lz = L(H0|x = %s) - L(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "**************************************************"
             return Lz
 
         #start by setting all box configs the same
@@ -301,9 +304,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
            
             print "calculate number of bkg events to generate"
-            bkgGenNum = boxes[box].workspace.function("Ntot_TTj").getVal()+boxes[box].workspace.function("Ntot_Wln").getVal()+boxes[box].workspace.function("Ntot_Zll").getVal()+boxes[box].workspace.function("Ntot_Znn").getVal()
-            print "bkgGenNum = %f" % bkgGenNum
-            print "numEntriesData = %i" % data.numEntries()
+            bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
+            #bkgGenNum = boxes[box].workspace.function("Ntot_TTj").getVal()+boxes[box].workspace.function("Ntot_Wln").getVal()+boxes[box].workspace.function("Ntot_Zll").getVal()+boxes[box].workspace.function("Ntot_Znn").getVal()
 
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
@@ -312,28 +314,38 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if self.options.expectedlimit == False:
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"              
-                    sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree')
-                    #sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree%i'%i)
-                    sigGenPdf = rt.RooHistPdf('%sPdf%i' % ('Signal',i),'%sPdf%i' % ('Signal',i),vars,sigData)
-                    #get nominal number of entries, including 13% SIGNAL NORMALIZATION SYSTEMATIC                
+                    #sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree')
+                    sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree_%i'%i)
+                    sigGenPdf = rt.RooHistPdf('%sPdf_%i' % ('Signal',i),'%sPdf_%i' % ('Signal',i),vars,sigData)
+                    #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
-                    sigGenNum = rt.RooRandom.randomGenerator().Gaus(1., 0.13)*boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
+                    #sigGenNum = rt.RooRandom.randomGenerator().Gaus(1., 0.17)*boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
+                    sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
                     print "sigGenNum =  %f" % sigGenNum
-
-                    sig_toy = sigGenPdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(sigGenNum))
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,rt.RooRandom.randomGenerator().Poisson(bkgGenNum))
+                    #print "bkgGenNum = %f" % bkgGenNum
+                    #print "numEntriesData = %i" % data.numEntries()
+                    PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
+                    sig_toy = sigGenPdf.generate(vars,PSigGenNum)
+                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum)
+                    print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
+                    #print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
 
                     #sum the toys
                     tot_toy = bkg_toy.Clone()
                     tot_toy.append(sig_toy)
                     tot_toy.SetName("sigbkg")
+                    sigData.Delete()
+                    sigGenPdf.Delete()
+                    sig_toy.Delete()
+                    bkg_toy.Delete()
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
-                    tot_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,rt.RooRandom.randomGenerator().Poisson(bkgGenNum))
+                    tot_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum)
                     tot_toy.SetName("bkg")
 
-                #print "get Lz for toys"
+                print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
+                print "get Lz for toys"
                 Lz = getLz(boxes[box],tot_toy, fr_central)
                 if Lz is None:
                     print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
