@@ -30,8 +30,44 @@ def GetErrAbs(w, w2, wALL, selectedEvents_, originalEvents_):
     xi = acc_central-originalAcceptance
     return math.fabs(xi/originalAcceptance)
 
-
 def GetErrEigen(w, w2, wALL, selectedEvents_, originalEvents_, CTEQ=False):
+
+    nmembers = len(w)
+    npairs = (nmembers-1)/2
+    wplus = 0.
+    wminus = 0.
+    nplus = 0
+    nminus = 0
+    events_central = w[0]
+    events2_central = w2[0]
+
+    for j in range(0,npairs):
+        wa = w[2*j+1]/events_central-1.
+        wb = w[2*j+2]/events_central-1.
+        if wa>wb:
+            if wa<0.: wa = 0.
+            if wb>0.: wb = 0.
+            wplus += wa*wa
+            wminus += wb*wb
+        else: 
+            if wb<0.: wb = 0.
+            if wa>0.: wa = 0.
+            wplus += wb*wb
+            wminus += wa*wa
+
+    if wplus>0: wplus = math.sqrt(wplus)
+    if wminus>0: wminus = math.sqrt(wminus)
+    if wplus != math.fabs(wplus): wplus = 0.
+    if wminus != math.fabs(wminus): wminus = 0.
+    if CTEQ:
+        cen = (wplus+wminus)/2.
+        err = math.fabs(wplus-wminus)/2.
+        wplus = cen+err/1.6
+        wminus = cen-err/1.6
+  
+    return wminus,wplus
+
+def GetErrEigenEff(w, w2, wALL, selectedEvents_, originalEvents_, CTEQ=False):
 
     nmembers = len(w)
     npairs = (nmembers-1)/2
