@@ -48,6 +48,7 @@ if __name__ == '__main__':
             outputfile.write("cd RazorCombinedFit\n")
             outputfile.write("source setup.sh\n")
             outputfile.write("make\n") 
+            outputfile.write("cp -r %s/RAZORFITS %s \n" %(pwd, mydir))
             outputfile.write("cp %s/%s %s \n" %(pwd,signalpath, mydir))
 
             #outputname = "%s_%s_%i.src" %(signal,options.box,i)
@@ -80,9 +81,9 @@ if __name__ == '__main__':
                 R='0.3'
             outputfile.write("python scripts/Chris2BinnedDataset.py -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -x %s -t %i -d %s %s/%s\n" %(box,toys,mydir, mydir, signalfilename))
             # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/%s_cleaned.root %s/%s_MR%s_R%s_%s.root -b --limit -t %i >& /dev/null\n" %(seed,mydir,MR,R,signal,box,i,box,mydir,signal,MR,R,box,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root -i %s/RAZORFITS/%s_cleaned.root %s/%s_MR%s_R%s_%s.root -b --limit -t %i >& /dev/null\n" %(seed,mydir,MR,R,signal,box,i,mydir,box,mydir,signal,MR,R,box,toys))
             # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root -i /afs/cern.ch/user/w/woodson/public/RAZORFITS/%s_cleaned.root %s/%s_MR%s_R%s_%s.root -b --limit -e -t %i >& /dev/null \n" %(seed,mydir,MR,R,signal,box,i,box,mydir,signal,MR,R,box,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root -i %s/RAZORFITS/%s_cleaned.root %s/%s_MR%s_R%s_%s.root -b --limit -e -t %i >& /dev/null \n" %(seed,mydir,MR,R,signal,box,i,mydir,box,mydir,signal,MR,R,box,toys))
             # copy output files
             outputfile.write("scp %s/LimitBkgSigToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data1/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
             outputfile.write("scp %s/LimitBkgToys_MR%s_R%s_%s_%s_%i.root woodson@lxcms132:/data1/woodson/SIGNALMODELTOYS/\n" %(mydir,MR,R,signal,box,i))
@@ -91,5 +92,5 @@ if __name__ == '__main__':
             outputfile.close
             # submit to batch
             os.system("echo bsub -q "+queue+" -o log_"+signal+"_"+box+"_"+str(i)+".log source "+pwd+"/"+outputname)
-            #os.system("bsub -q "+queue+" -o log_"+signal+"_"+box+"_"+str(i)+".log source "+pwd+"/"+outputname)
+            os.system("bsub -q "+queue+" -o log_"+signal+"_"+box+"_"+str(i)+".log source "+pwd+"/"+outputname)
             continue
