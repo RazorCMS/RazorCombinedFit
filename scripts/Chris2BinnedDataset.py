@@ -20,7 +20,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     for mydata in data: mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToys, write = True):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, write = True):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
@@ -83,10 +83,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToy
     seed = today+clock+pid+137
     gRnd = rt.TRandom3(seed)
 
-    for i in xrange(nToys):
+    for i in range(0,1000):
         # create a copy of the histogram
         wHisto_i = rt.TH2D("wHisto_%i" %i,"wHisto_%i" %i, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
-        # correlated systematics: LUMI 6.5% MULTIPLICATIVE
+        # correlated systematics: LUMI 4.5% MULTIPLICATIVE
         lumiFactor = gRnd.Gaus(1., 0.045)
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         xsecFactor = gRnd.Gaus(0., 1.)
@@ -166,8 +166,6 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
-    parser.add_option('-t',dest="toys",type="int",default=1000,
-                  help="Number of toys")
     
     (options,args) = parser.parse_args()
     
@@ -185,14 +183,14 @@ if __name__ == '__main__':
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
             if not options.eff:
                 if options.box != None:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.toys)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.toys)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.toys)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.toys)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.toys)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.toys)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
