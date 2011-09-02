@@ -113,9 +113,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToy
                     # the pdf code return the efficiency in each bin, with an error
                     # that includes the systematic effect. We use this to get a
                     # new value for the content of the bin
-                    newEff = gRnd.Gaus(wHisto_pdfCEN.GetBinContent(ix,iy), wHisto_pdfSYS.GetBinContent(ix,iy))
-                    oldEff = nominal/wHisto.Integral()
-                    newvalue = newvalue * newEff/oldEff 
+                    newvalue = newvalue *(1+ gRnd.Gaus(wHisto_pdfCEN.GetBinContent(ix,iy), wHisto_pdfSYS.GetBinContent(ix,iy)))
                     # fill histogram
                     wHisto_i.SetBinContent(ix,iy,newvalue)
                 else:
