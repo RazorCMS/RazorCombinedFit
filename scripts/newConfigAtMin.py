@@ -38,7 +38,7 @@ for Box in BoxName:
         fitresult.Print("v")
         if Box =="RazorMultiBoxSim_dir": continue
         
-        keys = [('variables','variables'),('pdf1_QCD','pdf1pars_QCD'),('pdf1_TTj','pdf1pars_TTj'),('pdf1_Wln','pdf1pars_Wln'),('pdf1_Zll','pdf1pars_Zll'),('pdf1_Znn','pdf1pars_Znn'),('pdf2_QCD','pdf2pars_QCD'),('pdf2_TTj','pdf2pars_TTj'),('pdf2_Wln','pdf2pars_Wln'),('pdf2_Zll','pdf2pars_Zll'),('pdf2_Znn','pdf2pars_Znn'),('others_QCD','otherpars_QCD'),('others_TTj','otherpars_TTj'),('others_Wln','otherpars_Wln'),('others_Zll','otherpars_Zll'),('others_Znn','otherpars_Znn')]
+        keys = [('variables','variables'),('pdf1_TTj','pdf1pars_TTj'),('pdf1_Wln','pdf1pars_Wln'),('pdf1_Zll','pdf1pars_Zll'),('pdf1_Znn','pdf1pars_Znn'),('pdf2_TTj','pdf2pars_TTj'),('pdf2_Wln','pdf2pars_Wln'),('pdf2_Zll','pdf2pars_Zll'),('pdf2_Znn','pdf2pars_Znn'),('others_TTj','otherpars_TTj'),('others_Wln','otherpars_Wln'),('others_Zll','otherpars_Zll'),('others_Znn','otherpars_Znn')]
     
         #get the final values from the fit
         parlist = fitresult.floatParsFinal()
@@ -62,7 +62,7 @@ for Box in BoxName:
                         vars.append('%s_s[%.5f]' % (v.GetName(),v.getError()))
                         
             config.set(Box,key,str(vars))
-        config.set(Box,'variables_range','[\'MR_FULL[300.,3500.]\',\'Rsq_FULL[0.09,0.5]\',\'MR_B1[300.,650.]\',\'Rsq_B1[0.09,0.2]\',\'MR_B2[300.,450.]\',\'Rsq_B2[0.2,0.3]\',\'MR_B3[300.,350.]\',\'Rsq_B3[0.3,0.5]\',\'MR_hC1[650.,1500.]\',\'Rsq_hC1[0.09,0.2]\',\'MR_hC2[450.,1000.]\',\'Rsq_hC2[0.2,0.3]\',\'MR_hC3[350.,800.]\',\'Rsq_hC3[0.3,0.45]\']')
+        config.set(Box,'variables_range','[\'MR_FULL[300.,3500.]\',\'Rsq_FULL[0.09,0.5]\',\'MR_fR1[300.,800.]\',\'Rsq_fR1[0.09,0.2]\',\'MR_fR2[300.,650.]\',\'Rsq_fR2[0.2,0.3]\',\'MR_fR3[300.,450.]\',\'Rsq_fR3[0.30,0.45]\',\'MR_fR4[300.,400.]\',\'Rsq_fR4[0.45,0.50]\',\'MR_sR1[800.,3500]\',\'Rsq_sR1[0.09,0.2]\',\'MR_sR2[650.,3500]\',\'Rsq_sR2[0.2,0.3]\',\'MR_sR3[450.,3500]\',\'Rsq_sR3[0.30,0.45]\',\'MR_sR4[400.,3500]\',\'Rsq_sR4[0.45,0.50]\']')
             
 config.write(outfile)
 outfile.close()
