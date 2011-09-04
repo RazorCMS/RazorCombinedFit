@@ -11,7 +11,7 @@ pwd = os.environ['PWD']
 if __name__ == '__main__':
     directory = sys.argv[1]
     filemap = "/afs/cern.ch/user/w/woodson/public/runMDLimit/mSUGRA_tanB10_SYS/mSUGRA_tanB10_PDF_M0-*.root"
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         filter = sys.argv[2]
         filemap = "/afs/cern.ch/user/w/woodson/public/runMDLimit/mSUGRA_tanB10_SYS/mSUGRA_tanB10_PDF_M0-%s*.root"%filter
     for filename in glob.glob(filemap):
