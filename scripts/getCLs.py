@@ -3,6 +3,7 @@ import sys
 import RootTools
 import glob
 from math import *
+import os
 
 def calcCLs(lzValues_sb,lzValues_b,Box):
     BoxName, lzCrit = Box
@@ -34,13 +35,20 @@ def getQdist(m0, m12, BoxName,directory):
     critValueData = -99999999
     FirstFile = True
     
-    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB10_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, m0, m12, BoxName))
+    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB10_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, m0, m12, BoxName))
  
     for spbFile in spbFileList:
+        # check if file is at least 40K and contains 4 keys in the box subdirectory
+        # otherwise the file probably didn't finish writing or didn't close properly
+        if os.stat(spbFile).st_size < 40000: continue 
         input = rt.TFile.Open(spbFile)
+        if input.Get(BoxName).GetNkeys() < 4:
+            input.Close()
+            continue
         if FirstFile:
             critValueData  = input.Get("%s/Lz_%s" %(BoxName, BoxName)).get().getRealValue("LzData")
             FirstFile = False
+        # get the tree entries using this funny Draw() trick
         tSpB=input.Get("%s/myTree" %BoxName)
         tSpB.Draw('>>elistSpB','','entrylist')
         elistSpB = rt.gDirectory.Get('elistSpB')
@@ -53,10 +61,17 @@ def getQdist(m0, m12, BoxName,directory):
             lzValues_sb.append(tSpB.Lz)
         input.Close()
 
-    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB10_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, m0, m12, BoxName))
+    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB10_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, m0, m12, BoxName))
 
     for bFile in bFileList:
+        # check if file is at least 40K and contains 4 keys in the box subdirectory
+        # otherwise the file probably didn't finish writing or didn't close properly
+        if os.stat(bFile).st_size < 40000: continue
         input = rt.TFile.Open(bFile)
+        if input.Get(BoxName).GetNkeys() < 4:
+            input.Close()
+            continue
+        # get the tree entries using this funny Draw() trick
         tB=input.Get("%s/myTree" %BoxName)
         tB.Draw('>>elistB','','entrylist')
         elistB = rt.gDirectory.Get('elistB')
@@ -65,10 +80,10 @@ def getQdist(m0, m12, BoxName,directory):
             entry = elistB.Next()
             if entry == -1: break
             tB.GetEntry(entry)
-            #if fabs(tB.Lz) < 400: 
             lzValues_b.append(tB.Lz)
         input.Close()
 
+    # sort the lists 
     lzValues_b.sort()
     lzValues_sb.sort()
 
@@ -79,9 +94,8 @@ def getCLs(m0, m12,directory):
     
     # we store the boxes in the format [ Name, Q_data^box]
     Boxes = [["Had", 0],["Mu",0], ["Ele", 0],["MuMu",0],["EleEle",0],["MuEle",0]]
-    #Boxes = [["Had", 0],["Mu",0]]
     
-    
+       
     lzValuesAll_sb = []
     lzValuesAll_b = []
     for Box in Boxes:
@@ -95,7 +109,7 @@ def getCLs(m0, m12,directory):
     maxEntries_b =  max([len(lz) for lz in lzValuesAll_b])
     maxEntries = max(maxEntries_sb,maxEntries_b)
 
-    # choose max number of events to generate for TOT
+    # choose number of events to generate for TOT
     # otherwise comment this line out and just generate up to the max populated box
     maxEntries = 10000
 
@@ -103,6 +117,9 @@ def getCLs(m0, m12,directory):
     extLzValuesAll_b = [list(lzValues_b) for lzValues_b in lzValuesAll_b]
     hSpBList =[]
     hBList = []
+    
+    # extend the lists to maxEntries, using ROOT histogram method to sample randomly from the existing distribution
+    # this way we equalize the number of entries in all the boxes
     for lzValues_sb,lzValues_b,Box in zip(extLzValuesAll_sb,extLzValuesAll_b,Boxes):
         
         if min(len(lzValues_sb),len(lzValues_b)) >= maxEntries: continue
@@ -127,16 +144,15 @@ def getCLs(m0, m12,directory):
         lzValues_sb.sort()
         lzValues_b.sort()
 
-    # to calculate CLs_Tot with just minimum stats in a box
-    extLzValuesAll_sb = lzValuesAll_sb
-    extLzValuesAll_b = lzValuesAll_b
-    print apply(zip,extLzValuesAll_sb)[0]
-    print apply(zip,extLzValuesAll_b)[0]
+    # to calculate CLs_Tot with just minimum stats in a box, uncomment these two lines    
+    #extLzValuesAll_sb = lzValuesAll_sb
+    #extLzValuesAll_b = lzValuesAll_b
+    
     if len(Boxes)>1:
+        # sum the individual values of Lz for each box, and return a list with CLs_tot
         lzValuesTot_sb = [sum(lzZip) for lzZip in apply(zip,extLzValuesAll_sb)]
-        print lzValuesTot_sb[0]
         lzValuesTot_b = [sum(lzZip) for lzZip in apply(zip,extLzValuesAll_b)]
-        print lzValuesTot_b[0]
+        #print lzValuesTot_b[0]
         lzValuesTot_sb.sort()
         lzValuesTot_b.sort()
         lzCritTot = sum(apply(zip,Boxes)[1])
@@ -181,7 +197,7 @@ def getCLs(m0, m12,directory):
     clTree.Branch("m0", rt.AddressOf(s,"m0"),'m0/D')
     clTree.Branch("m12", rt.AddressOf(s,"m12"),'m12/D')
     for i in range(0, len(Boxes)): clTree.Branch("CLs_%s" %Boxes[i][0], rt.AddressOf(s,"CL%i" %i),'CL%i/D' %i)
-
+        
     s.m0 = float(m0)
     s.m12 = float(m12)
     if len(Boxes) > 0: s.CL0 = calcCLs(lzValuesAll_sb[0], lzValuesAll_b[0], Boxes[0])
@@ -191,7 +207,7 @@ def getCLs(m0, m12,directory):
     if len(Boxes) > 4: s.CL4 = calcCLs(lzValuesAll_sb[4], lzValuesAll_b[4], Boxes[4])
     if len(Boxes) > 5: s.CL5 = calcCLs(lzValuesAll_sb[5], lzValuesAll_b[5], Boxes[5])
     if len(Boxes) > 6: s.CL6 = calcCLs(lzValuesAll_sb[6], lzValuesAll_b[6], Boxes[6])
-    
+        
     clTree.Fill()
 
     fileOut = rt.TFile.Open("CLs_m0_%s_m12_%s.root" %(m0, m12), "recreate")
