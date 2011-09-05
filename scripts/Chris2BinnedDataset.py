@@ -115,9 +115,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToy
                     # new value for the content of the bin
                     newvalue = newvalue *(1+ gRnd.Gaus(wHisto_pdfCEN.GetBinContent(ix,iy), wHisto_pdfSYS.GetBinContent(ix,iy)))
                     # fill histogram
-                    wHisto_i.SetBinContent(ix,iy,newvalue)
+                    wHisto_i.SetBinContent(ix,iy,max(0.,newvalue))
                 else:
-                    wHisto_i.SetBinContent(ix,iy,nominal)                    
+                    wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
                 continue
             continue
         data.append(wHisto_i)
