@@ -134,10 +134,10 @@ def getCLs(m0, m12,directory):
         
         for i in xrange(0, len(lzValues_sb)): hSpB.Fill(lzValues_sb[i])
         for i in xrange(0, len(lzValues_b)): hB.Fill(lzValues_b[i])
-        lzValues_sb = []
-        lzValues_b = []
-        for i in xrange(0,maxEntries): lzValues_sb.append(hSpB.GetRandom())
-        for i in xrange(0,maxEntries): lzValues_b.append(hB.GetRandom())
+        lzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
+        lzValues_b = [hB.GetRandom() for i in xrange(0,maxEntries)]
+        #for i in xrange(0,maxEntries): lzValues_sb.append(hSpB.GetRandom())
+        #for i in xrange(0,maxEntries): lzValues_b.append(hB.GetRandom())
         hSpBList.append(hSpB.Clone())
         hBList.append(hB.Clone())
         hSpB.Delete()
