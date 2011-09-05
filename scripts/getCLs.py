@@ -105,45 +105,44 @@ def getCLs(m0, m12,directory):
         lzValuesAll_b.append(lzValues_b)
         
 
+    # choose number of events to generate for TOT
+    # currently, we use the max number of entries in any box 
     maxEntries_sb =  max([len(lz) for lz in lzValuesAll_sb])
     maxEntries_b =  max([len(lz) for lz in lzValuesAll_b])
     maxEntries = max(maxEntries_sb,maxEntries_b)
+    #maxEntries = 100000
 
-    # choose number of events to generate for TOT
-    # otherwise comment this line out and just generate up to the max populated box
-    maxEntries = 10000
-
-    extLzValuesAll_sb = [list(lzValues_sb) for lzValues_sb in lzValuesAll_sb]
-    extLzValuesAll_b = [list(lzValues_b) for lzValues_b in lzValuesAll_b]
+    extLzValuesAll_sb = []
+    extLzValuesAll_b = []
     hSpBList =[]
     hBList = []
     
     # extend the lists to maxEntries, using ROOT histogram method to sample randomly from the existing distribution
     # this way we equalize the number of entries in all the boxes
-    for lzValues_sb,lzValues_b,Box in zip(extLzValuesAll_sb,extLzValuesAll_b,Boxes):
+    for lzValues_sb,lzValues_b,Box in zip(lzValuesAll_sb,lzValuesAll_b,Boxes):
         
         if min(len(lzValues_sb),len(lzValues_b)) >= maxEntries: continue
         zMin = min(lzValues_b+lzValues_sb)
         zMax = max(lzValues_b+lzValues_sb)
 
         binWidth = fabs(Box[1] - zMin)/20.
-        numBins = min(100000,int(ceil((zMax-zMin)/binWidth)))
-
+        numBins = min(1000000,int(ceil((zMax-zMin)/binWidth)))
+        print numBins
         hSpB = rt.TH1D("SpB_%s"% Box[0], "SpB_%s"% Box[0], numBins, zMin, zMax)
         hB = rt.TH1D("B_%s"% Box[0], "B_%s"% Box[0], numBins, zMin, zMax)
         
         for i in xrange(0, len(lzValues_sb)): hSpB.Fill(lzValues_sb[i])
         for i in xrange(0, len(lzValues_b)): hB.Fill(lzValues_b[i])
-        lzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
-        lzValues_b = [hB.GetRandom() for i in xrange(0,maxEntries)]
-        #for i in xrange(0,maxEntries): lzValues_sb.append(hSpB.GetRandom())
-        #for i in xrange(0,maxEntries): lzValues_b.append(hB.GetRandom())
+        extLzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
+        extLzValues_b = [hB.GetRandom() for i in xrange(0,maxEntries)]
+        #extLzValues_sb.sort()
+        #extLzValues_b.sort()
+        extLzValuesAll_sb.append(extLzValues_sb)
+        extLzValuesAll_b.append(extLzValues_b)
         hSpBList.append(hSpB.Clone())
         hBList.append(hB.Clone())
         hSpB.Delete()
         hB.Delete()
-        lzValues_sb.sort()
-        lzValues_b.sort()
 
     # to calculate CLs_Tot with just minimum stats in a box, uncomment these two lines    
     #extLzValuesAll_sb = lzValuesAll_sb
@@ -163,7 +162,7 @@ def getCLs(m0, m12,directory):
         zMin = min(lzValuesTot_b+lzValuesTot_sb)
         zMax = max(lzValuesTot_b+lzValuesTot_sb)       
         binWidth = fabs(Boxes[-1][1] - zMin)/ 20.
-        numBins = min(100000,int(ceil((zMax-zMin)/binWidth)))
+        numBins = min(1000000,int(ceil((zMax-zMin)/binWidth)))
 
         hSpB = rt.TH1D("SpB_Tot", "SpB_Tot", numBins, zMin, zMax)
         hB = rt.TH1D("B_Tot", "B_Tot", numBins, zMin, zMax)
