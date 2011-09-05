@@ -127,7 +127,6 @@ def getCLs(m0, m12,directory):
 
         binWidth = fabs(Box[1] - zMin)/20.
         numBins = min(1000000,int(ceil((zMax-zMin)/binWidth)))
-        print numBins
         hSpB = rt.TH1D("SpB_%s"% Box[0], "SpB_%s"% Box[0], numBins, zMin, zMax)
         hB = rt.TH1D("B_%s"% Box[0], "B_%s"% Box[0], numBins, zMin, zMax)
         
