@@ -126,7 +126,7 @@ def getCLs(m0, m12,directory):
         zMin = min(lzValues_b+lzValues_sb)
         zMax = max(lzValues_b+lzValues_sb)
 
-        binWidth = fabs(Box[1] - zMin)/10.
+        binWidth = fabs(Box[1] - zMin)/20.
         numBins = min(100000,int(ceil((zMax-zMin)/binWidth)))
 
         hSpB = rt.TH1D("SpB_%s"% Box[0], "SpB_%s"% Box[0], numBins, zMin, zMax)
@@ -134,9 +134,10 @@ def getCLs(m0, m12,directory):
         
         for i in xrange(0, len(lzValues_sb)): hSpB.Fill(lzValues_sb[i])
         for i in xrange(0, len(lzValues_b)): hB.Fill(lzValues_b[i])
-        
-        for i in xrange(len(lzValues_sb),maxEntries): lzValues_sb.append(hSpB.GetRandom())
-        for i in xrange(len(lzValues_b),maxEntries): lzValues_b.append(hB.GetRandom())
+        lzValues_sb = []
+        lzValues_b = []
+        for i in xrange(0,maxEntries): lzValues_sb.append(hSpB.GetRandom())
+        for i in xrange(0,maxEntries): lzValues_b.append(hB.GetRandom())
         hSpBList.append(hSpB.Clone())
         hBList.append(hB.Clone())
         hSpB.Delete()
@@ -152,7 +153,6 @@ def getCLs(m0, m12,directory):
         # sum the individual values of Lz for each box, and return a list with CLs_tot
         lzValuesTot_sb = [sum(lzZip) for lzZip in apply(zip,extLzValuesAll_sb)]
         lzValuesTot_b = [sum(lzZip) for lzZip in apply(zip,extLzValuesAll_b)]
-        #print lzValuesTot_b[0]
         lzValuesTot_sb.sort()
         lzValuesTot_b.sort()
         lzCritTot = sum(apply(zip,Boxes)[1])
@@ -162,7 +162,7 @@ def getCLs(m0, m12,directory):
 
         zMin = min(lzValuesTot_b+lzValuesTot_sb)
         zMax = max(lzValuesTot_b+lzValuesTot_sb)       
-        binWidth = fabs(Boxes[-1][1] - zMin)/ 10.
+        binWidth = fabs(Boxes[-1][1] - zMin)/ 20.
         numBins = min(100000,int(ceil((zMax-zMin)/binWidth)))
 
         hSpB = rt.TH1D("SpB_Tot", "SpB_Tot", numBins, zMin, zMax)
