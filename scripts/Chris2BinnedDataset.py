@@ -20,7 +20,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     for mydata in data: mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, nToys, write = True):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, minH, maxH, nToys, write = True):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
