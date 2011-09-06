@@ -296,26 +296,36 @@ class Box(object):
                 elif floatIfNoPenalty:
                     self.fixParsExact(par.GetName(),False)
 
+    def smearParsWithCovariance(self, fr, *options):
+        """Smear parameters using covariance matrix of fitresult"""
+        pars = {}
+        parsAtLimit = False
+        print "call fr.randomizePars()"
+        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): 
+            pars[p.GetName()] = p
+            print "RANDOMIZE PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())
+            if p.getVal() == p.getMin() or p.getVal() == p.getMax(): 
+                if p.GetName().find("Ntot") == -1: parsAtLimit = True
+        return pars, parsAtLimit
+
     def generateToyFRWithYield(self, genmodel, fr, number, *options):
         """Generate a toy dataset with the specified number of events"""
         
         pdf = self.workspace.pdf(genmodel)
         vars = rt.RooArgSet(self.workspace.set('variables'))
-        #print "expectedEvents = %f" % pdf.expectedEvents(vars)
+        print "expectedEvents = %f" % pdf.expectedEvents(vars)
         if self.workspace.cat('Boxes'):
             vars.add(self.workspace.cat('Boxes'))
-        
         parSet = self.workspace.allVars()
         #set the parameter values
-        pars = {}
-        #print "call fr.randomizePars()"
-        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): 
-            pars[p.GetName()] = p
-            #print "RANDOMIZE PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())
+        parsAtLimit = True
+        while parsAtLimit :
+            pars, parsAtLimit = self.smearParsWithCovariance(fr)
+            
         for name, value in pars.iteritems():
-            #print "FIX PARAMETER: %s " %name
+            print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
-        #print "GENERATE: "
+        print "GENERATE: "
         Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
         gdata = pdf.generate(vars,Pnumber,*options)
         
@@ -323,9 +333,9 @@ class Box(object):
         pars = {}
         for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
             pars[p.GetName()] = p
-            #print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
+            print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
         for name, value in pars.iteritems():
-            #print "FIX PARAMETER: %s " %name
+            print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
 
         gdata_cut = gdata.reduce(self.cut)

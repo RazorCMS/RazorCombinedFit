@@ -259,7 +259,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "L(H1|x = %s) = %f" %(ds.GetName(),LH1x)
             print "Lz = L(H0|x = %s) - L(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
             print "**************************************************"
-            return Lz
+            return Lz, LH0x,LH1x
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
@@ -285,8 +285,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
             print "get Lz for data"
-            lzData = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
+            lzData,LH0DataH0,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzValues = []
+            LH1xValues = []
+            LH0xValues = []
             
             values = rt.RooDataSet('Lz_%s' % box, 'Lz_values', rt.RooArgSet(lzV,lzD))
             lzD.setVal(lzData)
@@ -297,11 +299,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
             rt.gROOT.ProcessLine(
                 "struct MyStruct{\
                 Double_t var1;\
+                Double_t var2;\
+                Double_t var3;\
                 };")
             from ROOT import MyStruct
 
             s = MyStruct()
             myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
+            myTree.Branch("LH0x", rt.AddressOf(s,'var2'),'var2/D')
+            myTree.Branch("LH1x", rt.AddressOf(s,'var3'),'var3/D')
            
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
@@ -319,16 +325,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     sigGenPdf = rt.RooHistPdf('%sPdf_%i' % ('Signal',i),'%sPdf_%i' % ('Signal',i),vars,sigData)
                     #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
-                    #sigGenNum = rt.RooRandom.randomGenerator().Gaus(1., 0.17)*boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
                     sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
                     print "sigGenNum =  %f" % sigGenNum
-                    #print "bkgGenNum = %f" % bkgGenNum
-                    #print "numEntriesData = %i" % data.numEntries()
+                    print "bkgGenNum = %f" % bkgGenNum
+                    print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     sig_toy = sigGenPdf.generate(vars,PSigGenNum)
                     bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum)
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
-                    #print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
+                    print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
 
                     #sum the toys
                     tot_toy = bkg_toy.Clone()
@@ -346,14 +351,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
-                Lz = getLz(boxes[box],tot_toy, fr_central)
+                Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
                 if Lz is None:
                     print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
                     continue
                 lzValues.append(Lz)
+                LH0xValues.append(LH0x)
+                LH1xValues.append(LH1x)
                 lzV.setVal(Lz)
                 values.add(rt.RooArgSet(lzV,lzD))
                 s.var1 = Lz
+                s.var2 = LH0x
+                s.var3 = LH1x
                 myTree.Fill()
                 ### plotting:
                 #frame_MR_sig = boxes[box].workspace.var('MR').frame()

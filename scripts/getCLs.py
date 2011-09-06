@@ -20,6 +20,18 @@ def calcCLs(lzValues_sb,lzValues_b,Box):
     
     return CLs
 
+def calcCLsExp(lzValues_sb,lzValues_b):
+    lzValues_b.sort()
+    CLbValues = [0.16, 0.5, 0.84]
+    lzCritValues = [lzValues_b[int(sigma*len(lzValues_b)+0.5)] for sigma in CLbValues]
+    CLsbValues = [float(len([lz for lz in lzValues_sb if lz < lzCrit]))/len(lzValues_sb) for lzCrit in lzCritValues]
+    CLsExpValues = [CLsb/CLb for CLsb,CLb in zip(CLsbValues,CLbValues)]
+    print "Expected for Tot box"
+    print "CLsExp+ = %f" %CLsExpValues[0]
+    print "CLsExp  = %f" %CLsExpValues[1]
+    print "CLsExp- = %f" %CLsExpValues[2]
+    return CLsExpValues
+
 def getQdist(m0, m12, BoxName,directory):
 
     if BoxName=='Had':
@@ -93,8 +105,9 @@ def getQdist(m0, m12, BoxName,directory):
 def getCLs(m0, m12,directory):
     
     # we store the boxes in the format [ Name, Q_data^box]
-    Boxes = [["Had", 0],["Mu",0], ["Ele", 0],["MuMu",0],["EleEle",0],["MuEle",0]]
-    
+    #Boxes = [["Had", 0],["Mu",0], ["Ele", 0],["MuMu",0],["EleEle",0],["MuEle",0]]
+    Boxes = [["Had", 0]]
+                                                                          
        
     lzValuesAll_sb = []
     lzValuesAll_b = []
@@ -134,8 +147,7 @@ def getCLs(m0, m12,directory):
         for i in xrange(0, len(lzValues_b)): hB.Fill(lzValues_b[i])
         extLzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
         extLzValues_b = [hB.GetRandom() for i in xrange(0,maxEntries)]
-        #extLzValues_sb.sort()
-        #extLzValues_b.sort()
+        
         extLzValuesAll_sb.append(extLzValues_sb)
         extLzValuesAll_b.append(extLzValues_b)
         hSpBList.append(hSpB.Clone())
@@ -188,14 +200,19 @@ def getCLs(m0, m12,directory):
         Double_t CL3;\
         Double_t CL4;\
         Double_t CL5;\
-        Double_t CL6;};")
+        Double_t CL6;\
+        Double_t CL7;\
+        Double_t CL8;\
+        Double_t CL9;};")
     from ROOT import MyStruct
 
     s = MyStruct()
     clTree.Branch("m0", rt.AddressOf(s,"m0"),'m0/D')
     clTree.Branch("m12", rt.AddressOf(s,"m12"),'m12/D')
     for i in range(0, len(Boxes)): clTree.Branch("CLs_%s" %Boxes[i][0], rt.AddressOf(s,"CL%i" %i),'CL%i/D' %i)
-        
+    clTree.Branch("CLs_Tot_ExpPlus", rt.AddressOf(s,"CL7"),'CL7/D')
+    clTree.Branch("CLs_Tot_Exp", rt.AddressOf(s,"CL8"),'CL8/D')
+    clTree.Branch("CLs_Tot_ExpMinus", rt.AddressOf(s,"CL9"),'CL9/D')
     s.m0 = float(m0)
     s.m12 = float(m12)
     if len(Boxes) > 0: s.CL0 = calcCLs(lzValuesAll_sb[0], lzValuesAll_b[0], Boxes[0])
@@ -204,8 +221,9 @@ def getCLs(m0, m12,directory):
     if len(Boxes) > 3: s.CL3 = calcCLs(lzValuesAll_sb[3], lzValuesAll_b[3], Boxes[3])
     if len(Boxes) > 4: s.CL4 = calcCLs(lzValuesAll_sb[4], lzValuesAll_b[4], Boxes[4])
     if len(Boxes) > 5: s.CL5 = calcCLs(lzValuesAll_sb[5], lzValuesAll_b[5], Boxes[5])
-    if len(Boxes) > 6: s.CL6 = calcCLs(lzValuesAll_sb[6], lzValuesAll_b[6], Boxes[6])
-        
+    if len(Boxes) > 6: 
+        s.CL6 = calcCLs(lzValuesAll_sb[6], lzValuesAll_b[6], Boxes[6])
+        s.CL7,s.CL8,s.CL9 = calcCLsExp(lzValuesAll_sb[6], lzValuesAll_b[6])
     clTree.Fill()
 
     fileOut = rt.TFile.Open("CLs_m0_%s_m12_%s.root" %(m0, m12), "recreate")
