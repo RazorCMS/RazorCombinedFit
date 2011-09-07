@@ -304,8 +304,7 @@ class Box(object):
         for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): 
             pars[p.GetName()] = p
             print "RANDOMIZE PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())
-            if p.getVal() == p.getMin() or p.getVal() == p.getMax(): 
-                if p.GetName().find("Ntot") == -1: parsAtLimit = True
+            if p.getVal() == p.getMin() or p.getVal() == p.getMax(): parsAtLimit = True
         return pars, parsAtLimit
 
     def generateToyFRWithYield(self, genmodel, fr, number, *options):
