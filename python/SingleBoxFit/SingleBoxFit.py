@@ -166,8 +166,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
+                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
                 #store it in the workspace too
@@ -339,10 +339,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     tot_toy = bkg_toy.Clone()
                     tot_toy.append(sig_toy)
                     tot_toy.SetName("sigbkg")
-                    sigData.Delete()
-                    sigGenPdf.Delete()
-                    sig_toy.Delete()
-                    bkg_toy.Delete()
+                    #sigData.Delete()
+                    #sigGenPdf.Delete()
+                    #sig_toy.Delete()
+                    #bkg_toy.Delete()
+                    del sigData
+                    del sigGenPdf
+                    del sig_toy
+                    del bkg_toy
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
