@@ -21,7 +21,6 @@ def calcCLs(lzValues_sb,lzValues_b,Box):
     return CLs
 
 def calcCLsExp(lzValues_sb,lzValues_b):
-    lzValues_b.sort()
     CLbValues = [0.16, 0.5, 0.84]
     lzCritValues = [lzValues_b[int(sigma*len(lzValues_b)+0.5)] for sigma in CLbValues]
     CLsbValues = [float(len([lz for lz in lzValues_sb if lz < lzCrit]))/len(lzValues_sb) for lzCrit in lzCritValues]
@@ -32,7 +31,7 @@ def calcCLsExp(lzValues_sb,lzValues_b):
     print "CLsExp- = %f" %CLsExpValues[2]
     return CLsExpValues
 
-def getQdist(m0, m12, BoxName,directory):
+def getQdist(m0, m12, BoxName,directory,tanB):
 
     if BoxName=='Had':
         MR='400.0'
@@ -47,7 +46,7 @@ def getQdist(m0, m12, BoxName,directory):
     critValueData = -99999999
     FirstFile = True
     
-    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB10_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, m0, m12, BoxName))
+    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, tanB,m0, m12, BoxName))
  
     for spbFile in spbFileList:
         # check if file is at least 40K and contains 4 keys in the box subdirectory
@@ -73,7 +72,7 @@ def getQdist(m0, m12, BoxName,directory):
             lzValues_sb.append(tSpB.Lz)
         input.Close()
 
-    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB10_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, m0, m12, BoxName))
+    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, tanB,m0, m12, BoxName))
 
     for bFile in bFileList:
         # check if file is at least 40K and contains 4 keys in the box subdirectory
@@ -95,49 +94,29 @@ def getQdist(m0, m12, BoxName,directory):
             lzValues_b.append(tB.Lz)
         input.Close()
 
-    # sort the lists 
-    lzValues_b.sort()
-    lzValues_sb.sort()
-
     return lzValues_sb, lzValues_b, critValueData
 
 
-def getCLs(m0, m12,directory):
+def getCLs(m0, m12,directory,tanB):
     
     # we store the boxes in the format [ Name, Q_data^box]
-    #Boxes = [["Had", 0],["Mu",0], ["Ele", 0],["MuMu",0],["EleEle",0],["MuEle",0]]
-    Boxes = [["Had", 0]]
-                                                                          
+    Boxes = [["Had", 0],["Mu",0], ["Ele", 0],["MuMu",0],["EleEle",0],["MuEle",0]]
+    
        
     lzValuesAll_sb = []
     lzValuesAll_b = []
-    for Box in Boxes:
-        BoxName = Box[0]
-        lzValues_sb,lzValues_b, Box[1] = getQdist(m0, m12, BoxName,directory)
-        lzValuesAll_sb.append(lzValues_sb)
-        lzValuesAll_b.append(lzValues_b)
-        
 
-    # choose number of events to generate for TOT
-    # currently, we use the max number of entries in any box 
-    maxEntries_sb =  max([len(lz) for lz in lzValuesAll_sb])
-    maxEntries_b =  max([len(lz) for lz in lzValuesAll_b])
-    maxEntries = max(maxEntries_sb,maxEntries_b)
-    #maxEntries = 100000
-
-    extLzValuesAll_sb = []
-    extLzValuesAll_b = []
     hSpBList =[]
     hBList = []
-    
-    # extend the lists to maxEntries, using ROOT histogram method to sample randomly from the existing distribution
-    # this way we equalize the number of entries in all the boxes
-    for lzValues_sb,lzValues_b,Box in zip(lzValuesAll_sb,lzValuesAll_b,Boxes):
+    for Box in Boxes:
+        BoxName = Box[0]
+        lzValues_sb,lzValues_b, Box[1] = getQdist(m0, m12, BoxName,directory,tanB)
         
-        if min(len(lzValues_sb),len(lzValues_b)) >= maxEntries: continue
+        lzValuesAll_sb.append(lzValues_sb)
+        lzValuesAll_b.append(lzValues_b)
+
         zMin = min(lzValues_b+lzValues_sb)
         zMax = max(lzValues_b+lzValues_sb)
-
         binWidth = fabs(Box[1] - zMin)/20.
         numBins = min(1000000,int(ceil((zMax-zMin)/binWidth)))
         hSpB = rt.TH1D("SpB_%s"% Box[0], "SpB_%s"% Box[0], numBins, zMin, zMax)
@@ -145,19 +124,45 @@ def getCLs(m0, m12,directory):
         
         for i in xrange(0, len(lzValues_sb)): hSpB.Fill(lzValues_sb[i])
         for i in xrange(0, len(lzValues_b)): hB.Fill(lzValues_b[i])
-        extLzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
-        extLzValues_b = [hB.GetRandom() for i in xrange(0,maxEntries)]
-        
-        extLzValuesAll_sb.append(extLzValues_sb)
-        extLzValuesAll_b.append(extLzValues_b)
+
         hSpBList.append(hSpB.Clone())
         hBList.append(hB.Clone())
-        hSpB.Delete()
-        hB.Delete()
+        del hSpB
+        del hB
+    
+    # choose number of events to generate for TOT
+    # currently, we use the max number of entries in any box 
+    maxEntries_sb =  max([len(lz) for lz in lzValuesAll_sb])
+    maxEntries_b =  max([len(lz) for lz in lzValuesAll_b])
+    maxEntries = max(maxEntries_sb,maxEntries_b)
+    # or specify your own maxEntries, such as 50K
+    #maxEntries = 50000
 
-    # to calculate CLs_Tot with just minimum stats in a box, uncomment these two lines    
-    #extLzValuesAll_sb = lzValuesAll_sb
-    #extLzValuesAll_b = lzValuesAll_b
+    # or to calculate CLs_Tot with just minimum stats in a box, 
+    # simply set maxEntries = 1
+    #maxEntries = 1
+    
+    extLzValuesAll_sb = []
+    extLzValuesAll_b = []
+
+    # extend the lists to maxEntries, using ROOT histogram method to sample randomly from the existing distribution
+    # this way we equalize the number of entries in all the boxes
+    for lzValues_sb,lzValues_b,hSpB,hB in zip(lzValuesAll_sb,lzValuesAll_b,hSpBList,hBList):
+        
+        if min(len(lzValues_sb),len(lzValues_b)) >= maxEntries: 
+            # for "extended list", just copy the values of the initial list
+            extLzValues_sb = list(lzValues_sb)
+            extLzValues_b = list(lzValues_b)
+
+            extLzValuesAll_sb.append(extLzValues_sb)
+            extLzValuesAll_b.append(extLzValues_b)
+        else:
+            # for "extended list", generate from the histogram up to maxEntries
+            extLzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
+            extLzValues_b = [hB.GetRandom() for i in xrange(0,maxEntries)]
+        
+            extLzValuesAll_sb.append(extLzValues_sb)
+            extLzValuesAll_b.append(extLzValues_b)
     
     if len(Boxes)>1:
         # sum the individual values of Lz for each box, and return a list with CLs_tot
@@ -221,9 +226,9 @@ def getCLs(m0, m12,directory):
     if len(Boxes) > 3: s.CL3 = calcCLs(lzValuesAll_sb[3], lzValuesAll_b[3], Boxes[3])
     if len(Boxes) > 4: s.CL4 = calcCLs(lzValuesAll_sb[4], lzValuesAll_b[4], Boxes[4])
     if len(Boxes) > 5: s.CL5 = calcCLs(lzValuesAll_sb[5], lzValuesAll_b[5], Boxes[5])
-    if len(Boxes) > 6: 
-        s.CL6 = calcCLs(lzValuesAll_sb[6], lzValuesAll_b[6], Boxes[6])
-        s.CL7,s.CL8,s.CL9 = calcCLsExp(lzValuesAll_sb[6], lzValuesAll_b[6])
+    if len(Boxes) > 6: s.CL6 = calcCLs(lzValuesAll_sb[6], lzValuesAll_b[6], Boxes[6])
+
+    if len(Boxes) > 1: s.CL7,s.CL8,s.CL9 = calcCLsExp(lzValuesAll_sb[-1], lzValuesAll_b[-1])
     clTree.Fill()
 
     fileOut = rt.TFile.Open("CLs_m0_%s_m12_%s.root" %(m0, m12), "recreate")
@@ -237,4 +242,5 @@ if __name__ == '__main__':
     m0 = sys.argv[1]
     m12 = sys.argv[2]
     directory = sys.argv[3]
-    getCLs(m0, m12, directory)
+    tanB = 10
+    getCLs(m0, m12, directory,tanB)
