@@ -26,7 +26,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
         mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, minH, maxH, nToys, write = True):
+def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = True):
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
@@ -102,7 +102,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, minH, maxH, nToys, 
         wHisto_pdfSYS.append(histo_pdfSYS.Clone())
 
         #write objects for this box
-        if write: writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin)
+        if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
         # cleanup
         del data
 
@@ -165,7 +165,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, minH, maxH, nToys, 
                     else:
                         wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
 
-            if write: writeTree2DataSet([wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)], outputFile, outputBox, rMin, mRmin)
+            if write: writeTree2DataSet([wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)], outputFile, "%s.root" %box, rMin, mRmin)
             del wHisto_i
                     
     return []
@@ -221,7 +221,7 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
 
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
-            convertTree2Dataset(input.Get('EVENTS'), decorator, '.root', cfg,options.min,options.max,options.toys)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,options.toys)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
