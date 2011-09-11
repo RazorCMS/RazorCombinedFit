@@ -60,7 +60,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, minH, maxH, nT
 
     # xsec UP
     wHisto_xsecup = rt.TH2D("wHisto_xsecup","wHisto_xsecup", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
-    tree.Project("wHisto_xsecup", "RSQ_JES_UP:MR_JES_UP",, 'LEP_W*W_UP*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    tree.Project("wHisto_xsecup", "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W_UP*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
     data.append(wHisto_xsecup)
     
     # xsec correctiobns DOWN
