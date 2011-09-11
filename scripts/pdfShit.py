@@ -41,6 +41,8 @@ def GetErrEigen(w, w2, wALL, selectedEvents_, originalEvents_, CTEQ=False):
     events_central = w[0]
     events2_central = w2[0]
 
+    if events_central == 0: return 0,0
+
     for j in range(0,npairs):
         wa = w[2*j+1]/events_central-1.
         wb = w[2*j+2]/events_central-1.
