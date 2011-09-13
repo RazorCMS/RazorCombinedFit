@@ -17,6 +17,8 @@ if __name__ == '__main__':
         myfile = rt.TFile.Open("%s_%i.root" %(dir, i), "recreate")
         mydata.Write()
         myfile.Close()
+        del tree
+        del mydata
         continue
 
 
