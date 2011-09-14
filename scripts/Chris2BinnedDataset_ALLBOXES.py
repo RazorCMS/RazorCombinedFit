@@ -30,7 +30,6 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
-    
 
     wHisto = []
     wHisto_JESup = []
@@ -64,7 +63,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
         tree.Project("wHisto_%s" %box, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
-        data.append(rooDataHist.Clone())
+        data.append(rooDataHist)
         data.append(histo.Clone())
         wHisto.append(histo.Clone())
 
@@ -105,6 +104,13 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
         if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
         # cleanup
         del data
+        del workspace
+        del variables
+        del args
+        del mRmin
+        del mRmax
+        del MR
+        del Rsq
 
     # random number generator
     pid = os.getpid()
@@ -123,6 +129,25 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         xsecFactor = gRnd.Gaus(0., 1.)
         for ibox in range(0,len(boxes)):
+            box = boxes[ibox]
+            workspace = rt.RooWorkspace(box)
+            variables = config.getVariablesRange(box,"variables",workspace)
+            args = workspace.allVars()
+
+            #we cut away events outside our MR window
+            mRmin = args['MR'].getMin()
+            mRmax = args['MR'].getMax()
+
+            #we cut away events outside our Rsq window
+            rsqMin = args['Rsq'].getMin()
+            rsqMax = args['Rsq'].getMax()
+            rMin = rt.TMath.Sqrt(rsqMin)
+            rMax = rt.TMath.Sqrt(rsqMax)
+
+            # set the same binning for the RooRealVars
+            MR =  workspace.var("MR")
+            Rsq =  workspace.var("Rsq")
+
             box = boxes[ibox]
             # create a copy of the histogram
             wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), 100, mRmin, mRmax, 100, rsqMin, rsqMax)
@@ -164,10 +189,18 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
                         wHisto_i.SetBinContent(ix,iy,max(0.,newvalue))
                     else:
                         wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
-
-            if write: writeTree2DataSet([wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)], outputFile, "%s.root" %box, rMin, mRmin)
+            data = [wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)]            
+            if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
             del wHisto_i
-                    
+            del data
+            del workspace
+            del variables
+            del args
+            del mRmin
+            del mRmax
+            del MR
+            del Rsq
+
     return []
 
 def printEfficiencies(tree, outputFile, config, flavour):
