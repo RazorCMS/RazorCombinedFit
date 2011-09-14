@@ -45,7 +45,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, minH, maxH, nT
 
     #this is the nominal histogram
     wHisto = rt.TH2D("wHisto","wHisto", 100, mRmin, mRmax, 100, rsqMin, rsqMax)
-    tree.Project("wHisto", "RSQ:MR", "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+    tree.Project("wHisto", "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
     data = [rt.RooDataHist("RMRHistTree","RMRHistTree",rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto),wHisto]
 
     # JES correctiobns UP
