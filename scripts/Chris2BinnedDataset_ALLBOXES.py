@@ -21,7 +21,6 @@ def getMeanSigma(n0, nP, nM):
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'UPDATE')
-    print output.GetName()
     for mydata in data:
         mydata.Write()
     output.Close()
