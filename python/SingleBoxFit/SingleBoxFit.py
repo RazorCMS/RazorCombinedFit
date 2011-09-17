@@ -321,7 +321,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"              
                     #sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree')
-                    sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree_%i'%i)
+                    sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree_%s_%i'%(boxes[box].name,i))
                     sigGenPdf = rt.RooHistPdf('%sPdf_%i' % ('Signal',i),'%sPdf_%i' % ('Signal',i),vars,sigData)
                     #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
@@ -339,14 +339,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     tot_toy = bkg_toy.Clone()
                     tot_toy.append(sig_toy)
                     tot_toy.SetName("sigbkg")
-                    #sigData.Delete()
-                    #sigGenPdf.Delete()
-                    #sig_toy.Delete()
-                    #bkg_toy.Delete()
-                    del sigData
-                    del sigGenPdf
-                    del sig_toy
-                    del bkg_toy
+                    sigData.Delete()
+                    sigGenPdf.Delete()
+                    sig_toy.Delete()
+                    bkg_toy.Delete()
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"

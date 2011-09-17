@@ -139,7 +139,7 @@ class Box(object):
         
         #create a binned dataset in the parameter   
         #hdata = rt.RooDataHis(t'%sHist' % modelName,'%sHist' % modelName,hvars, signal)
-        hdata = RootTools.getDataSet(inputFile,'RMRHistTree')
+        hdata = RootTools.getDataSet(inputFile,'RMRHistTree_%s' %self.name)
         self.importToWS(hdata)
         hpdf = rt.RooHistPdf('%sPdf' % modelName,'%sPdf' % modelName,vars,hdata)
         self.importToWS(hpdf)
