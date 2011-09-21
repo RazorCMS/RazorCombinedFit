@@ -49,6 +49,9 @@ def getQdist(m0, m12, BoxName,directory,tanB):
         # otherwise the file probably didn't finish writing or didn't close properly
         if os.stat(spbFile).st_size < 40000: continue 
         input = rt.TFile.Open(spbFile)
+        if input.GetNkeys() < 7:
+            input.Close()
+            continue
         if input.Get(BoxName).GetNkeys() < 4:
             input.Close()
             continue
@@ -75,6 +78,9 @@ def getQdist(m0, m12, BoxName,directory,tanB):
         # otherwise the file probably didn't finish writing or didn't close properly
         if os.stat(bFile).st_size < 40000: continue
         input = rt.TFile.Open(bFile)
+        if input.GetNkeys() < 7:
+            input.Close()
+            continue
         if input.Get(BoxName).GetNkeys() < 4:
             input.Close()
             continue
