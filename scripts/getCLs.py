@@ -20,12 +20,14 @@ def calcCLs(lzValues_sb,lzValues_b,Box):
     
     return CLs
 
-def calcCLsExp(lzValues_sb,lzValues_b):
+def calcCLsExp(lzValues_sb,lzValues_b,Box):
     CLbValues = [0.16, 0.5, 0.84]
+    lzValues_b.sort()
+    lzValues_sb.sort()
     lzCritValues = [lzValues_b[int(sigma*len(lzValues_b)+0.5)] for sigma in CLbValues]
     CLsbValues = [float(len([lz for lz in lzValues_sb if lz < lzCrit]))/len(lzValues_sb) for lzCrit in lzCritValues]
     CLsExpValues = [CLsb/CLb for CLsb,CLb in zip(CLsbValues,CLbValues)]
-    print "Expected for Tot box"
+    print "Expected for %s box"%Box[0]
     print "CLsExp+ = %f" %CLsExpValues[0]
     print "CLsExp  = %f" %CLsExpValues[1]
     print "CLsExp- = %f" %CLsExpValues[2]
@@ -46,7 +48,7 @@ def getQdist(m0, m12, BoxName,directory,tanB):
     critValueData = -99999999
     FirstFile = True
     
-    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, tanB,m0, m12, BoxName))
+    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_*.root" %(directory, MR, R, tanB,m0, m12))
  
     for spbFile in spbFileList:
         # check if file is at least 40K and contains 4 keys in the box subdirectory
@@ -72,7 +74,7 @@ def getQdist(m0, m12, BoxName,directory,tanB):
             lzValues_sb.append(tSpB.Lz)
         input.Close()
 
-    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_%s_*.root" %(directory, MR, R, tanB,m0, m12, BoxName))
+    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_*.root" %(directory, MR, R, tanB,m0, m12))
 
     for bFile in bFileList:
         # check if file is at least 40K and contains 4 keys in the box subdirectory
@@ -101,8 +103,7 @@ def getCLs(m0, m12,directory,tanB):
     
     # we store the boxes in the format [ Name, Q_data^box]
     Boxes = [["Had", 0],["Mu",0], ["Ele", 0],["MuMu",0],["EleEle",0],["MuEle",0]]
-    
-       
+        
     lzValuesAll_sb = []
     lzValuesAll_b = []
 
@@ -114,7 +115,7 @@ def getCLs(m0, m12,directory,tanB):
         
         lzValuesAll_sb.append(lzValues_sb)
         lzValuesAll_b.append(lzValues_b)
-
+        
         zMin = min(lzValues_b+lzValues_sb)
         zMax = max(lzValues_b+lzValues_sb)
         binWidth = fabs(Box[1] - zMin)/20.
@@ -156,6 +157,7 @@ def getCLs(m0, m12,directory,tanB):
 
             extLzValuesAll_sb.append(extLzValues_sb)
             extLzValuesAll_b.append(extLzValues_b)
+            
         else:
             # for "extended list", generate from the histogram up to maxEntries
             extLzValues_sb = [hSpB.GetRandom() for i in xrange(0,maxEntries)]
@@ -163,18 +165,45 @@ def getCLs(m0, m12,directory,tanB):
         
             extLzValuesAll_sb.append(extLzValues_sb)
             extLzValuesAll_b.append(extLzValues_b)
-    
+                                
     if len(Boxes)>1:
         # sum the individual values of Lz for each box, and return a list with CLs_tot
         lzValuesTot_sb = [sum(lzZip) for lzZip in apply(zip,extLzValuesAll_sb)]
         lzValuesTot_b = [sum(lzZip) for lzZip in apply(zip,extLzValuesAll_b)]
-        lzValuesTot_sb.sort()
-        lzValuesTot_b.sort()
+
+        LepBoxes = [Boxes[apply(zip,Boxes)[0].index('Mu')],Boxes[apply(zip,Boxes)[0].index('Ele')]]
+        extLzValuesLep_sb = [extLzValuesAll_sb[apply(zip,Boxes)[0].index('Mu')],extLzValuesAll_sb[apply(zip,Boxes)[0].index('Ele')]]
+        extLzValuesLep_b = [extLzValuesAll_b[apply(zip,Boxes)[0].index('Mu')],extLzValuesAll_b[apply(zip,Boxes)[0].index('Ele')]]
+        
+        lzValuesLepTot_sb = [sum(lzZip) for lzZip in apply(zip,extLzValuesLep_sb)]
+        lzValuesLepTot_b = [sum(lzZip) for lzZip in apply(zip,extLzValuesLep_b)]
+        
         lzCritTot = sum(apply(zip,Boxes)[1])
+        lzCritLep = sum(apply(zip,LepBoxes)[1])
+
+        Boxes.append(["1Lep",lzCritLep])
         Boxes.append(["Tot",lzCritTot])
+        lzValuesAll_sb.append(lzValuesLepTot_sb)
+        lzValuesAll_b.append(lzValuesLepTot_b)
+         
         lzValuesAll_sb.append(lzValuesTot_sb) 
         lzValuesAll_b.append(lzValuesTot_b)
 
+        zMin = min(lzValuesLepTot_b+lzValuesLepTot_sb)
+        zMax = max(lzValuesLepTot_b+lzValuesLepTot_sb)
+        binWidth = fabs(Boxes[-1][1] - zMin)/ 20.
+        numBins = min(1000000,int(ceil((zMax-zMin)/binWidth)))
+        
+        hSpB = rt.TH1D("SpB_1Lep", "SpB_1Lep", numBins, zMin, zMax)
+        hB = rt.TH1D("B_1Lep", "B_1Lep", numBins, zMin, zMax)
+        for i in xrange(0, len(lzValuesLepTot_sb)): hSpB.Fill(lzValuesLepTot_sb[i])
+        for i in xrange(0, len(lzValuesLepTot_b)): hB.Fill(lzValuesLepTot_b[i])
+
+        hSpBList.append(hSpB.Clone())
+        hBList.append(hB.Clone())
+        del hSpB
+        del hB
+                                                
         zMin = min(lzValuesTot_b+lzValuesTot_sb)
         zMax = max(lzValuesTot_b+lzValuesTot_sb)       
         binWidth = fabs(Boxes[-1][1] - zMin)/ 20.
@@ -183,16 +212,17 @@ def getCLs(m0, m12,directory,tanB):
         hSpB = rt.TH1D("SpB_Tot", "SpB_Tot", numBins, zMin, zMax)
         hB = rt.TH1D("B_Tot", "B_Tot", numBins, zMin, zMax)
         
+        for i in xrange(0, len(lzValuesLepTot_sb)): hSpB.Fill(lzValuesLepTot_sb[i])
+        for i in xrange(0, len(lzValuesLepTot_b)): hB.Fill(lzValuesLepTot_b[i])
+
         for i in xrange(0, len(lzValuesTot_sb)): hSpB.Fill(lzValuesTot_sb[i])
         for i in xrange(0, len(lzValuesTot_b)): hB.Fill(lzValuesTot_b[i])
 
-        zMin = min(lzValuesTot_b+lzValuesTot_sb)
-        zMax = max(lzValuesTot_b+lzValuesTot_sb)        
-        
+                
         hSpBList.append(hSpB.Clone())
         hBList.append(hB.Clone())
-        hSpB.Delete()
-        hB.Delete()
+        del hSpB
+        del hB
 
     clTree = rt.TTree("clTree", "clTree")
     rt.gROOT.ProcessLine(
@@ -208,16 +238,33 @@ def getCLs(m0, m12,directory,tanB):
         Double_t CL6;\
         Double_t CL7;\
         Double_t CL8;\
-        Double_t CL9;};")
+        Double_t CL9;\
+        Double_t CL10;\
+        Double_t CL11;\
+        Double_t CL12;\
+        Double_t CL13;\
+        Double_t CL14;\
+        Double_t CL15;\
+        Double_t CL16;};")
     from ROOT import MyStruct
 
     s = MyStruct()
     clTree.Branch("m0", rt.AddressOf(s,"m0"),'m0/D')
     clTree.Branch("m12", rt.AddressOf(s,"m12"),'m12/D')
     for i in range(0, len(Boxes)): clTree.Branch("CLs_%s" %Boxes[i][0], rt.AddressOf(s,"CL%i" %i),'CL%i/D' %i)
-    clTree.Branch("CLs_Tot_ExpPlus", rt.AddressOf(s,"CL7"),'CL7/D')
-    clTree.Branch("CLs_Tot_Exp", rt.AddressOf(s,"CL8"),'CL8/D')
-    clTree.Branch("CLs_Tot_ExpMinus", rt.AddressOf(s,"CL9"),'CL9/D')
+
+    clTree.Branch("CLs_Had_ExpPlus", rt.AddressOf(s,"CL8"),'CL8/D')
+    clTree.Branch("CLs_Had_Exp", rt.AddressOf(s,"CL9"),'CL9/D')
+    clTree.Branch("CLs_Had_ExpMinus", rt.AddressOf(s,"CL10"),'CL10/D')
+
+    clTree.Branch("CLs_1Lep_ExpPlus", rt.AddressOf(s,"CL11"),'CL11/D')
+    clTree.Branch("CLs_1Lep_Exp", rt.AddressOf(s,"CL12"),'CL12/D')
+    clTree.Branch("CLs_1Lep_ExpMinus", rt.AddressOf(s,"CL13"),'CL13/D')
+
+    clTree.Branch("CLs_Tot_ExpPlus", rt.AddressOf(s,"CL14"),'CL14/D')
+    clTree.Branch("CLs_Tot_Exp", rt.AddressOf(s,"CL15"),'CL15/D')
+    clTree.Branch("CLs_Tot_ExpMinus", rt.AddressOf(s,"CL16"),'CL16/D')
+
     s.m0 = float(m0)
     s.m12 = float(m12)
     if len(Boxes) > 0: s.CL0 = calcCLs(lzValuesAll_sb[0], lzValuesAll_b[0], Boxes[0])
@@ -227,8 +274,11 @@ def getCLs(m0, m12,directory,tanB):
     if len(Boxes) > 4: s.CL4 = calcCLs(lzValuesAll_sb[4], lzValuesAll_b[4], Boxes[4])
     if len(Boxes) > 5: s.CL5 = calcCLs(lzValuesAll_sb[5], lzValuesAll_b[5], Boxes[5])
     if len(Boxes) > 6: s.CL6 = calcCLs(lzValuesAll_sb[6], lzValuesAll_b[6], Boxes[6])
+    if len(Boxes) > 7: s.CL7 = calcCLs(lzValuesAll_sb[7], lzValuesAll_b[7], Boxes[7])
 
-    if len(Boxes) > 1: s.CL7,s.CL8,s.CL9 = calcCLsExp(lzValuesAll_sb[-1], lzValuesAll_b[-1])
+    if len(Boxes) > 7: s.CL8,s.CL9,s.CL10 = calcCLsExp(lzValuesAll_sb[0], lzValuesAll_b[0],Boxes[0])
+    if len(Boxes) > 7: s.CL11,s.CL12,s.CL13 = calcCLsExp(lzValuesAll_sb[6], lzValuesAll_b[6],Boxes[6])
+    if len(Boxes) > 7: s.CL14,s.CL15,s.CL16 = calcCLsExp(lzValuesAll_sb[7], lzValuesAll_b[7],Boxes[7])
     clTree.Fill()
 
     fileOut = rt.TFile.Open("CLs_m0_%s_m12_%s.root" %(m0, m12), "recreate")
