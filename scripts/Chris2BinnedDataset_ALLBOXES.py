@@ -25,7 +25,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
         mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = True):
+def convertTree2Dataset(tree, nbin, outputFile, config, minH, maxH, nToys, write = True):
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
@@ -59,7 +59,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
         MR =  workspace.var("MR")
         Rsq =  workspace.var("Rsq")
  
-        histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+        histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbin, mRmin, mRmax, nbin, rsqMin, rsqMax)
         tree.Project("wHisto_%s" %box, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
@@ -67,31 +67,31 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
         wHisto.append(histo.Clone())
 
         # JES correctiobns UP
-        histo_JESup = rt.TH2D("wHisto_JESup_%s" %box,"wHisto_JESup_%s" %box, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+        histo_JESup = rt.TH2D("wHisto_JESup_%s" %box,"wHisto_JESup_%s" %box, nbin, mRmin, mRmax, nbin, rsqMin, rsqMax)
         tree.Project("wHisto_JESup_%s" %box, "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         data.append(histo_JESup.Clone())
         wHisto_JESup.append(histo_JESup.Clone())
 
         # JES correctiobns DOWN
-        histo_JESdown = rt.TH2D("wHisto_JESdown_%s" %box,"wHisto_JESdown_%s" %box, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+        histo_JESdown = rt.TH2D("wHisto_JESdown_%s" %box,"wHisto_JESdown_%s" %box, nbin, mRmin, mRmax, nbin, rsqMin, rsqMax)
         tree.Project("wHisto_JESdown_%s" %box,  "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*W*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         data.append(histo_JESdown.Clone())
         wHisto_JESdown.append(histo_JESdown.Clone())
 
         # xsec UP
-        histo_xsecup = rt.TH2D("wHisto_xsecup_%s" %box,"wHisto_xsecup_%s" %box, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+        histo_xsecup = rt.TH2D("wHisto_xsecup_%s" %box,"wHisto_xsecup_%s" %box, nbin, mRmin, mRmax, nbin, rsqMin, rsqMax)
         tree.Project("wHisto_xsecup_%s" %box, "RSQ:MR",  'LEP_W*W_UP*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         data.append(histo_xsecup.Clone())
         wHisto_xsecup.append(histo_xsecup.Clone())
         
         # xsec correctiobns DOWN
-        histo_xsecdown = rt.TH2D("wHisto_xsecdown_%s" %box,"wHisto_xsecdown_%s" %box, 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+        histo_xsecdown = rt.TH2D("wHisto_xsecdown_%s" %box,"wHisto_xsecdown_%s" %box, nbin, mRmin, mRmax, nbin, rsqMin, rsqMax)
         tree.Project("wHisto_xsecdown_%s" %box, "RSQ:MR",  'LEP_W*W_DOWN*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         data.append(histo_xsecdown.Clone())
         wHisto_xsecdown.append(histo_xsecdown.Clone())
         
         # PDF central (new nominal) and error (for systematics)
-        histo_pdfCEN, histo_pdfSYS = makePDFPlot(tree, histo, 100, mRmin, mRmax, 100, rsqMin, rsqMax, boxMap[box])
+        histo_pdfCEN, histo_pdfSYS = makePDFPlot(tree, histo, nbin, mRmin, mRmax, nbin, rsqMin, rsqMax, boxMap[box])
         histo_pdfCEN.SetName("wHisto_pdfCEN_%s" %box)
         histo_pdfSYS.SetName("wHisto_pdfSYS_%s" %box)
         data.append(histo_pdfCEN.Clone())
@@ -149,7 +149,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, write = Tru
 
             box = boxes[ibox]
             # create a copy of the histogram
-            wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), 100, mRmin, mRmax, 100, rsqMin, rsqMax)
+            wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), nbin, mRmin, mRmax, nbin, rsqMin, rsqMax)
             for ix in range(1,101):
                 for iy in range(1,101):
                     # uncorrelated systematics: lepton efficiency data/MC 1%
@@ -209,7 +209,7 @@ def printEfficiencies(tree, outputFile, config, flavour):
     cross_section = cross_sections[flavour]
     
     for box in boxMap:
-        ds = convertTree2Dataset(tree, outputFile, 'Dummy', config, box, 0, -1, -1, write = False)
+        ds = convertTree2Dataset(tree, 100, outputFile, 'Dummy', config, box, 0, -1, -1, write = False)
         row = ds[0].get(0)
         W = ds.mean(row['W'])
         n_i = (cross_section*lumi)/W
@@ -238,6 +238,8 @@ if __name__ == '__main__':
                   help="Specify only one box")
     parser.add_option('-t','--toys',dest="toys",type="int",default=1000,
                   help="Number of toys")
+    parser.add_option('-n','--nbin',dest="nbin",type="int",default=100,
+                      help="Number of bins in R2 and mR")
     
     (options,args) = parser.parse_args()
     
@@ -253,7 +255,7 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
 
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
-            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,options.toys)
+            convertTree2Dataset(input.Get('EVENTS'), options.nbin, decorator, cfg,options.min,options.max,options.toys)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
