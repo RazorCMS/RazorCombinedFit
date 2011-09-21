@@ -35,12 +35,6 @@ def calcCLsExp(lzValues_sb,lzValues_b,Box):
 
 def getQdist(m0, m12, BoxName,directory,tanB):
 
-    if BoxName=='Had':
-        MR='400.0'
-        R='0.4'
-    else:
-        MR='300.0'
-        R='0.3'
 
     lzValues_b = []
     lzValues_sb = []
@@ -48,7 +42,7 @@ def getQdist(m0, m12, BoxName,directory,tanB):
     critValueData = -99999999
     FirstFile = True
     
-    spbFileList = glob.glob("%s/LimitBkgSigToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_*.root" %(directory, MR, R, tanB,m0, m12))
+    spbFileList = glob.glob("%s/LimitBkgSigToys_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_*.root" %(directory, tanB,m0, m12))
  
     for spbFile in spbFileList:
         # check if file is at least 40K and contains 4 keys in the box subdirectory
@@ -74,7 +68,7 @@ def getQdist(m0, m12, BoxName,directory,tanB):
             lzValues_sb.append(tSpB.Lz)
         input.Close()
 
-    bFileList =  glob.glob("%s/LimitBkgToys_MR%s_R%s_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_*.root" %(directory, MR, R, tanB,m0, m12))
+    bFileList =  glob.glob("%s/LimitBkgToys_mSUGRA_tanB%i_PDF_M0-%s_M12-%s_*.root" %(directory, tanB,m0, m12))
 
     for bFile in bFileList:
         # check if file is at least 40K and contains 4 keys in the box subdirectory
