@@ -238,9 +238,9 @@ if __name__ == '__main__':
                   help="Specify only one box")
     parser.add_option('-t','--toys',dest="toys",type="int",default=1000,
                   help="Number of toys")
-    parser.add_option('-nx','--nbinx',dest="nbinx",type="int",default=100,
+    parser.add_option('-x','--nbinx',dest="nbinx",type="int",default=100,
                       help="Number of bins in mR")
-    parser.add_option('-ny','--nbiny',dest="nbiny",type="int",default=100,
+    parser.add_option('-y','--nbiny',dest="nbiny",type="int",default=100,
                       help="Number of bins in R^2")
     
     (options,args) = parser.parse_args()
