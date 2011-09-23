@@ -234,8 +234,6 @@ if __name__ == '__main__':
                   help="The minimum run number")
     parser.add_option('-d','--dir',dest="outdir",default="./",type="string",
                   help="Output directory to store datasets")
-    parser.add_option('-x','--box',dest="box",default=None,type="string",
-                  help="Specify only one box")
     parser.add_option('-t','--toys',dest="toys",type="int",default=1000,
                   help="Number of toys")
     parser.add_option('-x','--nbinx',dest="nbinx",type="int",default=100,
