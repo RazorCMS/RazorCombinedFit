@@ -60,44 +60,11 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
         Rsq =  workspace.var("Rsq")
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_%s" %box, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+        tree.Project("wHisto_%s" %box, "RSQ:MR", '(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
         data.append(histo.Clone())
         wHisto.append(histo.Clone())
-
-        # JES correctiobns UP
-        histo_JESup = rt.TH2D("wHisto_JESup_%s" %box,"wHisto_JESup_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_JESup_%s" %box, "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
-        data.append(histo_JESup.Clone())
-        wHisto_JESup.append(histo_JESup.Clone())
-
-        # JES correctiobns DOWN
-        histo_JESdown = rt.TH2D("wHisto_JESdown_%s" %box,"wHisto_JESdown_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_JESdown_%s" %box,  "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*W*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
-        data.append(histo_JESdown.Clone())
-        wHisto_JESdown.append(histo_JESdown.Clone())
-
-        # xsec UP
-        histo_xsecup = rt.TH2D("wHisto_xsecup_%s" %box,"wHisto_xsecup_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_xsecup_%s" %box, "RSQ:MR",  'LEP_W*W_UP*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
-        data.append(histo_xsecup.Clone())
-        wHisto_xsecup.append(histo_xsecup.Clone())
-        
-        # xsec correctiobns DOWN
-        histo_xsecdown = rt.TH2D("wHisto_xsecdown_%s" %box,"wHisto_xsecdown_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_xsecdown_%s" %box, "RSQ:MR",  'LEP_W*W_DOWN*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
-        data.append(histo_xsecdown.Clone())
-        wHisto_xsecdown.append(histo_xsecdown.Clone())
-        
-        # PDF central (new nominal) and error (for systematics)
-        histo_pdfCEN, histo_pdfSYS = makePDFPlot(tree, histo, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax, boxMap[box])
-        histo_pdfCEN.SetName("wHisto_pdfCEN_%s" %box)
-        histo_pdfSYS.SetName("wHisto_pdfSYS_%s" %box)
-        data.append(histo_pdfCEN.Clone())
-        data.append(histo_pdfSYS.Clone())
-        wHisto_pdfCEN.append(histo_pdfCEN.Clone())
-        wHisto_pdfSYS.append(histo_pdfSYS.Clone())
 
         #write objects for this box
         if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
@@ -166,24 +133,9 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
                         if box == "MuMu" or box == "MuEle" or box == "Mu": newvalue = newvalue*muTriggerFactor
                         if box == "EleEle" or box == "Ele": newvalue = newvalue*eleTriggerFactor
                         if box != "Had": newvalue = newvalue*lepFactor
-                        # add xsec systematics
-                        #if xsecFactor > 0: newvalue = newvalue* + xsecFactor*(wHisto_xsecup[ibox].GetBinContent(ix,iy)-nominal)
-                        #else: newvalue = newvalue*math.pow( + xsecFactor*(wHisto_xsecdown[ibox].GetBinContent(ix,iy)-nominal))
-                        mXsec, sXsec = getMeanSigma(nominal, wHisto_xsecup[ibox].GetBinContent(ix,iy), wHisto_xsecdown[ibox].GetBinContent(ix,iy))
-                        if mXsec > 0: newvalue = newvalue*mXsec/nominal*math.pow(1.+sXsec/mXsec, xsecFactor)
-                        # add jes systematics
-                        #if jesFactor > 0: newvalue = newvalue + jesFactor*(wHisto_JESup[ibox].GetBinContent(ix,iy)-nominal)
-                        #else: newvalue = newvalue + jesFactor*(wHisto_JESdown[ibox].GetBinContent(ix,iy)-nominal)               
-                        mJES, sJES = getMeanSigma(nominal, wHisto_JESup[ibox].GetBinContent(ix,iy), wHisto_JESdown[ibox].GetBinContent(ix,iy))
-                        if mJES > 0: newvalue = newvalue*mJES/nominal*math.pow(1.+sJES/mJES, jesFactor)
-                        # apply the systematic correction to the pdf value
-                        # the pdf code return the efficiency in each bin, with an error
-                        # that includes the systematic effect. We use this to get a
-                        # new value for the content of the bin
-                        mPDF = wHisto_pdfCEN[ibox].GetBinContent(ix,iy)
-                        sPDF = wHisto_pdfSYS[ibox].GetBinContent(ix,iy)
-                        if 1+mPDF > 0.: newvalue = newvalue*(1+mPDF)*math.pow(1+sPDF/(1+mPDF),gRnd.Gaus(0.,1.))
-                        #newvalue = newvalue *(1+ gRnd.Gaus(wHisto_pdfCEN[ibox].GetBinContent(ix,iy), wHisto_pdfSYS[ibox].GetBinContent(ix,iy)))
+                        # add xsec systematics: NA
+                        # add jes systematics: NA
+                        # apply the systematic correction to the pdf value: NA
                         # fill histogram
                         wHisto_i.SetBinContent(ix,iy,max(0.,newvalue))
                     else:
@@ -199,7 +151,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             del mRmax
             del MR
             del Rsq
-
+   
     return []
 
 def printEfficiencies(tree, outputFile, config, flavour):
