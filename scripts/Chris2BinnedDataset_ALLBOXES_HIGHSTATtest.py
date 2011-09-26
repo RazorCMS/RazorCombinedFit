@@ -60,7 +60,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
         Rsq =  workspace.var("Rsq")
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_%s" %box, "RSQ:MR", '(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+        tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
         data.append(histo.Clone())
@@ -120,9 +120,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             for ix in range(1,nbinx+1):
                 for iy in range(1,nbiny+1):
                     # uncorrelated systematics: lepton efficiency data/MC 1%
-                    lepFactor = math.pow(1.01,gRnd.Gaus(0., 1.))
-                    # uncorrelated systematics: JES corrections ADDITIVE (scaled bin by bin)
-                    jesFactor  = gRnd.Gaus(0., 1.)
+                    lepFactor = math.pow(1.01,gRnd.Gaus(0., 1.))                   
                     # compute the total
                     # starting value
                     nominal = wHisto[ibox].GetBinContent(ix,iy)
