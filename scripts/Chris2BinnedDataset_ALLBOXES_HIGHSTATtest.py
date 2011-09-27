@@ -25,7 +25,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
         mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToys, write = True):
+def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToys, scale, write = True):
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
@@ -85,6 +85,13 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
     clock = now.GetTime()
     seed = today+clock+pid+137
     gRnd = rt.TRandom3(seed)
+
+    # rescale the statistics
+    if scale != 1.:
+        for ix in range(1,nbinx+1):
+            for iy in range(1,nbiny+1):
+                for ibox in range(0,len(boxes)):
+                    wHisto[ibox].SetBinContent(ix,iy,gRnd.Poisson(wHisto[ibox].GetBinContent(ix,iy)*scale))
 
     for i in xrange(nToys):
         # correlated systematics: LUMI 4.5% MULTIPLICATIVE sumInQuadrature  sumInQuadrature RvsMR trigger 2% = 4.9%
@@ -190,6 +197,8 @@ if __name__ == '__main__':
                       help="Number of bins in mR")
     parser.add_option('-y','--nbiny',dest="nbiny",type="int",default=100,
                       help="Number of bins in R^2")
+    parser.add_option('-s','--scale',dest="scale",type="float",default=1.,
+                      help="Statistics scale factor")
     
     (options,args) = parser.parse_args()
     
@@ -205,7 +214,7 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
 
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
-            convertTree2Dataset(input.Get('EVENTS'), options.nbinx, options.nbiny, decorator, cfg,options.min,options.max,options.toys)
+            convertTree2Dataset(input.Get('EVENTS'), options.nbinx, options.nbiny, decorator, cfg,options.min,options.max,options.toys,options.scale)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
