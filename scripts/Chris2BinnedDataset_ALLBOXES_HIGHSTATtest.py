@@ -87,11 +87,11 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
     gRnd = rt.TRandom3(seed)
 
     # rescale the statistics
-    if scale != 1.:
+    if scale != 1. and scale != 0.:
         for ix in range(1,nbinx+1):
             for iy in range(1,nbiny+1):
                 for ibox in range(0,len(boxes)):
-                    wHisto[ibox].SetBinContent(ix,iy,gRnd.Poisson(wHisto[ibox].GetBinContent(ix,iy)*scale))
+                    wHisto[ibox].SetBinContent(ix,iy,gRnd.Poisson(wHisto[ibox].GetBinContent(ix,iy)*scale)/scale)
 
     for i in xrange(nToys):
         # correlated systematics: LUMI 4.5% MULTIPLICATIVE sumInQuadrature  sumInQuadrature RvsMR trigger 2% = 4.9%
