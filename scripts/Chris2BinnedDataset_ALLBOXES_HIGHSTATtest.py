@@ -60,7 +60,10 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
         Rsq =  workspace.var("Rsq")
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+        if scale <0:
+            tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+        else:
+            tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && COUNT < %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box], scale))
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
         data.append(histo.Clone())
@@ -87,11 +90,11 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
     gRnd = rt.TRandom3(seed)
 
     # rescale the statistics
-    if scale != 1. and scale != 0.:
-        for ix in range(1,nbinx+1):
-            for iy in range(1,nbiny+1):
-                for ibox in range(0,len(boxes)):
-                    wHisto[ibox].SetBinContent(ix,iy,gRnd.Poisson(wHisto[ibox].GetBinContent(ix,iy)*scale)/scale)
+    #if scale != 1. and scale != 0.:
+    #    for ix in range(1,nbinx+1):
+    #        for iy in range(1,nbiny+1):
+    #            for ibox in range(0,len(boxes)):
+    #                wHisto[ibox].SetBinContent(ix,iy,gRnd.Poisson(wHisto[ibox].GetBinContent(ix,iy)*scale)/scale)
 
     for i in xrange(nToys):
         # correlated systematics: LUMI 4.5% MULTIPLICATIVE sumInQuadrature  sumInQuadrature RvsMR trigger 2% = 4.9%
@@ -197,7 +200,7 @@ if __name__ == '__main__':
                       help="Number of bins in mR")
     parser.add_option('-y','--nbiny',dest="nbiny",type="int",default=100,
                       help="Number of bins in R^2")
-    parser.add_option('-s','--scale',dest="scale",type="float",default=1.,
+    parser.add_option('-s','--scale',dest="scale",type="int",default=-99,
                       help="Statistics scale factor")
     
     (options,args) = parser.parse_args()
