@@ -63,6 +63,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && COUNT < %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box], numEvents))
+        histo.Scale(1/scale)
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
         data.append(histo.Clone())
