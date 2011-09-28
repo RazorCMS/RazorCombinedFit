@@ -38,6 +38,8 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
     wHisto_pdfCEN = []
     wHisto_pdfSYS = []
 
+    numEvents = tree.GetEntries()*scale
+
     #this is the nominal histogram
     for box in boxes:               
         data = [] 
@@ -60,10 +62,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
         Rsq =  workspace.var("Rsq")
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-        if scale <0:
-            tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
-        else:
-            tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && COUNT < %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box], scale))
+        tree.Project("wHisto_%s" %box, "RSQ:MR", 'W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && COUNT < %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box], numEvents))
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
         data.append(histo.Clone())
@@ -200,7 +199,7 @@ if __name__ == '__main__':
                       help="Number of bins in mR")
     parser.add_option('-y','--nbiny',dest="nbiny",type="int",default=100,
                       help="Number of bins in R^2")
-    parser.add_option('-s','--scale',dest="scale",type="int",default=-99,
+    parser.add_option('-s','--scale',dest="scale",type="float",default=1.,
                       help="Statistics scale factor")
     
     (options,args) = parser.parse_args()
