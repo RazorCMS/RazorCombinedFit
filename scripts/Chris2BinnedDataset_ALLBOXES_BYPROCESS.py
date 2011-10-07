@@ -29,15 +29,29 @@ def isInFitRegion(x, y, box):
     return isFitReg
 
     
-def cutFitRegion(histo, box):
+def cutFitRegion(histo, box, config):
+
+
+    # define the loosest bin ranges
+    workspace = rt.RooWorkspace(box)
+    variables = config.getVariablesRange(box,"variables",workspace)
+    args = workspace.allVars()
+    
+    #we cut away events outside our MR window
+    minX = args['MR'].getMin()
+    maxX = args['MR'].getMax()
+
+    #we cut away events outside our Rsq window
+    minY = args['Rsq'].getMin()
+    maxY = args['Rsq'].getMax()
+
+    # cleanup
+    del workspace
+    del variables
+    del args
 
     nameHisto = histo.GetName()
     histo.SetName(nameHisto+"TMP")
-    minX = histo.GetXaxis().GetXmin()
-    maxX = histo.GetXaxis().GetXmax()
-
-    minY = histo.GetYaxis().GetXmin()
-    maxY = histo.GetYaxis().GetXmax()
 
     newhisto = rt.TH2D(nameHisto, nameHisto, 100, minX, maxX, 100, minY, maxY)
     for ix in range(1,101):
@@ -47,7 +61,7 @@ def cutFitRegion(histo, box):
             if isInFitRegion(x,y,box): newhisto.SetBinContent(ix,iy,0.)
             else: newhisto.SetBinContent(ix,iy, histo.GetBinContent(ix,iy))
 
-    if newhisto.Integral != 0.: newhisto.Scale(histo.Integral()/newhisto.Integral())
+    if newhisto.Integral() != 0.: newhisto.Scale(histo.Integral()/newhisto.Integral())
     return newhisto
 
 def getMeanSigma(n0, nP, nM):
@@ -85,76 +99,67 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
 
     yieldByProcess = []
 
+    # define the loosest bin ranges
+    workspace = rt.RooWorkspace("MuMu")
+    variables = config.getVariablesRange("MuMu","variables",workspace)
+    args = workspace.allVars()
+                    
+    #we cut away events outside our MR window
+    mRmin = args['MR'].getMin()
+    mRmax = args['MR'].getMax()
+    
+    #we cut away events outside our Rsq window
+    rsqMin = args['Rsq'].getMin()
+    rsqMax = args['Rsq'].getMax()
+    rMin = rt.TMath.Sqrt(rsqMin)
+    rMax = rt.TMath.Sqrt(rsqMax)
+
+
     # get weight
     for box in boxes:
         yieldByProcessThisBox = []        
         for i in range(0,10): 
-            histo = rt.TH2D("wHisto_PROC%i" %i,"wHisto_PROC%i" %i, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
-            tree.Project("wHisto_TMP" %i, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box]))
+            histo = rt.TH2D("wHisto_TMP","wHisto_TMP", nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
+            tree.Project("wHisto_TMP", "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box]))
             yieldByProcessThisBox.append(histo.Integral())
+            del histo
         yieldByProcess.append([box,yieldByProcessThisBox])
 
     # plots by process TO CHECK
     for i in range(0,10): 
-        workspace = rt.RooWorkspace(box)
-        variables = config.getVariablesRange(box,"variables",workspace)
-        args = workspace.allVars()
         
-        #we cut away events outside our MR window
-        mRmin = args['MR'].getMin()
-        mRmax = args['MR'].getMax()
-        
-        #we cut away events outside our Rsq window
-        rsqMin = args['Rsq'].getMin()
-        rsqMax = args['Rsq'].getMax()
-        rMin = rt.TMath.Sqrt(rsqMin)
-        rMax = rt.TMath.Sqrt(rsqMax)
-        
-        # set the same binning for the RooRealVars
-        MR =  workspace.var("MR")
-        Rsq =  workspace.var("Rsq")
-
         # nominal
         histo = rt.TH2D("wHisto_PROC%i" %i,"wHisto_PROC%i" %i, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_PROC%i" %i, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i))
-        plotByProcess.append(histo.Clone()
+        plotByProcess.append(histo.Clone())
 
         # JES UP
         histo = rt.TH2D("wHisto_JESup_PROC%i" %i,"wHisto_JESup_PROC%i" %i, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_JESup_PROC%i" %i, "RSQ_JES_UP:MR_JES_UP", 'LEP_W*W*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (PROC == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i))
-        plotByProcessJESUP.append(histo.Clone()
+        plotByProcessJESUP.append(histo.Clone())
 
         # JES DOWN
         histo = rt.TH2D("wHisto_JESdown_PROC%i" %i,"wHisto_JESdown_PROC%i" %i, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_JESdown_PROC%i" %i, "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*W*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (PROC == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i))
-        plotByProcessJESDOWN.append(histo.Clone()
+        plotByProcessJESDOWN.append(histo.Clone())
 
         # XSEC UP
         histo = rt.TH2D("wHisto_xsecup_PROC%i" %i,"wHisto_xsecup_PROC%i" %i, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_xsecup_PROC%i" %i,  "RSQ:MR",  'LEP_W*W_UP*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i))
-        plotByProcessXSECUP.append(histo.Clone()
+        plotByProcessXSECUP.append(histo.Clone())
 
         # XSEC DOWN
         histo = rt.TH2D("wHisto_xsecdown_PROC%i" %i,"wHisto_xsecdown_PROC%i" %i, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*W_DOWN*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i))
-        plotByProcessXSECDOWN.append(histo.Clone()
+        plotByProcessXSECDOWN.append(histo.Clone())
 
         # PDF CEN and SIGMA
         histo_pdfCEN, histo_pdfSYS = makePDFPlotCOND(tree, histo, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax, "PROC == %i" %i)
         histo_pdfCEN.SetName("wHisto_pdfCEN_PROC%i" %i)
         histo_pdfSYS.SetName("wHisto_pdfSYS_PROC%i" %i)
-        plotByProcessPDFCEN.append(histo_pdfCEN.Clone()
-        plotByProcessPDFSYS.append(histo_pdfSYS.Clone()
+        plotByProcessPDFCEN.append(histo_pdfCEN.Clone())
+        plotByProcessPDFSYS.append(histo_pdfSYS.Clone())
 
-        # cleanup
-        del workspace
-        del variables
-        del args
-        del mRmin
-        del mRmax
-        del MR
-        del Rsq
-        
     #this is the nominal histogram
     for box in boxes:               
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
@@ -162,14 +167,9 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if yieldByProcessThisBox[0] != box: continue
             for iProc in range(0,len(yieldByProcessThisBox[1])):
                 thishisto = plotByProcess[iProc]
-                thisYield = yieldByProcessThisBox[iProc]
+                thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo.Add(thishisto,thisYield/thishisto.Integral())
         wHisto.append(histo.Clone())
-        # check the fit-region edge
-        histo = cutFitRegion(histo,box)
-        data.append(histo.Clone())
-        rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
-        data.append(rooDataHist)
 
         # JES correctiobns UP
         histo_JESup = rt.TH2D("wHisto_JESup_%s" %box,"wHisto_JESup_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
@@ -177,9 +177,8 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if yieldByProcessThisBox[0] != box: continue
             for iProc in range(0,len(yieldByProcessThisBox[1])):
                 thishisto = plotByProcessJESUP[iProc]
-                thisYield = yieldByProcessThisBox[iProc]
+                thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo_JESup.Add(thishisto,thisYield/thishisto.Integral())
-        data.append(histo_JESup.Clone())
         wHisto_JESup.append(histo_JESup.Clone())
 
         # JES correctiobns DOWN
@@ -188,9 +187,8 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if yieldByProcessThisBox[0] != box: continue
             for iProc in range(0,len(yieldByProcessThisBox[1])):
                 thishisto = plotByProcessJESDOWN[iProc]
-                thisYield = yieldByProcessThisBox[iProc]
+                thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo_JESdown.Add(thishisto,thisYield/thishisto.Integral())
-        data.append(histo_JESdown.Clone())
         wHisto_JESdown.append(histo_JESdown.Clone())
 
         # xsec UP
@@ -199,9 +197,8 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if yieldByProcessThisBox[0] != box: continue
             for iProc in range(0,len(yieldByProcessThisBox[1])):
                 thishisto = plotByProcessXSECUP[iProc]
-                thisYield = yieldByProcessThisBox[iProc]
+                thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo_xsecup.Add(thishisto,thisYield/thishisto.Integral())                
-        data.append(histo_xsecup.Clone())
         wHisto_xsecup.append(histo_xsecup.Clone())
         
         # xsec correctiobns DOWN
@@ -210,9 +207,8 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if yieldByProcessThisBox[0] != box: continue
             for iProc in range(0,len(yieldByProcessThisBox[1])):
                 thishisto = plotByProcessXSECDOWN[iProc]
-                thisYield = yieldByProcessThisBox[iProc]
+                thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo_xsecdown.Add(thishisto,thisYield/thishisto.Integral())   
-        data.append(histo_xsecdown.Clone())
         wHisto_xsecdown.append(histo_xsecdown.Clone())
         
         # PDF central (new nominal) and error (for systematics)
@@ -221,7 +217,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if yieldByProcessThisBox[0] != box: continue
             for iProc in range(0,len(yieldByProcessThisBox[1])):
                 thishisto = plotByProcessPDFCEN[iProc]
-                thisYield = yieldByProcessThisBox[iProc]
+                thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo_pdfCEN.Add(thishisto,thisYield/thishisto.Integral()) 
         # to compute the error, we need some gymnastic
         histo_pdfSYS = rt.TH2D("wHisto_pdfSYS_%s" %box,"wHisto_pdfSYS_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
@@ -229,26 +225,18 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             for iy in range(1,nbiny+1):
                 error = 0.
                 for iProc in range(0,len(yieldByProcessThisBox[1])):
-                    thisYield = yieldByProcessThisBox[iProc]
+                    thisYield = yieldByProcessThisBox[1][iProc]
                     thishisto = plotByProcessPDFCEN[iProc]                                    
                     if thishisto.Integral() != 0. : error = error + pow(plotByProcessPDFSYS[iProc].GetBinContent(ix,iy)*thisYield/thishisto.Integral(),2.)
-                histo_pdfSYS.SetBinContent(ix,iy,sqrt(error))
-        data.append(histo_pdfCEN.Clone())
-        data.append(histo_pdfSYS.Clone())
+                histo_pdfSYS.SetBinContent(ix,iy,math.sqrt(error))
         wHisto_pdfCEN.append(histo_pdfCEN.Clone())
         wHisto_pdfSYS.append(histo_pdfSYS.Clone())
 
-        #write objects for this box
-        if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
-        # cleanup
-        del data
-        del workspace
-        del variables
-        del args
-        del mRmin
-        del mRmax
-        del MR
-        del Rsq
+    del workspace
+    del variables
+    del args
+    del mRmin
+    del mRmax
 
     # random number generator
     pid = os.getpid()
@@ -288,15 +276,13 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
 
             box = boxes[ibox]
 
-            if box == "Had":
-                nbinx = 50
-                nbiny = 10
-            elif box == "Mu" or box == "Ele":
-                nbinx = 25
-                nbiny = 10
-            else:
-                nbinx = 25
-                nbiny = 5
+            #write the nominal only once
+            if i == 0: 
+                histo = cutFitRegion(wHisto[ibox],box,config)
+                data = [histo.Clone()]
+                rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
+                data.append(rooDataHist)
+                if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
 
             # create a copy of the histogram
             wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
@@ -339,7 +325,8 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
                     else:
                         wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
             # check the fit-region edge
-            wHisto_i = cutFitRegion(wHisto_i,box)
+            wHisto_i = cutFitRegion(wHisto_i,box,config)
+
             data = [wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)]            
             if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
             del wHisto_i
