@@ -13,6 +13,57 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
+def isInFitRegion(x, y, box):
+    isFitReg = True
+    if x>800 : isFitReg = False
+    if x>650 and y>0.2: isFitReg = False
+    if x>450 and y>0.3: isFitReg = False
+
+    if box == "Mu" or box == "Ele":
+        if x>400 and y>0.45: isFitReg = False
+
+    if box == "MuMu" or box == "MuEle" or box == "EleEle":
+        if x>650 and y>0.45: isFitReg = False
+        if x>450 and y>0.2: isFitReg = False
+        if x>350 and y>0.3: isFitReg = False
+    return isFitReg
+
+    
+def cutFitRegion(histo, box, config):
+
+
+    # define the loosest bin ranges
+    workspace = rt.RooWorkspace(box)
+    variables = config.getVariablesRange(box,"variables",workspace)
+    args = workspace.allVars()
+    
+    #we cut away events outside our MR window
+    minX = args['MR'].getMin()
+    maxX = args['MR'].getMax()
+
+    #we cut away events outside our Rsq window
+    minY = args['Rsq'].getMin()
+    maxY = args['Rsq'].getMax()
+
+    # cleanup
+    del workspace
+    del variables
+    del args
+
+    nameHisto = histo.GetName()
+    histo.SetName(nameHisto+"TMP")
+
+    newhisto = rt.TH2D(nameHisto, nameHisto, 100, minX, maxX, 100, minY, maxY)
+    for ix in range(1,101):
+        x = minX+ (maxX-minX)*(ix-0.5)/100.
+        for iy in range(1,101):
+            y = minY+ (maxY-minY)*(iy-0.5)/100.
+            if isInFitRegion(x,y,box): newhisto.SetBinContent(ix,iy,0.)
+            else: newhisto.SetBinContent(ix,iy, histo.GetBinContent(ix,iy))
+
+    if newhisto.Integral() != 0.: newhisto.Scale(histo.Integral()/newhisto.Integral())
+    return newhisto
+
 def getMeanSigma(n0, nP, nM):
     maxVal = max(n0, nP, nM)
     minVal = min(n0, nP, nM)
@@ -71,10 +122,11 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_%s" %box, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
+        wHisto.append(histo.Clone())
+        histo = cutFitRegion(histo,box,config)
         rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
         data.append(rooDataHist)
         data.append(histo.Clone())
-        wHisto.append(histo.Clone())
 
         # JES correctiobns UP
         histo_JESup = rt.TH2D("wHisto_JESup_%s" %box,"wHisto_JESup_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
@@ -209,6 +261,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
                         wHisto_i.SetBinContent(ix,iy,max(0.,newvalue))
                     else:
                         wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
+            wHisto_i = cutFitRegion(wHisto_i,box,config)            
             data = [wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)]            
             if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
             del wHisto_i
