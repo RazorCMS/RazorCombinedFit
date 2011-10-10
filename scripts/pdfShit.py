@@ -199,4 +199,4 @@ def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     return GetCenAndErr(hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM)
 
 def makePDFPlot(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
-    makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, "BOX_NUM == %i" %box)
+    return makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, "BOX_NUM == %i" %box)
