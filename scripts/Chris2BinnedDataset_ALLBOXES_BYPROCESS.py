@@ -59,7 +59,7 @@ def cutFitRegion(histo, box, config):
         for iy in range(1,101):
             y = minY+ (maxY-minY)*(iy-0.5)/100.
             if isInFitRegion(x,y,box): newhisto.SetBinContent(ix,iy,0.)
-            else: newhisto.SetBinContent(ix,iy, histo.GetBinContent(ix,iy))
+            else: newhisto.SetBinContent(ix,iy, histo.GetBinContent(histo.FindBin(x,y)))
 
     if newhisto.Integral() != 0.: newhisto.Scale(histo.Integral()/newhisto.Integral())
     return newhisto
