@@ -211,15 +211,15 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
 
             box = boxes[ibox]
 
-            if box == "Had":
-                nbinx = 50
-                nbiny = 10
-            elif box == "Mu" or box == "Ele":
-                nbinx = 25
-                nbiny = 10
-            else:
-                nbinx = 25
-                nbiny = 5
+            #if box == "Had":
+            #    nbinx = 50
+            #    nbiny = 10
+            #elif box == "Mu" or box == "Ele":
+            #    nbinx = 25
+            #    nbiny = 10
+            #else:
+            #    nbinx = 25
+            #    nbiny = 5
 
             # create a copy of the histogram
             wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
