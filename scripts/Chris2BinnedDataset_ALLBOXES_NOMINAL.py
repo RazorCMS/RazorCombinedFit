@@ -113,12 +113,6 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
         if box == "Had":
             nbinx = 50
             nbiny = 10
-        elif box == "Mu" or box == "Ele":
-            nbinx = 25
-            nbiny = 10
-        else:
-            nbinx = 25
-            nbiny = 5
  
         histo = rt.TH2D("wHisto_%s" %box,"wHisto_%s" %box, nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
         tree.Project("wHisto_%s" %box, "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]))
@@ -214,12 +208,6 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
             if box == "Had":
                 nbinx = 50
                 nbiny = 10
-            elif box == "Mu" or box == "Ele":
-                nbinx = 25
-                nbiny = 10
-            else:
-                nbinx = 25
-                nbiny = 5
 
             # create a copy of the histogram
             wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
