@@ -313,6 +313,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
             #bkgGenNum = boxes[box].workspace.function("Ntot_TTj").getVal()+boxes[box].workspace.function("Ntot_Wln").getVal()+boxes[box].workspace.function("Ntot_Zll").getVal()+boxes[box].workspace.function("Ntot_Znn").getVal()
 
+            fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
 
@@ -326,18 +328,22 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
                     sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
-                    print "sigGenNum =  %f" % sigGenNum
+                    print "sigGenNum = %f" % sigGenNum
                     print "bkgGenNum = %f" % bkgGenNum
                     print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     sig_toy = sigGenPdf.generate(vars,PSigGenNum)
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum)
+                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
                     print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
+                    print "fitDataSet.numEntries() = %f" %fitDataSet.numEntries()
 
                     #sum the toys
                     tot_toy = bkg_toy.Clone()
                     tot_toy.append(sig_toy)
+                    tot_toy.append(fitDataSet)
+                    print "Total Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
                     sigData.Delete()
                     sigGenPdf.Delete()
@@ -346,7 +352,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
-                    tot_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum)
+                    tot_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    tot_toy.append(fitDataSet)
                     tot_toy.SetName("bkg")
 
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
