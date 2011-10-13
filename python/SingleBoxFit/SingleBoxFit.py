@@ -333,7 +333,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     sig_toy = sigGenPdf.generate(vars,PSigGenNum)
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
                     
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
                     print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
@@ -352,7 +352,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
-                    tot_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central,bkgGenNum).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    tot_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
                     tot_toy.append(fitDataSet)
                     tot_toy.SetName("bkg")
 

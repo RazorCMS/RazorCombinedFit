@@ -320,11 +320,45 @@ class Box(object):
         parsAtLimit = True
         while parsAtLimit :
             pars, parsAtLimit = self.smearParsWithCovariance(fr)
-            
+
         for name, value in pars.iteritems():
             print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
         print "GENERATE: "
+        Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
+        gdata = pdf.generate(vars,Pnumber,*options)
+        
+        #now set the parameters back
+        pars = {}
+        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
+            pars[p.GetName()] = p
+            print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
+        for name, value in pars.iteritems():
+            print "FIX PARAMETER: %s " %name
+            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+
+        gdata_cut = gdata.reduce(self.cut)
+        return gdata_cut
+    
+    def generateToyFRWithVarYield(self, genmodel, fr, *options):
+        """Generate a toy dataset from fit result"""
+        
+        pdf = self.workspace.pdf(genmodel)
+        vars = rt.RooArgSet(self.workspace.set('variables'))
+        print "expectedEvents = %f" % pdf.expectedEvents(vars)
+        if self.workspace.cat('Boxes'):
+            vars.add(self.workspace.cat('Boxes'))
+        parSet = self.workspace.allVars()
+        #set the parameter values
+        parsAtLimit = True
+        while parsAtLimit :
+            pars, parsAtLimit = self.smearParsWithCovariance(fr)
+
+        for name, value in pars.iteritems():
+            print "FIX PARAMETER: %s " %name
+            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+        print "GENERATE: "
+        number = pdf.expectedEvents(vars) 
         Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
         gdata = pdf.generate(vars,Pnumber,*options)
         
