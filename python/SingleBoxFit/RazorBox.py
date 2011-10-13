@@ -165,10 +165,15 @@ class RazorBox(Box.Box):
         self.workspace.var("rSig").setConstant(rt.kTRUE)
         self.workspace.factory("expr::Ntot_%s('%f*@0/1000.*@1', Lumi, rSig)" %(modelName,nSig))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
-        add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
-                           rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
+        #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
+        #                   rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
+        #                   )
+        theRealFitModel = "fitmodel"
+        add = rt.RooAddPdf('%s_%sCombined' % (theRealFitModel,modelName),'Signal+BG PDF',
+                           rt.RooArgList(self.workspace.pdf(theRealFitModel),extended)
                            )
         self.importToWS(add)
+        self.workspace.Print()
         self.signalmodel = add.GetName()
         return extended.GetName()
 

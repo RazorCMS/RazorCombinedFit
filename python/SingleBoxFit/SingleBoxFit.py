@@ -246,7 +246,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
-            H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
+            #H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
+            theRealFitModel = "fitmodel"
+            H0xNLL = box.getFitPDF(name=theRealFitModel).createNLL(ds)
             LH0x = H0xNLL.getVal()
             #L(H1|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
@@ -301,6 +303,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 Double_t var1;\
                 Double_t var2;\
                 Double_t var3;\
+                Double_t var4;\
+                Double_t var5;\
+                Double_t var6;\
                 };")
             from ROOT import MyStruct
 
@@ -308,6 +313,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
             myTree.Branch("LH0x", rt.AddressOf(s,'var2'),'var2/D')
             myTree.Branch("LH1x", rt.AddressOf(s,'var3'),'var3/D')
+            myTree.Branch("Ns", rt.AddressOf(s,'var4'),'var4/D')
+            myTree.Branch("Nb", rt.AddressOf(s,'var5'),'var5/D')
+            myTree.Branch("Nt", rt.AddressOf(s,'var6'),'var6/D')
            
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
@@ -333,18 +341,21 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     sig_toy = sigGenPdf.generate(vars,PSigGenNum)
-                    bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
                     
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
                     print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
                     print "fitDataSet.numEntries() = %f" %fitDataSet.numEntries()
 
                     #sum the toys
-                    tot_toy = bkg_toy.Clone()
+                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
                     tot_toy.append(sig_toy)
                     tot_toy.append(fitDataSet)
                     print "Total Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
+                    s.var4 = sig_toy.numEntries()
+                    s.var5 = bkg_toy.numEntries()
+                    s.var6 = tot_toy.numEntries() 
                     sigData.Delete()
                     sigGenPdf.Delete()
                     sig_toy.Delete()
@@ -352,8 +363,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
-                    tot_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central).reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
+                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
                     tot_toy.append(fitDataSet)
+                    s.var4 = 0
+                    s.var5 = bkg_toy.numEntries()
+                    s.var6 = tot_toy.numEntries()
+                    bkg_toy.Delete()
                     tot_toy.SetName("bkg")
 
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
