@@ -219,7 +219,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         lzV = rt.RooRealVar('Lz','Lz',0)
         lzD = rt.RooRealVar('LzData','LzData',0)
+        lzDH0 = rt.RooRealVar('LzDataH0','LzDataH0',0)
+        lzDH1 = rt.RooRealVar('LzDataH1','LzDataH1',0)
                 
+        lzDSR = rt.RooRealVar('LzData_SR','LzData_SR',0)
+        lzDH0SR = rt.RooRealVar('LzDataH0_SR','LzDataH0_SR',0)
+        lzDH1SR = rt.RooRealVar('LzDataH1_SR','LzDataH1_SR',0)
+
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
         
@@ -261,9 +267,39 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "L(H1|x = %s) = %f" %(ds.GetName(),LH1x)
             print "Lz = L(H0|x = %s) - L(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
             print "**************************************************"
+
             return Lz, LH0x,LH1x
 
-        #start by setting all box configs the same
+        def getLzSR(box, ds, fr, testForQuality = True):
+            reset(box, fr)
+            
+            #L(H0|x)
+            print "retrieving L(H0|x = %s)"%ds.GetName()
+            #H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
+            theRealFitModel = "fitmodel"
+            H0xNLL1 = box.getFitPDF(name=theRealFitModel).createNLL(ds, rt.RooFit.Range("sR1"),rt.RooFit.SumCoefRange("sR1"), rt.RooFit.Extended(rt.kTRUE))
+            H0xNLL2 = box.getFitPDF(name=theRealFitModel).createNLL(ds, rt.RooFit.Range("sR2"),rt.RooFit.SumCoefRange("sR2"), rt.RooFit.Extended(rt.kTRUE))
+            H0xNLL3 = box.getFitPDF(name=theRealFitModel).createNLL(ds, rt.RooFit.Range("sR3"),rt.RooFit.SumCoefRange("sR3"), rt.RooFit.Extended(rt.kTRUE))
+            H0xNLL4 = box.getFitPDF(name=theRealFitModel).createNLL(ds, rt.RooFit.Range("sR4"),rt.RooFit.SumCoefRange("sR4"), rt.RooFit.Extended(rt.kTRUE))
+            LH0x = H0xNLL1.getVal()+H0xNLL2.getVal()+H0xNLL3.getVal()+H0xNLL4.getVal()
+            #L(H1|x)
+            print "retrieving L(H1|x = %s)"%ds.GetName()
+            H1xNLL1 = box.getFitPDF(name=box.signalmodel).createNLL(ds, rt.RooFit.Range("sR1"),rt.RooFit.SumCoefRange("sR1"), rt.RooFit.Extended(rt.kTRUE))
+            H1xNLL2 = box.getFitPDF(name=box.signalmodel).createNLL(ds, rt.RooFit.Range("sR2"),rt.RooFit.SumCoefRange("sR2"), rt.RooFit.Extended(rt.kTRUE))
+            H1xNLL3 = box.getFitPDF(name=box.signalmodel).createNLL(ds, rt.RooFit.Range("sR3"),rt.RooFit.SumCoefRange("sR3"), rt.RooFit.Extended(rt.kTRUE))
+            H1xNLL4 = box.getFitPDF(name=box.signalmodel).createNLL(ds, rt.RooFit.Range("sR4"),rt.RooFit.SumCoefRange("sR4"), rt.RooFit.Extended(rt.kTRUE))
+            LH1x = H1xNLL1.getVal()+H1xNLL2.getVal()+H1xNLL3.getVal()+H1xNLL4.getVal()
+
+            Lz = LH0x-LH1x
+            print "**************************************************"
+            print "L_SR(H0|x = %s) = %f" %(ds.GetName(),LH0x)
+            print "L_SR(H1|x = %s) = %f" %(ds.GetName(),LH1x)
+            print "Lz = L_SR(H0|x = %s) - L_SR(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "**************************************************"
+
+            return Lz, LH0x,LH1x
+
+         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Starting limit setting for box %s' % box
                 
@@ -287,13 +323,21 @@ class SingleBoxAnalysis(Analysis.Analysis):
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
             print "get Lz for data"
-            lzData,LH0DataH0,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
+            lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
+            lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzValues = []
             LH1xValues = []
             LH0xValues = []
             
-            values = rt.RooDataSet('Lz_%s' % box, 'Lz_values', rt.RooArgSet(lzV,lzD,LH0DataH0,LH1Data))
             lzD.setVal(lzData)
+            lzDH0.setVal(LH0Data)
+            lzDH1.setVal(LH1Data)
+            lzDSR.setVal(lzDataSR)
+            lzDH0SR.setVal(LH0DataSR)
+            lzDH1SR.setVal(LH1DataSR)
+
+            values = rt.RooDataSet('Lz_%s' % box, 'Lz_values', rt.RooArgSet(lzV,lzD,lzDH0,lzDH1))
+            valuesSR = rt.RooDataSet('LzSR_%s' % box, 'LzSR_values', rt.RooArgSet(lzV,lzDSR,lzDH0SR,lzDH1SR))
 
             myTree = rt.TTree("myTree", "myTree")
     
@@ -306,6 +350,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 Double_t var4;\
                 Double_t var5;\
                 Double_t var6;\
+                Double_t var7;\
+                Double_t var8;\
+                Double_t var9;\
                 };")
             from ROOT import MyStruct
 
@@ -316,6 +363,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree.Branch("Ns", rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("Nb", rt.AddressOf(s,'var5'),'var5/D')
             myTree.Branch("Nt", rt.AddressOf(s,'var6'),'var6/D')
+            myTree.Branch("LzSR", rt.AddressOf(s,'var7'),'var7/D')
+            myTree.Branch("LH0xSR", rt.AddressOf(s,'var8'),'var8/D')
+            myTree.Branch("LH1xSR", rt.AddressOf(s,'var9'),'var9/D')
            
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
@@ -375,6 +425,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
                 Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
+                LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central)
                 if Lz is None:
                     print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
                     continue
@@ -382,10 +433,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 LH0xValues.append(LH0x)
                 LH1xValues.append(LH1x)
                 lzV.setVal(Lz)
-                values.add(rt.RooArgSet(lzV,lzD))
+                values.add(rt.RooArgSet(lzV,lzD,lzDH0,lzDH1))
+                valuesSR.add(rt.RooArgSet(lzV,lzDSR,lzDH0SR,lzDH1SR))
                 s.var1 = Lz
                 s.var2 = LH0x
                 s.var3 = LH1x
+                s.var7 = LzSR
+                s.var8 = LH0xSR
+                s.var9 = LH1xSR
                 myTree.Fill()
                 ### plotting:
                 #frame_MR_sig = boxes[box].workspace.var('MR').frame()
@@ -421,6 +476,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             self.store(hist_H1, dir=box)
             self.store(values, dir=box)
+            self.store(valuesSR, dir=box)
             self.store(myTree, dir=box)
 
 
