@@ -292,7 +292,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             LH1xValues = []
             LH0xValues = []
             
-            values = rt.RooDataSet('Lz_%s' % box, 'Lz_values', rt.RooArgSet(lzV,lzD))
+            values = rt.RooDataSet('Lz_%s' % box, 'Lz_values', rt.RooArgSet(lzV,lzD,LH0DataH0,LH1Data))
             lzD.setVal(lzData)
 
             myTree = rt.TTree("myTree", "myTree")
