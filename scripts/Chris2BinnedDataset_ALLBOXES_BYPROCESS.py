@@ -53,11 +53,19 @@ def cutFitRegion(histo, box, config):
     nameHisto = histo.GetName()
     histo.SetName(nameHisto+"TMP")
 
-    newhisto = rt.TH2D(nameHisto, nameHisto, 100, minX, maxX, 100, minY, maxY)
-    for ix in range(1,101):
-        x = minX+ (maxX-minX)*(ix-0.5)/100.
-        for iy in range(1,101):
-            y = minY+ (maxY-minY)*(iy-0.5)/100.
+    mynx = 128
+    myny = 164
+
+    if box == "Had":
+        mynx = 124
+        myny = 136
+        
+
+    newhisto = rt.TH2D(nameHisto, nameHisto, mynx, minX, maxX, myny, minY, maxY)
+    for ix in range(1,mynx+1):
+        x = minX+ (maxX-minX)*(ix-0.5)/mynx
+        for iy in range(1,myny+1):
+            y = minY+ (maxY-minY)*(iy-0.5)/myny
             if isInFitRegion(x,y,box): newhisto.SetBinContent(ix,iy,0.)
             else: newhisto.SetBinContent(ix,iy, histo.GetBinContent(histo.FindBin(x,y)))
 
