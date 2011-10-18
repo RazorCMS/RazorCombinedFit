@@ -217,19 +217,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
     def limit(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
         
-        lzV = rt.RooRealVar('Lz','Lz',0)
-        lzD = rt.RooRealVar('LzData','LzData',0)
-        lzDH0 = rt.RooRealVar('LzDataH0','LzDataH0',0)
-        lzDH1 = rt.RooRealVar('LzDataH1','LzDataH1',0)
-                
-        lzDSR = rt.RooRealVar('LzData_SR','LzData_SR',0)
-        lzDH0SR = rt.RooRealVar('LzDataH0_SR','LzDataH0_SR',0)
-        lzDH1SR = rt.RooRealVar('LzDataH1_SR','LzDataH1_SR',0)
-
-        lzDSRnoExt = rt.RooRealVar('LzData_SRnoExt','LzData_SRnoExt',0)
-        lzDH0SRnoExt = rt.RooRealVar('LzDataH0_SRnoExt','LzDataH0_SRnoExt',0)
-        lzDH1SRnoExt = rt.RooRealVar('LzDataH1_SRnoExt','LzDataH1_SRnoExt',0)
-
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
         
@@ -359,6 +346,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 Double_t var15;\
                 Double_t var16;\
                 Double_t var17;\
+                Double_t var18;\
+                Double_t var19;\
+                Double_t var20;\
+                Double_t var21;\
                 };")
             from ROOT import MyDataStruct
 
@@ -385,6 +376,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("NBsR3", rt.AddressOf(sDATA,'var16'), 'var16/D')
             myDataTree.Branch("NBsR4", rt.AddressOf(sDATA,'var17'), 'var17/D')
 
+            myDataTree.Branch("NOBSsR1", rt.AddressOf(sDATA,'var18'), 'var18/D')
+            myDataTree.Branch("NOBSsR2", rt.AddressOf(sDATA,'var19'), 'var19/D')
+            myDataTree.Branch("NOBSsR3", rt.AddressOf(sDATA,'var20'), 'var20/D')
+            myDataTree.Branch("NOBSsR4", rt.AddressOf(sDATA,'var21'), 'var21/D')
+                                     
             lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, Extend=True)
             lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, Extend=False)
@@ -425,6 +421,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             sDATA.var15 = NB*IntB2/(IntB)
             sDATA.var16 = NB*IntB3/(IntB)
             sDATA.var17 = NB*IntB4/(IntB)
+
+            sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1"]))
+            sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2"]))
+            sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3"]))
+            sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4"]))
 
             myDataTree.Fill()
 
@@ -542,9 +543,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 s.var5 = LH0xSR
                 s.var6 = LH1xSR
 
-                s.var7 = LzSR
-                s.var8 = LH0xSR
-                s.var9 = LH1xSR
+                s.var7 = LzSRnoExt
+                s.var8 = LH0xSRnoExt
+                s.var9 = LH1xSRnoExt
 
                 s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1"])).numEntries()
                 s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2"])).numEntries()
