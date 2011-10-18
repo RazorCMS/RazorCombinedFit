@@ -269,23 +269,46 @@ class SingleBoxAnalysis(Analysis.Analysis):
             LH0x = 0
 
             ds1 = ds.reduce(box.getVarRangeCutNamed(["sR1"]))
-            if ds1.numEntries() > 0: LH1x = LH1x + box.getFitPDF(name=box.signalmodel).createNLL(ds1, rt.RooFit.Range("sR1"),rt.RooFit.SumCoefRange("sR1"), rt.RooFit.Extended(Extend)).getVal()
-            if ds1.numEntries() > 0: LH0x = LH0x + box.getFitPDF(name=theRealFitModel).createNLL(ds1, rt.RooFit.Range("sR1"),rt.RooFit.SumCoefRange("sR1"), rt.RooFit.Extended(Extend)).getVal()
+            if ds1.numEntries() > 0:
+                likVal = box.getFitPDF(name=box.signalmodel).createNLL(ds1, rt.RooFit.Range("sR1"),rt.RooFit.SumCoefRange("sR1"), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H1) value in sR1 = %f" %likVal
+                LH1x = LH1x + likVal
+                likVal = box.getFitPDF(name=theRealFitModel).createNLL(ds1, rt.RooFit.Range("sR1"),rt.RooFit.SumCoefRange("sR1"), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H0) value in sR1 = %f" %likVal
+                LH0x = LH0x + likVal
             del ds1
 
-            ds2 = ds.reduce(box.getVarRangeCutNamed(["sR2"]))
-            if ds2.numEntries() > 0: LH1x = LH1x + box.getFitPDF(name=box.signalmodel).createNLL(ds2, rt.RooFit.Range("sR2"),rt.RooFit.SumCoefRange("sR2"), rt.RooFit.Extended(Extend)).getVal()
-            if ds2.numEntries() > 0: LH0x = LH0x + box.getFitPDF(name=theRealFitModel).createNLL(ds2, rt.RooFit.Range("sR2"),rt.RooFit.SumCoefRange("sR2"), rt.RooFit.Extended(Extend)).getVal()
+            rangeSR2 = "sR2"
+            if box.name == "MuMu": rangeSR2 = "sR2bis"
+
+            ds2 = ds.reduce(box.getVarRangeCutNamed([rangeSR2]))
+            if ds2.numEntries() > 0:
+                likVal =  box.getFitPDF(name=box.signalmodel).createNLL(ds2, rt.RooFit.Range(rangeSR2),rt.RooFit.SumCoefRange(rangeSR2), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H1) value in sR2 = %f" %likVal
+                LH1x = LH1x + likVal
+                likVal =  box.getFitPDF(name=theRealFitModel).createNLL(ds2, rt.RooFit.Range(rangeSR2),rt.RooFit.SumCoefRange(rangeSR2), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H0) value in sR2 = %f" %likVal
+                LH0x = LH0x + likVal
             del ds2
 
             ds3 = ds.reduce(box.getVarRangeCutNamed(["sR3"]))
-            if ds3.numEntries() > 0: LH1x = LH1x + box.getFitPDF(name=box.signalmodel).createNLL(ds3, rt.RooFit.Range("sR3"),rt.RooFit.SumCoefRange("sR3"), rt.RooFit.Extended(Extend)).getVal()
-            if ds3.numEntries() > 0: LH0x = LH0x + box.getFitPDF(name=theRealFitModel).createNLL(ds3, rt.RooFit.Range("sR3"),rt.RooFit.SumCoefRange("sR3"), rt.RooFit.Extended(Extend)).getVal()
+            if ds3.numEntries() > 0:
+                likVal = box.getFitPDF(name=box.signalmodel).createNLL(ds3, rt.RooFit.Range("sR3"),rt.RooFit.SumCoefRange("sR3"), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H1) value in sR3 = %f" %likVal
+                LH1x = LH1x + likVal
+                likVal = LH0x + box.getFitPDF(name=theRealFitModel).createNLL(ds3, rt.RooFit.Range("sR3"),rt.RooFit.SumCoefRange("sR3"), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H0) value in sR3 = %f" %likVal
+                LH0x = LH0x + likVal
             del ds3
 
             ds4 = ds.reduce(box.getVarRangeCutNamed(["sR4"]))
-            if ds4.numEntries() > 0: LH1x = LH1x + box.getFitPDF(name=box.signalmodel).createNLL(ds4, rt.RooFit.Range("sR4"),rt.RooFit.SumCoefRange("sR4"), rt.RooFit.Extended(Extend)).getVal()
-            if ds4.numEntries() > 0: LH0x = LH0x + box.getFitPDF(name=theRealFitModel).createNLL(ds4, rt.RooFit.Range("sR4"),rt.RooFit.SumCoefRange("sR4"), rt.RooFit.Extended(Extend)).getVal()
+            if ds4.numEntries() > 0:
+                likVal = box.getFitPDF(name=box.signalmodel).createNLL(ds4, rt.RooFit.Range("sR4"),rt.RooFit.SumCoefRange("sR4"), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H1) value in sR4 = %f" %likVal
+                LH1x = LH1x + likVal
+                likVal = box.getFitPDF(name=theRealFitModel).createNLL(ds4, rt.RooFit.Range("sR4"),rt.RooFit.SumCoefRange("sR4"), rt.RooFit.Extended(Extend)).getVal()
+                print "L(H0) value in sR4 = %f" %likVal
+                LH0x = LH0x + likVal
             del ds4
 
             Lz = LH0x-LH1x
@@ -380,6 +403,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("NOBSsR2", rt.AddressOf(sDATA,'var19'), 'var19/D')
             myDataTree.Branch("NOBSsR3", rt.AddressOf(sDATA,'var20'), 'var20/D')
             myDataTree.Branch("NOBSsR4", rt.AddressOf(sDATA,'var21'), 'var21/D')
+
+            boxes[box].workspace.var("MR").setRange("sR2bis", 450., 3500)
+            boxes[box].workspace.var("Rsq").setRange("sR2bis", 0.2, 0.298)
                                      
             lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, Extend=True)
@@ -422,10 +448,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             sDATA.var16 = NB*IntB3/(IntB)
             sDATA.var17 = NB*IntB4/(IntB)
 
-            sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1"]))
-            sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2"]))
-            sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3"]))
-            sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4"]))
+            sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1"])).numEntries()
+            sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2"])).numEntries()
+            sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3"])).numEntries()
+            sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4"])).numEntries()
 
             myDataTree.Fill()
 
