@@ -1,5 +1,6 @@
 import ROOT as rt
 import math
+from array import array
 
 # return histogram with max and min variations value
 def GetCenAndErr(h1, h2, h3, h4):
@@ -112,25 +113,33 @@ def GetErrEigenEff(w, w2, wALL, selectedEvents_, originalEvents_, CTEQ=False):
   
     return wminus,wplus
 
-def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
+def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
     
     # for PDFs
-    hCTEQ66_EIGENP = rt.TH2D("hCTEQ66_EIGENP",   "hCTEQ66_EIGENP", ibinx, minx, maxx, ibiny, miny, maxy)
-    hCTEQ66_EIGENM = rt.TH2D("hCTEQ66_EIGEN", "hCTEQ66_EIGEN", ibinx, minx, maxx, ibiny, miny, maxy)
+    hCTEQ66_EIGENP = rt.TH2D("hCTEQ66_EIGENP",   "hCTEQ66_EIGENP", ibinx, xarray, ibiny, yarray)
+    hCTEQ66_EIGENM = rt.TH2D("hCTEQ66_EIGEN", "hCTEQ66_EIGEN", ibinx, xarray, ibiny, yarray)
     
-    hMRST2006NNLO_EIGENP = rt.TH2D("hMRST2006NNLO_EIGENP",   "hMRST2006NNLO_EIGENP", ibinx, minx, maxx, ibiny, miny, maxy)
-    hMRST2006NNLO_EIGENM = rt.TH2D("hMRST2006NNLO_EIGEN", "hMRST2006NNLO_EIGEN", ibinx, minx, maxx, ibiny, miny, maxy)
+    hMRST2006NNLO_EIGENP = rt.TH2D("hMRST2006NNLO_EIGENP",   "hMRST2006NNLO_EIGENP", ibinx, xarray, ibiny, yarray)
+    hMRST2006NNLO_EIGENM = rt.TH2D("hMRST2006NNLO_EIGEN", "hMRST2006NNLO_EIGEN", ibinx, xarray, ibiny, yarray)
     
-    hMRST2007lomod_ABS = rt.TH2D("hMRST2007lomod_ABS",   "hMRST2007lomod_ABS", ibinx, minx, maxx, ibiny, miny, maxy)
+    hMRST2007lomod_ABS = rt.TH2D("hMRST2007lomod_ABS",   "hMRST2007lomod_ABS", ibinx, xarray, ibiny, yarray)
     
     hwCTEQ66 = []
     hwCTEQ66SQ = []
 
+    minx = xarray[0]
+    maxx = xarray[-1]
+
+    print maxx
+
+    miny = yarray[0]
+    maxy = yarray[-1]
+
     for i in range(0, 45):
         #make histogram for this weight
-        wCTEQ66 = rt.TH2D("wCTEQ66_%i" %i,"wCTEQ66_%i" %i, ibinx, minx, maxx, ibiny, miny, maxy)
+        wCTEQ66 = rt.TH2D("wCTEQ66_%i" %i,"wCTEQ66_%i" %i, ibinx, xarray, ibiny, yarray)
         tree.Project("wCTEQ66_%i" %i, "RSQ:MR", 'LEP_W*W*CTEQ66_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-        wCTEQ66SQ = rt.TH2D("wCTEQ66SQ_%i" %i,"wCTEQ66SQ_%i", ibinx, minx, maxx, ibiny, miny, maxy)
+        wCTEQ66SQ = rt.TH2D("wCTEQ66SQ_%i" %i,"wCTEQ66SQ_%i", ibinx, xarray, ibiny, yarray)
         tree.Project("wCTEQ66SQ_%i" %i, "RSQ:MR", 'LEP_W*W*pow(CTEQ66_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
         hwCTEQ66.append(wCTEQ66)
         hwCTEQ66SQ.append(wCTEQ66SQ)
@@ -139,9 +148,9 @@ def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     hwMRST2006NNLOSQ = []
     for i in range(0,31):
         #make histogram for this weight
-        wMRST2006NNLO = rt.TH2D("wMRST2006NNLO_%i" %i,"wMRST2006NNLO_%i" %i, ibinx, minx, maxx, ibiny, miny, maxy)
+        wMRST2006NNLO = rt.TH2D("wMRST2006NNLO_%i" %i,"wMRST2006NNLO_%i" %i, ibinx, xarray, ibiny, yarray)
         tree.Project("wMRST2006NNLO_%i" %i, "RSQ:MR", 'LEP_W*W*MRST2006NNLO_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-        wMRST2006NNLOSQ = rt.TH2D("wMRST2006NNLOSQ_%i" %i,"wMRST2006NNLOSQ_%i", ibinx, minx, maxx, ibiny, miny, maxy)
+        wMRST2006NNLOSQ = rt.TH2D("wMRST2006NNLOSQ_%i" %i,"wMRST2006NNLOSQ_%i", ibinx, xarray, ibiny, yarray)
         tree.Project("wMRST2006NNLOSQ_%i" %i,"RSQ:MR",'LEP_W*W*pow(MRST2006NNLO_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
         hwMRST2006NNLO.append(wMRST2006NNLO)
         hwMRST2006NNLOSQ.append(wMRST2006NNLOSQ)
@@ -151,9 +160,9 @@ def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
 
     for i in range(0,1):
         #make histogram for this weight
-        wMRST2007lomod = rt.TH2D("wMRST2007lomod_%i" %i,"wMRST2007lomod_%i" %i, ibinx, minx, maxx, ibiny, miny, maxy)
+        wMRST2007lomod = rt.TH2D("wMRST2007lomod_%i" %i,"wMRST2007lomod_%i" %i, ibinx, xarray, ibiny, yarray)
         tree.Project("wMRST2007lomod_%i" %i, "RSQ:MR", 'LEP_W*W*MRST2007lomod_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-        wMRST2007lomodSQ = rt.TH2D("wMRST2007lomodSQ_%i" %i,"wMRST2007lomodSQ_%i", ibinx, minx, maxx, ibiny, miny, maxy)
+        wMRST2007lomodSQ = rt.TH2D("wMRST2007lomodSQ_%i" %i,"wMRST2007lomodSQ_%i", ibinx, xarray, ibiny, yarray)
         tree.Project("wMRST2007lomodSQ_%i" %i, "RSQ:MR", 'LEP_W*W*pow(MRST2007lomod_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
         hwMRST2007lomod.append(wMRST2007lomod)
         hwMRST2007lomodSQ.append(wMRST2007lomodSQ)
@@ -197,6 +206,16 @@ def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
                 hMRST2007lomod_ABS.SetBinContent(i, j, GetErrAbs(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral()))
 
     return GetCenAndErr(hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM)
+
+def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
+    myX = []
+    for i in range (0,ibinx+1): myX.append(minx+ (maxx-minx)/ibinx*i)
+    myXarray = array("d",myX)
+    myY = []
+    for i in range (0,ibiny+1): myY.append(miny+ (maxy-miny)/ibiny*i)
+    myYarray = array("d", myY)
+    makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibinY, myYarray, box)
+
 
 def makePDFPlot(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     return makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, "BOX_NUM == %i" %box)
