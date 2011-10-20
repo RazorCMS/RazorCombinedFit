@@ -133,13 +133,16 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
 
     binedgexLIST = []
     binedgeyLIST = []
-    binwidthX = (1400-mRmin)/(nbinx-4)
+    binwidthX = (1000-mRmin)/nbinx
     binwidthY = (rsqMax-rsqMin)/nbiny
-    for ibin in range(0,nbinx-3): binedgexLIST.append(mRmin+ibin*binwidthX)
-    binedgexLIST.append(1500)
+    for ibin in range(0,nbinx+1): binedgexLIST.append(mRmin+ibin*binwidthX)
+    binedgexLIST.append(1000)
+    binedgexLIST.append(1200)
+    binedgexLIST.append(1600)
     binedgexLIST.append(2000)
-    binedgexLIST.append(2750)
+    binedgexLIST.append(2800)
     binedgexLIST.append(mRmax)
+    nbinx =  len(binedgexLIST)-1
     for ibin in range(0,nbiny+1): binedgeyLIST.append(rsqMin+ibin*binwidthY) 
     print binedgexLIST
     binedgex = array('d',binedgexLIST)
