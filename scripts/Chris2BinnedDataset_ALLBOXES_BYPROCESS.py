@@ -354,8 +354,10 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
                         sPDF = wHisto_pdfSYS[ibox].GetBinContent(ix,iy)
                         if 1+mPDF > 0.: newvalue = newvalue*(1+mPDF)*math.pow(1+sPDF/(1+mPDF),gRnd.Gaus(0.,1.))
                         #newvalue = newvalue *(1+ gRnd.Gaus(wHisto_pdfCEN[ibox].GetBinContent(ix,iy), wHisto_pdfSYS[ibox].GetBinContent(ix,iy)))
+                        # add a 20% systematics due to filling procedure
+                        byProcFactor = math.pow(1.20,gRnd.Gaus(0., 1.))
                         # fill histogram
-                        wHisto_i.SetBinContent(ix,iy,max(0.,newvalue))
+                        wHisto_i.SetBinContent(ix,iy,max(0.,newvalue*byProcFactor))
                     else:
                         wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
             # check the fit-region edge
