@@ -209,12 +209,14 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
 
 def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     myX = []
-    for i in range (0,ibinx+1): myX.append(minx+ (maxx-minx)/ibinx*i)
+    for i in range (0,ibinx+1):
+        myX.append(minx+ (maxx-minx)/ibinx*i)
+        print minx+ (maxx-minx)/ibinx*i
     myXarray = array("d",myX)
     myY = []
     for i in range (0,ibiny+1): myY.append(miny+ (maxy-miny)/ibiny*i)
     myYarray = array("d", myY)
-    makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibinY, myYarray, box)
+    return makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, box)
 
 
 def makePDFPlot(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
