@@ -93,7 +93,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
         mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToys, write = True):
+def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToys, varBin, write = True):
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
@@ -133,18 +133,19 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
 
     binedgexLIST = []
     binedgeyLIST = []
-    binwidthX = (1000-mRmin)/nbinx
+    maxVal = 1000
+    if varBin != 1: maxVal = mRmax
+    binwidthX = (maxVal-mRmin)/nbinx
     binwidthY = (rsqMax-rsqMin)/nbiny
     for ibin in range(0,nbinx+1): binedgexLIST.append(mRmin+ibin*binwidthX)
-    binedgexLIST.append(1000)
-    binedgexLIST.append(1200)
-    binedgexLIST.append(1600)
-    binedgexLIST.append(2000)
-    binedgexLIST.append(2800)
-    binedgexLIST.append(mRmax)
+    if varBin == 1:
+        binedgexLIST.append(1200)
+        binedgexLIST.append(1600)
+        binedgexLIST.append(2000)
+        binedgexLIST.append(2800)
+        binedgexLIST.append(mRmax)
     nbinx =  len(binedgexLIST)-1
     for ibin in range(0,nbiny+1): binedgeyLIST.append(rsqMin+ibin*binwidthY) 
-    print binedgexLIST
     binedgex = array('d',binedgexLIST)
     binedgey = array('d',binedgeyLIST)
 
@@ -316,8 +317,9 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
                 data = [histo.Clone()]
                 rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
                 data.append(rooDataHist)
+                data.append(wHisto_JESup[ibox])
                 if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
-
+                
             # create a copy of the histogram
             wHisto_i = rt.TH2D("wHisto_%s_%i" %(box, i),"wHisto_%s_%i" %(box, i), nbinx, binedgex, nbiny, binedgey)
             for ix in range(1,nbinx+1):
@@ -355,7 +357,7 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
                         if 1+mPDF > 0.: newvalue = newvalue*(1+mPDF)*math.pow(1+sPDF/(1+mPDF),gRnd.Gaus(0.,1.))
                         #newvalue = newvalue *(1+ gRnd.Gaus(wHisto_pdfCEN[ibox].GetBinContent(ix,iy), wHisto_pdfSYS[ibox].GetBinContent(ix,iy)))
                         # add a 20% systematics due to filling procedure
-                        byProcFactor = math.pow(1.20,gRnd.Gaus(0., 1.))
+                        byProcFactor = math.pow(1.50,gRnd.Gaus(0., 1.))
                         # fill histogram
                         wHisto_i.SetBinContent(ix,iy,max(0.,newvalue*byProcFactor))
                     else:
@@ -415,6 +417,8 @@ if __name__ == '__main__':
                       help="Number of bins in mR")
     parser.add_option('-y','--nbiny',dest="nbiny",type="int",default=100,
                       help="Number of bins in R^2")
+    parser.add_option('-v','--VariableBinning', dest="varbin", type="int",default=1,
+                                        help="Use Variable Binning for mR")
     
     (options,args) = parser.parse_args()
     
@@ -430,7 +434,7 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
 
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
-            convertTree2Dataset(input.Get('EVENTS'), options.nbinx, options.nbiny, decorator, cfg,options.min,options.max,options.toys)
+            convertTree2Dataset(input.Get('EVENTS'), options.nbinx, options.nbiny, decorator, cfg,options.min,options.max,options.toys,options.varbin)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
