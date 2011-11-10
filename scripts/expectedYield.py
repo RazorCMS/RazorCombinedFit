@@ -322,7 +322,7 @@ if __name__ == '__main__':
         del dataTMP
         myTree.Fill()
         del gdata
-        myfile.Close()
+        myfile.Close()        
         continue
 
     #dilepSigRegions = [["S1", 50, 0, 100], ["S2", 25, 0, 50], ["S3", 25, 0, 50]]

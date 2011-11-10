@@ -33,7 +33,6 @@ def setWorkspace( boxes, sigYields, xsec, doBayes=rt.kFALSE):
             highLumiBox = mybox
         continue
 
-
     ws = rt.RooWorkspace("razorCombination");
     # we want a limit on the signal strenght
     ws.factory("f[1, 0., 2.]")

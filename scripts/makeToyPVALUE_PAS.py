@@ -51,9 +51,20 @@ def WriteText(pt, result):
     pt.SetTextSize(0.0282392)
     pt.AddText("%s %s box" %(result[0],result[1]))
     pt.AddText("68%% range [%3.1f,%3.1f]" %(result[3], result[4]))
+    pt.AddText("Mode %3.1f" %result[6])
+    pt.AddText("Median %3.1f" %result[7])
     pt.AddText("observed %i" %result[2])
-    pt.AddText("p-value %4.2f" %result[5])
+    pt.AddText("p-value %4.2f" %result[5])    
     pt.Draw()
+
+def findMedian(myHisto):
+    prob = 0
+    median = 0
+    for i in range(1, myHisto.GetNbinsX()+1):
+        if prob < 0.5 and prob+myHisto.GetBinContent(i) > 0.5:
+            median = myHisto.GetBinCenter(i)
+        prob = prob + myHisto.GetBinContent(i)
+    return median
     
 def find68ProbRange(hToy, probVal=0.68):
     # get the bin contents
@@ -86,7 +97,7 @@ def find68ProbRange(hToy, probVal=0.68):
             fraction = (prob68-hToy.GetBinContent(hToy.GetNbinsX()-i+1))/(hToy.GetBinContent(hToy.GetNbinsX()-i)-hToy.GetBinContent(hToy.GetNbinsX()-i+1))
             maxVal = hToy.GetBinLowEdge(hToy.GetNbinsX()-i)+hToy.GetBinWidth(hToy.GetNbinsX()-i)*(1-fraction)
             foundMax = True
-    return max(minVal,0.),maxVal
+    return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
 
 def getPValue(n, hToy):
     oldToy = hToy
@@ -179,13 +190,21 @@ if __name__ == '__main__':
         # make an histogram of the expected yield
         myhisto = rt.TH1D("%s" %region[0], "%s" %region[0], 100, 0., 100.)
         myTree.Project(region[0], region[1])
-        myhisto.SetBinContent(1,0)
+        #myhisto.SetBinContent(1,0)
         if myhisto.GetEntries() != 0: 
             myhisto.Scale(1./myhisto.Integral())
             # get the observed number of events
             data = alldata.reduce(region[2])
             nObs = data.numEntries()
-            rangeMin,rangeMax = find68ProbRange(myhisto)
+            modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
+            #nq = 3
+            #xq = [0, 0, 0]
+            #yq = [0.16, 0.50, 0.84]
+            #myhisto.GetQuantiles(3,xq,yq)
+            #rangeMin = xq[0]
+            #rangeMax = xq[2]
+            #medianVal = xq[1]
+            medianVal = findMedian(myhisto)
             pval,myhisto,oldhisto = getPValue(nObs, myhisto)
             for mybin in region[3]: h.SetBinContent(mybin[0]+1, mybin[1]+1, pval)
             if pval >0.99: pval = 0.99 
@@ -197,7 +216,7 @@ if __name__ == '__main__':
             if Box == "MuMu": BoxName = "MU-MU"
             if Box == "EleEle": BoxName = "ELE-ELE"
             if Box == "MuEle": BoxName = "MU-ELE"
-            result.append([region[0], BoxName, nObs, rangeMin, rangeMax, pval])
+            result.append([region[0], BoxName, nObs, rangeMin, rangeMax, pval, modeVal, medianVal])
             #myhisto.GetXaxis().SetRangeUser(0., rangeMax*2.)
             myhisto.Write()
             oldhisto.Write()
@@ -236,7 +255,7 @@ if __name__ == '__main__':
         pt2 = rt.TPaveText(1012,0.41674,1482.45,0.491657,"br")
         pt3 = rt.TPaveText(650.4241,0.2124211,974.4978,0.2864867,"br")
         pt4 = rt.TPaveText(450.9832,0.362255,775.279,0.4314286,"br")
-        
+
         WriteText(pt1, result[0])
         WriteText(pt2, result[1])
         WriteText(pt3, result[2])
@@ -284,6 +303,60 @@ if __name__ == '__main__':
         line.SetLineStyle(1)
         line.SetLineColor(rt.kBlack)
         line.Draw()
+
+
+    # the fit region in dashed green
+    frLines = []
+    minRsq = 0.09
+    minMR = 300.
+    if Box == "Had":
+        frLines.append(rt.TLine(400,0.16,800,0.16))
+        frLines.append(rt.TLine(800,0.16,800,0.2))
+        frLines.append(rt.TLine(650,0.2,800,0.2))
+        frLines.append(rt.TLine(650,0.2,650,0.3))
+        frLines.append(rt.TLine(450,0.3,650,0.3))
+        frLines.append(rt.TLine(450,0.3,450,0.5))
+        frLines.append(rt.TLine(450,0.5,400,0.5))
+        frLines.append(rt.TLine(400,0.16,400,0.5))
+
+    if Box == "Mu" or Box == "Ele":
+        frLines.append(rt.TLine(800,0.09,800,0.2))
+        frLines.append(rt.TLine(650,0.2,800,0.2))
+        frLines.append(rt.TLine(650,0.2,650,0.3))
+        frLines.append(rt.TLine(450,0.3,650,0.3))
+        frLines.append(rt.TLine(450,0.3,450,0.45))
+        frLines.append(rt.TLine(450,0.45,400,0.45))
+        frLines.append(rt.TLine(400,0.45,400,0.5))
+        frLines.append(rt.TLine(400,0.5,300,0.5))
+
+    if Box == "MuMu" or Box == "EleEle" or Box == "MuEle":
+        frLines.append(rt.TLine(650,0.09,650,0.2))
+        frLines.append(rt.TLine(650,0.2,450,0.2))
+        frLines.append(rt.TLine(450,0.2,450,0.3))
+        frLines.append(rt.TLine(350,0.3,450,0.3))
+        frLines.append(rt.TLine(350,0.3,350,0.5))
+
+    ci = rt.TColor.GetColor("#006600");
+    for frLine in frLines:
+        frLine.SetLineColor(ci)
+        frLine.SetLineStyle(2)
+        frLine.SetLineWidth(2)
+        frLine.Draw()
+
+    sometext = rt.TPaveText(405.3013,0.2062981,874.8884,0.2815603,"br")
+    if Box == "MuMu" or Box == "EleEle" or Box == "MuEle": sometext = rt.TPaveText(281.9754,0.209882,751.5625,0.2851442,"br")
+    sometext.SetFillColor(0)
+    sometext.SetFillStyle(0)
+    sometext.SetLineColor(0)
+    sometext.SetTextAlign(13)
+    sometext.SetTextSize(0.022)
+    sometext.SetFillColor(0)
+    sometext.SetBorderSize(0)
+    sometext.SetTextAlign(13)
+    sometext.SetTextFont(42)
+    sometext.SetTextSize(0.0282392)
+    sometext.AddText("Fit Region")
+    sometext.Draw()
         
     c1.SaveAs("pValue_%s.C" %Box)
     c1.SaveAs("pValue_%s.pdf" %Box)

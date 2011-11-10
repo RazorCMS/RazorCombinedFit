@@ -93,8 +93,7 @@ def printEfficiencies(tree, outputFile, config, flavour):
         W = ds.mean(row['W'])
         n_i = (cross_section*lumi)/W
         n_f = ds.numEntries()
-        print 'Efficienty: %s: %f (n_i=%f; n_f=%i)' % (box,n_f/n_i,n_i, n_f)
-    
+        print 'Efficienty: %s: %f (n_i=%f; n_f=%i)' % (box,n_f/n_i,n_i, n_f)  
 
 if __name__ == '__main__':
     
@@ -117,7 +116,7 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
-    
+      
     (options,args) = parser.parse_args()
     
     if options.config is None:

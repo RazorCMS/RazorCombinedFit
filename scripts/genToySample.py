@@ -17,10 +17,16 @@ mytree = mydata.tree()
 myTH2 = rt.TH2D("h", "h", 100, minMR, maxMR, 100, minRsq, maxRsq)
 mytree.Project("h", "Rsq:MR", "W")
 Nev = myTH2.Integral()
+print Nev
+print mytree.GetEntries()
 # create roohistPDF
 MR = rt.RooRealVar("MR", "MR", minMR, maxMR)
 Rsq = rt.RooRealVar("Rsq", "Rsq", minRsq, maxRsq)
-myhistdata = rt.RooDataHist("hdata", "hdata", rt.RooArgSet(MR, Rsq), mydata)
+W = rt.RooRealVar("W", "W", 0, 100000000.)
+#new dataset with weight
+wdata = rt.RooDataSet('RMRTree','Weighted Cocktail', mydata.get(),"W")
+wdata.append(mydata)
+myhistdata = rt.RooDataHist("hdata", "hdata", rt.RooArgSet(MR, Rsq), wdata)
 mypdf = rt.RooHistPdf("pdf", "pdf", rt.RooArgSet(MR, Rsq), myhistdata)
 myNewData = mypdf.generate(rt.RooArgSet(MR, Rsq), int(Nev))
 myNewData.SetName("RMRTree")
