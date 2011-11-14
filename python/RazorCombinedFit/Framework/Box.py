@@ -469,8 +469,8 @@ class Box(object):
                             100, xmin, xmax, 
                             100, ymin, ymax)
         # project the data on the histograms
-        data.tree().Project("histoData",yvarname+":"+xvarname)
-        toyData.tree().Project("histoToy",yvarname+":"+xvarname)
+        data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname),self.workspace.var(yvarname)))
+        toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname),self.workspace.var(yvarname)))
         histoToy.Scale(histoData.Integral()/histoToy.Integral())
         histoData.Add(histoToy, -1)
         histoData.SetName('Compare_Data_MC_%s' % '_'.join(ranges) )
@@ -570,13 +570,13 @@ class Box(object):
             
             toyDataWln = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nznn)))
             toyDataWln = toyDataWln.reduce(self.getVarRangeCutNamed(ranges=ranges))
-            if self.name == "Had":
-                Nwj = self.workspace.var("Ntot_Wln").getVal()
-                self.workspace.var("Ntot_Wln").setVal(0.)
-                self.workspace.var("Ntot_Znn").setVal(Nznn)
-                toyDataZnn = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nwj)))
-                toyDataZnn = toyDataZnn.reduce(self.getVarRangeCutNamed(ranges=ranges))
-                self.workspace.var("Ntot_Wln").setVal(Nwj)
+            #if self.name == "Had":
+                #Nwj = self.workspace.var("Ntot_Wln").getVal()
+                #self.workspace.var("Ntot_Wln").setVal(0.)
+                #self.workspace.var("Ntot_Znn").setVal(Nznn)
+                #toyDataZnn = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nwj)))
+                #toyDataZnn = toyDataZnn.reduce(self.getVarRangeCutNamed(ranges=ranges))
+                #self.workspace.var("Ntot_Wln").setVal(Nwj)
                 
             self.workspace.var("Ntot_TTj").setVal(Ntt)
 
@@ -599,20 +599,21 @@ class Box(object):
                 histo.SetBinError(i,rt.TMath.Sqrt(histo.GetBinContent(i)))
 
         # project the data on the histograms
-        data.tree().Project("histoData",xvarname)
-        toyData.tree().Project("histoToy",xvarname)
+        #data.tree().Project("histoData",xvarname)
+        data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
+        toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
         scaleFactor = histoData.Integral()/histoToy.Integral()
         if self.name != "MuEle":
-            toyDataWln.tree().Project("histoToyWln",xvarname)
-            toyData.tree().Project("histoToyTTj",xvarname)
+            toyDataWln.fillHistogram(histoToyWln,rt.RooArgList(self.workspace.var(xvarname)))
+            toyData.fillHistogram(histoToyTTj,rt.RooArgList(self.workspace.var(xvarname)))
             histoToyTTj.Add(histoToyWln, -1)
-            if self.name == "Had":
-                toyDataZnn.tree().Project("histoToyZnn",xvarname)
-                histoToyTTj.Add(histoToyZnn, -1)
-                histoToyZnn.Scale(scaleFactor)
-                SetErrors(histoToyZnn, nbins)
-                setName(histoToyZnn,xvarname)
-                histoToyZnn.SetLineColor(rt.kGreen)    
+            #if self.name == "Had":
+                #toyDataZnn.fillHistogram(histoToyZnn,rt.RooArgList(self.workspace.var(xvarname)))
+                #histoToyTTj.Add(histoToyZnn, -1)
+                #histoToyZnn.Scale(scaleFactor)
+                #SetErrors(histoToyZnn, nbins)
+                #setName(histoToyZnn,xvarname)
+                #histoToyZnn.SetLineColor(rt.kGreen)    
             histoToyTTj.Scale(scaleFactor)
             histoToyWln.Scale(scaleFactor)
             SetErrors(histoToyTTj, nbins)
