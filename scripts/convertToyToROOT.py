@@ -9,8 +9,8 @@ if __name__ == '__main__':
     dir = sys.argv[1] 
     # to add the category
     #argc = len(sys.argv)
-    argc = int(sys.argv[2]) 
-    for i in range(2,argc):
+    #argc = int(sys.argv[2]) 
+    for i in range(0,3501):
         tree = rt.TTree()
         #tree.ReadFile(sys.argv[i],"MR/D:Rsq/D")
         filename = sys.argv[1]+"_"+str(i)+".txt"

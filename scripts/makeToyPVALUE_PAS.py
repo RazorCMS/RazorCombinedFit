@@ -4,7 +4,7 @@ from array import *
 import sys
 
 def Rebin(h):
-    myhisto = rt.TH1D("%s_REBIN" %h.GetName(), "%s_REBIN" %h.GetName(), 1000, 0., 100.)
+    myhisto = rt.TH1D("%s_REBIN" %h.GetName(), "%s_REBIN" %h.GetName(), 1000, 0., 1000.)
     for i in range(1,1001):
         myhisto.SetBinContent(i, h.GetBinContent(int(i/10)))
     return myhisto
@@ -185,44 +185,43 @@ if __name__ == '__main__':
     print "%s Box & Observed & Predicted 68 Prob. & \"p-value\" \\\\" %Box
     # loop over regions
     result = []
-    for region in hSregions:
-        varName = region[1]
-        # make an histogram of the expected yield
-        myhisto = rt.TH1D("%s" %region[0], "%s" %region[0], 100, 0., 100.)
-        myTree.Project(region[0], region[1])
-        #myhisto.SetBinContent(1,0)
-        if myhisto.GetEntries() != 0: 
-            myhisto.Scale(1./myhisto.Integral())
-            # get the observed number of events
-            data = alldata.reduce(region[2])
-            nObs = data.numEntries()
-            modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
-            #nq = 3
-            #xq = [0, 0, 0]
-            #yq = [0.16, 0.50, 0.84]
-            #myhisto.GetQuantiles(3,xq,yq)
-            #rangeMin = xq[0]
-            #rangeMax = xq[2]
-            #medianVal = xq[1]
-            medianVal = findMedian(myhisto)
-            pval,myhisto,oldhisto = getPValue(nObs, myhisto)
-            for mybin in region[3]: h.SetBinContent(mybin[0]+1, mybin[1]+1, pval)
-            if pval >0.99: pval = 0.99 
-            print "%s & %i & $[%f, %f]$ & %f \\\\" %(region[0], nObs, rangeMin, rangeMax, pval)
-            BoxName = ""
-            if Box == "Had": BoxName = "HAD"
-            if Box == "Mu": BoxName = "MU"
-            if Box == "Ele": BoxName = "ELE"
-            if Box == "MuMu": BoxName = "MU-MU"
-            if Box == "EleEle": BoxName = "ELE-ELE"
-            if Box == "MuEle": BoxName = "MU-ELE"
-            result.append([region[0], BoxName, nObs, rangeMin, rangeMax, pval, modeVal, medianVal])
-            #myhisto.GetXaxis().SetRangeUser(0., rangeMax*2.)
-            myhisto.Write()
-            oldhisto.Write()
-            del data
-    h.Write()
-    fileOUT.Close()
+    #for region in hSregions:
+    #    varName = region[1]
+    #    # make an histogram of the expected yield
+    #    myhisto = rt.TH1D("%s" %region[0], "%s" %region[0], 1000, 0., 1000.)
+    #    myTree.Project(region[0], region[1])
+    #    #myhisto.SetBinContent(1,0)
+    #    if myhisto.GetEntries() != 0: 
+    #        myhisto.Scale(1./myhisto.Integral())
+    #        data = alldata.reduce(region[2])
+    #        nObs = data.numEntries()
+    #        modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
+    #        #nq = 3
+    #        #xq = [0, 0, 0]
+    #        #yq = [0.16, 0.50, 0.84]
+    #        #myhisto.GetQuantiles(3,xq,yq)
+    #        #rangeMin = xq[0]
+    #        #rangeMax = xq[2]
+    #        #medianVal = xq[1]
+    #        medianVal = findMedian(myhisto)
+    #        pval,myhisto,oldhisto = getPValue(nObs, myhisto)
+    #        for mybin in region[3]: h.SetBinContent(mybin[0]+1, mybin[1]+1, pval)
+    #        if pval >0.99: pval = 0.99 
+    #        print "%s & %i & $[%f, %f]$ & %f \\\\" %(region[0], nObs, rangeMin, rangeMax, pval)
+    #        BoxName = ""
+    #        if Box == "Had": BoxName = "HAD"
+    #        if Box == "Mu": BoxName = "MU"
+    #        if Box == "Ele": BoxName = "ELE"
+    #        if Box == "MuMu": BoxName = "MU-MU"
+    #        if Box == "EleEle": BoxName = "ELE-ELE"
+    #        if Box == "MuEle": BoxName = "MU-ELE"
+    #        result.append([region[0], BoxName, nObs, rangeMin, rangeMax, pval, modeVal, medianVal])
+    #        #myhisto.GetXaxis().SetRangeUser(0., rangeMax*2.)
+    #        myhisto.Write()
+    #        oldhisto.Write()
+    #        del data
+    #h.Write()
+    #fileOUT.Close()
 
 
     xLines = []
@@ -250,35 +249,35 @@ if __name__ == '__main__':
     for i in range(0,8): yLines[i].Draw()
 
     # write the text
-    if Box == "Mu" or Box == "Had" or Box == "Ele":
-        pt1 = rt.TPaveText(1512.863,0.41674,1982.45,0.491657,"br")
-        pt2 = rt.TPaveText(1012,0.41674,1482.45,0.491657,"br")
-        pt3 = rt.TPaveText(650.4241,0.2124211,974.4978,0.2864867,"br")
-        pt4 = rt.TPaveText(450.9832,0.362255,775.279,0.4314286,"br")
+    #if Box == "Mu" or Box == "Had" or Box == "Ele":
+    #    pt1 = rt.TPaveText(1512.863,0.41674,1982.45,0.491657,"br")
+    #    pt2 = rt.TPaveText(1012,0.41674,1482.45,0.491657,"br")
+    #    pt3 = rt.TPaveText(650.4241,0.2124211,974.4978,0.2864867,"br")
+    #    pt4 = rt.TPaveText(450.9832,0.362255,775.279,0.4314286,"br")
 
-        WriteText(pt1, result[0])
-        WriteText(pt2, result[1])
-        WriteText(pt3, result[2])
-        WriteText(pt4, result[3])
+    #    WriteText(pt1, result[0])
+    #    WriteText(pt2, result[1])
+    #    WriteText(pt3, result[2])
+    #    WriteText(pt4, result[3])
 
         # draw the arrows
-        arrow1, arrow2 = WriteArrowsLep()
-        arrow1.Draw()
-        arrow2.Draw()
+    #    arrow1, arrow2 = WriteArrowsLep()
+    #    arrow1.Draw()
+    #    arrow2.Draw()
 
-    else:
-        pt1 = rt.TPaveText(1375.307,0.1856906,1844.894,0.2600568,"br")
-        pt2 = rt.TPaveText(1002.958,0.3281512,1474.916,0.4034135,"br")
-        pt3 = rt.TPaveText(303.3203,0.1149082,628.2366,0.1892745,"br")
+    #else:
+    #    pt1 = rt.TPaveText(1375.307,0.1856906,1844.894,0.2600568,"br")
+    #    pt2 = rt.TPaveText(1002.958,0.3281512,1474.916,0.4034135,"br")
+    #    pt3 = rt.TPaveText(303.3203,0.1149082,628.2366,0.1892745,"br")
         
-        WriteText(pt1, result[0])
-        WriteText(pt2, result[1])
-        WriteText(pt3, result[2])
+    #    WriteText(pt1, result[0])
+    #    WriteText(pt2, result[1])
+    #    WriteText(pt3, result[2])
 
-        # draw the arrows
-        arrow1, arrow2 = WriteArrowsDiLep()
-        arrow1.Draw()
-        arrow2.Draw()
+    #    # draw the arrows
+    #    arrow1, arrow2 = WriteArrowsDiLep()
+    #    arrow1.Draw()
+    #    arrow2.Draw()
 
     # border lines
     bLines = []

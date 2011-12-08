@@ -70,23 +70,13 @@ if __name__ == '__main__':
     label = sys.argv[2]
     Box = sys.argv[3]
 
-    minMR = []
     # bins in mR
     MRbins = [300, 350, 400, 450, 650, 800, 1000, 1250, 1500, 7000]
     # bins in R^2
     Rsqbins = [0.09, 0.16, 0.20, 0.30, 0.40, 0.45, 0.50]
-    # min bin in the signal region, for each bin or R^2
-    # This depends on the box
-    minMR = []
-    if Box == "Had":    minMR = [9,5,4,5,5,2]
-    if Box == "Mu":     minMR = [5,5,4,5,5,2]
-    if Box == "Ele":    minMR = [5,5,4,5,5,2]
-    if Box == "MuMu":   minMR = [4,4,3,1,1,1]
-    if Box == "MuEle":  minMR = [4,4,3,1,1,1]
-    if Box == "EleEle": minMR = [4,4,3,1,1,1]
 
     binList = []
-    # fille the bins list and associate the bins to the corresponding variables in the structure
+    # fills the bins list and associate the bins to the corresponding variables in the structure
     s = MyStruct()
     for ix in range(0, len(MRbins)-1):
         for iy in range(0, len(Rsqbins)-1):
@@ -94,12 +84,12 @@ if __name__ == '__main__':
             varName = "bin_%i_%i" %(ix, iy) 
             binList.append(myBin)
             # only the signal-region bins go in the Tree
-            #if ix >= minMR[iy]:
             myTree.Branch(myBin[0], rt.AddressOf(s,varName),'%s/D' %varName)
     
     treeName = "RMRTree"
     for i in range(4,len(sys.argv)):
         myfile = rt.TFile(sys.argv[i])
+        #myfile = rt.TFile("%s_%i.root" %(sys.argv[4],i))
         gdata = myfile.Get(treeName)
         if gdata == None: continue
         if gdata.InheritsFrom("RooDataSet") != True: continue
