@@ -167,7 +167,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                 # perform the fit
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
-                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True))
+                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("FULL"))
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
                 #store it in the workspace too
@@ -365,7 +365,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # add signal specific parameters 
             #boxes[box].defineSet("others_Signal", self.config.getVariables(box, "others_Signal"))
             #add a signal model to the workspace
-            signalModel = boxes[box].addSignalModel(fileIndex[box])
+            signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
             #need to fix all parameters to their restored values
             #boxes[box].fixAllPars()
 

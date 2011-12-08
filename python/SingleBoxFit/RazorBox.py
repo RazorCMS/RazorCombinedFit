@@ -8,7 +8,11 @@ class RazorBox(Box.Box):
         super(RazorBox,self).__init__(name, variables)
         
         #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
+        # this is what we did in 2011
         self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
+        # now we switch off the redundant Znn component in the Had box
+        #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Had','Ele','MuMu','EleEle','MuEle']}
+
         self.cut = 'MR >= 0.0'
 
     def addTailPdf(self, flavour):
@@ -60,13 +64,20 @@ class RazorBox(Box.Box):
         self.fixPars("MR01st_%s_s" % flavour)
         self.fixPars("R01st_%s_s" % flavour)
         self.fixPars("b1st_%s_s" % flavour)
-    def float2ndComponentWithPenalty(self,flavour):
-        self.fixParsPenalty("MR02nd_%s" % flavour)
+    def float2ndComponentWithPenalty(self,flavour, alsoB):
         self.fixParsPenalty("R02nd_%s" % flavour)
-        self.fixParsPenalty("b2nd_%s" % flavour)
-        self.fixPars("MR02nd_%s_s" % flavour)
         self.fixPars("R02nd_%s_s" % flavour)
-        self.fixPars("b2nd_%s_s" % flavour)
+        #self.fixParsPenalty("b2nd_%s" % flavour)
+        #self.fixPars("b2nd_%s_s" % flavour)
+        self.fixParsPenalty("MR02nd_%s" % flavour)
+        self.fixPars("MR02nd_%s_s" % flavour)
+        if alsoB == True:
+            self.fixParsPenalty("b2nd_%s" % flavour)
+            self.fixPars("b2nd_%s_s" % flavour)
+        else:
+            print "ciaoooo"
+            self.fixParsExact("b2nd_%s" % flavour, False)      
+            
     def float1stComponent(self,flavour):
         self.fixParsExact("MR01st_%s" % flavour, False)
         self.fixParsExact("R01st_%s" % flavour, False)
@@ -82,7 +93,15 @@ class RazorBox(Box.Box):
         self.fixParsExact("f2_%s" % flavour, False)
     def floatYield(self,flavour):
         self.fixParsExact("Ntot_%s" % flavour, False)
-
+    def fix2ndComponent(self,flavour):
+        self.fixParsExact("MR02nd_%s" % flavour, True)
+        self.fixParsExact("R02nd_%s" % flavour, True)
+        self.fixParsExact("b2nd_%s" % flavour, True)        
+    def fix1stComponent(self,flavour):
+        self.fixParsExact("MR01st_%s" % flavour, True)
+        self.fixParsExact("R01st_%s" % flavour, True)
+        self.fixParsExact("b1st_%s" % flavour, True)        
+    
     def addDataSet(self, inputFile):
         #create the dataset
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
@@ -134,7 +153,8 @@ class RazorBox(Box.Box):
             """Switch on or off whatever you want here"""
             if z == "Wln" and self.name == "Had": self.float1stComponent(z)
             else : self.float1stComponentWithPenalty(z)
-            if self.name != "Had": self.float2ndComponentWithPenalty(z)
+            if self.name == "Mu" or self.name == "Ele" and z == "TTj": self.float2ndComponentWithPenalty(z, False)
+            elif self.name != "Had": self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             if self.name != "Had": self.floatFraction(z)
 
@@ -150,20 +170,43 @@ class RazorBox(Box.Box):
                     floatSomething(z)
                     fixed.append(z)
 
-    def addSignalModel(self, inputFile, modelName = None):
+        #remove redundant second components
+        if self.name == "Ele":
+            self.fix2ndComponent("Wln")
+            self.workspace.var("f2_Wln").setVal(0.)
+            self.workspace.var("f2_Wln").setConstant(rt.kTRUE)
+        if self.name == "Mu":
+            self.fix2ndComponent("Znn")
+            self.workspace.var("f2_Znn").setVal(0.)
+            self.workspace.var("f2_Znn").setConstant(rt.kTRUE)
+        #if self.name == "EleEle":
+        if self.name == "MuMu" or self.name == "EleEle":
+            self.fix2ndComponent("Zll")
+            self.workspace.var("f2_Zll").setVal(0.)
+            self.workspace.var("f2_Zll").setConstant(rt.kTRUE)
+
+    def addSignalModel(self, inputFile, signalXsec, modelName = None):
         
         if modelName is None:
             modelName = 'Signal'
         
         #data = self.workspace.data('RMRTree')
         signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
+        if signalXsec > 0.:
+            # here nSig is the efficiency (fromr SMSs distribution)
+            # and we multiply it by the xsection
+            nSig = nSig*signalXsec
+        else:
+            # here nSig is the expected yields for 1000 pb-1
+            # and we turn it into the expcted yield in a pb-1
+            nSig = nSig/1000.
 
         #set the MC efficiency relative to the number of events generated
         #epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
         #self.yieldToCrossSection(modelName) #define Ntot
         self.workspace.factory("rSig[1.]")
         self.workspace.var("rSig").setConstant(rt.kTRUE)
-        self.workspace.factory("expr::Ntot_%s('%f*@0/1000.*@1', Lumi, rSig)" %(modelName,nSig))
+        self.workspace.factory("expr::Ntot_%s('%f*@0*@1', Lumi, rSig)" %(modelName,nSig))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
         #                   rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
