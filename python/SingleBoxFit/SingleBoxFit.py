@@ -4,9 +4,10 @@ from RazorCombinedFit.Framework import Analysis
 import RootTools
 
 class SingleBoxAnalysis(Analysis.Analysis):
-    
-    def __init__(self, outputFile, config):
+
+    def __init__(self, outputFile, config, DoRazorB = False):
         super(SingleBoxAnalysis,self).__init__('SingleBoxFit',outputFile, config)
+        self.DoRazorB = DoRazorB
     
     def merge(self, workspace, box):
         """Import the contents of a box workspace into the master workspace while enforcing some name-spaceing"""
@@ -19,12 +20,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
         """Refactor out the common box def for fitting and simple toys"""
         
         import RazorBox
+        import RazorBjetBox
         boxes = {}
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
-            boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
+            if self.DoRazorB: boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
+            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             # Wln
             boxes[box].defineSet("pdf1pars_Wln", self.config.getVariables(box, "pdf1_Wln"))

@@ -9,9 +9,9 @@ class RazorBox(Box.Box):
         
         #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
         # this is what we did in 2011
-        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
+        # self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
         # now we switch off the redundant Znn component in the Had box
-        #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Had','Ele','MuMu','EleEle','MuEle']}
+        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Had','Ele','MuMu','EleEle','MuEle']}
 
         self.cut = 'MR >= 0.0'
 
@@ -169,6 +169,8 @@ class RazorBox(Box.Box):
                 if not z in fixed:
                     floatSomething(z)
                     fixed.append(z)
+
+        if self.name == "Had": self.workspace.var("b1st_TTj").setConstant(rt.kFALSE)
 
         #remove redundant second components
         if self.name == "Ele":
