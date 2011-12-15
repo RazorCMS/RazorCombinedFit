@@ -12,10 +12,10 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
-def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMax):
+def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMin):
     
-    if bMax >= 0:
-        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_nBtag_'+str(bMax)+'_'+outputBox,'RECREATE')
+    if bMin >= 0:
+        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_nBtag_'+str(bMin)+'_'+outputBox,'RECREATE')
     else:
         output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
@@ -23,7 +23,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMax):
     output.Close()
     return data.numEntries()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax, run, write = True):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin, run, write = True):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
@@ -54,7 +54,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
         if entry == -1: break
         tree.GetEntry(entry)
         
-        if bMax >= 0 and tree.BTAG_NUM != bMax: continue
+        if bMin >= 0 and tree.BTAG_NUM < bMin: continue
         
         try:
             if tree.RUN_NUMBER <= run: continue
@@ -78,7 +78,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMax
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:
-        writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, bMax)
+        writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, bMin)
     return rdata
 
 def printEfficiencies(tree, outputFile, config, flavour):
