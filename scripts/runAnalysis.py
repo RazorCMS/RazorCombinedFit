@@ -36,6 +36,8 @@ def defineParser():
                   help="Run the model-independent limit setting code")
     parser.add_option('-x','--xsec',dest="signal_xsec", type="float", default=-99,
                   help="Signal cross section (in pb) for SMSs limit setting")
+    parser.add_option('--bjet',dest="doBjet", default=False, action='store_true',
+                  help="Run the RazorB analysis")
     return parser
 
 if __name__ == '__main__':
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     
     if options.analysis is not None:
         a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg),
-             DalglishFit.DalglishAnalysis(options.output, cfg), SingleBoxFit.SingleBoxAnalysis(options.output, cfg)]
+             DalglishFit.DalglishAnalysis(options.output, cfg), SingleBoxFit.SingleBoxAnalysis(options.output, cfg, options.doBjet)]
         for aa in a:
             if aa.name == options.analysis:
                 aa.options = options
