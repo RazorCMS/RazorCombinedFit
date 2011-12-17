@@ -192,11 +192,13 @@ class RazorBox(Box.Box):
         if modelName is None:
             modelName = 'Signal'
         
-        #data = self.workspace.data('RMRTree')
+        # signalModel is the 2D pdf [normalized to one]
+        # nSig is the integral of the histogram given as input
         signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
+        # compute the expected yield/(pb-1)
         if signalXsec > 0.:
-            # here nSig is the efficiency (fromr SMSs distribution)
-            # and we multiply it by the xsection
+            # for SMS: the integral is the efficiency.
+            # We multiply it by the specified xsection
             nSig = nSig*signalXsec
         else:
             # here nSig is the expected yields for 1000 pb-1
@@ -208,6 +210,7 @@ class RazorBox(Box.Box):
         #self.yieldToCrossSection(modelName) #define Ntot
         self.workspace.factory("rSig[1.]")
         self.workspace.var("rSig").setConstant(rt.kTRUE)
+        # compute the signal yield multiplying by the efficiency
         self.workspace.factory("expr::Ntot_%s('%f*@0*@1', Lumi, rSig)" %(modelName,nSig))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',

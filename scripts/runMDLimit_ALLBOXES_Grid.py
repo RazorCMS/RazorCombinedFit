@@ -17,6 +17,7 @@ if __name__ == '__main__':
     parser.add_option('-y','--nbiny',dest="nbiny",type="int",default="100", help="number of binx on Y axis")
     parser.add_option('-f','--fill-by-process',dest="fillByProcess",default=False, action='store_true', help="Fill boxes by process")
     parser.add_option("--input",dest="input",default="razor_output.root", help="input file containing the bkg fits") 
+    parser.add_option('--xsec',dest="xsec",type="float",default="-99", help="Signal cross section (in pb) for SMSs limit setting")
 
     (options,args) = parser.parse_args()
     
@@ -26,6 +27,7 @@ if __name__ == '__main__':
     toys = options.toys
     nbinx = options.nbinx
     nbiny = options.nbiny
+    xsec = options.xsec
     input = options.input
     if options.fillByProcess: script = "Chris2BinnedDataset_ALLBOXES_BYPROCESS.py"
     else: script = "Chris2BinnedDataset_ALLBOXES.py"
@@ -68,9 +70,9 @@ if __name__ == '__main__':
             print str(seed)
             outputfile.write("python scripts/%s -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -t %i -d $PWD -x %i -y %i $PWD/../%s/%s\n" %(script, toys, nbinx, nbiny, signalfiledir, signalfilename))
             # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(xsec,seed,signal,input,signal,toys))
             # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(xsec,seed,signal,input,signal,toys))
 
             # prepare the CRAB script
             outputname2 = "crab_%s.cfg" %(signal)
