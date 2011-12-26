@@ -60,7 +60,7 @@ def findMedian(myHisto):
         prob = prob + myHisto.GetBinContent(i)
     return median
     
-def find68ProbRange(hToy, probVal=0.95):
+def find68ProbRange(hToy, probVal=0.68):
     # get the bin contents
     probsList = []
     for  i in range(1, hToy.GetNbinsX()+1):
@@ -111,18 +111,18 @@ if __name__ == '__main__':
     fileName = sys.argv[2]
     datafileName = sys.argv[3]
 
-    minRsq = 0.09
+    minRsq = 0.11
     minMR = 300.
     firstmR = 450
     if Box == "Had":
-        minRsq = 0.16
+        minRsq = 0.18
         minMR = 400.
         firstmR = 500
 
     # bins in mR
     MRbins = [300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2800, 3500]
     # bins in R^2
-    Rsqbins =  [0.09, 0.16, 0.20, 0.30, 0.40, 0.50]
+    Rsqbins =  [0.11, 0.18, 0.20, 0.30, 0.40, 0.50]
     x = array("d",MRbins)
     y = array("d",Rsqbins)
        
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     # bins in R^2
     RsqbinsGL =  [minRsq, 0.20, 0.30, 0.40, 0.50]
 
-    MRbins2 = [minMR, firstmR, 650, 800, 1000, 2000, 3500]
+    MRbins2 = [minMR, firstmR, 650, 1000, 2000, 3500]
     Rsqbins2 =  [minRsq, 0.20, 0.30, 0.50]
 
     x2 = array("d",MRbins2)
@@ -180,11 +180,8 @@ if __name__ == '__main__':
     S4 = ["S4", S4sel[:-1], "MR>=1000.&&MR<2000.&&Rsq>=0.3"]
     #define the SRs
     S5sel = ""
-    for i in range(9,11):
-        for j in range(0,2):
-            S5sel = S5sel+"b%i_%i+" %(i,j)
     for i in range(7,11): S5sel = S5sel+"b%i_%i+" %(i,2)
-    S5 = ["S5", S5sel[:-1], "(MR>=800.&&MR<1000.&&Rsq<0.2&&Rsq>=%f)||(MR>=650.&&MR<1000.&&Rsq<0.3&&Rsq>=0.2)" %minRsq]
+    S5 = ["S5", S5sel[:-1], "(MR>=650.&&MR<1000.&&Rsq<0.3&&Rsq>=0.2)"]
     #define the SRs
     S6sel = ""
     if Box != "Had":
@@ -308,9 +305,9 @@ if __name__ == '__main__':
     # the fit region in green
     frLines = []
     if Box == "Had":
-        frLines.append(rt.TLine(400,minRsq,800,minRsq))
-        frLines.append(rt.TLine(800,minRsq,800,0.2))
-        frLines.append(rt.TLine(650,0.2,800,0.2))
+        frLines.append(rt.TLine(400,minRsq,1000,minRsq))
+        frLines.append(rt.TLine(1000,minRsq,1000,0.2))
+        frLines.append(rt.TLine(650,0.2,1000,0.2))
         frLines.append(rt.TLine(650,0.2,650,0.3))
         frLines.append(rt.TLine(500,0.3,650,0.3))
         frLines.append(rt.TLine(500,0.3,500,0.5))
@@ -318,8 +315,8 @@ if __name__ == '__main__':
         frLines.append(rt.TLine(400,minRsq,400,0.5))
 
     if Box == "Mu" or Box == "Ele":
-        frLines.append(rt.TLine(800,0.09,800,0.2))
-        frLines.append(rt.TLine(650,0.2,800,0.2))
+        frLines.append(rt.TLine(1000,0.09,1000,0.2))
+        frLines.append(rt.TLine(650,0.2,1000,0.2))
         frLines.append(rt.TLine(650,0.2,650,0.3))
         frLines.append(rt.TLine(450,0.3,650,0.3))
         frLines.append(rt.TLine(450,0.3,450,0.5))

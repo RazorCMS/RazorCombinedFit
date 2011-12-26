@@ -11,7 +11,7 @@ class RazorBox(Box.Box):
         # this is what we did in 2011
         # self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
         # now we switch off the redundant Znn component in the Had box
-        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Had','Ele','MuMu','EleEle','MuEle']}
+        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
 
         self.cut = 'MR >= 0.0'
 
@@ -57,26 +57,27 @@ class RazorBox(Box.Box):
         self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
 
     #add penalty terms and float
-    def float1stComponentWithPenalty(self,flavour):
+    def float1stComponentWithPenalty(self,flavour, alsoB):
         self.fixParsPenalty("MR01st_%s" % flavour)
         self.fixParsPenalty("R01st_%s" % flavour)
-        self.fixParsPenalty("b1st_%s" % flavour)
         self.fixPars("MR01st_%s_s" % flavour)
         self.fixPars("R01st_%s_s" % flavour)
-        self.fixPars("b1st_%s_s" % flavour)
+        if alsoB == True:
+            self.fixParsPenalty("b1st_%s" % flavour)
+            self.fixPars("b1st_%s_s" % flavour)
+        else:
+            self.fixParsExact("b1st_%s" % flavour, False)
+
     def float2ndComponentWithPenalty(self,flavour, alsoB):
         self.fixParsPenalty("R02nd_%s" % flavour)
         self.fixPars("R02nd_%s_s" % flavour)
-        #self.fixParsPenalty("b2nd_%s" % flavour)
-        #self.fixPars("b2nd_%s_s" % flavour)
         self.fixParsPenalty("MR02nd_%s" % flavour)
         self.fixPars("MR02nd_%s_s" % flavour)
         if alsoB == True:
             self.fixParsPenalty("b2nd_%s" % flavour)
             self.fixPars("b2nd_%s_s" % flavour)
         else:
-            print "ciaoooo"
-            self.fixParsExact("b2nd_%s" % flavour, False)      
+            self.fixParsExact("b2nd_%s" % flavour, False)
             
     def float1stComponent(self,flavour):
         self.fixParsExact("MR01st_%s" % flavour, False)
@@ -151,9 +152,12 @@ class RazorBox(Box.Box):
 
         def floatSomething(z):
             """Switch on or off whatever you want here"""
+            # the "effective" first component in the Had box
             if z == "Wln" and self.name == "Had": self.float1stComponent(z)
-            else : self.float1stComponentWithPenalty(z)
+            else : self.float1stComponentWithPenalty(z, True)
+            # the b2nd parameter is floated in the 1Lep boxes (no penalty term)
             if self.name == "Mu" or self.name == "Ele" and z == "TTj": self.float2ndComponentWithPenalty(z, False)
+            #if self.name == "Mu" and z == "TTj": self.float2ndComponentWithPenalty(z, False)
             elif self.name != "Had": self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             if self.name != "Had": self.floatFraction(z)
@@ -318,3 +322,136 @@ class RazorBox(Box.Box):
         
         return frameMR
 
+    def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
+        
+        rangeNone = False
+        if ranges is None:
+            rangeNone = True
+            ranges = ['']
+            
+        #before I find a better way
+        rangeCut = self.getVarRangeCutNamed(ranges=ranges)
+        if data is None:
+            data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+            data = data.reduce(rangeCut)
+        toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
+        toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
+
+        if self.name != "MuEle":
+            # no ttbar
+            Ntt = self.workspace.var("Ntot_TTj").getVal()
+            self.workspace.var("Ntot_TTj").setVal(0.)
+            # no znn+jets [this is ONLY for the Had box]
+            Nznn = 0
+            if self.name == "Had":
+                Nznn = self.workspace.var("Ntot_Znn").getVal()
+                self.workspace.var("Ntot_Znn").setVal(0.)
+            
+            toyDataWln = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nznn)))
+            toyDataWln = toyDataWln.reduce(self.getVarRangeCutNamed(ranges=ranges))
+            if self.name == "Had":
+                Nwj = self.workspace.var("Ntot_Wln").getVal()
+                self.workspace.var("Ntot_Wln").setVal(0.)
+                self.workspace.var("Ntot_Znn").setVal(Nznn)
+                toyDataZnn = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nwj)))
+                toyDataZnn = toyDataZnn.reduce(self.getVarRangeCutNamed(ranges=ranges))
+                self.workspace.var("Ntot_Wln").setVal(Nwj)
+                
+            self.workspace.var("Ntot_TTj").setVal(Ntt)
+
+        xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
+        xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
+
+        # define 1D histograms
+        histoData = rt.TH1D("histoData", "histoData",nbins, xmin, xmax)
+        histoToy = rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax)
+        histoToyTTj = rt.TH1D("histoToyTTj", "histoToyTTj",nbins, xmin, xmax)
+        histoToyWln = rt.TH1D("histoToyWln", "histoToyWln",nbins, xmin, xmax)
+        histoToyZnn = rt.TH1D("histoToyZnn", "histoToyZnn",nbins, xmin, xmax)
+
+        def setName(h, name):
+            h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(),name,'_'.join(ranges)) )
+            h.GetXaxis().SetTitle(name)
+        
+        def SetErrors(histo, nbins):
+            for i in range(1, nbins+1):
+                histo.SetBinError(i,rt.TMath.Sqrt(histo.GetBinContent(i)))
+
+        # project the data on the histograms
+        #data.tree().Project("histoData",xvarname)
+        data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
+        toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
+        scaleFactor = histoData.Integral()/histoToy.Integral()
+        if self.name != "MuEle":
+            toyDataWln.fillHistogram(histoToyWln,rt.RooArgList(self.workspace.var(xvarname)))
+            toyData.fillHistogram(histoToyTTj,rt.RooArgList(self.workspace.var(xvarname)))
+            histoToyTTj.Add(histoToyWln, -1)
+            if self.name == "Had":
+                toyDataZnn.fillHistogram(histoToyZnn,rt.RooArgList(self.workspace.var(xvarname)))
+                histoToyTTj.Add(histoToyZnn, -1)
+                histoToyZnn.Scale(scaleFactor)
+                SetErrors(histoToyZnn, nbins)
+                setName(histoToyZnn,xvarname)
+                histoToyZnn.SetLineColor(rt.kGreen)    
+            histoToyTTj.Scale(scaleFactor)
+            histoToyWln.Scale(scaleFactor)
+            SetErrors(histoToyTTj, nbins)
+            SetErrors(histoToyWln, nbins)
+            setName(histoToyTTj,xvarname)
+            setName(histoToyWln,xvarname)
+            histoToyTTj.SetLineColor(rt.kOrange)
+            histoToyTTj.SetLineWidth(2)
+            if self.name == "EleEle" or self.name == "MuMu": histoToyWln.SetLineColor(rt.kMagenta)
+            else: histoToyWln.SetLineColor(rt.kRed)
+            histoToyWln.SetLineWidth(2)
+
+        histoToy.Scale(scaleFactor)
+        SetErrors(histoToy, nbins)
+        setName(histoData,xvarname)
+        setName(histoToy,xvarname)
+        histoData.SetMarkerStyle(20)
+        histoToy.SetLineColor(rt.kBlue)
+        histoToy.SetLineWidth(2)
+
+        c = rt.TCanvas()
+        c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
+        histoData.Draw("pe")
+
+        if self.name != "MuEle":
+            if self.name == "Had":
+                histoToyZnn.DrawCopy("histsame")
+                histoToyZnn.SetFillColor(rt.kGreen)
+                histoToyZnn.SetFillStyle(3018)
+                histoToyZnn.Draw('e2same')            
+            histoToyWln.DrawCopy("histsame")
+            if self.name == "EleEle" or self.name == "MuMu": histoToyWln.SetFillColor(rt.kMagenta)
+            else: histoToyWln.SetFillColor(rt.kRed)
+            histoToyWln.SetFillStyle(3018)
+            histoToyWln.Draw('e2same')
+            histoToyTTj.DrawCopy('histsame')
+            histoToyTTj.SetFillColor(rt.kOrange)
+            histoToyTTj.SetFillStyle(3018)
+            histoToyTTj.Draw('e2same')        
+            histoToy.DrawCopy('histsame')
+
+        histoToy.DrawCopy('histsame')
+        histoToy.SetFillColor(rt.kBlue)
+        histoToy.SetFillStyle(3018)
+        histoToy.Draw('e2same')
+
+        #histoData.Draw("pesame")
+
+        #leg = rt.TLegend(0.6,0.6,0.9,0.9)
+        #leg.SetFillColor(0)
+        #leg.AddEntry(histoToyWln.GetName(),"W+jets","l")
+        #leg.AddEntry(histoToyTTj.GetName(),"t#bar{t}","l")
+        #leg.AddEntry(histoToy.GetName(),"Total","l")
+        #leg.Draw()
+
+        histToReturn = [histoToy, histoData, c]
+        if self.name != "MuEle":
+            histToReturn.append(histoToyTTj)
+            histToReturn.append(histoToyWln)
+            if self.name == "Had": histToReturn.append(histoToyZnn)
+
+        return histToReturn

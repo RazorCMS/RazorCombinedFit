@@ -558,28 +558,6 @@ class Box(object):
         toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
         toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
 
-        if self.name != "MuEle":
-            # no ttbar
-            Ntt = self.workspace.var("Ntot_TTj").getVal()
-            self.workspace.var("Ntot_TTj").setVal(0.)
-            # no znn+jets [this is ONLY for the Had box]
-            Nznn = 0
-            if self.name == "Had":
-                Nznn = self.workspace.var("Ntot_Znn").getVal()
-                self.workspace.var("Ntot_Znn").setVal(0.)
-            
-            toyDataWln = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nznn)))
-            toyDataWln = toyDataWln.reduce(self.getVarRangeCutNamed(ranges=ranges))
-            #if self.name == "Had":
-                #Nwj = self.workspace.var("Ntot_Wln").getVal()
-                #self.workspace.var("Ntot_Wln").setVal(0.)
-                #self.workspace.var("Ntot_Znn").setVal(Nznn)
-                #toyDataZnn = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nwj)))
-                #toyDataZnn = toyDataZnn.reduce(self.getVarRangeCutNamed(ranges=ranges))
-                #self.workspace.var("Ntot_Wln").setVal(Nwj)
-                
-            self.workspace.var("Ntot_TTj").setVal(Ntt)
-
         xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
 
@@ -603,28 +581,6 @@ class Box(object):
         data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
         toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
         scaleFactor = histoData.Integral()/histoToy.Integral()
-        if self.name != "MuEle":
-            toyDataWln.fillHistogram(histoToyWln,rt.RooArgList(self.workspace.var(xvarname)))
-            toyData.fillHistogram(histoToyTTj,rt.RooArgList(self.workspace.var(xvarname)))
-            histoToyTTj.Add(histoToyWln, -1)
-            #if self.name == "Had":
-                #toyDataZnn.fillHistogram(histoToyZnn,rt.RooArgList(self.workspace.var(xvarname)))
-                #histoToyTTj.Add(histoToyZnn, -1)
-                #histoToyZnn.Scale(scaleFactor)
-                #SetErrors(histoToyZnn, nbins)
-                #setName(histoToyZnn,xvarname)
-                #histoToyZnn.SetLineColor(rt.kGreen)    
-            histoToyTTj.Scale(scaleFactor)
-            histoToyWln.Scale(scaleFactor)
-            SetErrors(histoToyTTj, nbins)
-            SetErrors(histoToyWln, nbins)
-            setName(histoToyTTj,xvarname)
-            setName(histoToyWln,xvarname)
-            histoToyTTj.SetLineColor(rt.kOrange)
-            histoToyTTj.SetLineWidth(2)
-            if self.name == "EleEle" or self.name == "MuMu": histoToyWln.SetLineColor(rt.kMagenta)
-            else: histoToyWln.SetLineColor(rt.kRed)
-            histoToyWln.SetLineWidth(2)
 
         histoToy.Scale(scaleFactor)
         SetErrors(histoToy, nbins)
@@ -637,23 +593,6 @@ class Box(object):
         c = rt.TCanvas()
         c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
         histoData.Draw("pe")
-
-        if self.name != "MuEle":
-            if self.name == "Had":
-                histoToyZnn.DrawCopy("histsame")
-                histoToyZnn.SetFillColor(rt.kGreen)
-                histoToyZnn.SetFillStyle(3018)
-                histoToyZnn.Draw('e2same')            
-            histoToyWln.DrawCopy("histsame")
-            if self.name == "EleEle" or self.name == "MuMu": histoToyWln.SetFillColor(rt.kMagenta)
-            else: histoToyWln.SetFillColor(rt.kRed)
-            histoToyWln.SetFillStyle(3018)
-            histoToyWln.Draw('e2same')
-            histoToyTTj.DrawCopy('histsame')
-            histoToyTTj.SetFillColor(rt.kOrange)
-            histoToyTTj.SetFillStyle(3018)
-            histoToyTTj.Draw('e2same')        
-            histoToy.DrawCopy('histsame')
 
         histoToy.DrawCopy('histsame')
         histoToy.SetFillColor(rt.kBlue)
@@ -670,10 +609,6 @@ class Box(object):
         #leg.Draw()
 
         histToReturn = [histoToy, histoData, c]
-        if self.name != "MuEle":
-            histToReturn.append(histoToyTTj)
-            histToReturn.append(histoToyWln)
-            if self.name == "Had": histToReturn.append(histoToyZnn)
 
         return histToReturn
 
