@@ -468,8 +468,10 @@ class Box(object):
         histoToy = rt.TH2D("histoToy", "histoToy",
                             100, xmin, xmax, 
                             100, ymin, ymax)
+        # reduced the data to the region in which we generate the toy
+        reducedData = data.reduce(self.getVarRangeCutNamed(ranges))
         # project the data on the histograms
-        data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname),self.workspace.var(yvarname)))
+        reducedData.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname),self.workspace.var(yvarname)))
         toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname),self.workspace.var(yvarname)))
         histoToy.Scale(histoData.Integral()/histoToy.Integral())
         histoData.Add(histoToy, -1)
