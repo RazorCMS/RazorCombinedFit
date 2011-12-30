@@ -216,21 +216,18 @@ if __name__ == '__main__':
                 pval,myhisto,oldhisto = getPValue(nObs, myhisto)
                 # fill the bins of 2D blue plot
                 if S[0] == "S1":
-                    h.SetBinContent(6, 1, pval)
-                    h.SetBinContent(6, 2, pval)
-                if S[0] == "S2":
-                    h.SetBinContent(6, 3, pval)
-                if S[0] == "S3":
                     h.SetBinContent(5, 1, pval)
                     h.SetBinContent(5, 2, pval)
-                if S[0] == "S4":
+                if S[0] == "S2":
                     h.SetBinContent(5, 3, pval)
-                if S[0] == "S5":
+                if S[0] == "S3":
                     h.SetBinContent(4, 1, pval)
                     h.SetBinContent(4, 2, pval)
+                if S[0] == "S4":
+                    h.SetBinContent(4, 3, pval)
+                if S[0] == "S5":
                     h.SetBinContent(3, 2, pval)
                 if S[0] == "S6":
-                    h.SetBinContent(4, 3, pval)
                     h.SetBinContent(3, 3, pval)
                     h.SetBinContent(2, 3, pval)
 
@@ -289,13 +286,12 @@ if __name__ == '__main__':
     xLinesB.append(rt.TLine(650,0.3,3500,0.3))
     if Box == "MuMu" or Box == "MuEle" or Box == "EleEle":
         xLinesB.append(rt.TLine(450,0.3,650,0.3))
-        xLinesB.append(rt.TLine(650,0.2,800,0.2))
+        xLinesB.append(rt.TLine(650,0.2,1000,0.2))
                              
     yLinesB.append(rt.TLine(2000,minRsq,2000,0.5))
     yLinesB.append(rt.TLine(1000,minRsq,1000,0.5))
 
     if Box == "MuMu" or Box == "MuEle" or Box == "EleEle":
-        yLinesB.append(rt.TLine(800,0.09,800,0.2))
         yLinesB.append(rt.TLine(650,0.2,650,0.3))
         yLinesB.append(rt.TLine(450,0.3,450,0.5))
 
@@ -315,7 +311,7 @@ if __name__ == '__main__':
         frLines.append(rt.TLine(400,minRsq,400,0.5))
 
     if Box == "Mu" or Box == "Ele":
-        frLines.append(rt.TLine(1000,0.09,1000,0.2))
+        frLines.append(rt.TLine(1000,minRsq,1000,0.2))
         frLines.append(rt.TLine(650,0.2,1000,0.2))
         frLines.append(rt.TLine(650,0.2,650,0.3))
         frLines.append(rt.TLine(450,0.3,650,0.3))
@@ -323,7 +319,7 @@ if __name__ == '__main__':
         frLines.append(rt.TLine(450,0.5,300,0.5))
 
     if Box == "MuMu" or Box == "EleEle" or Box == "MuEle":
-        frLines.append(rt.TLine(650,0.09,650,0.2))
+        frLines.append(rt.TLine(650,minRsq,650,0.2))
         frLines.append(rt.TLine(650,0.2,450,0.2))
         frLines.append(rt.TLine(450,0.2,450,0.3))
         frLines.append(rt.TLine(400,0.3,450,0.3))
@@ -340,10 +336,9 @@ if __name__ == '__main__':
     pt1 = rt.TPaveText(2070,0.21,2538,0.29,"br")
     pt2 = rt.TPaveText(2070,0.41,2538,0.48,"br")
     if Box == "Had" : pt3 = rt.TPaveText(1331,0.21,1656,0.29,"br")
-    else: pt3 = rt.TPaveText(1100,0.21,1426.464,0.29,"br")
+    else: pt3 = rt.TPaveText(1200,0.21,1526.464,0.29,"br")
     pt4 = rt.TPaveText(1100,0.41,1426,0.48,"br")
-    if Box == "Had" : pt5 = rt.TPaveText(471,0.22,800,0.29,"br")
-    else: pt5 = rt.TPaveText(341,0.11,668,0.18,"br")
+    pt5 = rt.TPaveText(471,0.22,800,0.29,"br")
     if Box == "Had" : pt6 = rt.TPaveText(540,0.32,869,0.39,"br")
     else: pt6 = rt.TPaveText(341,0.32,668,0.39,"br")
 
