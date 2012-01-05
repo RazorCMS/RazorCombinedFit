@@ -130,8 +130,6 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
     minx = xarray[0]
     maxx = xarray[-1]
 
-    print maxx
-
     miny = yarray[0]
     maxy = yarray[-1]
 

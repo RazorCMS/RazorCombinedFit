@@ -157,10 +157,6 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, varBin, wri
         if mRmax> mRmax: binedgexLIST.append(mRmax)
     nbinx =  len(binedgexLIST)-1
 
-    for ibin in range(0,nbiny+1): binedgeyLIST.append(rsqMin+ibin*binwidthY) 
-    binedgex = array('d',binedgexLIST)
-    binedgey = array('d',binedgeyLIST)
-
     #use a fixed bin for R^2
     if varBin != 1:
         R2edge = rsqMin
@@ -172,6 +168,9 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, varBin, wri
         #use fixed binning 
         binedgeyLIST = [rsqMin,0.2,0.3,0.4,0.5]
     nbiny = len(binedgeyLIST)-1    
+
+    binedgex = array('d',binedgexLIST)
+    binedgey = array('d',binedgeyLIST)
 
     # get weight
     for box in boxes:
