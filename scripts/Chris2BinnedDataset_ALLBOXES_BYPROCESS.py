@@ -16,17 +16,18 @@ lumi = 1.0
 
 def isInFitRegion(x, y, box):
     isFitReg = True
-    if x>800 : isFitReg = False
+    if x>900 : isFitReg = False
     if x>650 and y>0.2: isFitReg = False
-    if x>450 and y>0.3: isFitReg = False
+    if x>500 and y>0.3: isFitReg = False
 
     if box == "Mu" or box == "Ele":
-        if x>400 and y>0.45: isFitReg = False
+        if x>1000 : isFitReg = False
+        if x>450 and y>0.3: isFitReg = False
 
     if box == "MuMu" or box == "MuEle" or box == "EleEle":
         if x>650 and y>0.45: isFitReg = False
         if x>450 and y>0.2: isFitReg = False
-        if x>350 and y>0.3: isFitReg = False
+        if x>400 and y>0.3: isFitReg = False
     return isFitReg
 
     
@@ -133,21 +134,43 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
 
     binedgexLIST = []
     binedgeyLIST = []
-    maxVal = 1000
+    # if the bin is fixed, do 50 GeV in mR
+    # and 0.1 in R^2
+    binwMR = 50.
+    binwR2 = 0.1
+    #use a fixed bin for mR
     if varBin != 1: maxVal = mRmax
-    binwidthX = (maxVal-mRmin)/nbinx
-    binwidthY = (rsqMax-rsqMin)/nbiny
-    for ibin in range(0,nbinx+1): binedgexLIST.append(mRmin+ibin*binwidthX)
+    else: maxVal = 700.
+    mRedge = mRmin
+    while mRedge < maxVal: 
+        binedgexLIST.append(mRedge)
+        mRedge = mRedge + binwMR
+    binedgexLIST.append(maxVal)
     if varBin == 1:
-        binedgexLIST.append(1200)
-        binedgexLIST.append(1600)
-        binedgexLIST.append(2000)
-        binedgexLIST.append(2800)
-        binedgexLIST.append(mRmax)
+        if mRmax> 800: binedgexLIST.append(800)
+        if mRmax> 900: binedgexLIST.append(900)
+        if mRmax> 1000: binedgexLIST.append(1000)
+        if mRmax> 1200: binedgexLIST.append(1200)
+        if mRmax> 1600: binedgexLIST.append(1600)
+        if mRmax> 2000: binedgexLIST.append(2000)
+        if mRmax> 2800: binedgexLIST.append(2800)
+        if mRmax> mRmax: binedgexLIST.append(mRmax)
     nbinx =  len(binedgexLIST)-1
+
     for ibin in range(0,nbiny+1): binedgeyLIST.append(rsqMin+ibin*binwidthY) 
     binedgex = array('d',binedgexLIST)
     binedgey = array('d',binedgeyLIST)
+
+    #use a fixed bin for R^2
+    if varBin != 1:
+        R2edge = rsqMin
+        while R2edge <rsqMax: 
+            binedgexLIST.append(R2edge)
+            R2edge = R2edge + binwR2
+        binedgexLIST.append(rsqMax)
+    else: 
+        #use fixed binning 
+        binedgeyLIST = [rsqMin,0.2,0.3,0.4,0.5]
 
     # get weight
     for box in boxes:
