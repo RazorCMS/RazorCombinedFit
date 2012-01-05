@@ -94,7 +94,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
         mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToys, varBin, write = True):
+def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, varBin, write = True):
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
@@ -167,16 +167,16 @@ def convertTree2Dataset(tree, nbinx, nbiny, outputFile, config, minH, maxH, nToy
         while R2edge <rsqMax: 
             binedgexLIST.append(R2edge)
             R2edge = R2edge + binwR2
-        binedgexLIST.append(rsqMax)
+        binedgeyLIST.append(rsqMax)
     else: 
         #use fixed binning 
         binedgeyLIST = [rsqMin,0.2,0.3,0.4,0.5]
+    nbiny = len(binedgeyLIST)-1    
 
     # get weight
     for box in boxes:
         yieldByProcessThisBox = []        
         for i in range(0,10): 
-            #histo = rt.TH2D("wHisto_TMP","wHisto_TMP", nbinx, mRmin, mRmax, nbiny, rsqMin, rsqMax)
             histo = rt.TH2D("wHisto_TMP","wHisto_TMP", nbinx, binedgex, nbiny, binedgey) 
             tree.Project("wHisto_TMP", "RSQ:MR", 'LEP_W*W*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i))' % (mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box]))
             yieldByProcessThisBox.append(histo.Integral())
@@ -436,10 +436,6 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-t','--toys',dest="toys",type="int",default=1000,
                   help="Number of toys")
-    parser.add_option('-x','--nbinx',dest="nbinx",type="int",default=100,
-                      help="Number of bins in mR")
-    parser.add_option('-y','--nbiny',dest="nbiny",type="int",default=100,
-                      help="Number of bins in R^2")
     parser.add_option('-v','--VariableBinning', dest="varbin", type="int",default=1,
                                         help="Use Variable Binning for mR")
     
@@ -457,7 +453,7 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
 
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
-            convertTree2Dataset(input.Get('EVENTS'), options.nbinx, options.nbiny, decorator, cfg,options.min,options.max,options.toys,options.varbin)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,options.toys,options.varbin)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
