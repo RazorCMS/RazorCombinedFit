@@ -2,6 +2,7 @@ import ROOT as rt
 import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
 import RootTools
+import math
 
 class SingleBoxAnalysis(Analysis.Analysis):
 
@@ -501,7 +502,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             if N_1stSR_Zll.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Zll"))
             if N_2ndSR_Zll.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Zll"))
 
-            SpBPdfList = rt.RooArgList(boxes[box].workspace.pdf("eBinPDFSR_Signal"),boxes[box].workspace.pdf("ePDF1stSR_TTj"))
+            SpBPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF1stSR_TTj"))
+            # prevent nan when there is no signal expected
+            if not math.isnan(NsSR.getVal()): SpBPdfList.add(boxes[box].workspace.pdf("eBinPDFSR_Signal"))
             if N_2ndSR_TTj.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_TTj"))
             if N_1stSR_Wln.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Wln"))
             if N_2ndSR_Wln.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Wln"))
