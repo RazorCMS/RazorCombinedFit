@@ -1,10 +1,12 @@
-rm DATA2012/*
-python scripts/Chris2Dataset.py -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012.cfg ~/RAZOR_SAMPLES/2012/NTUPLE/HT.root 
-mv HT*MR*Had.root DATA2012
+# $1: config file
+# $2: output directory
+rm $2/*
+python scripts/Chris2Dataset.py -c $1 ~/RAZOR_SAMPLES/2012/NTUPLE/HT.root 
+mv HT*MR*Had.root $2/
 rm HT*MR*root
-python scripts/Chris2Dataset.py -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012.cfg ~/RAZOR_SAMPLES/2012/NTUPLE/MuHad.root 
-mv Mu*MR*_Mu*.root DATA2012/
+python scripts/Chris2Dataset.py -c $1 ~/RAZOR_SAMPLES/2012/NTUPLE/MuHad.root 
+mv Mu*MR*_Mu*.root $2/
 rm Mu*MR*root
-python scripts/Chris2Dataset.py -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012.cfg ~/RAZOR_SAMPLES/2012/NTUPLE/ElectronHad.root 
-mv Ele*MR*_Ele*.root DATA2012/
+python scripts/Chris2Dataset.py -c $1 ~/RAZOR_SAMPLES/2012/NTUPLE/ElectronHad.root 
+mv Ele*MR*_Ele*.root $2/
 rm Ele*MR*root

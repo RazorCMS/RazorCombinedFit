@@ -118,6 +118,8 @@ if __name__ == '__main__':
         minRsq = 0.18
         minMR = 400.
         firstmR = 500
+    if Box == "BJet":
+        minRsq = 0.16
 
     # bins in mR
     MRbins = [300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2800, 3500]
@@ -150,7 +152,7 @@ if __name__ == '__main__':
     fileOUT = rt.TFile.Open("pvalue_%s_new.root" %Box, "recreate")
 
     # translate from upper to lower case
-    boxName = [["HAD","Had"], ["MU", "Mu"], ["ELE", "Ele"], ["MUMU", "MuMu"], ["MUELE", "MuEle"], ["ELEELE", "EleEle"]]
+    boxName = [["HAD","Had"], ["MU", "Mu"], ["ELE", "Ele"], ["MUMU", "MuMu"], ["MUELE", "MuEle"], ["ELEELE", "EleEle"],["BJET","BJet"]]
     thisBoxName = ""
     for bn in boxName:
         if bn[0] == Box: thisBoxName = bn[1]
@@ -212,6 +214,7 @@ if __name__ == '__main__':
                 nObs = data.numEntries()
                 modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
                 medianVal = findMedian(myhisto)
+                if medianVal <= 100 and medianVal > 50: myhisto.Rebin(2)
                 if medianVal > 100: myhisto.Rebin(5)
                 pval,myhisto,oldhisto = getPValue(nObs, myhisto)
                 # fill the bins of 2D blue plot
@@ -237,6 +240,7 @@ if __name__ == '__main__':
                 if pval !=-99 or modeVal != 0.5 : pValHist.Fill(pval)
                 BoxName = ""
                 if Box == "Had": BoxName = "HAD"
+                if Box == "BJet": BoxName = "BJET"
                 if Box == "Mu": BoxName = "MU"
                 if Box == "Ele": BoxName = "ELE"
                 if Box == "MuMu": BoxName = "MU-MU"
@@ -262,7 +266,6 @@ if __name__ == '__main__':
     xLines = []
     yLines = []
     if Box != "Had":
-        MRbinsGL = MRbins
         MRbinsGL = MRbins
 
     xL = array("d",MRbinsGL)
@@ -310,7 +313,7 @@ if __name__ == '__main__':
         frLines.append(rt.TLine(500,0.5,400,0.5))
         frLines.append(rt.TLine(400,minRsq,400,0.5))
 
-    if Box == "Mu" or Box == "Ele":
+    if Box == "Mu" or Box == "Ele" or Box == "BJet":
         frLines.append(rt.TLine(1000,minRsq,1000,0.2))
         frLines.append(rt.TLine(650,0.2,1000,0.2))
         frLines.append(rt.TLine(650,0.2,650,0.3))
@@ -335,11 +338,11 @@ if __name__ == '__main__':
     # write the text
     pt1 = rt.TPaveText(2070,0.21,2538,0.29,"br")
     pt2 = rt.TPaveText(2070,0.41,2538,0.48,"br")
-    if Box == "Had" : pt3 = rt.TPaveText(1331,0.21,1656,0.29,"br")
+    if Box == "Had" or Box == "BJet": pt3 = rt.TPaveText(1331,0.21,1656,0.29,"br")
     else: pt3 = rt.TPaveText(1200,0.21,1526.464,0.29,"br")
     pt4 = rt.TPaveText(1100,0.41,1426,0.48,"br")
     pt5 = rt.TPaveText(471,0.22,800,0.29,"br")
-    if Box == "Had" : pt6 = rt.TPaveText(540,0.32,869,0.39,"br")
+    if Box == "Had" or Box == "BJet": pt6 = rt.TPaveText(540,0.32,869,0.39,"br")
     else: pt6 = rt.TPaveText(341,0.32,668,0.39,"br")
 
     WriteText(pt1, result[0])

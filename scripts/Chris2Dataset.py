@@ -5,7 +5,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':5}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -55,11 +55,13 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
         tree.GetEntry(entry)
         
         if bMin >= 0 and tree.BTAG_NUM < bMin: continue
-        
-        try:
-            if tree.RUN_NUMBER <= run: continue
-        except AttributeError:
-            pass
+
+        runrange = run.split(":")
+        if len(runrange) == 2:
+            minrun = int(runrange[0])
+            maxrun = int(runrange[1])
+            if tree.RUN_NUM < minrun: continue
+            if tree.RUN_NUM > maxrun: continue
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
@@ -110,8 +112,8 @@ if __name__ == '__main__':
                   help="Calculate the MC efficiencies")
     parser.add_option('-f','--flavour',dest="flavour",default='TTj',
                   help="The flavour of MC used as input")
-    parser.add_option('-r','--run',dest="run",default=-1,type=float,
-                  help="The minimum run number")
+    parser.add_option('-r','--run',dest="run",default="none",type="string",
+                  help="The run range in the format min_run_number:max_run_number")
     parser.add_option('-d','--dir',dest="outdir",default="./",type="string",
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
@@ -136,6 +138,7 @@ if __name__ == '__main__':
                 if options.box != None:
                     convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.btag,options.run)
                 else:
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'BJet.root', cfg,'BJet',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag,options.run)
