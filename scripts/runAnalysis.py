@@ -58,8 +58,8 @@ if __name__ == '__main__':
         now = rt.TDatime()
         today = now.GetDate()
         clock = now.GetTime()
-        seed = today+clock+pid+137*i
-    
+        seed = today+clock+pid+137
+        
     rt.RooRandom.randomGenerator().SetSeed(seed)
     
     if options.config is None:
