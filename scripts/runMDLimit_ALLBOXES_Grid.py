@@ -12,7 +12,7 @@ if __name__ == '__main__':
     parser.add_option('-t','--toys',dest="toys",type="int",default="40", help="Number of toys per job")
     parser.add_option('-i','--index',dest="iJob",type="int",default="5", help="Integer index (to label outputs)")
     parser.add_option('-n','--number',dest="numJobs",type="int",default="100", help="number of jobs")
-    parser.add_option('-f','--fill-by-process',dest="fillByProcess",default=False, action='store_true', help="Fill boxes by process")
+    parser.add_option('-f','--fill-by-box',dest="fillByProcess",default=True, action='store_false', help="Fill boxes by Box")
     parser.add_option("--input",dest="input",default="razor_output.root", help="input file containing the bkg fits") 
     parser.add_option('--xsec',dest="xsec",type="float",default="-99", help="Signal cross section (in pb) for SMSs limit setting")
 
