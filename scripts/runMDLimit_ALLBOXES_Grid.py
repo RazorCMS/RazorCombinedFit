@@ -48,7 +48,8 @@ if __name__ == '__main__':
         for i in range(options.iJob,options.iJob+options.numJobs):
 
             # prepare the script to run           
-            outputname = "%s.src" %(signal)
+            if xsec >0: outputname = "%s_xsec_%f.src" %(signal, xsec)
+            else: outputname = "%s.src" %(signal)
             outputfile = open(outputname,'w')
             outputfile.write('#!/bin/bash\n')
             outputfile.write("eval `scramv1 run -sh`\n")
@@ -68,21 +69,36 @@ if __name__ == '__main__':
             clock = now.GetTime()
             seed = today+clock+pid+137*i
             print str(seed)
-            outputfile.write("python scripts/%s -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -t %i -d $PWD -x %i -y %i $PWD/../%s/%s\n" %(script, toys, nbinx, nbiny, signalfiledir, signalfilename))
-            # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(xsec,seed,signal,input,signal,toys))
-            # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(xsec,seed,signal,input,signal,toys))
+            if xsec > 0.:
+                # run SMS
+                outputfile.write("python scripts/%s -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg --sms -t %i -d $PWD -x %i -y %i $PWD/../%s/%s\n" %(script, toys, nbinx, nbiny, signalfiledir, signalfilename))
+                # perform limit toys(signal + bkgd) setting fits
+                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s_xsec_%f.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(xsec,seed,signal,xsec,input,signal,toys))
+                # perform limit toys(bkgd only) setting fits
+                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s_xsec_%f.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(xsec,seed,signal,xsec,input,signal,toys))
+            else:
+                # run CMSSM
+                outputfile.write("python scripts/%s -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -t %i -d $PWD -x %i -y %i $PWD/../%s/%s\n" %(script, toys, nbinx, nbiny, signalfiledir, signalfilename))
+                # perform limit toys(signal + bkgd) setting fits
+                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
+                # perform limit toys(bkgd only) setting fits
+                outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
 
             # prepare the CRAB script
-            outputname2 = "crab_%s.cfg" %(signal)
+            if xsec>0: outputname2 = "crab_%s_xsec_%f.cfg" %(signal,xsec)
+            else: outputname2 = "crab_%s.cfg" %(signal)
             outputfile2 = open(outputname2,'w')
             outputfile2.write('[CRAB]\n')
             outputfile2.write('jobtype = cmssw\n')
             outputfile2.write('scheduler = glite\n')
             outputfile2.write('[CMSSW]\n')
             outputfile2.write('### The output files (comma separated list)\n')
-            outputfile2.write('output_file = LimitBkgSigToys_%s.root, LimitBkgToys_%s.root\n' %(signal,signal))
+            if xsec > 0.:
+                #SMS
+                outputfile2.write('output_file = LimitBkgSigToys_%s_xsec_%f.root, LimitBkgToys_%s_xsec_%f.root\n' %(signal,xsec,signal,xsec))
+            else:
+                # CMSSM
+                outputfile2.write('output_file = LimitBkgSigToys_%s.root, LimitBkgToys_%s.root\n' %(signal,signal))
             outputfile2.write('datasetpath=None\n')
             outputfile2.write('pset=None\n')
             outputfile2.write('number_of_jobs=100\n')
@@ -99,13 +115,13 @@ if __name__ == '__main__':
             outputfile2.close
 
             # prepare the tarball
-            outputname3 = "source_me_%s.src" %(signal)
+            if xsec>0: outputname3 = "source_me_%s_xsec_%f.src" %(signal,xsec)
+            else: outputname3 = "source_me_%s.src" %(signal)
             outputfile3 = open(outputname3,'w')
             outputfile3.write('tar czf files_%i_%i.tgz %s %s/%s\n' %(M0, M12, outputname, signalfiledir, signalfilename))
             outputfile3.write('crab -create -cfg %s\n' %outputname2)
             outputfile3.write('crab -submit -c  crab_%s\n' %(signal))
             outputfile3.close
-
 
             # submit the job [TO UNCOMMENT]
             #os.system("source %s" %outputname3)
