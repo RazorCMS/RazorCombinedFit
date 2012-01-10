@@ -1,5 +1,7 @@
-from optparse import OptionParser
+import os
+import sys
 import ROOT as rt
+from optparse import OptionParser
 
 class Marker(object):
     pass
@@ -49,8 +51,16 @@ if __name__ == '__main__':
     
 
     (options,args) = parser.parse_args()
+
+    seed = options.seed
+    if seed < 0:
+        pid = os.getpid()
+        now = rt.TDatime()
+        today = now.GetDate()
+        clock = now.GetTime()
+        seed = today+clock+pid+137*i
     
-    rt.RooRandom.randomGenerator().SetSeed(options.seed)
+    rt.RooRandom.randomGenerator().SetSeed(seed)
     
     if options.config is None:
         import inspect, os
