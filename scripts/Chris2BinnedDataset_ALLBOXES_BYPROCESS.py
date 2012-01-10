@@ -186,7 +186,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, varBin, doS
     # get weight
     for box in boxes:
         yieldByProcessThisBox = []        
-        for i in range(0,10): 
+        for i in range(0,nProcess): 
             histo = rt.TH2D("wHisto_TMP","wHisto_TMP", nbinx, binedgex, nbiny, binedgey) 
             tree.Project("wHisto_TMP", "RSQ:MR", 'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box]))
             yieldByProcessThisBox.append(histo.Integral())
@@ -218,7 +218,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, nToys, varBin, doS
 
         # XSEC DOWN
         histo = rt.TH2D("wHisto_xsecdown_PROC%i" %i,"wHisto_xsecdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i))' % (weightDOWM,mRmin,mRmax,rsqMin,rsqMax,i))
+        tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i))' % (weightDOWN,mRmin,mRmax,rsqMin,rsqMax,i))
         plotByProcessXSECDOWN.append(histo.Clone())
 
         # PDF CEN and SIGMA
