@@ -149,10 +149,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             self.store(outpars, dir='%s_Toys' % box)
             self.store(yields, dir='%s_Toys' % box)
             
-
-
-        
-    
     def analysis(self, inputFiles):
         """Run independent and then simultanious fits"""
         
@@ -525,79 +521,79 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine(
-                "struct MyDataStruct{\
-                Double_t var4;\
-                Double_t var5;\
-                Double_t var6;\
-                Double_t var7;\
-                Double_t var8;\
-                Double_t var9;\
-                Double_t var10;\
-                Double_t var11;\
-                Double_t var12;\
-                Double_t var13;\
-                Double_t var14;\
-                Double_t var15;\
-                Double_t var16;\
-                Double_t var17;\
-                Double_t var18;\
-                Double_t var19;\
-                Double_t var20;\
-                Double_t var21;\
-                };")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var7;Double_t var8;Double_t var9;};")
+            #                "struct MyDataStruct{\
+            #                Double_t var4;\
+            #                Double_t var5;\
+            #                Double_t var6;\
+            #                Double_t var7;\
+            #                Double_t var8;\
+            #                Double_t var9;\
+            #                Double_t var10;\
+            #                Double_t var11;\
+            #                Double_t var12;\
+            #                Double_t var13;\
+            #                Double_t var14;\
+            #                Double_t var15;\
+            #                Double_t var16;\
+            #                Double_t var17;\
+            #                Double_t var18;\
+            #                Double_t var19;\
+            #                Double_t var20;\
+            #                Double_t var21;\
+            #                };")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
-            myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
-            myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
-            myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
+            #myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
+            #myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
+            #myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
 
             myDataTree.Branch("LzSRnoExt", rt.AddressOf(sDATA,'var7'),'var7/D')
             myDataTree.Branch("LH0xSRnoExt", rt.AddressOf(sDATA,'var8'),'var8/D')
             myDataTree.Branch("LH1xSRnoExt", rt.AddressOf(sDATA,'var9'),'var9/D')
 
-            myDataTree.Branch("NSpBsR1", rt.AddressOf(sDATA,'var10'), 'var10/D')
-            myDataTree.Branch("NSpBsR2", rt.AddressOf(sDATA,'var11'), 'var11/D')
-            myDataTree.Branch("NSpBsR3", rt.AddressOf(sDATA,'var12'), 'var12/D')
-            myDataTree.Branch("NSpBsR4", rt.AddressOf(sDATA,'var13'), 'var13/D')
+            #myDataTree.Branch("NSpBsR1", rt.AddressOf(sDATA,'var10'), 'var10/D')
+            #myDataTree.Branch("NSpBsR2", rt.AddressOf(sDATA,'var11'), 'var11/D')
+            #myDataTree.Branch("NSpBsR3", rt.AddressOf(sDATA,'var12'), 'var12/D')
+            #myDataTree.Branch("NSpBsR4", rt.AddressOf(sDATA,'var13'), 'var13/D')
 
-            myDataTree.Branch("NBsR1", rt.AddressOf(sDATA,'var14'), 'var14/D')
-            myDataTree.Branch("NBsR2", rt.AddressOf(sDATA,'var15'), 'var15/D')
-            myDataTree.Branch("NBsR3", rt.AddressOf(sDATA,'var16'), 'var16/D')
-            myDataTree.Branch("NBsR4", rt.AddressOf(sDATA,'var17'), 'var17/D')
+            #myDataTree.Branch("NBsR1", rt.AddressOf(sDATA,'var14'), 'var14/D')
+            #myDataTree.Branch("NBsR2", rt.AddressOf(sDATA,'var15'), 'var15/D')
+            #myDataTree.Branch("NBsR3", rt.AddressOf(sDATA,'var16'), 'var16/D')
+            #myDataTree.Branch("NBsR4", rt.AddressOf(sDATA,'var17'), 'var17/D')
 
-            myDataTree.Branch("NOBSsR1", rt.AddressOf(sDATA,'var18'), 'var18/D')
-            myDataTree.Branch("NOBSsR2", rt.AddressOf(sDATA,'var19'), 'var19/D')
-            myDataTree.Branch("NOBSsR3", rt.AddressOf(sDATA,'var20'), 'var20/D')
-            myDataTree.Branch("NOBSsR4", rt.AddressOf(sDATA,'var21'), 'var21/D')
+            #myDataTree.Branch("NOBSsR1", rt.AddressOf(sDATA,'var18'), 'var18/D')
+            #myDataTree.Branch("NOBSsR2", rt.AddressOf(sDATA,'var19'), 'var19/D')
+            #myDataTree.Branch("NOBSsR3", rt.AddressOf(sDATA,'var20'), 'var20/D')
+            #myDataTree.Branch("NOBSsR4", rt.AddressOf(sDATA,'var21'), 'var21/D')
             
             #lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
-            lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True)
+            #lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True)
             lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],data, fr_central, Extend=False)
 
-            sDATA.var4 = lzDataSR
-            sDATA.var5 = LH0DataSR
-            sDATA.var6 = LH1DataSR
+            #sDATA.var4 = lzDataSR
+            #sDATA.var5 = LH0DataSR
+            #sDATA.var6 = LH1DataSR
 
             sDATA.var7 = lzDataSRnoExt
             sDATA.var8 = LH0DataSRnoExt
             sDATA.var9 = LH1DataSRnoExt
 
-            sDATA.var10 = NS*IntS1/(IntS)+NB*IntB1/(IntB)
-            sDATA.var11 = NS*IntS2/(IntS)+NB*IntB2/(IntB)
-            sDATA.var12 = NS*IntS3/(IntS)+NB*IntB3/(IntB)
-            sDATA.var13 = NS*IntS4/(IntS)+NB*IntB4/(IntB)
+            #sDATA.var10 = NS*IntS1/(IntS)+NB*IntB1/(IntB)
+            #sDATA.var11 = NS*IntS2/(IntS)+NB*IntB2/(IntB)
+            #sDATA.var12 = NS*IntS3/(IntS)+NB*IntB3/(IntB)
+            #sDATA.var13 = NS*IntS4/(IntS)+NB*IntB4/(IntB)
 
-            sDATA.var14 = NB*IntB1/(IntB)
-            sDATA.var15 = NB*IntB2/(IntB)
-            sDATA.var16 = NB*IntB3/(IntB)
-            sDATA.var17 = NB*IntB4/(IntB)
+            #sDATA.var14 = NB*IntB1/(IntB)
+            #sDATA.var15 = NB*IntB2/(IntB)
+            #sDATA.var16 = NB*IntB3/(IntB)
+            #sDATA.var17 = NB*IntB4/(IntB)
 
-            sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1bis"])).numEntries()
-            sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2bis"])).numEntries()
-            sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3bis"])).numEntries()
-            sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4bis"])).numEntries()
+            #sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1bis"])).numEntries()
+            #sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2bis"])).numEntries()
+            #sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3bis"])).numEntries()
+            #sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4bis"])).numEntries()
 
             myDataTree.Fill()
 
@@ -608,35 +604,35 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine(
-                "struct MyStruct{\
-                Double_t var4;\
-                Double_t var5;\
-                Double_t var6;\
-                Double_t var7;\
-                Double_t var8;\
-                Double_t var9;\
-                Double_t var10;\
-                Double_t var11;\
-                Double_t var12;\
-                Double_t var13;\
-                };")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var7;Double_t var8;Double_t var9;};")
+            #                "struct MyStruct{\
+            #                Double_t var4;\
+            #                Double_t var5;\
+            #                Double_t var6;\
+            #                Double_t var7;\
+            #                Double_t var8;\
+            #                Double_t var9;\
+            #                Double_t var10;\
+            #                Double_t var11;\
+            #                Double_t var12;\
+            #                Double_t var13;\
+            #                };")
             from ROOT import MyStruct
 
             s = MyStruct()
             #myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
             #myTree.Branch("LH0x", rt.AddressOf(s,'var2'),'var2/D')
             #myTree.Branch("LH1x", rt.AddressOf(s,'var3'),'var3/D')
-            myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
-            myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
-            myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
+            #myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
+            #myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
+            #myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
             myTree.Branch("LzSRnoExt", rt.AddressOf(s,'var7'),'var7/D')
             myTree.Branch("LH0xSRnoExt", rt.AddressOf(s,'var8'),'var8/D')
             myTree.Branch("LH1xSRnoExt", rt.AddressOf(s,'var9'),'var9/D')
-            myTree.Branch("NOBSsR1", rt.AddressOf(s,'var10'), 'var10/D')
-            myTree.Branch("NOBSsR2", rt.AddressOf(s,'var11'), 'var11/D')
-            myTree.Branch("NOBSsR3", rt.AddressOf(s,'var12'), 'var12/D')
-            myTree.Branch("NOBSsR4", rt.AddressOf(s,'var13'), 'var13/D')
+            #myTree.Branch("NOBSsR1", rt.AddressOf(s,'var10'), 'var10/D')
+            #myTree.Branch("NOBSsR2", rt.AddressOf(s,'var11'), 'var11/D')
+            #myTree.Branch("NOBSsR3", rt.AddressOf(s,'var12'), 'var12/D')
+            #myTree.Branch("NOBSsR4", rt.AddressOf(s,'var13'), 'var13/D')
 
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
@@ -689,11 +685,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
                 #Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
-                LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True)
+                #LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True)
                 LzSRnoExt, LH0xSRnoExt,LH1xSRnoExt = getLzSR(boxes[box],tot_toy, fr_central, Extend=False)
-                if LzSR is None:
-                    print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
-                    continue
+                #if LzSR is None:
+                #    print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
+                #    continue
                 #lzValues.append(Lz)
                 #LH0xValues.append(LH0x)
                 #LH1xValues.append(LH1x)
@@ -706,18 +702,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 #s.var2 = LH0x
                 #s.var3 = LH1x
 
-                s.var4 = LzSR
-                s.var5 = LH0xSR
-                s.var6 = LH1xSR
+                #s.var4 = LzSR
+                #s.var5 = LH0xSR
+                #s.var6 = LH1xSR
 
                 s.var7 = LzSRnoExt
                 s.var8 = LH0xSRnoExt
                 s.var9 = LH1xSRnoExt
 
-                s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1bis"])).numEntries()
-                s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2bis"])).numEntries()
-                s.var12 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR3bis"])).numEntries()
-                s.var13 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR4bis"])).numEntries()
+                #s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1bis"])).numEntries()
+                #s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2bis"])).numEntries()
+                #s.var12 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR3bis"])).numEntries()
+                #s.var13 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR4bis"])).numEntries()
 
                 del tot_toy
 
@@ -757,6 +753,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #self.store(hist_H1, dir=box)
             #self.store(values, dir=box)
             #self.store(valuesSR, dir=box)
+
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)
 
