@@ -14,73 +14,34 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
-def isInFitRegion(x, y, box):
+def isInFitRegion(x, y, box, config):
+    myworkspace = rt.RooWorkspace(box)
+    myvariables = config.getVariablesRange(box,"variables",workspace)
+    myargs = workspace.allVars()
+    
     isFitReg = True
-    if x>900 : isFitReg = False
-    if x>650 and y>0.2: isFitReg = False
-    if x>500 and y>0.3: isFitReg = False
-
-    if box == "Mu" or box == "Ele":
-        if x>1000 : isFitReg = False
-        if x>450 and y>0.3: isFitReg = False
-
-    if box == "MuMu" or box == "MuEle" or box == "EleEle":
-        if x>650 and y>0.45: isFitReg = False
-        if x>450 and y>0.2: isFitReg = False
-        if x>400 and y>0.3: isFitReg = False
+    if x> myargs['MR'].getMin('sR1'): isFitReg = False
+    if x> myargs['MR'].getMin('sR2') and y> myargs['Rsq'].getMin('sR2'): isFitReg = False
+    if x> myargs['MR'].getMin('sR3') and y> myargs['Rsq'].getMin('sR3'): isFitReg = False
+    del myargs
+    del myvariables
+    del myworkspace
     return isFitReg
-
     
 def cutFitRegion(histo, box, config):
 
-
-    # define the loosest bin ranges
-    workspace = rt.RooWorkspace(box)
-    variables = config.getVariablesRange(box,"variables",workspace)
-    args = workspace.allVars()
-    
-    #we cut away events outside our MR window
-    minX = args['MR'].getMin()
-    maxX = args['MR'].getMax()
-
-    #we cut away events outside our Rsq window
-    minY = args['Rsq'].getMin()
-    maxY = args['Rsq'].getMax()
-
-    # cleanup
-    del workspace
-    del variables
-    del args
-
-    nameHisto = histo.GetName()
-    histo.SetName(nameHisto+"TMP")
-
-    mynx = 128
-    myny = 164
-
-    if box == "Had":
-        mynx = 124
-        myny = 136
-        
-
-    newhisto = rt.TH2D(nameHisto, nameHisto, mynx, minX, maxX, myny, minY, maxY)
-    for ix in range(1,mynx+1):
-        x = minX+ (maxX-minX)*(ix-0.5)/mynx
-        for iy in range(1,myny+1):
+    iBinx = histo.GetNbinsX()
+    iBiny = histo.GetNbinsY()
+    minX = histo.GetXaxis().GetXmin()
+    maxX = histo.GetXaxis().GetXmax()
+    minY = histo.GetYaxis().GetXmin()
+    maxY = histo.GetYaxis().GetXmax()
+    for ix in range(1, iBinx+1):
+        for iy in range(1, iBiny+1):
+            x = minX+ (maxX-minX)*(ix-0.5)/mynx
             y = minY+ (maxY-minY)*(iy-0.5)/myny
-            mybin = histo.FindBin(x,y)
-            if isInFitRegion(x,y,box): newhisto.SetBinContent(ix,iy,0.)
-            else :
-                oldXaxis = histo.GetXaxis()
-                newXaxis = newhisto.GetXaxis()
-                oldYaxis = histo.GetYaxis()
-                newYaxis = newhisto.GetYaxis()
-                newhisto.SetBinContent(ix,iy, histo.GetBinContent(mybin)*
-                                       newXaxis.GetBinWidth(newXaxis.FindBin(x))/oldXaxis.GetBinWidth(oldXaxis.FindBin(x))*
-                                       newYaxis.GetBinWidth(newYaxis.FindBin(y))/oldYaxis.GetBinWidth(oldYaxis.FindBin(y)))
-
-    if newhisto.Integral() != 0.: newhisto.Scale(histo.Integral()/newhisto.Integral())
-    return newhisto
+            if isInFitRegion(x,y,box): histo.SetBinContent(ix,iy,0.)
+    return histo
 
 def getMeanSigma(n0, nP, nM):
     maxVal = max(n0, nP, nM)
