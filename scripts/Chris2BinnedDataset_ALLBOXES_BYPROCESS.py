@@ -16,13 +16,13 @@ lumi = 1.0
 
 def isInFitRegion(x, y, box, config):
     myworkspace = rt.RooWorkspace(box)
-    myvariables = config.getVariablesRange(box,"variables",workspace)
-    myargs = workspace.allVars()
+    myvariables = config.getVariablesRange(box,"variables",myworkspace)
+    myargs = myworkspace.allVars()
     
     isFitReg = True
-    if x> myargs['MR'].getMin('sR1'): isFitReg = False
-    if x> myargs['MR'].getMin('sR2') and y> myargs['Rsq'].getMin('sR2'): isFitReg = False
-    if x> myargs['MR'].getMin('sR3') and y> myargs['Rsq'].getMin('sR3'): isFitReg = False
+    if x>= myargs['MR'].getMin('sR1'): isFitReg = False
+    if x>= myargs['MR'].getMin('sR2') and y> myargs['Rsq'].getMin('sR2'): isFitReg = False
+    if x>= myargs['MR'].getMin('sR3') and y> myargs['Rsq'].getMin('sR3'): isFitReg = False
     del myargs
     del myvariables
     del myworkspace
@@ -32,15 +32,11 @@ def cutFitRegion(histo, box, config):
 
     iBinx = histo.GetNbinsX()
     iBiny = histo.GetNbinsY()
-    minX = histo.GetXaxis().GetXmin()
-    maxX = histo.GetXaxis().GetXmax()
-    minY = histo.GetYaxis().GetXmin()
-    maxY = histo.GetYaxis().GetXmax()
+    xAxis = histo.GetXaxis()
+    yAxis = histo.GetYaxis()
     for ix in range(1, iBinx+1):
         for iy in range(1, iBiny+1):
-            x = minX+ (maxX-minX)*(ix-0.5)/mynx
-            y = minY+ (maxY-minY)*(iy-0.5)/myny
-            if isInFitRegion(x,y,box): histo.SetBinContent(ix,iy,0.)
+            if isInFitRegion(xAxis.GetBinCenter(ix),yAxis.GetBinCenter(iy),box,config): histo.SetBinContent(ix,iy,0.)
     return histo
 
 def getMeanSigma(n0, nP, nM):
