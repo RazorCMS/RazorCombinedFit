@@ -267,11 +267,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
             #H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
-            H0xNLL = box.getFitPDF(name=box.BkgModelSR).createNLL(ds,rt.RooFit.Range("sR1bis,sR2bis,sR3bis,sR4bis"),rt.RooFit.SumCoefRange("sR1bis,sR2bis,sR3bis,sR4bis"),rt.RooFit.Extended(Extend))
+            H0xNLL = box.getFitPDF(name=box.BkgModelSR).createNLL(ds,rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.SumCoefRange("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(Extend))
             LH0x = H0xNLL.getVal()
             #L(H1|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
-            H1xNLL = box.getFitPDF(name=box.SigPlusBkgModelSR).createNLL(ds,rt.RooFit.Range("sR1bis,sR2bis,sR3bis,sR4bis"),rt.RooFit.SumCoefRange("sR1bis,sR2bis,sR3bis,sR4bis"),rt.RooFit.Extended(Extend))
+            H1xNLL = box.getFitPDF(name=box.SigPlusBkgModelSR).createNLL(ds,rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.SumCoefRange("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(Extend))
             LH1x = H1xNLL.getVal()
 
             Lz = LH0x-LH1x
@@ -285,77 +285,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             return Lz, LH0x,LH1x
 
-        def getLzSROLD(box, ds, fr, Extend = True):
-            reset(box, fr)
-            
-            theRealFitModel = "fitmodel"
-            LH1x = 0 
-            LH0x = 0
-
-            rangeSR1 = "sR1"
-            if box.name == "MuMu" or box.name == "EleEle" or  box.name == "MuEle": rangeSR1 = "sR1bis"
-
-            ds1 = ds.reduce(box.getVarRangeCutNamed([rangeSR1]))
-            if ds1.numEntries() > 0:
-                likVal = box.getFitPDF(name=box.signalmodel).createNLL(ds1, rt.RooFit.Range(rangeSR1),rt.RooFit.SumCoefRange(rangeSR1), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H1) value in sR1 = %f" %likVal
-                LH1x = LH1x + likVal
-                likVal = box.getFitPDF(name=theRealFitModel).createNLL(ds1, rt.RooFit.Range(rangeSR1),rt.RooFit.SumCoefRange(rangeSR1), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H0) value in sR1 = %f" %likVal
-                LH0x = LH0x + likVal
-            del ds1
-
-            rangeSR2 = "sR2"
-            if box.name == "MuMu" or box.name == "EleEle" or  box.name == "MuEle": rangeSR2 = "sR2bis"
-
-            ds2 = ds.reduce(box.getVarRangeCutNamed([rangeSR2]))
-            if ds2.numEntries() > 0:
-                likVal =  box.getFitPDF(name=box.signalmodel).createNLL(ds2, rt.RooFit.Range(rangeSR2),rt.RooFit.SumCoefRange(rangeSR2), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H1) value in sR2 = %f" %likVal
-                LH1x = LH1x + likVal
-                likVal =  box.getFitPDF(name=theRealFitModel).createNLL(ds2, rt.RooFit.Range(rangeSR2),rt.RooFit.SumCoefRange(rangeSR2), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H0) value in sR2 = %f" %likVal
-                LH0x = LH0x + likVal
-            del ds2
-
-            rangeSR3 = "sR3"
-            if box.name == "MuMu" or box.name == "EleEle" or  box.name == "MuEle": rangeSR3 = "sR3bis"
-
-            ds3 = ds.reduce(box.getVarRangeCutNamed([rangeSR3]))
-            if ds3.numEntries() > 0:
-                likVal = box.getFitPDF(name=box.signalmodel).createNLL(ds3, rt.RooFit.Range(rangeSR3),rt.RooFit.SumCoefRange(rangeSR3), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H1) value in sR3 = %f" %likVal
-                LH1x = LH1x + likVal
-                likVal = LH0x + box.getFitPDF(name=theRealFitModel).createNLL(ds3, rt.RooFit.Range(rangeSR3),rt.RooFit.SumCoefRange(rangeSR3), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H0) value in sR3 = %f" %likVal
-                LH0x = LH0x + likVal
-            del ds3
-
-            rangeSR4 = "sR4"
-            if box.name == "MuMu" or box.name == "EleEle" or  box.name == "MuEle": rangeSR4 = "sR4bis"
-
-            ds4 = ds.reduce(box.getVarRangeCutNamed([rangeSR4]))
-            if ds4.numEntries() > 0:
-                likVal = box.getFitPDF(name=box.signalmodel).createNLL(ds4, rt.RooFit.Range(rangeSR4),rt.RooFit.SumCoefRange(rangeSR4), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H1) value in sR4 = %f" %likVal
-                LH1x = LH1x + likVal
-                likVal = box.getFitPDF(name=theRealFitModel).createNLL(ds4, rt.RooFit.Range(rangeSR4),rt.RooFit.SumCoefRange(rangeSR4), rt.RooFit.Extended(Extend)).getVal()
-                print "L(H0) value in sR4 = %f" %likVal
-                LH0x = LH0x + likVal
-            del ds4
-
-            Lz = LH0x-LH1x
-            print "**************************************************"
-            print " Set Extend to %i" %Extend
-            print "**************************************************"
-            print "L_SR(H0|x = %s) = %f" %(ds.GetName(),LH0x)
-            print "L_SR(H1|x = %s) = %f" %(ds.GetName(),LH1x)
-            print "Lz = L_SR(H0|x = %s) - L_SR(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
-            print "**************************************************"
-
-            return Lz, LH0x,LH1x
-
-         #start by setting all box configs the same
+        #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Starting limit setting for box %s' % box
 
@@ -379,89 +309,50 @@ class SingleBoxAnalysis(Analysis.Analysis):
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 
-            # define the new ranges
-            if boxes[box].name == "MuMu" or boxes[box].name == "MuEle" or boxes[box].name == "EleEle":
-                boxes[box].workspace.var("MR").setRange("sR1bis", 650., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR1bis", 0.11, 0.198)
-                boxes[box].workspace.var("MR").setRange("sR2bis", 450., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR2bis", 0.20, 0.298)
-                boxes[box].workspace.var("MR").setRange("sR3bis", 400., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR3bis", 0.30, 0.398)
-                boxes[box].workspace.var("MR").setRange("sR4bis", 350., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR4bis", 0.40, 0.498)
-            if boxes[box].name == "Mu" or boxes[box].name == "Ele":
-                boxes[box].workspace.var("MR").setRange("sR1bis", 1000., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR1bis", 0.11, 0.198)
-                boxes[box].workspace.var("MR").setRange("sR2bis", 650., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR2bis", 0.2, 0.298)
-                boxes[box].workspace.var("MR").setRange("sR3bis", 450., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR3bis", 0.30, 0.398)
-                boxes[box].workspace.var("MR").setRange("sR4bis", 450., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR4bis", 0.40, 0.498)
-            if boxes[box].name == "Had":
-                boxes[box].workspace.var("MR").setRange("sR1bis", 900., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR1bis", 0.18, 0.198)
-                boxes[box].workspace.var("MR").setRange("sR2bis", 650., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR2bis", 0.2, 0.298)
-                boxes[box].workspace.var("MR").setRange("sR3bis", 500., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR3bis", 0.30, 0.398)
-                boxes[box].workspace.var("MR").setRange("sR4bis", 500., 3500)
-                boxes[box].workspace.var("Rsq").setRange("sR4bis", 0.40, 0.498)                                     
-
             # define the yields and the extended pdfs in the SRs
             NS = boxes[box].getFitPDF("eBinPDF_Signal").expectedEvents(vars)
             IntS  = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars).getVal()
-            IntS1 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR1bis').getVal()
-            IntS2 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR2bis').getVal()
-            IntS3 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR3bis').getVal()
-            IntS4 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR4bis').getVal()
+            IntS1 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR1').getVal()
+            IntS2 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR2').getVal()
+            IntS3 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR3').getVal()
+            IntS4 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR4').getVal()
 
             NsSR = rt.RooRealVar("NsSR", "NsSR",NS*(IntS1+IntS2+IntS3+IntS4)/IntS)
 
             N_1stSR_TTj = rt.RooRealVar("N_1stSR_TTj","N_1stSR_TTj", boxes[box].getFitPDF("ePDF1st_TTj").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars).getVal())
             N_2ndSR_TTj = rt.RooRealVar("N_2ndSR_TTj","N_2ndSR_TTj", boxes[box].getFitPDF("ePDF2nd_TTj").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars).getVal())
             N_1stSR_Wln = rt.RooRealVar("N_1stSR_Wln","N_1stSR_Wln", boxes[box].getFitPDF("ePDF1st_Wln").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF1st_Wln").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF1st_Wln").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_Wln").createIntegral(vars,vars).getVal())
             N_2ndSR_Wln = rt.RooRealVar("N_2ndSR_Wln","N_2ndSR_Wln", boxes[box].getFitPDF("ePDF2nd_Wln").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF2nd_Wln").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF2nd_Wln").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_Wln").createIntegral(vars,vars).getVal())
             N_1stSR_Znn = rt.RooRealVar("N_1stSR_Znn","N_1stSR_Znn", boxes[box].getFitPDF("ePDF1st_Znn").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF1st_Znn").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF1st_Znn").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_Znn").createIntegral(vars,vars).getVal())
             N_2ndSR_Znn = rt.RooRealVar("N_2ndSR_Znn","N_2ndSR_Znn", boxes[box].getFitPDF("ePDF2nd_Znn").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF2nd_Znn").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF2nd_Znn").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_Znn").createIntegral(vars,vars).getVal())
             N_1stSR_Zll = rt.RooRealVar("N_1stSR_Zll","N_1stSR_Zll", boxes[box].getFitPDF("ePDF1st_Zll").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF1st_Zll").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF1st_Zll").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_Zll").createIntegral(vars,vars).getVal())
             N_2ndSR_Zll = rt.RooRealVar("N_2ndSR_Zll","N_2ndSR_Zll", boxes[box].getFitPDF("ePDF2nd_Zll").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF2nd_Zll").createIntegral(vars,vars,0,'sR1bis,sR2bis,sR3bis,sR4bis').getVal()/
+                                        boxes[box].getFitPDF("ePDF2nd_Zll").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_Zll").createIntegral(vars,vars).getVal())
 
-            #eBinPDFSR_Signal = rt.RooExtendPdf("eBinPDFSR_Signal","eBinPDFSR_Signal",  boxes[box].workspace.pdf("SignalPdf"), NsSR, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF1stSR_TTj = rt.RooExtendPdf("ePDF1stSR_TTj","ePDF1stSR_TTj", boxes[box].workspace.pdf("PDF1st_TTj"), N_1stSR_TTj, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF2ndSR_TTj = rt.RooExtendPdf("ePDF2ndSR_TTj","ePDF2ndSR_TTj", boxes[box].workspace.pdf("PDF2nd_TTj"), N_2ndSR_TTj, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF1stSR_Wln = rt.RooExtendPdf("ePDF1stSR_Wln","ePDF1stSR_Wln", boxes[box].workspace.pdf("PDF1st_Wln"), N_1stSR_Wln, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF2ndSR_Wln = rt.RooExtendPdf("ePDF2ndSR_Wln","ePDF2ndSR_Wln", boxes[box].workspace.pdf("PDF2nd_Wln"), N_2ndSR_Wln, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF1stSR_Znn = rt.RooExtendPdf("ePDF1stSR_Znn","ePDF1stSR_Znn", boxes[box].workspace.pdf("PDF1st_Znn"), N_1stSR_Znn, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF2ndSR_Znn = rt.RooExtendPdf("ePDF2ndSR_Znn","ePDF2ndSR_Znn", boxes[box].workspace.pdf("PDF2nd_Znn"), N_2ndSR_Znn, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF1stSR_Zll = rt.RooExtendPdf("ePDF1stSR_Zll","ePDF1stSR_Zll", boxes[box].workspace.pdf("PDF1st_Zll"), N_1stSR_Zll, "sR1bis,sR2bis,sR3bis,sR4bis")
-            #ePDF2ndSR_Zll = rt.RooExtendPdf("ePDF2ndSR_Zll","ePDF2ndSR_Zll", boxes[box].workspace.pdf("PDF2nd_Zll"), N_2ndSR_Zll, "sR1bis,sR2bis,sR3bis,sR4bis")
-
-            eBinPDFSR_Signal = rt.RooExtendPdf("eBinPDFSR_Signal","eBinPDFSR_Signal",  boxes[box].workspace.pdf("SignalPdf"), NsSR, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF1stSR_TTj = rt.RooExtendPdf("ePDF1stSR_TTj","ePDF1stSR_TTj", boxes[box].workspace.pdf("PDF1st_TTj"), N_1stSR_TTj, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF2ndSR_TTj = rt.RooExtendPdf("ePDF2ndSR_TTj","ePDF2ndSR_TTj", boxes[box].workspace.pdf("PDF2nd_TTj"), N_2ndSR_TTj, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF1stSR_Wln = rt.RooExtendPdf("ePDF1stSR_Wln","ePDF1stSR_Wln", boxes[box].workspace.pdf("PDF1st_Wln"), N_1stSR_Wln, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF2ndSR_Wln = rt.RooExtendPdf("ePDF2ndSR_Wln","ePDF2ndSR_Wln", boxes[box].workspace.pdf("PDF2nd_Wln"), N_2ndSR_Wln, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF1stSR_Znn = rt.RooExtendPdf("ePDF1stSR_Znn","ePDF1stSR_Znn", boxes[box].workspace.pdf("PDF1st_Znn"), N_1stSR_Znn, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF2ndSR_Znn = rt.RooExtendPdf("ePDF2ndSR_Znn","ePDF2ndSR_Znn", boxes[box].workspace.pdf("PDF2nd_Znn"), N_2ndSR_Znn, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF1stSR_Zll = rt.RooExtendPdf("ePDF1stSR_Zll","ePDF1stSR_Zll", boxes[box].workspace.pdf("PDF1st_Zll"), N_1stSR_Zll, "sR1bis,sR2bis,sR3bis,sR4bis")
-            ePDF2ndSR_Zll = rt.RooExtendPdf("ePDF2ndSR_Zll","ePDF2ndSR_Zll", boxes[box].workspace.pdf("PDF2nd_Zll"), N_2ndSR_Zll, "sR1bis,sR2bis,sR3bis,sR4bis")
+            eBinPDFSR_Signal = rt.RooExtendPdf("eBinPDFSR_Signal","eBinPDFSR_Signal",  boxes[box].workspace.pdf("SignalPdf"), NsSR, "sR1,sR2,sR3,sR4")
+            ePDF1stSR_TTj = rt.RooExtendPdf("ePDF1stSR_TTj","ePDF1stSR_TTj", boxes[box].workspace.pdf("PDF1st_TTj"), N_1stSR_TTj, "sR1,sR2,sR3,sR4")
+            ePDF2ndSR_TTj = rt.RooExtendPdf("ePDF2ndSR_TTj","ePDF2ndSR_TTj", boxes[box].workspace.pdf("PDF2nd_TTj"), N_2ndSR_TTj, "sR1,sR2,sR3,sR4")
+            ePDF1stSR_Wln = rt.RooExtendPdf("ePDF1stSR_Wln","ePDF1stSR_Wln", boxes[box].workspace.pdf("PDF1st_Wln"), N_1stSR_Wln, "sR1,sR2,sR3,sR4")
+            ePDF2ndSR_Wln = rt.RooExtendPdf("ePDF2ndSR_Wln","ePDF2ndSR_Wln", boxes[box].workspace.pdf("PDF2nd_Wln"), N_2ndSR_Wln, "sR1,sR2,sR3,sR4")
+            ePDF1stSR_Znn = rt.RooExtendPdf("ePDF1stSR_Znn","ePDF1stSR_Znn", boxes[box].workspace.pdf("PDF1st_Znn"), N_1stSR_Znn, "sR1,sR2,sR3,sR4")
+            ePDF2ndSR_Znn = rt.RooExtendPdf("ePDF2ndSR_Znn","ePDF2ndSR_Znn", boxes[box].workspace.pdf("PDF2nd_Znn"), N_2ndSR_Znn, "sR1,sR2,sR3,sR4")
+            ePDF1stSR_Zll = rt.RooExtendPdf("ePDF1stSR_Zll","ePDF1stSR_Zll", boxes[box].workspace.pdf("PDF1st_Zll"), N_1stSR_Zll, "sR1,sR2,sR3,sR4")
+            ePDF2ndSR_Zll = rt.RooExtendPdf("ePDF2ndSR_Zll","ePDF2ndSR_Zll", boxes[box].workspace.pdf("PDF2nd_Zll"), N_2ndSR_Zll, "sR1,sR2,sR3,sR4")
 
             boxes[box].importToWS(NsSR)
             boxes[box].importToWS(eBinPDFSR_Signal)
@@ -484,10 +375,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             NB = boxes[box].getFitPDF(boxes[box].fitmodel).expectedEvents(vars)
             IntB  = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars).getVal()
-            IntB1 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR1bis').getVal()
-            IntB2 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR2bis').getVal()
-            IntB3 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR3bis').getVal()
-            IntB4 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR4bis').getVal()
+            IntB1 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR1').getVal()
+            IntB2 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR2').getVal()
+            IntB3 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR3').getVal()
+            IntB4 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR4').getVal()
 
             BPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF1stSR_TTj"))
             if N_2ndSR_TTj.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_TTj"))
@@ -522,26 +413,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
     
             # THIS IS CRAZY !!!!
             rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var7;Double_t var8;Double_t var9;};")
-            #                "struct MyDataStruct{\
-            #                Double_t var4;\
-            #                Double_t var5;\
-            #                Double_t var6;\
-            #                Double_t var7;\
-            #                Double_t var8;\
-            #                Double_t var9;\
-            #                Double_t var10;\
-            #                Double_t var11;\
-            #                Double_t var12;\
-            #                Double_t var13;\
-            #                Double_t var14;\
-            #                Double_t var15;\
-            #                Double_t var16;\
-            #                Double_t var17;\
-            #                Double_t var18;\
-            #                Double_t var19;\
-            #                Double_t var20;\
-            #                Double_t var21;\
-            #                };")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
@@ -590,10 +461,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #sDATA.var16 = NB*IntB3/(IntB)
             #sDATA.var17 = NB*IntB4/(IntB)
 
-            #sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1bis"])).numEntries()
-            #sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2bis"])).numEntries()
-            #sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3bis"])).numEntries()
-            #sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4bis"])).numEntries()
+            #sDATA.var18 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR1"])).numEntries()
+            #sDATA.var19 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR2"])).numEntries()
+            #sDATA.var20 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR3"])).numEntries()
+            #sDATA.var21 = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["sR4"])).numEntries()
 
             myDataTree.Fill()
 
@@ -605,18 +476,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
     
             # THIS IS CRAZY !!!!
             rt.gROOT.ProcessLine("struct MyStruct{Double_t var7;Double_t var8;Double_t var9;};")
-            #                "struct MyStruct{\
-            #                Double_t var4;\
-            #                Double_t var5;\
-            #                Double_t var6;\
-            #                Double_t var7;\
-            #                Double_t var8;\
-            #                Double_t var9;\
-            #                Double_t var10;\
-            #                Double_t var11;\
-            #                Double_t var12;\
-            #                Double_t var13;\
-            #                };")
             from ROOT import MyStruct
 
             s = MyStruct()
@@ -650,7 +509,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     sigGenPdf = rt.RooHistPdf('%sPdf_%i' % ('Signal',i),'%sPdf_%i' % ('Signal',i),vars,sigData)
                     #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
-                    sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
+                    if self.options.signal_xsec > 0.:   
+                        # for SMS
+                        sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)*self.options.signal_xsec
+                    else:
+                        # for CMSSM
+                        sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
                     print "sigGenNum = %f" % sigGenNum
                     print "bkgGenNum = %f" % bkgGenNum
                     print "numEntriesData = %i" % data.numEntries()
@@ -710,10 +574,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 s.var8 = LH0xSRnoExt
                 s.var9 = LH1xSRnoExt
 
-                #s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1bis"])).numEntries()
-                #s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2bis"])).numEntries()
-                #s.var12 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR3bis"])).numEntries()
-                #s.var13 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR4bis"])).numEntries()
+                #s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1"])).numEntries()
+                #s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2"])).numEntries()
+                #s.var12 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR3"])).numEntries()
+                #s.var13 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR4"])).numEntries()
 
                 del tot_toy
 
