@@ -145,7 +145,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         yieldByProcessThisBox = []        
         for i in range(0,nProcess): 
             histo = rt.TH2D("wHisto_TMP","wHisto_TMP", nbinx, binedgex, nbiny, binedgey) 
-            tree.Project("wHisto_TMP", "RSQ:MR", 'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i) && (BTAG_NUM>=%i))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box], btag))
+            #tree.Project("wHisto_TMP", "RSQ:MR", 'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i) && (BTAG_NUM>=%i))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box], btag))
+            tree.Project("wHisto_TMP", "RSQ:MR", 'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BOX_NUM == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,boxMap[box], btag,btag))
             yieldByProcessThisBox.append(histo.Integral())
             del histo
         yieldByProcess.append([box,yieldByProcessThisBox])
@@ -155,31 +156,31 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         
         # nominal
         histo = rt.TH2D("wHisto_PROC%i" %i,"wHisto_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_PROC%i" %i, "RSQ:MR", 'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_NUM>=%i))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag))
+        tree.Project("wHisto_PROC%i" %i, "RSQ:MR", 'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
         plotByProcess.append(histo.Clone())
 
         # JES UP
         histo = rt.TH2D("wHisto_JESup_PROC%i" %i,"wHisto_JESup_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_JESup_PROC%i" %i, "RSQ_JES_UP:MR_JES_UP", 'LEP_W*%s*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (PROC == %i) && (BTAG_NUM>=%i))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag))
+        tree.Project("wHisto_JESup_PROC%i" %i, "RSQ_JES_UP:MR_JES_UP", 'LEP_W*%s*(MR_JES_UP >= %f && MR_JES_UP <= %f && RSQ_JES_UP >= %f && RSQ_JES_UP <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
         plotByProcessJESUP.append(histo.Clone())
 
         # JES DOWN
         histo = rt.TH2D("wHisto_JESdown_PROC%i" %i,"wHisto_JESdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_JESdown_PROC%i" %i, "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*%s*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (PROC == %i) && (BTAG_NUM>=%i))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag))
+        tree.Project("wHisto_JESdown_PROC%i" %i, "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*%s*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
         plotByProcessJESDOWN.append(histo.Clone())
 
         # XSEC UP
         histo = rt.TH2D("wHisto_xsecup_PROC%i" %i,"wHisto_xsecup_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_xsecup_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_NUM>=%i))' % (weightUP,mRmin,mRmax,rsqMin,rsqMax,i,btag))
+        tree.Project("wHisto_xsecup_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weightUP,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
         plotByProcessXSECUP.append(histo.Clone())
 
         # XSEC DOWN
         histo = rt.TH2D("wHisto_xsecdown_PROC%i" %i,"wHisto_xsecdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_NUM>=%i))' % (weightDOWN,mRmin,mRmax,rsqMin,rsqMax,i,btag))
+        tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weightDOWN,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
         plotByProcessXSECDOWN.append(histo.Clone())
 
         # PDF CEN and SIGMA
-        histo_pdfCEN, histo_pdfSYS = makePDFPlotCONDARRAY(tree, histo, nbinx, binedgex, nbiny, binedgey, "PROC == %i && BTAG_NUM>=%i" %(i,btag))
+        histo_pdfCEN, histo_pdfSYS = makePDFPlotCONDARRAY(tree, histo, nbinx, binedgex, nbiny, binedgey, "PROC == %i && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f)" %(i,btag,btag))
         histo_pdfCEN.SetName("wHisto_pdfCEN_PROC%i" %i)
         histo_pdfSYS.SetName("wHisto_pdfSYS_PROC%i" %i)
         plotByProcessPDFCEN.append(histo_pdfCEN.Clone())
@@ -424,7 +425,11 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
 
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
-            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,options.btag,options.toys,options.varbin,options.doSMS)
+            btag = -10000000000000.
+            if options.btag > 0:
+                # we do only one btag
+                btag = 3.3
+            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
