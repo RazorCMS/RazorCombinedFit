@@ -412,13 +412,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var7;Double_t var8;Double_t var9;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
-            #myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
-            #myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
-            #myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
+            myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
+            myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
+            myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
 
             myDataTree.Branch("LzSRnoExt", rt.AddressOf(sDATA,'var7'),'var7/D')
             myDataTree.Branch("LH0xSRnoExt", rt.AddressOf(sDATA,'var8'),'var8/D')
@@ -440,13 +440,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #myDataTree.Branch("NOBSsR4", rt.AddressOf(sDATA,'var21'), 'var21/D')
             
             #lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
-            #lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True)
+            lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True)
             lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],data, fr_central, Extend=False)
 
-            #sDATA.var4 = lzDataSR
-            #sDATA.var5 = LH0DataSR
-            #sDATA.var6 = LH1DataSR
-
+            sDATA.var4 = lzDataSR
+            sDATA.var5 = LH0DataSR
+            sDATA.var6 = LH1DataSR
             sDATA.var7 = lzDataSRnoExt
             sDATA.var8 = LH0DataSRnoExt
             sDATA.var9 = LH1DataSRnoExt
@@ -475,16 +474,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Double_t var7;Double_t var8;Double_t var9;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;};")
             from ROOT import MyStruct
 
             s = MyStruct()
             #myTree.Branch("Lz", rt.AddressOf(s,'var1'),'var1/D')
             #myTree.Branch("LH0x", rt.AddressOf(s,'var2'),'var2/D')
             #myTree.Branch("LH1x", rt.AddressOf(s,'var3'),'var3/D')
-            #myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
-            #myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
-            #myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
+            myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
+            myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
+            myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
             myTree.Branch("LzSRnoExt", rt.AddressOf(s,'var7'),'var7/D')
             myTree.Branch("LH0xSRnoExt", rt.AddressOf(s,'var8'),'var8/D')
             myTree.Branch("LH1xSRnoExt", rt.AddressOf(s,'var9'),'var9/D')
@@ -549,7 +548,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
                 #Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
-                #LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True)
+                LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True)
                 LzSRnoExt, LH0xSRnoExt,LH1xSRnoExt = getLzSR(boxes[box],tot_toy, fr_central, Extend=False)
                 #if LzSR is None:
                 #    print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
@@ -566,10 +565,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 #s.var2 = LH0x
                 #s.var3 = LH1x
 
-                #s.var4 = LzSR
-                #s.var5 = LH0xSR
-                #s.var6 = LH1xSR
-
+                s.var4 = LzSR
+                s.var5 = LH0xSR
+                s.var6 = LH1xSR
                 s.var7 = LzSRnoExt
                 s.var8 = LH0xSRnoExt
                 s.var9 = LH1xSRnoExt
