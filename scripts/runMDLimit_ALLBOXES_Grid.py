@@ -58,18 +58,18 @@ if __name__ == '__main__':
         seed = -1
         if xsec > 0.:
             # run SMS
-            outputfile.write("python scripts/%s -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg --sms -t %i -d $PWD $PWD/../%s/%s\n" %(script, toys, signalfiledir, signalfilename))
+            outputfile.write("python scripts/%s -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg --sms -t %i -d $PWD $PWD/../%s/%s\n" %(script, toys, signalfiledir, signalfilename))
             # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s_xsec_%f.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(xsec,seed,signal,xsec,input,signal,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg -o $PWD/../LimitBkgSigToys_%s_xsec_%f.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(xsec,seed,signal,xsec,input,signal,toys))
             # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s_xsec_%f.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(xsec,seed,signal,xsec,input,signal,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg -o $PWD/../LimitBkgToys_%s_xsec_%f.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(xsec,seed,signal,xsec,input,signal,toys))
         else:
             # run CMSSM
-            outputfile.write("python scripts/%s -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -t %i -d $PWD $PWD/../%s/%s\n" %(script, toys, signalfiledir, signalfilename))
+            outputfile.write("python scripts/%s -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg -t %i -d $PWD $PWD/../%s/%s\n" %(script, toys, signalfiledir, signalfilename))
             # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgSigToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg -o $PWD/../LimitBkgSigToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
             # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_summer11/SingleBoxFit_Prompt_fR1fR2fR3fR4.cfg -o $PWD/../LimitBkgToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
+            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -s %i -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg -o $PWD/../LimitBkgToys_%s.root -i $PWD/../%s $PWD/%s_MR*.root -b --limit -e -t %i >& /dev/null\n" %(seed,signal,input,signal,toys))
 
         # prepare the CRAB script
         if xsec>0: outputname2 = "crab_%s_xsec_%f.cfg" %(signal,xsec)
@@ -99,7 +99,8 @@ if __name__ == '__main__':
         if xsec > 0: outputfile2.write('additional_input_files = everything.tgz, files_%i_%i_xsec_%f.tgz\n' %(M0,M12,xsec))
         else: outputfile2.write('additional_input_files = everything.tgz, files_%i_%i.tgz\n' %(M0,M12))
         outputfile2.write('[GRID]\n')
-        outputfile2.write('ce_white_list=T2_US_Caltech\n')
+        #outputfile2.write('ce_white_list=T2_US_Caltech\n')
+        outputfile2.write('ce_white_list=T2_FR_GRIF_LLR,T2_UK_London_IC\n')    
         outputfile2.close
         
         # prepare the tarball
@@ -111,6 +112,5 @@ if __name__ == '__main__':
         outputfile3.write('crab -create -cfg %s\n' %outputname2)
         outputfile3.write('crab -submit -c  %s\n' %(outputname2.split(".cfg")[0]))
         outputfile3.close
-        
         # submit the job [TO UNCOMMENT]
-        #os.system("source %s" %outputname3)
+        os.system("echo source %s" %outputname3)
