@@ -111,7 +111,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         if mRmax> 1600: binedgexLIST.append(1600)
         if mRmax> 2000: binedgexLIST.append(2000)
         if mRmax> 2800: binedgexLIST.append(2800)
-        if mRmax> mRmax: binedgexLIST.append(mRmax)
+        binedgexLIST.append(mRmax)
     nbinx =  len(binedgexLIST)-1
 
     #use a fixed bin for R^2
@@ -123,7 +123,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         binedgeyLIST.append(rsqMax)
     else: 
         #use fixed binning 
-        binedgeyLIST = [rsqMin,0.2,0.3,0.4,0.5]
+        binedgeyLIST = [rsqMin,0.18,0.2,0.3,0.4,0.5]
     nbiny = len(binedgeyLIST)-1    
 
     binedgex = array('d',binedgexLIST)
