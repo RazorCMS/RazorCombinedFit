@@ -9,11 +9,12 @@ class RazorMultiJetBox(RazorBox.RazorBox):
     def __init__(self, name, variables):
         super(RazorMultiJetBox,self).__init__(name, variables)
         
-        #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
-        # this is what we did in 2011
-        # self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
-        # now we switch off the redundant Znn component in the Had box
+        # DATA DEFAULT
         self.zeros = {'TTj':[], 'QCD':['BJET']}
+        # MC FIT: QCD
+        #self.zeros = {'TTj':['Had','QCD'], 'QCD':[]}
+        # MC FIT: TTj
+        #self.zeros = {'TTj':[], 'QCD':['Had','BJET']}
 
         self.cut = 'MR >= 0.0'
 
@@ -45,8 +46,8 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             # the "effective" first component in the Had box
-            if not (self.name == "BJET" and z == "QCD"): self.float1stComponentWithPenalty(z)
-            if z != "QCD": self.float2ndComponentWithPenalty(z, False)
+            if not (self.name == "BJET" and z == "QCD"): self.float1stComponentWithPenalty(z, True)
+            if z != "QCD": self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             self.floatFraction(z)
 
@@ -140,4 +141,4 @@ class RazorMultiJetBox(RazorBox.RazorBox):
     def plot(self, inputFile, store, box):
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['FULL'])]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['FULL'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=['FULL'])]
