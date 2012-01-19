@@ -274,6 +274,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             H1xNLL = box.getFitPDF(name=box.SigPlusBkgModelSR).createNLL(ds,rt.RooFit.Range("sR1,sR2,sR3,sR4"),rt.RooFit.SumCoefRange("sR1,sR2,sR3,sR4"),rt.RooFit.Extended(Extend))
             LH1x = H1xNLL.getVal()
 
+            if math.isnan(LH1x):
+                print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
+                print "         Since this corresponds to no signal/bkg discrimination, returning L(H1)=L(H0)"
+                LH1x = LH0x
+
             Lz = LH0x-LH1x
             print "**************************************************"
             print " Set Extend to %i" %Extend
@@ -514,6 +519,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)*self.options.signal_xsec
                     else:
                         # for CMSSM
+                        print sigData.sum(False)
                         sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigData.sum(False)/1000
                     print "sigGenNum = %f" % sigGenNum
                     print "bkgGenNum = %f" % bkgGenNum
