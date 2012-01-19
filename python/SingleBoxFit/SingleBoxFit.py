@@ -6,9 +6,9 @@ import math
 
 class SingleBoxAnalysis(Analysis.Analysis):
 
-    def __init__(self, outputFile, config, DoRazorB = False):
+    def __init__(self, outputFile, config, Analysis = "INCLUSIVE"):
         super(SingleBoxAnalysis,self).__init__('SingleBoxFit',outputFile, config)
-        self.DoRazorB = DoRazorB
+        self.Analysis = Analysis
     
     def merge(self, workspace, box):
         """Import the contents of a box workspace into the master workspace while enforcing some name-spaceing"""
@@ -22,12 +22,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         import RazorBox
         import RazorBjetBox
+        import RazorMultiJetBox
         boxes = {}
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
-            if self.DoRazorB: boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
+            if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
+            elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             # Wln

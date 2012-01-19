@@ -40,6 +40,8 @@ def defineParser():
                   help="Signal cross section (in pb) for SMSs limit setting")
     parser.add_option('--bjet',dest="doBjet", default=False, action='store_true',
                   help="Run the RazorB analysis")
+    parser.add_option('--multijet',dest="doMultijet", default=False, action='store_true',
+                  help="Run the Razor MultiJet analysis")
     return parser
 
 if __name__ == '__main__':
@@ -76,10 +78,14 @@ if __name__ == '__main__':
     from TwoDFit import TwoDFit
     from DalglishFit import DalglishFit
     from SingleBoxFit import SingleBoxFit
+
+    analysis = "INCLUSIVE"
+    if options.doBjet: analysis = "BJET"
+    if options.doMultijet: analysis = "MULTIJET"
     
     if options.analysis is not None:
         a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg),
-             DalglishFit.DalglishAnalysis(options.output, cfg), SingleBoxFit.SingleBoxAnalysis(options.output, cfg, options.doBjet)]
+             DalglishFit.DalglishAnalysis(options.output, cfg), SingleBoxFit.SingleBoxAnalysis(options.output, cfg, analysis)]
         for aa in a:
             if aa.name == options.analysis:
                 aa.options = options
