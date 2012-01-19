@@ -263,7 +263,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         def getLzSR(box, ds, fr, Extend = True):
             reset(box, fr)
-            
+
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
             #H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
@@ -283,6 +283,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Lz = L_SR(H0|x = %s) - L_SR(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
             print "**************************************************"
 
+            del H0xNLL, H1xNLL            
             return Lz, LH0x,LH1x
 
         #start by setting all box configs the same
@@ -412,7 +413,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;};")
+            #rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var4;Double_t var5;Double_t var6;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
@@ -420,9 +422,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
             myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
 
-            myDataTree.Branch("LzSRnoExt", rt.AddressOf(sDATA,'var7'),'var7/D')
-            myDataTree.Branch("LH0xSRnoExt", rt.AddressOf(sDATA,'var8'),'var8/D')
-            myDataTree.Branch("LH1xSRnoExt", rt.AddressOf(sDATA,'var9'),'var9/D')
+            #myDataTree.Branch("LzSRnoExt", rt.AddressOf(sDATA,'var7'),'var7/D')
+            #myDataTree.Branch("LH0xSRnoExt", rt.AddressOf(sDATA,'var8'),'var8/D')
+            #myDataTree.Branch("LH1xSRnoExt", rt.AddressOf(sDATA,'var9'),'var9/D')
 
             #myDataTree.Branch("NSpBsR1", rt.AddressOf(sDATA,'var10'), 'var10/D')
             #myDataTree.Branch("NSpBsR2", rt.AddressOf(sDATA,'var11'), 'var11/D')
@@ -441,14 +443,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True)
-            lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],data, fr_central, Extend=False)
+            #lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],data, fr_central, Extend=False)
 
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
             sDATA.var6 = LH1DataSR
-            sDATA.var7 = lzDataSRnoExt
-            sDATA.var8 = LH0DataSRnoExt
-            sDATA.var9 = LH1DataSRnoExt
+            #sDATA.var7 = lzDataSRnoExt
+            #sDATA.var8 = LH0DataSRnoExt
+            #sDATA.var9 = LH1DataSRnoExt
 
             #sDATA.var10 = NS*IntS1/(IntS)+NB*IntB1/(IntB)
             #sDATA.var11 = NS*IntS2/(IntS)+NB*IntB2/(IntB)
@@ -467,14 +469,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             myDataTree.Fill()
 
-            lzValues = []
-            LH1xValues = []
-            LH0xValues = []
+            #lzValues = []
+            #LH1xValues = []
+            #LH0xValues = []
 
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;};")
+            #rt.gROOT.ProcessLine("struct MyStruct{Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var4;Double_t var5;Double_t var6;};")
             from ROOT import MyStruct
 
             s = MyStruct()
@@ -484,9 +487,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
             myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
-            myTree.Branch("LzSRnoExt", rt.AddressOf(s,'var7'),'var7/D')
-            myTree.Branch("LH0xSRnoExt", rt.AddressOf(s,'var8'),'var8/D')
-            myTree.Branch("LH1xSRnoExt", rt.AddressOf(s,'var9'),'var9/D')
+            #myTree.Branch("LzSRnoExt", rt.AddressOf(s,'var7'),'var7/D')
+            #myTree.Branch("LH0xSRnoExt", rt.AddressOf(s,'var8'),'var8/D')
+            #myTree.Branch("LH1xSRnoExt", rt.AddressOf(s,'var9'),'var9/D')
             #myTree.Branch("NOBSsR1", rt.AddressOf(s,'var10'), 'var10/D')
             #myTree.Branch("NOBSsR2", rt.AddressOf(s,'var11'), 'var11/D')
             #myTree.Branch("NOBSsR3", rt.AddressOf(s,'var12'), 'var12/D')
@@ -549,7 +552,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "get Lz for toys"
                 #Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
                 LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True)
-                LzSRnoExt, LH0xSRnoExt,LH1xSRnoExt = getLzSR(boxes[box],tot_toy, fr_central, Extend=False)
+                #LzSRnoExt, LH0xSRnoExt,LH1xSRnoExt = getLzSR(boxes[box],tot_toy, fr_central, Extend=False)
                 #if LzSR is None:
                 #    print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
                 #    continue
@@ -568,9 +571,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 s.var4 = LzSR
                 s.var5 = LH0xSR
                 s.var6 = LH1xSR
-                s.var7 = LzSRnoExt
-                s.var8 = LH0xSRnoExt
-                s.var9 = LH1xSRnoExt
+                #s.var7 = LzSRnoExt
+                #s.var8 = LH0xSRnoExt
+                #s.var9 = LH1xSRnoExt
 
                 #s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1"])).numEntries()
                 #s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2"])).numEntries()
@@ -618,5 +621,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)
-
+            del sDATA
+            del s
 
