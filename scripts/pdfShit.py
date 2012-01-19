@@ -5,8 +5,7 @@ from array import array
 # return histogram with max and min variations value
 def GetCenAndErr(h1, h2, h3, h4):
     ibinx = h1.GetNbinsX()
-    ibiny = h1.GetNbinsY()
-    
+    ibiny = h1.GetNbinsY()    
     for i in range(1,ibinx+1):
         for j in range(1,ibiny+1):
             MAX = h1.GetBinContent(i,j)
@@ -122,17 +121,16 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
     hMRST2006NNLO_EIGENP = rt.TH2D("hMRST2006NNLO_EIGENP",   "hMRST2006NNLO_EIGENP", ibinx, xarray, ibiny, yarray)
     hMRST2006NNLO_EIGENM = rt.TH2D("hMRST2006NNLO_EIGEN", "hMRST2006NNLO_EIGEN", ibinx, xarray, ibiny, yarray)
     
-    hMRST2007lomod_ABS = rt.TH2D("hMRST2007lomod_ABS",   "hMRST2007lomod_ABS", ibinx, xarray, ibiny, yarray)
+    #hMRST2007lomod_ABS = rt.TH2D("hMRST2007lomod_ABS",   "hMRST2007lomod_ABS", ibinx, xarray, ibiny, yarray)
     
-    hwCTEQ66 = []
-    hwCTEQ66SQ = []
-
     minx = xarray[0]
     maxx = xarray[-1]
 
     miny = yarray[0]
     maxy = yarray[-1]
 
+    hwCTEQ66 = []
+    hwCTEQ66SQ = []
     for i in range(0, 45):
         #make histogram for this weight
         wCTEQ66 = rt.TH2D("wCTEQ66_%i" %i,"wCTEQ66_%i" %i, ibinx, xarray, ibiny, yarray)
@@ -153,17 +151,16 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
         hwMRST2006NNLO.append(wMRST2006NNLO)
         hwMRST2006NNLOSQ.append(wMRST2006NNLOSQ)
 
-    hwMRST2007lomod = []
-    hwMRST2007lomodSQ = []
-
-    for i in range(0,1):
-        #make histogram for this weight
-        wMRST2007lomod = rt.TH2D("wMRST2007lomod_%i" %i,"wMRST2007lomod_%i" %i, ibinx, xarray, ibiny, yarray)
-        tree.Project("wMRST2007lomod_%i" %i, "RSQ:MR", 'LEP_W*W*MRST2007lomod_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-        wMRST2007lomodSQ = rt.TH2D("wMRST2007lomodSQ_%i" %i,"wMRST2007lomodSQ_%i", ibinx, xarray, ibiny, yarray)
-        tree.Project("wMRST2007lomodSQ_%i" %i, "RSQ:MR", 'LEP_W*W*pow(MRST2007lomod_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-        hwMRST2007lomod.append(wMRST2007lomod)
-        hwMRST2007lomodSQ.append(wMRST2007lomodSQ)
+    #hwMRST2007lomod = []
+    #hwMRST2007lomodSQ = []
+    #for i in range(0,1):
+    #    #make histogram for this weight
+    #    wMRST2007lomod = rt.TH2D("wMRST2007lomod_%i" %i,"wMRST2007lomod_%i" %i, ibinx, xarray, ibiny, yarray)
+    #    tree.Project("wMRST2007lomod_%i" %i, "RSQ:MR", 'LEP_W*W*MRST2007lomod_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
+    #    wMRST2007lomodSQ = rt.TH2D("wMRST2007lomodSQ_%i" %i,"wMRST2007lomodSQ_%i", ibinx, xarray, ibiny, yarray)
+    #    tree.Project("wMRST2007lomodSQ_%i" %i, "RSQ:MR", 'LEP_W*W*pow(MRST2007lomod_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
+    #    hwMRST2007lomod.append(wMRST2007lomod)
+    #    hwMRST2007lomodSQ.append(wMRST2007lomodSQ)
 
     for i in range(1, ibinx+1):
         for j in range(1, ibiny+1):
@@ -178,6 +175,7 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
                 GetErrEigenM, GetErrEigenP = GetErrEigen(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral(), True)
                 hCTEQ66_EIGENP.SetBinContent(i, j, GetErrEigenP)
                 hCTEQ66_EIGENM.SetBinContent(i, j, GetErrEigenM)
+    del hwCTEQ66, hwCTEQ66SQ
     
     for i in range(1, ibinx+1):
         for j in range(1, ibiny+1):
@@ -191,19 +189,23 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
                 GetErrEigenM, GetErrEigenP = GetErrEigen(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral(), False)
                 hMRST2006NNLO_EIGENP.SetBinContent(i, j, GetErrEigenP)
                 hMRST2006NNLO_EIGENM.SetBinContent(i, j, GetErrEigenM)      
+    del hwMRST2006NNLO, hwMRST2006NNLOSQ
 
-    for i in range(1, ibinx+1):
-        for j in range(1, ibiny+1):
-            hw = []
-            hw2 = []
-            for k in range(0,1):
-                w.append(hwMRST2007lomod[k].Integral())
-                hw.append(hwMRST2007lomod[k].GetBinContent(i,j))
-                hw2.append(hwMRST2007lomodSQ[k].GetBinContent(i,j))
-            if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:    
-                hMRST2007lomod_ABS.SetBinContent(i, j, GetErrAbs(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral()))
-
-    return GetCenAndErr(hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM)
+    #for i in range(1, ibinx+1):
+    #    for j in range(1, ibiny+1):
+    #        hw = []
+    #        hw2 = []
+    #        for k in range(0,1):
+    #            w.append(hwMRST2007lomod[k].Integral())
+    #            hw.append(hwMRST2007lomod[k].GetBinContent(i,j))
+    #            hw2.append(hwMRST2007lomodSQ[k].GetBinContent(i,j))
+    #        if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:    
+    #            hMRST2007lomod_ABS.SetBinContent(i, j, GetErrAbs(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral()))
+    #del hwMRST2007lomod, hwMRST2007lomodSQ
+    
+    Cen,Error = GetCenAndErr(hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM)
+    del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM
+    return Cen,Error
 
 def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     myX = []
@@ -214,8 +216,9 @@ def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     myY = []
     for i in range (0,ibiny+1): myY.append(miny+ (maxy-miny)/ibiny*i)
     myYarray = array("d", myY)
-    return makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, box)
-
+    Cen,Error = makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, box)
+    del myXarray, myYarray
+    return Cen,Error
 
 def makePDFPlot(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     return makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, "BOX_NUM == %i" %box)

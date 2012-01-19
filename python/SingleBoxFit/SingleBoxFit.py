@@ -304,9 +304,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.allVars().Print('V')
             print 'Workspace'
             boxes[box].workspace.Print('V')
-
             fr_central = boxes[box].workspace.obj('independentFR')    
-            
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 

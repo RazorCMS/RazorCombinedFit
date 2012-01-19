@@ -229,7 +229,6 @@ class RazorBox(Box.Box):
         self.workspace.Print()
         self.signalmodel = add.GetName()
         return extended.GetName()
-
         
     def plot(self, inputFile, store, box):
         store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1', 'fR2','fR3','fR4']), dir=box)

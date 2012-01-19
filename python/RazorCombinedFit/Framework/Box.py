@@ -144,7 +144,6 @@ class Box(object):
         hpdf = rt.RooHistPdf('%sPdf' % modelName,'%sPdf' % modelName,vars,hdata)
         self.importToWS(hpdf)
         return (hpdf.GetName(),hdata.sum(False))
-
     
     def importToWS(self, *args):
         """Utility function to call the RooWorkspace::import methods"""
