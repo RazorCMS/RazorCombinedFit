@@ -20,9 +20,10 @@ def isInFitRegion(x, y, box, config):
     myargs = myworkspace.allVars()
     
     isFitReg = True
-    if x>= myargs['MR'].getMin('sR1'): isFitReg = False
+    if x>= myargs['MR'].getMin('sR1')and y> myargs['Rsq'].getMin('sR1'): isFitReg = False
     if x>= myargs['MR'].getMin('sR2') and y> myargs['Rsq'].getMin('sR2'): isFitReg = False
     if x>= myargs['MR'].getMin('sR3') and y> myargs['Rsq'].getMin('sR3'): isFitReg = False
+    if y> 0.5: isFitReg = False
     del myargs
     del myvariables
     del myworkspace
