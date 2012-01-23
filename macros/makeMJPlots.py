@@ -35,9 +35,6 @@ class PlotCount(object):
         color_index = 0
         self.max_count = 0
         
-        self.xaxis = 'No title set'
-        self.yaxis = 'No title set'
-
         self.histograms = {}
         for r in self.ranges:
             name = '%s_%i_%i_%s' % (self.count_var,r[0],r[1],self.var)
@@ -91,6 +88,7 @@ class PlotCount(object):
             histo.Draw(option)
             
             histo.GetXaxis().SetTitle(self.xaxis)
+            histo.GetYaxis().SetTitle('Entries')
             histo.GetXaxis().SetTitleFont(132)
             histo.GetYaxis().SetTitleFont(132)
             histo.GetXaxis().SetTitleSize(0.06)
@@ -139,9 +137,9 @@ class PlotCount(object):
             ratio.GetXaxis().SetLabelSize(0.15)
             ratio.GetYaxis().SetLabelSize(0.15)
             ratio.GetXaxis().SetTitle(self.xaxis)
-            ratio.GetYaxis().SetTitle()
+            ratio.GetYaxis().SetTitle(self.yaxis)            
             ratio.GetXaxis().CenterTitle()
-            #ratio.GetYaxis()->CenterTitle();
+            ratio.GetYaxis().CenterTitle();
             ratio.GetYaxis().SetTitleOffset(0.25)
             ratio.GetXaxis().SetTitleOffset(0.3)
             
@@ -190,6 +188,49 @@ class PlotBTagRsq(PlotRsq,PlotBTag):
     def __init__(self, store):
         PlotRsq.__init__(self)        
         PlotBTag.__init__(self, store, 'Rsq')        
+        
+class PlotJetCount(PlotCount):
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nJet', [(6,12),(6,6),(7,7),(8,8),(9,12)])
+        self.yaxis = "R(N_{Jet}^{i} / N_{Jet}^{INCL})"
+    def rangeLabel(self, range):
+        if range[0] == range[1]:
+            return '[%i Jets]' % range[0]
+        else:
+            return '[%d-%d Jets]' % (range[0],range[1])
+        
+class PlotJetMR(PlotMR,PlotJetCount):
+    def __init__(self, store):
+        PlotMR.__init__(self)        
+        PlotJetCount.__init__(self, store, 'MR')
+        
+class PlotJetRsq(PlotRsq,PlotJetCount):
+    def __init__(self, store):
+        PlotRsq.__init__(self)        
+        PlotJetCount.__init__(self, store, 'Rsq')         
+
+class PlotLeptonCount(PlotCount):
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nLepton', [(0,4),(1,1),(2,2),(3,4)])
+        self.yaxis = "R(N_{Lepton}^{i} / N_{Lepton}^{INCL})"
+    def rangeLabel(self, range):
+        if range[0] == range[1]:
+            if range[0] == 1:
+                return '[%i Loose Lepton]' % range[0]
+            else:
+                return '[%i Loose Leptons]' % range[0]
+        else:
+            return '[%d-%d Loose Leptons]' % (range[0],range[1])
+
+class PlotLeptonMR(PlotMR,PlotLeptonCount):
+    def __init__(self, store):
+        PlotMR.__init__(self)        
+        PlotLeptonCount.__init__(self, store, 'MR')
+        
+class PlotLeptonRsq(PlotRsq,PlotLeptonCount):
+    def __init__(self, store):
+        PlotRsq.__init__(self)        
+        PlotLeptonCount.__init__(self, store, 'Rsq') 
 
 
 if __name__ ==  '__main__':
@@ -198,10 +239,8 @@ if __name__ ==  '__main__':
     rt.gStyle.SetOptTitle(0)
 
     store = RootTools.RootFile.RootFile('razorMJControlPlots.root')
-    npvMR = PlotNPVMR(store)
-    npvRsq = PlotNPVRsq(store)
-    btagMR = PlotBTagMR(store)
-    btagRsq = PlotBTagRsq(store)
+    plotters = [PlotNPVMR(store),PlotNPVRsq(store),PlotBTagMR(store),PlotBTagRsq(store),PlotJetMR(store),PlotJetRsq(store),PlotLeptonMR(store),PlotLeptonRsq(store)]
+    #plotters = [PlotJetMR(store),PlotJetRsq(store)]
 
     def loop(fileName):
         input = rt.TFile.Open(fileName)
@@ -209,21 +248,14 @@ if __name__ ==  '__main__':
     
         for i in xrange(dataSet.numEntries()):
             row = dataSet.get(i)
+            [p.fill(row) for p in plotters]
+            del row
 
-            npvMR.fill(row)
-            npvRsq.fill(row)
-            btagMR.fill(row)
-            btagRsq.fill(row)
-            
         input.Close()
         
     loop('MultiJet-Run2011A-05Aug2011-v1-wreece_130112_MR500.0_R0.173205080757_Had.root')
     loop('MultiJet-Run2011A-05Aug2011-v1-wreece_130112_MR500.0_R0.173205080757_nBtag_1_BJet.root')
         
-    npvMR.final()
-    npvRsq.final()
-    btagMR.final()
-    btagRsq.final()
-    
+    [p.final() for p in plotters]    
     store.write()
         
