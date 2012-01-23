@@ -139,6 +139,10 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
     # to be removed eventually
     def plot(self, inputFile, store, box):
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['FULL'])]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=['FULL'])]
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1,fR2,fR3,fR4']), dir=box)
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['fR1,fR2,fR3,fR4'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=['fR1,fR2,fR3,fR4'])]
+        for r in ['FULL','fR1','fR2','fR3','fR4']:
+            store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=[r]), dir=box)
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=[r])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=[r])]
