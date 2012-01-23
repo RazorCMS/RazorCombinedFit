@@ -1,6 +1,24 @@
 import ROOT as rt
 import RootTools
 
+class PlotMR(object):
+    def __init__(self):
+        self.var = 'MR'
+        self.xaxis = 'M_{R} [GeV]'
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,22,500,2700)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h
+
+class PlotRsq(object):
+    def __init__(self):
+        self.var = 'Rsq'
+        self.xaxis = 'R^{2}'
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,10,0.03,0.5)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h  
+
 class PlotCount(object):
     
     def setBinning(self, name, title):
@@ -142,162 +160,36 @@ class PlotCount(object):
 
 
 class PlotNPV(PlotCount):
-    
-    def setBinning(self, name, title):
-        pass
-    
-    def __init__(self, store):
-        PlotCount.__init__(self, store, var, count_var, [(1,40),(1,5),(6,10),(11,15),(16,20),(21,39)])
-        self.store = store
-        self.var = var
-        
-        self.ranges = [(1,40),(1,5),(6,10),(11,15),(16,20),(21,39)]
-        
-        colors = RootTools.RazorStyle.getColorList()
-        color_index = 0
-        self.max_npv = 0
-        
-        self.xaxis = 'No title set'
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nVertex', [(1,40),(1,5),(6,10),(11,15),(16,20),(21,39)])
         self.yaxis = "R(N_{PV}^{i} / N_{PV}^{INCL})"
-
-        self.histograms = {}
-        for r in self.ranges:
-            name = 'NPV_%i_%i_%s' % (r[0],r[1],self.var)
-            h = self.setBinning(name,name)
-            h.SetLineColor(colors[color_index])
-            h.SetMarkerColor(colors[color_index])
-            self.histograms[r] = h
-            color_index += 1
             
-    def fill(self,row):
-        
-        val = row[self.var].getVal()
-        npv = row['nVertex'].getVal()
-        
-        if npv > self.max_npv:
-            self.max_npv = npv
-        
-        for range, histogram in self.histograms.iteritems():
-            if npv < range[0] or npv > range[1]: continue
-            histogram.Fill(val)
-            
-    def final(self):
-        
-        dir='NPV_%s' % self.var
-        inc = self.histograms[self.ranges[0]]
-        
-        canvas = rt.TCanvas('NPV_%s' % self.var,'NPV_%s' % self.var,640,800)
-        rt.gStyle.SetOptTitle(0)
-        canvas.Draw()
-        
-        pad1 = rt.TPad("pad1","pad1",0.0,0.15,1.,1.)
-        pad1.Draw();        
-        pad1.SetLogy()
-        pad1.cd()
-        pad1.SetGridx()
-        pad1.SetGridy()
-
-        leg = rt.TLegend(0.71, 0.5, 0.9, 0.9)
-        leg.SetTextSize(0.05)
-        leg.SetLineColor(rt.kWhite)
-        leg.SetFillColor(rt.kWhite)
-        leg.SetShadowColor(rt.kWhite)
-        
-        option = ''
-        for range in self.ranges:
-            histo = self.histograms[range]
-            self.store.add(histo,dir=dir)
-            histo.Draw(option)
-            
-            histo.GetXaxis().SetTitle(self.xaxis)
-            histo.GetXaxis().SetTitleFont(132)
-            histo.GetYaxis().SetTitleFont(132)
-            histo.GetXaxis().SetTitleSize(0.06)
-            histo.GetYaxis().SetTitleSize(0.06)
-            histo.GetXaxis().SetLabelFont(132)
-            histo.GetYaxis().SetLabelFont(132)
-            histo.GetXaxis().SetLabelSize(0.05)
-            histo.GetYaxis().SetLabelSize(0.05)
-            histo.GetXaxis().CenterTitle()
-            histo.GetYaxis().CenterTitle()
-            histo.GetYaxis().SetTitleOffset(1.3)
-            histo.GetXaxis().SetTitleOffset(1.)
-            histo.Draw(option)
-            
-            if histo is not inc:
-                leg.AddEntry(histo,'[%i-%i]' % range)
-            else:
-                leg.AddEntry(histo,'[Incl.]')
-            
-            if not option:
-                option = 'same'
-                
-        leg.Draw()
-        
-        pad2 = rt.TPad("pad2","pad2",0.0,0.01,1.0,0.15)
-        pad2.Draw()        
-        pad2.cd()
-        pad2.SetGridx()
-        pad2.SetGridy()
-        
-        option = ''
-        for range in self.ranges:
-            histo = self.histograms[range]        
-            if histo is inc: continue
-            ratio = histo.Clone('ratio%s' % histo.GetName())
-            ratio.Sumw2()
-            ratio.Divide(inc)
-            ratio.Draw(option)
-            
-            ratio.GetXaxis().SetTitleFont(132);
-            ratio.GetYaxis().SetTitleFont(132);
-            ratio.GetXaxis().SetTitleSize(0.14);
-            ratio.GetYaxis().SetTitleSize(0.14);
-            ratio.GetXaxis().SetLabelFont(132);
-            ratio.GetYaxis().SetLabelFont(132);
-            ratio.GetXaxis().SetLabelSize(0.15);
-            ratio.GetYaxis().SetLabelSize(0.15);
-            ratio.GetXaxis().SetTitle(self.xaxis);
-            ratio.GetYaxis().SetTitle("R(N_{PV}^{i} / N_{PV}^{INCL})");
-            ratio.GetXaxis().CenterTitle();
-            #ratio.GetYaxis()->CenterTitle();
-            ratio.GetYaxis().SetTitleOffset(0.25);
-            ratio.GetXaxis().SetTitleOffset(0.3);
-            
-            ratio.SetFillColor(rt.kWhite);
-            ratio.SetLineWidth(2);
-            ratio.SetMarkerSize(1.0);
-            
-            self.store.add(ratio, dir = dir)
-            
-            if not option:
-                option = 'same'
-        
-        self.store.add(leg,dir=dir)
-        self.store.add(canvas,dir=dir)
-        print 'max NPV = %i' % self.max_npv
-                
-            
-
-class PlotNPVMR(PlotNPV):
-    
+class PlotNPVMR(PlotMR,PlotNPV):
     def __init__(self, store):
+        PlotMR.__init__(self)
         PlotNPV.__init__(self, store, 'MR')
-        self.xaxis = 'M_{R} [GeV]'
-    def setBinning(self, name, title):       
-        h = rt.TH1D(name,title,22,500,2700)
-        h.GetXaxis().SetTitle(self.xaxis)
-        return h
 
-class PlotNPVRsq(PlotNPV):
-    
+class PlotNPVRsq(PlotRsq,PlotNPV):
     def __init__(self, store):
+        PlotRsq.__init__(self)   
         PlotNPV.__init__(self, store, 'Rsq')
-        self.xaxis = 'R^{2}'
-    def setBinning(self, name, title):       
-        h = rt.TH1D(name,title,10,0.03,0.5)
-        h.GetXaxis().SetTitle(self.xaxis)
-        return h    
+
+class PlotBTag(PlotCount):
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nBtag', [(1,2),(0,0),(1,1),(2,2)])
+        self.yaxis = "R(N_{TCHEM}^{i} / N_{TCHEM}^{INCL})"
+    def rangeLabel(self, range):
+        return '[%i TCHEM]' % range[0]
+    
+class PlotBTagMR(PlotMR,PlotBTag):
+    def __init__(self, store):
+        PlotMR.__init__(self)        
+        PlotBTag.__init__(self, store, 'MR')
+        
+class PlotBTagRsq(PlotRsq,PlotBTag):
+    def __init__(self, store):
+        PlotRsq.__init__(self)        
+        PlotBTag.__init__(self, store, 'Rsq')        
 
 
 if __name__ ==  '__main__':
@@ -308,6 +200,8 @@ if __name__ ==  '__main__':
     store = RootTools.RootFile.RootFile('razorMJControlPlots.root')
     npvMR = PlotNPVMR(store)
     npvRsq = PlotNPVRsq(store)
+    btagMR = PlotBTagMR(store)
+    btagRsq = PlotBTagRsq(store)
 
     def loop(fileName):
         input = rt.TFile.Open(fileName)
@@ -318,6 +212,8 @@ if __name__ ==  '__main__':
 
             npvMR.fill(row)
             npvRsq.fill(row)
+            btagMR.fill(row)
+            btagRsq.fill(row)
             
         input.Close()
         
@@ -326,6 +222,8 @@ if __name__ ==  '__main__':
         
     npvMR.final()
     npvRsq.final()
+    btagMR.final()
+    btagRsq.final()
     
     store.write()
         
