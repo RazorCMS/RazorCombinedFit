@@ -9,7 +9,9 @@ def getPlots(fileName, weight, name):
         fileName = fileName.replace('_Had.root','_nBtag_1_BJet.root')
     
     rsq = rt.TH1D('rsq_%s' % name, name, 10,0,0.5)
+    rsq.GetXaxis().SetTitle('R^{2}')
     mr = rt.TH1D('mr_%s' % name, name,25,500,3000)
+    mr.GetXaxis().SetTitle('M_{R} [GeV]')
     
     inputFile = rt.TFile.Open(fileName)
     tree = inputFile.Get('RMRTree')
@@ -24,6 +26,10 @@ if __name__ == '__main__':
     RootTools.RazorStyle.setStyle()
     store = RootTools.RootFile.RootFile('razorMJDataMCPlots.root')
     colors = RootTools.RazorStyle.getColorList()
+
+    factor = 1.
+    #HAD: factor = 1.207
+    #BTag: factor = 1.427
     
     plots = []
     plots.append(getPlots('TTJets_TuneZ2_7TeV-madgraph-tauola-wreece_110112_MR500.0_R0.173205080757_Had.root',0.062006809,'T#bar{T}+Jets'))
@@ -38,7 +44,7 @@ if __name__ == '__main__':
     plots.append(getPlots('Tbar_TuneZ2_tW-channel-DR_7TeV-powheg-tauola-wreece_110112_MR500.0_R0.173205080757_Had.root',0.052092087,'#bar{T} tW-channel'))
     plots.append(getPlots('DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola-wreece_110112_MR500.0_R0.173205080757_Had.root',0.181731478,'DY+Jets'))
     plots.append(getPlots('WJetsToLNu_TuneZ2_7TeV-madgraph-tauola-wreece_110112_MR500.0_R0.173205080757_Had.root',1.296284825,'W+Jets'))        
-    plots.append(getPlots('QCD_Pt-80toInf_6GenJets_TuneZ2_7TeV-pythia6-wreece_110112_MR500.0_R0.173205080757_Had.root',36.81047999,'QCD'))
+    plots.append(getPlots('QCD_Pt-80toInf_6GenJets_TuneZ2_7TeV-pythia6-wreece_110112_MR500.0_R0.173205080757_Had.root',36.81047999*factor,'QCD'))
     
     stacks = (rt.THStack('rsq','R^{2}'),rt.THStack('mr','M_{R}'))
     store.add(stacks[0])
@@ -72,8 +78,8 @@ if __name__ == '__main__':
         
     data = getPlots('MultiJet-Run2011A-05Aug2011-v1-wreece_130112_MR500.0_R0.173205080757_Had.root',1.,'Data')
     leg.AddEntry(data[0],'Data')
-    stacks[0].Add(data[0],'nostackerrors')
-    stacks[1].Add(data[1],'nostackerrors')
+    #stacks[0].Add(data[0],'nostackerrors')
+    #stacks[1].Add(data[1],'nostackerrors')
     store.add(data[0])
     store.add(data[1])
     store.add(leg)
