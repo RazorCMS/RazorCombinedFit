@@ -52,7 +52,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
         mydata.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBin, doSMS, write = True):
+def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBin, doSMS, doXsec, write = True):
     """This defines the format of the RooDataSet"""
 
     boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
@@ -60,16 +60,16 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
     wHisto = []
     wHisto_JESup = []
     wHisto_JESdown = []
-    wHisto_xsecup = []
-    wHisto_xsecdown = []
+    #wHisto_xsecup = []
+    #wHisto_xsecdown = []
     wHisto_pdfCEN = []
     wHisto_pdfSYS = []
 
     plotByProcess = []
     plotByProcessJESUP = []
     plotByProcessJESDOWN = []
-    plotByProcessXSECUP = []
-    plotByProcessXSECDOWN = []
+    #plotByProcessXSECUP = []
+    #plotByProcessXSECDOWN = []
     plotByProcessPDFCEN = []
     plotByProcessPDFSYS = []
 
@@ -133,13 +133,13 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
     if doSMS == True:
         nProcess   = 1
         weight     = "W_EFF"
-        weightUP   = "W_EFF"
-        weightDOWN = "W_EFF"
+        #weightUP   = "W_EFF"
+        #weightDOWN = "W_EFF"
     else:
         nProcess = 10
-        weight     = "W"
-        weightUP   = "W_UP"
-        weightDOWN = "W_DOWN"
+        if doXsec == 1:    weight = "W_UP"
+        elif doXsec == -1: weight = "W_DOWN"
+        else: weight = "W"
 
     # get weight
     for box in boxes:
@@ -171,14 +171,14 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         plotByProcessJESDOWN.append(histo.Clone())
 
         # XSEC UP
-        histo = rt.TH2D("wHisto_xsecup_PROC%i" %i,"wHisto_xsecup_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_xsecup_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weightUP,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
-        plotByProcessXSECUP.append(histo.Clone())
+        #histo = rt.TH2D("wHisto_xsecup_PROC%i" %i,"wHisto_xsecup_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
+        #tree.Project("wHisto_xsecup_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weightUP,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
+        #plotByProcessXSECUP.append(histo.Clone())
 
         # XSEC DOWN
-        histo = rt.TH2D("wHisto_xsecdown_PROC%i" %i,"wHisto_xsecdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
-        tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weightDOWN,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
-        plotByProcessXSECDOWN.append(histo.Clone())
+        #histo = rt.TH2D("wHisto_xsecdown_PROC%i" %i,"wHisto_xsecdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
+        #tree.Project("wHisto_xsecdown_PROC%i" %i,  "RSQ:MR",  'LEP_W*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weightDOWN,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
+        #plotByProcessXSECDOWN.append(histo.Clone())
 
         # PDF CEN and SIGMA
         histo_pdfCEN, histo_pdfSYS = makePDFPlotCONDARRAY(tree, histo, nbinx, binedgex, nbiny, binedgey, "PROC == %i && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f)" %(i,btag,btag))
@@ -219,24 +219,24 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         wHisto_JESdown.append(histo_JESdown.Clone())
 
         # xsec UP
-        histo_xsecup = rt.TH2D("wHisto_xsecup_%s" %box,"wHisto_xsecup_%s" %box, nbinx, binedgex, nbiny, binedgey)
-        for yieldByProcessThisBox in yieldByProcess:
-            if yieldByProcessThisBox[0] != box: continue
-            for iProc in range(0,len(yieldByProcessThisBox[1])):
-                thishisto = plotByProcessXSECUP[iProc]
-                thisYield = yieldByProcessThisBox[1][iProc]
-                if thishisto.Integral() != 0. : histo_xsecup.Add(thishisto,thisYield/thishisto.Integral())                
-        wHisto_xsecup.append(histo_xsecup.Clone())
+        #histo_xsecup = rt.TH2D("wHisto_xsecup_%s" %box,"wHisto_xsecup_%s" %box, nbinx, binedgex, nbiny, binedgey)
+        #for yieldByProcessThisBox in yieldByProcess:
+        #    if yieldByProcessThisBox[0] != box: continue
+        #    for iProc in range(0,len(yieldByProcessThisBox[1])):
+        #        thishisto = plotByProcessXSECUP[iProc]
+        #        thisYield = yieldByProcessThisBox[1][iProc]
+        #        if thishisto.Integral() != 0. : histo_xsecup.Add(thishisto,thisYield/thishisto.Integral())                
+        #wHisto_xsecup.append(histo_xsecup.Clone())
         
         # xsec correctiobns DOWN
-        histo_xsecdown = rt.TH2D("wHisto_xsecdown_%s" %box,"wHisto_xsecdown_%s" %box, nbinx, binedgex, nbiny, binedgey)
-        for yieldByProcessThisBox in yieldByProcess:
-            if yieldByProcessThisBox[0] != box: continue
-            for iProc in range(0,len(yieldByProcessThisBox[1])):
-                thishisto = plotByProcessXSECDOWN[iProc]
-                thisYield = yieldByProcessThisBox[1][iProc]
-                if thishisto.Integral() != 0. : histo_xsecdown.Add(thishisto,thisYield/thishisto.Integral())   
-        wHisto_xsecdown.append(histo_xsecdown.Clone())
+        #histo_xsecdown = rt.TH2D("wHisto_xsecdown_%s" %box,"wHisto_xsecdown_%s" %box, nbinx, binedgex, nbiny, binedgey)
+        #for yieldByProcessThisBox in yieldByProcess:
+        #    if yieldByProcessThisBox[0] != box: continue
+        #    for iProc in range(0,len(yieldByProcessThisBox[1])):
+        #        thishisto = plotByProcessXSECDOWN[iProc]
+        #        thisYield = yieldByProcessThisBox[1][iProc]
+        #        if thishisto.Integral() != 0. : histo_xsecdown.Add(thishisto,thisYield/thishisto.Integral())   
+        #wHisto_xsecdown.append(histo_xsecdown.Clone())
         
         # PDF central (new nominal) and error (for systematics)
         histo_pdfCEN = rt.TH2D("wHisto_pdfCEN_%s" %box,"wHisto_pdfCEN_%s" %box, nbinx, binedgex, nbiny, binedgey)
@@ -280,7 +280,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         muTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
         eleTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))      
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
-        xsecFactor = gRnd.Gaus(0., 1.)
+        #xsecFactor = gRnd.Gaus(0., 1.)
         for ibox in range(0,len(boxes)):
             box = boxes[ibox]
             workspace = rt.RooWorkspace(box)
@@ -333,8 +333,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                         # add xsec systematics
                         #if xsecFactor > 0: newvalue = newvalue* + xsecFactor*(wHisto_xsecup[ibox].GetBinContent(ix,iy)-nominal)
                         #else: newvalue = newvalue*math.pow( + xsecFactor*(wHisto_xsecdown[ibox].GetBinContent(ix,iy)-nominal))
-                        mXsec, sXsec = getMeanSigma(nominal, wHisto_xsecup[ibox].GetBinContent(ix,iy), wHisto_xsecdown[ibox].GetBinContent(ix,iy))
-                        if mXsec > 0: newvalue = newvalue*mXsec/nominal*math.pow(1.+sXsec/mXsec, xsecFactor)
+                        #mXsec, sXsec = getMeanSigma(nominal, wHisto_xsecup[ibox].GetBinContent(ix,iy), wHisto_xsecdown[ibox].GetBinContent(ix,iy))
+                        #if mXsec > 0: newvalue = newvalue*mXsec/nominal*math.pow(1.+sXsec/mXsec, xsecFactor)
                         # add jes systematics
                         #if jesFactor > 0: newvalue = newvalue + jesFactor*(wHisto_JESup[ibox].GetBinContent(ix,iy)-nominal)
                         #else: newvalue = newvalue + jesFactor*(wHisto_JESdown[ibox].GetBinContent(ix,iy)-nominal)               
@@ -411,8 +411,16 @@ if __name__ == '__main__':
                       help="Run PDF filling for SMS models")
     parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
                   help="The minimum number of Btags to allow")     
+    parser.add_option('--xsecUp',dest="xsecUp",action="store_true", default=False,
+                      help="Run with theory cross section up by one sigma")
+    parser.add_option('--xsecDown',dest="xsecDown",action="store_true", default=False,
+                      help="Run with theory cross section down by one sigma")
     
     (options,args) = parser.parse_args()
+
+    doXsec = 0
+    if option.xsecUp:   doXsec = 1
+    if option.xsecDown: doXsec = -1
     
     if options.config is None:
         import inspect, os
@@ -430,7 +438,7 @@ if __name__ == '__main__':
             if options.btag > 0:
                 # we do only one btag
                 btag = 3.3
-            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS)
+            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS,doXsec)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
