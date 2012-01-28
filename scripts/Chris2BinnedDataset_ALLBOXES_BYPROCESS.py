@@ -419,8 +419,8 @@ if __name__ == '__main__':
     (options,args) = parser.parse_args()
 
     doXsec = 0
-    if option.xsecUp:   doXsec = 1
-    if option.xsecDown: doXsec = -1
+    if options.xsecUp:   doXsec = 1
+    if options.xsecDown: doXsec = -1
     
     if options.config is None:
         import inspect, os
