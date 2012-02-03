@@ -48,6 +48,9 @@ class Analysis(object):
     
     def runtoys(self, inputFiles, nToys):
         pass
+    
+    def toystudy(self, inputFiles, nToys):
+        pass
         
     def final(self):
         self.store(self.workspace)
