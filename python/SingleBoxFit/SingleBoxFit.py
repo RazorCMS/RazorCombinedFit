@@ -57,6 +57,30 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].define(fileName)
 
         return boxes
+
+    def toystudy(self, inputFiles, nToys):
+        
+        random = rt.RooRandom.randomGenerator()
+        
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+
+        for box in boxes:
+            if self.options.input is not None:
+                wsName = '%s/Box%s_workspace' % (box,box)
+                print "Restoring the workspace from %s" % self.options.input
+                boxes[box].restoreWorkspace(self.options.input, wsName)
+
+        for box in boxes:    
+            data_yield = boxes[box].workspace.data('RMRTree').numEntries()
+            
+            study = boxes[box].getMCStudy()
+            study.generateAndFit(nToys,data_yield)
+            
+            fitPars = study.fitParDataSet()
+            outpars = rt.RooDataSet('fitPars_%s' % box, 'fitPars_%s' % box, fitPars,fitPars.get(0))
+            
+            self.store(outpars, dir='%s_Toys' % box)
             
     def runtoys(self, inputFiles, nToys):
         
