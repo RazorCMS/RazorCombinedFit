@@ -32,6 +32,8 @@ def defineParser():
                   help="Run the simultaneous fit")
     parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',
                   help="Run the model-dependent limit setting code")
+    parser.add_option('--study',dest="study", default=False,action='store_true',
+                  help="Run a simple RooMCStudy")    
     parser.add_option('-e','--expected-limit',dest="expectedlimit", default=False,action='store_true',
                   help="Run the model-dependent bkg-only toy MC to compute the expected limit")
     parser.add_option('-m','--model-independent-limit',dest="model_independent_limit", default=False,action='store_true',
@@ -91,7 +93,10 @@ if __name__ == '__main__':
                 aa.options = options
                 print "Running analysis '%s'" % aa.name
                 if options.toys > 0 and not options.limit:
-                    aa.runtoys(args, options.toys)
+                    if options.study:
+                        aa.toystudy(args, options.toys)
+                    else:
+                        aa.runtoys(args, options.toys)
                 else:
                     aa.analysis(args)
                     if options.limit:    
