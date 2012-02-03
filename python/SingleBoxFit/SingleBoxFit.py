@@ -77,8 +77,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
             study = boxes[box].getMCStudy()
             study.generateAndFit(nToys,data_yield)
             
+            qual_ = rt.RooRealVar('quality','quality',-1)
+            status_ = rt.RooRealVar('status','status',-1)
+            args = rt.RooArgSet(qual_,status_)
+            fit = rt.RooDataSet('Fit','Fit',args)            
+            
+            for i in xrange(nToys):
+                fr = study.fitResult(i)
+                args.setRealValue('quality',fr.covQual())
+                args.setRealValue('status',fr.status())
+                fit.add(args)
+                
             fitPars = study.fitParDataSet()
             outpars = rt.RooDataSet('fitPars_%s' % box, 'fitPars_%s' % box, fitPars,fitPars.get(0))
+            outpars.append(fit)
             
             self.store(outpars, dir='%s_Toys' % box)
             
