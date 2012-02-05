@@ -105,7 +105,11 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         #data.tree().Project("histoData",xvarname)
         data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
         toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
-        scaleFactor = histoData.Integral()/histoToy.Integral()
+
+        #put some protection in for divide by zero
+        scaleFactor = 1.0
+        if abs(histoToy.Integral()-0.0) > 1e-8:
+            scaleFactor = histoData.Integral()/histoToy.Integral()
 
         histoToy.Scale(scaleFactor)
         SetErrors(histoToy, nbins)
@@ -139,10 +143,10 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
     # to be removed eventually
     def plot(self, inputFile, store, box):
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1,fR2,fR3,fR4']), dir=box)
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['fR1,fR2,fR3,fR4'])]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=['fR1,fR2,fR3,fR4'])]
-        for r in ['FULL','fR1','fR2','fR3','fR4']:
+        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1,fR2,fR3,fR4,fR5']), dir=box)
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['fR1,fR2,fR3,fR4,fR5'])]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=['fR1,fR2,fR3,fR4,fR5'])]
+        for r in ['FULL','fR1','fR2','fR3','fR4','fR5']:
             store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=[r]), dir=box)
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=[r])]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=[r])]

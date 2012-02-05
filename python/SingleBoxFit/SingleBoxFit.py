@@ -205,7 +205,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4"))                
+                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("fR1,fR2,fR3,fR4,fR5"))
                 #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("FULL"))
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
