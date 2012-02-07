@@ -34,6 +34,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     workspace.factory('Event[0,0,+INF]')
     #
     workspace.factory('nBtag[0,0,2.0]')
+    workspace.factory('nLepton[0,0,15.0]')
+    workspace.factory('nVertex[1,0.,50.]')
     workspace.factory('nJet[0,0,15.0]')
     workspace.factory('W[0,0,+INF]')
 
@@ -58,6 +60,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
         if tree.mRMB > mRmax or tree.mRMB < mRmin or tree.RsqMB < rsqMin or tree.RsqMB > rsqMax:
             continue
         if not tree.triggerFilter: continue
+        if hasattr(tree,'selectionFilter') and not tree.selectionFilter: continue
         
         if tree.HBHENoiseFilterResultProducer2011NonIsoRecommended == 0 or tree.goodPrimaryVertexFilter == 0 or \
             tree.ecalDeadCellTPfilter == 0 or tree.eeNoiseFilter == 0 or tree.recovRecHitFilter == 0:
@@ -89,7 +92,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
         a.setRealValue('MR',tree.mRMB, True)
         a.setRealValue('Rsq',tree.RsqMB, True)
         a.setRealValue('nBtag',nBtag)
+        a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
         a.setRealValue('nJet',tree.nJet)
+        a.setRealValue('nVertex',tree.nVertex)        
         a.setRealValue('W',1.0)
         
         data.add(a)
@@ -160,4 +165,4 @@ if __name__ == '__main__':
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
     convertTree2Dataset(chain,fName, 'Had.root', cfg,'Had',options.min,options.max,-1,0,options.run)
-    convertTree2Dataset(chain,fName, 'BJet.root', cfg,'Bjet',options.min,options.max,1,-1,options.run)
+    convertTree2Dataset(chain,fName, 'BJet.root', cfg,'BJet',options.min,options.max,1,-1,options.run)
