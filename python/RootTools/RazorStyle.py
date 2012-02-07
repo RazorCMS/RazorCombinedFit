@@ -3,7 +3,7 @@ import ROOT as rt
 def getColorList():
     return [rt.kBlue+3,rt.kMagenta+1,rt.kGreen-6,\
             rt.kRed+1,rt.kBlue-1,rt.kGreen+3,\
-            rt.kYellow+1,rt.kCyan+3,1397,1407]
+            rt.kYellow+1,rt.kCyan+3,rt.kSpring,rt.kOrange-9,rt.kOrange,rt.kAzure,rt.kGray]
 
 def setStyle():
     """Copy and paste from Chris's macro"""
