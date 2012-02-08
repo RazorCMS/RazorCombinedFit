@@ -7,7 +7,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5, 'BJet':6}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -54,8 +54,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
 
 def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBin, doSMS, doXsec, write = True):
     """This defines the format of the RooDataSet"""
-
-    boxes = ["MuEle", "MuMu", "EleEle", "Mu", "Ele", "Had"]
+    boxes = config.getBoxes()
 
     wHisto = []
     wHisto_JESup = []
@@ -76,8 +75,11 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
     yieldByProcess = []
 
     # define the loosest bin ranges
-    workspace = rt.RooWorkspace("MuMu")
-    variables = config.getVariablesRange("MuMu","variables",workspace)
+    loose_bin = 'MuMu'
+    if loose_bin not in boxes:
+        loose_bin = 'Had'
+    workspace = rt.RooWorkspace(loose_bin)
+    variables = config.getVariablesRange(loose_bin,"variables",workspace)
     args = workspace.allVars()
                     
     #we cut away events outside our MR window
@@ -371,20 +373,6 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
 
     return []
 
-def printEfficiencies(tree, outputFile, config, flavour):
-    """Backout the MC efficiency from the weights"""
-    print 'ERROR:: This functionality produces incorrect results as we\'re missing a factor somewhere...'
-    
-    cross_section = cross_sections[flavour]
-    
-    for box in boxMap:
-        ds = convertTree2Dataset(tree, 100, 100, outputFile, 'Dummy', config, box, 0, -1, -1, write = False)
-        row = ds[0].get(0)
-        W = ds.mean(row['W'])
-        n_i = (cross_section*lumi)/W
-        n_f = ds.numEntries()
-        print 'Efficienty: %s: %f (n_i=%f; n_f=%i)' % (box,n_f/n_i,n_i, n_f)
-    
 
 if __name__ == '__main__':
     
@@ -415,6 +403,8 @@ if __name__ == '__main__':
                       help="Run with theory cross section up by one sigma")
     parser.add_option('--xsecDown',dest="xsecDown",action="store_true", default=False,
                       help="Run with theory cross section down by one sigma")
+    parser.add_option('--tree_name',dest="tree_name",type="string",default='EVENTS',
+                  help="The name of the TTree to look at")
     
     (options,args) = parser.parse_args()
 
@@ -438,7 +428,7 @@ if __name__ == '__main__':
             if options.btag > 0:
                 # we do only one btag
                 btag = 3.3
-            convertTree2Dataset(input.Get('EVENTS'), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS,doXsec)
+            convertTree2Dataset(input.Get(options.tree_name), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS,doXsec)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
