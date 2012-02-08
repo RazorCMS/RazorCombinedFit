@@ -333,7 +333,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                         # add the lep trigger eff
                         if box == "MuMu" or box == "MuEle" or box == "Mu": newvalue = newvalue*muTriggerFactor
                         if box == "EleEle" or box == "Ele": newvalue = newvalue*eleTriggerFactor
-                        if box != "Had": newvalue = newvalue*lepFactor
+                        #ignore leptons for the hadronic boxes
+                        if box not in ['Had','BJet']: newvalue = newvalue*lepFactor
                         # add xsec systematics
                         #if xsecFactor > 0: newvalue = newvalue* + xsecFactor*(wHisto_xsecup[ibox].GetBinContent(ix,iy)-nominal)
                         #else: newvalue = newvalue*math.pow( + xsecFactor*(wHisto_xsecdown[ibox].GetBinContent(ix,iy)-nominal))
