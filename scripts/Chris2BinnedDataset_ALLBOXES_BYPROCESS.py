@@ -277,10 +277,11 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
 
     for i in xrange(nToys):
         # correlated systematics: LUMI 4.5% MULTIPLICATIVE sumInQuadrature  sumInQuadrature RvsMR trigger 2% = 4.9%
-        lumiFactor = math.pow((1.049), gRnd.Gaus(0., 1.))
+        lumiFactor = math.pow((1.045), gRnd.Gaus(0., 1.))
         # triggerLepton 3% per trigger set
         muTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
-        eleTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))      
+        eleTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
+        btagFactor = math.pow(1.06,gRnd.Gaus(0.,1.))
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         #xsecFactor = gRnd.Gaus(0., 1.)
         for ibox in range(0,len(boxes)):
@@ -328,6 +329,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                     if nominal != 0:
                         # add lumi systematics
                         newvalue = nominal*lumiFactor
+                        if box == "BJet" or btag> 0.0: newvalue = newvalue*btagFactor
                         # add the lep trigger eff
                         if box == "MuMu" or box == "MuEle" or box == "Mu": newvalue = newvalue*muTriggerFactor
                         if box == "EleEle" or box == "Ele": newvalue = newvalue*eleTriggerFactor
@@ -351,7 +353,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                         if 1+mPDF > 0.: newvalue = newvalue*(1+mPDF)*math.pow(1+sPDF/(1+mPDF),gRnd.Gaus(0.,1.))
                         #newvalue = newvalue *(1+ gRnd.Gaus(wHisto_pdfCEN[ibox].GetBinContent(ix,iy), wHisto_pdfSYS[ibox].GetBinContent(ix,iy)))
                         # add a 20% systematics due to filling procedure
-                        byProcFactor = math.pow(1.50,gRnd.Gaus(0., 1.))
+                        #byProcFactor = math.pow(1.50,gRnd.Gaus(0., 1.))
+                        byProcFactor = 1
                         # fill histogram
                         wHisto_i.SetBinContent(ix,iy,max(0.,newvalue*byProcFactor))
                     else:
