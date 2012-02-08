@@ -43,6 +43,10 @@ class Config(object):
     def getRCuts(self, box):
         self.__checkBox(box)
         return eval(self.config.get(box,'rcuts'))
+    
+    def getBoxes(self):
+        """Returns the names of the boxes defined in the config file"""
+        return self.config.sections()
         
         
         
