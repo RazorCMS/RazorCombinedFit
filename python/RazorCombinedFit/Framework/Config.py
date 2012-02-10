@@ -47,6 +47,31 @@ class Config(object):
     def getBoxes(self):
         """Returns the names of the boxes defined in the config file"""
         return self.config.sections()
+    
+    def hasBinning(self, box):
+        """Does the config for the box define a signal binning section?"""
+        
+        self.__checkBox(box)
+        vars = self.getVariables(box)
+        varNames = [v.split('[')[0] for v in vars]
+        result = True
+        for v in varNames:
+            if not self.config.has_option(box, 'signal_%s' % v):
+                result = False
+                break
+        return result
+    
+    def getBinning(self, box):
+        """Returns the signal binning defined for the box"""
+        self.__checkBox(box)
+        vars = self.getVariables(box)
+        
+        varNames = [v.split('[')[0] for v in vars]
+        result = []
+        for v in varNames:
+            result.append(eval(self.config.get(box, 'signal_%s' %  v)) )
+        return result        
+        
         
         
         

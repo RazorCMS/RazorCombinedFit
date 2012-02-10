@@ -94,39 +94,48 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
 
     binedgexLIST = []
     binedgeyLIST = []
-    # if the bin is fixed, do 50 GeV in mR
-    # and 0.1 in R^2
-    binwMR = 50.
-    binwR2 = 0.1
-    #use a fixed bin for mR
-    if varBin != 1: maxVal = mRmax
-    else: maxVal = 700.
-    mRedge = mRmin
-    while mRedge < maxVal: 
-        binedgexLIST.append(mRedge)
-        mRedge = mRedge + binwMR
-    binedgexLIST.append(maxVal)
-    if varBin == 1:
-        if mRmax> 800: binedgexLIST.append(800)
-        if mRmax> 900: binedgexLIST.append(900)
-        if mRmax> 1000: binedgexLIST.append(1000)
-        if mRmax> 1200: binedgexLIST.append(1200)
-        if mRmax> 1600: binedgexLIST.append(1600)
-        if mRmax> 2000: binedgexLIST.append(2000)
-        if mRmax> 2800: binedgexLIST.append(2800)
-        binedgexLIST.append(mRmax)
-    nbinx =  len(binedgexLIST)-1
+    #either use a binning scheme defined here or take from the config
+    if not config.hasBinning(loose_bin):
+        # if the bin is fixed, do 50 GeV in mR
+        # and 0.1 in R^2
+        binwMR = 50.
+        binwR2 = 0.1
+        #use a fixed bin for mR
+        if varBin != 1: maxVal = mRmax
+        else: maxVal = 700.
+        mRedge = mRmin
+        while mRedge < maxVal: 
+            binedgexLIST.append(mRedge)
+            mRedge = mRedge + binwMR
+        binedgexLIST.append(maxVal)
+        if varBin == 1:
+            if mRmax> 800: binedgexLIST.append(800)
+            if mRmax> 900: binedgexLIST.append(900)
+            if mRmax> 1000: binedgexLIST.append(1000)
+            if mRmax> 1200: binedgexLIST.append(1200)
+            if mRmax> 1600: binedgexLIST.append(1600)
+            if mRmax> 2000: binedgexLIST.append(2000)
+            if mRmax> 2800: binedgexLIST.append(2800)
+            binedgexLIST.append(mRmax)
 
-    #use a fixed bin for R^2
-    if varBin != 1:
-        R2edge = rsqMin
-        while R2edge <rsqMax: 
-            binedgexLIST.append(R2edge)
-            R2edge = R2edge + binwR2
-        binedgeyLIST.append(rsqMax)
-    else: 
-        #use fixed binning 
-        binedgeyLIST = [rsqMin,0.18,0.2,0.3,0.4,0.5]
+            #use a fixed bin for R^2
+            if varBin != 1:
+                R2edge = rsqMin
+                while R2edge <rsqMax: 
+                    binedgexLIST.append(R2edge)
+                    R2edge = R2edge + binwR2
+                binedgeyLIST.append(rsqMax)
+            else: 
+                #use fixed binning 
+                binedgeyLIST = [rsqMin,0.18,0.2,0.3,0.4,0.5]
+    else:
+        #take from the config
+        binning = config.getBinning(loose_bin)
+        #MR and Rsq in that order
+        binedgexLIST.extend(binning[0])
+        binedgeyLIST.extend(binning[1])
+
+    nbinx =  len(binedgexLIST)-1
     nbiny = len(binedgeyLIST)-1    
 
     binedgex = array('d',binedgexLIST)
