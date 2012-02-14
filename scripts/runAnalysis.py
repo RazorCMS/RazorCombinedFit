@@ -44,6 +44,9 @@ def defineParser():
                   help="Run the RazorB analysis")
     parser.add_option('--multijet',dest="doMultijet", default=False, action='store_true',
                   help="Run the Razor MultiJet analysis")
+    parser.add_option('--full-region',dest="full_region", default=False, action='store_true',
+                  help="Perform the fit in the FULL region")
+
     return parser
 
 if __name__ == '__main__':
