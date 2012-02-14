@@ -14,7 +14,7 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
-def isInFitRegion(x, y, box, config):
+def isInFitRegion(x, y, box, config, doMultijet):
     myworkspace = rt.RooWorkspace(box)
     myvariables = config.getVariablesRange(box,"variables",myworkspace)
     myargs = myworkspace.allVars()
@@ -23,13 +23,18 @@ def isInFitRegion(x, y, box, config):
     if x>= myargs['MR'].getMin('sR1')and y> myargs['Rsq'].getMin('sR1'): isFitReg = False
     if x>= myargs['MR'].getMin('sR2') and y> myargs['Rsq'].getMin('sR2'): isFitReg = False
     if x>= myargs['MR'].getMin('sR3') and y> myargs['Rsq'].getMin('sR3'): isFitReg = False
-    if y> 0.5: isFitReg = False
+    if not doMultijet:
+        if y> 0.5: isFitReg = False
+    else:
+       if x>= myargs['MR'].getMin('sR4') and y> myargs['Rsq'].getMin('sR4'): isFitReg = False 
+       if x>= myargs['MR'].getMin('sR5') and y> myargs['Rsq'].getMin('sR5'): isFitReg = False
+       if x>= myargs['MR'].getMin('sR6') and y> myargs['Rsq'].getMin('sR6'): isFitReg = False
     del myargs
     del myvariables
     del myworkspace
     return isFitReg
     
-def cutFitRegion(histo, box, config):
+def cutFitRegion(histo, box, config, doMultijet):
 
     iBinx = histo.GetNbinsX()
     iBiny = histo.GetNbinsY()
@@ -37,7 +42,7 @@ def cutFitRegion(histo, box, config):
     yAxis = histo.GetYaxis()
     for ix in range(1, iBinx+1):
         for iy in range(1, iBiny+1):
-            if isInFitRegion(xAxis.GetBinCenter(ix),yAxis.GetBinCenter(iy),box,config): histo.SetBinContent(ix,iy,0.)
+            if isInFitRegion(xAxis.GetBinCenter(ix),yAxis.GetBinCenter(iy),box,config,doMultijet): histo.SetBinContent(ix,iy,0.)
     return histo
 
 def getMeanSigma(n0, nP, nM):
@@ -50,9 +55,10 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'UPDATE')
     for mydata in data:
         mydata.Write()
+    print 'Writing',output.GetName()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBin, doSMS, doXsec, write = True):
+def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBin, doSMS, doXsec, doMultijet, write = True):
     """This defines the format of the RooDataSet"""
     boxes = config.getBoxes()
 
@@ -317,7 +323,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
 
             #write the nominal only once
             if i == 0: 
-                histo = cutFitRegion(wHisto[ibox],box,config)
+                histo = cutFitRegion(wHisto[ibox],box,config,doMultijet)
                 data = [histo.Clone()]
                 rooDataHist = rt.RooDataHist("RMRHistTree_%s" %box,"RMRHistTree_%s" %box,rt.RooArgList(rt.RooArgSet(MR,Rsq)),histo)
                 data.append(rooDataHist)
@@ -370,7 +376,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                     else:
                         wHisto_i.SetBinContent(ix,iy,max(0.,nominal))
             # check the fit-region edge
-            wHisto_i = cutFitRegion(wHisto_i,box,config)
+            wHisto_i = cutFitRegion(wHisto_i,box,config,doMultijet)
 
             data = [wHisto_i,rt.RooDataHist("RMRHistTree_%s_%i" %(box,i),"RMRHistTree_%s_%i" %(box,i),rt.RooArgList(rt.RooArgSet(MR,Rsq)),wHisto_i)]            
             if write: writeTree2DataSet(data, outputFile, "%s.root" %box, rMin, mRmin)
@@ -410,6 +416,8 @@ if __name__ == '__main__':
                                         help="Use Variable Binning for mR")
     parser.add_option('--sms',dest="doSMS",action="store_true", default=False,
                       help="Run PDF filling for SMS models")
+    parser.add_option('--multijet',dest="doMultijet",action="store_true", default=False,
+                      help="We are in the multijet analysis")    
     parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
                   help="The minimum number of Btags to allow")     
     parser.add_option('--xsecUp',dest="xsecUp",action="store_true", default=False,
@@ -441,7 +449,7 @@ if __name__ == '__main__':
             if options.btag > 0:
                 # we do only one btag
                 btag = 3.3
-            convertTree2Dataset(input.Get(options.tree_name), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS,doXsec)
+            convertTree2Dataset(input.Get(options.tree_name), decorator, cfg,options.min,options.max,btag,options.toys,options.varbin,options.doSMS,doXsec,options.doMultijet)
 
         else:
             "File '%s' of unknown type. Looking for .root files only" % f

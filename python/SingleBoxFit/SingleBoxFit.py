@@ -368,40 +368,53 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             NsSR = rt.RooRealVar("NsSR", "NsSR",NS*(IntS1+IntS2+IntS3+IntS4)/IntS)
 
+
             N_1stSR_TTj = rt.RooRealVar("N_1stSR_TTj","N_1stSR_TTj", boxes[box].getFitPDF("ePDF1st_TTj").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars).getVal())
             N_2ndSR_TTj = rt.RooRealVar("N_2ndSR_TTj","N_2ndSR_TTj", boxes[box].getFitPDF("ePDF2nd_TTj").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars).getVal())
-            N_1stSR_Wln = rt.RooRealVar("N_1stSR_Wln","N_1stSR_Wln", boxes[box].getFitPDF("ePDF1st_Wln").expectedEvents(vars)*
+            if not self.options.doMultijet:
+                N_1stSR_Wln = rt.RooRealVar("N_1stSR_Wln","N_1stSR_Wln", boxes[box].getFitPDF("ePDF1st_Wln").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF1st_Wln").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_Wln").createIntegral(vars,vars).getVal())
-            N_2ndSR_Wln = rt.RooRealVar("N_2ndSR_Wln","N_2ndSR_Wln", boxes[box].getFitPDF("ePDF2nd_Wln").expectedEvents(vars)*
+                N_2ndSR_Wln = rt.RooRealVar("N_2ndSR_Wln","N_2ndSR_Wln", boxes[box].getFitPDF("ePDF2nd_Wln").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF2nd_Wln").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_Wln").createIntegral(vars,vars).getVal())
-            N_1stSR_Znn = rt.RooRealVar("N_1stSR_Znn","N_1stSR_Znn", boxes[box].getFitPDF("ePDF1st_Znn").expectedEvents(vars)*
+                N_1stSR_Znn = rt.RooRealVar("N_1stSR_Znn","N_1stSR_Znn", boxes[box].getFitPDF("ePDF1st_Znn").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF1st_Znn").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_Znn").createIntegral(vars,vars).getVal())
-            N_2ndSR_Znn = rt.RooRealVar("N_2ndSR_Znn","N_2ndSR_Znn", boxes[box].getFitPDF("ePDF2nd_Znn").expectedEvents(vars)*
+                N_2ndSR_Znn = rt.RooRealVar("N_2ndSR_Znn","N_2ndSR_Znn", boxes[box].getFitPDF("ePDF2nd_Znn").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF2nd_Znn").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_Znn").createIntegral(vars,vars).getVal())
-            N_1stSR_Zll = rt.RooRealVar("N_1stSR_Zll","N_1stSR_Zll", boxes[box].getFitPDF("ePDF1st_Zll").expectedEvents(vars)*
+                N_1stSR_Zll = rt.RooRealVar("N_1stSR_Zll","N_1stSR_Zll", boxes[box].getFitPDF("ePDF1st_Zll").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF1st_Zll").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF1st_Zll").createIntegral(vars,vars).getVal())
-            N_2ndSR_Zll = rt.RooRealVar("N_2ndSR_Zll","N_2ndSR_Zll", boxes[box].getFitPDF("ePDF2nd_Zll").expectedEvents(vars)*
+                N_2ndSR_Zll = rt.RooRealVar("N_2ndSR_Zll","N_2ndSR_Zll", boxes[box].getFitPDF("ePDF2nd_Zll").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF2nd_Zll").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
                                         boxes[box].getFitPDF("ePDF2nd_Zll").createIntegral(vars,vars).getVal())
+            else:
+                N_1stSR_QCD = rt.RooRealVar("N_1stSR_QCD","N_1stSR_QCD", boxes[box].getFitPDF("ePDF1st_QCD").expectedEvents(vars)*
+                                        boxes[box].getFitPDF("ePDF1st_QCD").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
+                                        boxes[box].getFitPDF("ePDF1st_QCD").createIntegral(vars,vars).getVal())
+                N_2ndSR_QCD = rt.RooRealVar("N_2ndSR_QCD","N_2ndSR_QCD", boxes[box].getFitPDF("ePDF2nd_QCD").expectedEvents(vars)*
+                                        boxes[box].getFitPDF("ePDF2nd_QCD").createIntegral(vars,vars,0,'sR1,sR2,sR3,sR4').getVal()/
+                                        boxes[box].getFitPDF("ePDF2nd_QCD").createIntegral(vars,vars).getVal())
 
             eBinPDFSR_Signal = rt.RooExtendPdf("eBinPDFSR_Signal","eBinPDFSR_Signal",  boxes[box].workspace.pdf("SignalPdf"), NsSR, "sR1,sR2,sR3,sR4")
             ePDF1stSR_TTj = rt.RooExtendPdf("ePDF1stSR_TTj","ePDF1stSR_TTj", boxes[box].workspace.pdf("PDF1st_TTj"), N_1stSR_TTj, "sR1,sR2,sR3,sR4")
             ePDF2ndSR_TTj = rt.RooExtendPdf("ePDF2ndSR_TTj","ePDF2ndSR_TTj", boxes[box].workspace.pdf("PDF2nd_TTj"), N_2ndSR_TTj, "sR1,sR2,sR3,sR4")
-            ePDF1stSR_Wln = rt.RooExtendPdf("ePDF1stSR_Wln","ePDF1stSR_Wln", boxes[box].workspace.pdf("PDF1st_Wln"), N_1stSR_Wln, "sR1,sR2,sR3,sR4")
-            ePDF2ndSR_Wln = rt.RooExtendPdf("ePDF2ndSR_Wln","ePDF2ndSR_Wln", boxes[box].workspace.pdf("PDF2nd_Wln"), N_2ndSR_Wln, "sR1,sR2,sR3,sR4")
-            ePDF1stSR_Znn = rt.RooExtendPdf("ePDF1stSR_Znn","ePDF1stSR_Znn", boxes[box].workspace.pdf("PDF1st_Znn"), N_1stSR_Znn, "sR1,sR2,sR3,sR4")
-            ePDF2ndSR_Znn = rt.RooExtendPdf("ePDF2ndSR_Znn","ePDF2ndSR_Znn", boxes[box].workspace.pdf("PDF2nd_Znn"), N_2ndSR_Znn, "sR1,sR2,sR3,sR4")
-            ePDF1stSR_Zll = rt.RooExtendPdf("ePDF1stSR_Zll","ePDF1stSR_Zll", boxes[box].workspace.pdf("PDF1st_Zll"), N_1stSR_Zll, "sR1,sR2,sR3,sR4")
-            ePDF2ndSR_Zll = rt.RooExtendPdf("ePDF2ndSR_Zll","ePDF2ndSR_Zll", boxes[box].workspace.pdf("PDF2nd_Zll"), N_2ndSR_Zll, "sR1,sR2,sR3,sR4")
+            if not self.options.doMultijet:
+                ePDF1stSR_Wln = rt.RooExtendPdf("ePDF1stSR_Wln","ePDF1stSR_Wln", boxes[box].workspace.pdf("PDF1st_Wln"), N_1stSR_Wln, "sR1,sR2,sR3,sR4")
+                ePDF2ndSR_Wln = rt.RooExtendPdf("ePDF2ndSR_Wln","ePDF2ndSR_Wln", boxes[box].workspace.pdf("PDF2nd_Wln"), N_2ndSR_Wln, "sR1,sR2,sR3,sR4")
+                ePDF1stSR_Znn = rt.RooExtendPdf("ePDF1stSR_Znn","ePDF1stSR_Znn", boxes[box].workspace.pdf("PDF1st_Znn"), N_1stSR_Znn, "sR1,sR2,sR3,sR4")
+                ePDF2ndSR_Znn = rt.RooExtendPdf("ePDF2ndSR_Znn","ePDF2ndSR_Znn", boxes[box].workspace.pdf("PDF2nd_Znn"), N_2ndSR_Znn, "sR1,sR2,sR3,sR4")
+                ePDF1stSR_Zll = rt.RooExtendPdf("ePDF1stSR_Zll","ePDF1stSR_Zll", boxes[box].workspace.pdf("PDF1st_Zll"), N_1stSR_Zll, "sR1,sR2,sR3,sR4")
+                ePDF2ndSR_Zll = rt.RooExtendPdf("ePDF2ndSR_Zll","ePDF2ndSR_Zll", boxes[box].workspace.pdf("PDF2nd_Zll"), N_2ndSR_Zll, "sR1,sR2,sR3,sR4")
+            else:
+                ePDF1stSR_QCD = rt.RooExtendPdf("ePDF1stSR_QCD","ePDF1stSR_QCD", boxes[box].workspace.pdf("PDF1st_QCD"), N_1stSR_QCD, "sR1,sR2,sR3,sR4")
+                ePDF2ndSR_QCD = rt.RooExtendPdf("ePDF2ndSR_QCD","ePDF2ndSR_QCD", boxes[box].workspace.pdf("PDF2nd_QCD"), N_2ndSR_QCD, "sR1,sR2,sR3,sR4")
 
             boxes[box].importToWS(NsSR)
             boxes[box].importToWS(eBinPDFSR_Signal)
@@ -409,18 +422,23 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].importToWS(N_2ndSR_TTj)
             boxes[box].importToWS(ePDF1stSR_TTj)
             boxes[box].importToWS(ePDF2ndSR_TTj)
-            boxes[box].importToWS(N_1stSR_Wln)
-            boxes[box].importToWS(N_2ndSR_Wln)
-            boxes[box].importToWS(ePDF1stSR_Wln)
-            boxes[box].importToWS(ePDF2ndSR_Wln)
-            boxes[box].importToWS(N_1stSR_Znn)
-            boxes[box].importToWS(N_2ndSR_Znn)
-            boxes[box].importToWS(ePDF1stSR_Znn)
-            boxes[box].importToWS(ePDF2ndSR_Znn)
-            boxes[box].importToWS(N_1stSR_Zll)
-            boxes[box].importToWS(N_2ndSR_Zll)
-            boxes[box].importToWS(ePDF1stSR_Zll)
-            boxes[box].importToWS(ePDF2ndSR_Zll)
+            
+            if not self.options.doMultijet:
+                boxes[box].importToWS(N_1stSR_Wln)
+                boxes[box].importToWS(N_2ndSR_Wln)
+                boxes[box].importToWS(ePDF1stSR_Wln)
+                boxes[box].importToWS(ePDF2ndSR_Wln)
+                boxes[box].importToWS(N_1stSR_Znn)
+                boxes[box].importToWS(N_2ndSR_Znn)
+                boxes[box].importToWS(ePDF1stSR_Znn)
+                boxes[box].importToWS(ePDF2ndSR_Znn)
+                boxes[box].importToWS(N_1stSR_Zll)
+                boxes[box].importToWS(N_2ndSR_Zll)
+                boxes[box].importToWS(ePDF1stSR_Zll)
+                boxes[box].importToWS(ePDF2ndSR_Zll)
+            else:
+                boxes[box].importToWS(N_1stSR_QCD)
+                boxes[box].importToWS(N_2ndSR_QCD)
 
             NB = boxes[box].getFitPDF(boxes[box].fitmodel).expectedEvents(vars)
             IntB  = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars).getVal()
@@ -431,23 +449,32 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             BPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF1stSR_TTj"))
             if N_2ndSR_TTj.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_TTj"))
-            if N_1stSR_Wln.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Wln"))
-            if N_2ndSR_Wln.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Wln"))
-            if N_1stSR_Znn.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Znn"))
-            if N_2ndSR_Znn.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Znn"))
-            if N_1stSR_Zll.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Zll"))
-            if N_2ndSR_Zll.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Zll"))
+            if not self.options.doMultijet:
+                if N_1stSR_Wln.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Wln"))
+                if N_2ndSR_Wln.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Wln"))
+                if N_1stSR_Znn.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Znn"))
+                if N_2ndSR_Znn.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Znn"))
+                if N_1stSR_Zll.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Zll"))
+                if N_2ndSR_Zll.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Zll"))
+            else:
+                if N_1stSR_QCD.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_QCD"))
+                if N_2ndSR_QCD.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_QCD"))
 
             SpBPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF1stSR_TTj"))
             # prevent nan when there is no signal expected
             if not math.isnan(NsSR.getVal()): SpBPdfList.add(boxes[box].workspace.pdf("eBinPDFSR_Signal"))
             if N_2ndSR_TTj.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_TTj"))
-            if N_1stSR_Wln.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Wln"))
-            if N_2ndSR_Wln.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Wln"))
-            if N_1stSR_Znn.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Znn"))
-            if N_2ndSR_Znn.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Znn"))
-            if N_1stSR_Zll.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Zll"))
-            if N_2ndSR_Zll.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Zll"))
+            if not self.options.doMultijet:
+                if N_1stSR_Wln.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Wln"))
+                if N_2ndSR_Wln.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Wln"))
+                if N_1stSR_Znn.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Znn"))
+                if N_2ndSR_Znn.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Znn"))
+                if N_1stSR_Zll.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_Zll"))
+                if N_2ndSR_Zll.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_Zll"))
+            else:
+                if N_1stSR_QCD.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1stSR_QCD"))
+                if N_2ndSR_QCD.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2ndSR_QCD"))
+                
 
             SigPlusBkgModelSR = rt.RooAddPdf("SigPlusBkgModelSR","SigPlusBkgModelSR",SpBPdfList)
             BkgModelSR = rt.RooAddPdf("BkgModelSR","BkgModelSR",BPdfList)
