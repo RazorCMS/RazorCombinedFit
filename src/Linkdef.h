@@ -16,6 +16,7 @@
 #pragma link C++ defined_in "RooRazor2DTail.h";
 #pragma link C++ defined_in "RooRazorLShape.h";
 #pragma link C++ defined_in "RooDalglish.h";
+#pragma link C++ defined_in "MLMixedSample.h";
 
 #endif
 
