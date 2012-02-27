@@ -604,18 +604,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"              
                     #sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree')
-                    sigHisto =  RootTools.getObj(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
+                    sigNorm =  RootTools.getHistNorm(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
                     sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree_%s_%i'%(boxes[box].name,i))
                     sigGenPdf = rt.RooHistPdf('%sPdf_%i' % ('Signal',i),'%sPdf_%i' % ('Signal',i),vars,sigData)
                     #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
                     if self.options.signal_xsec > 0.:   
                         # for SMS
-                        sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigHisto.Integral()*self.options.signal_xsec
+                        sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigNorm*self.options.signal_xsec
                     else:
                         # for CMSSM
                         print sigData.sum(False)
-                        sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigHisto.Integral()/1000
+                        sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigNorm/1000
                     print "sigGenNum = %f" % sigGenNum
                     print "bkgGenNum = %f" % bkgGenNum
                     print "numEntriesData = %i" % data.numEntries()

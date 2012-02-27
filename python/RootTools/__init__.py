@@ -5,16 +5,16 @@ import Utils
 
 import ROOT as rt
 
-def getObj(fileName, dsName, cut = None):
+def getHistNorm(fileName, dsName, cut = None):
     result = None
     input = None
     try:
         input = rt.TFile.Open(fileName)
-        result = input.Get(dsName)
+        result = input.Get(dsName).Integral()
+        print result
     finally:
         if input is not None: input.Close()
     return result
-        
 
 def getDataSet(fileName, dsName, cut = None):
     
