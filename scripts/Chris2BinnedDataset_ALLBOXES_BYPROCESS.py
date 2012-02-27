@@ -19,20 +19,25 @@ def isInFitRegion(x, y, box, config, doMultijet):
     myvariables = config.getVariablesRange(box,"variables",myworkspace)
     myargs = myworkspace.allVars()
     
-    isFitReg = True
-    if x>= myargs['MR'].getMin('sR1')and y> myargs['Rsq'].getMin('sR1'): isFitReg = False
-    if x>= myargs['MR'].getMin('sR2') and y> myargs['Rsq'].getMin('sR2'): isFitReg = False
-    if x>= myargs['MR'].getMin('sR3') and y> myargs['Rsq'].getMin('sR3'): isFitReg = False
-    if not doMultijet:
-        if y> 0.5: isFitReg = False
-    else:
-       if x>= myargs['MR'].getMin('sR4') and y> myargs['Rsq'].getMin('sR4'): isFitReg = False 
-       if x>= myargs['MR'].getMin('sR5') and y> myargs['Rsq'].getMin('sR5'): isFitReg = False
-       if x>= myargs['MR'].getMin('sR6') and y> myargs['Rsq'].getMin('sR6'): isFitReg = False
+    def testInRegion(region, x, y):
+        inMR = x >= myargs['MR'].getMin(region) and x < myargs['MR'].getMax(region)
+        inRsq = y >= myargs['Rsq'].getMin(region) and y < myargs['Rsq'].getMax(region)
+        return inMR and inRsq
+
+    regions = ['fR1','fR2','fR3','fR4']
+    if doMultijet:
+        regions.append('fR5')
+    
+    result = False
+    for r in regions:
+        if testInRegion(r, x, y):
+            result = True
+            break
+
     del myargs
     del myvariables
     del myworkspace
-    return isFitReg
+    return result
     
 def cutFitRegion(histo, box, config, doMultijet):
 
