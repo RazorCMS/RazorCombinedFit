@@ -36,7 +36,6 @@ def isInFitRegion(x, y, box, config, doMultijet):
 
     del myvariables
     del myworkspace
-    print 'isInFitRegion',x,y,box,result
     return result
     
 def cutFitRegion(histo, box, config, doMultijet):
