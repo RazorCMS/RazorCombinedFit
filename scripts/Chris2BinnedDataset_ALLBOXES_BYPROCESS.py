@@ -291,8 +291,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
     gRnd = rt.TRandom3(seed)
 
     for i in xrange(nToys):
-        # correlated systematics: LUMI 4.5% MULTIPLICATIVE sumInQuadrature  sumInQuadrature RvsMR trigger 2% = 4.9%
-        lumiFactor = math.pow((1.045), gRnd.Gaus(0., 1.))
+        # correlated systematics: LUMI 3.6% MULTIPLICATIVE sumInQuadrature  sumInQuadrature RvsMR trigger 2% = 4.9%
+        lumiFactor = math.pow((1.036), gRnd.Gaus(0., 1.))
         # triggerLepton 3% per trigger set
         muTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
         eleTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
