@@ -378,9 +378,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             #add in the other signal regions
             norm_region = 'sR1,sR2,sR3,sR4'
+            fit_range = ['fR1','fR2','fR3','fR4']
             if self.options.doMultijet:
                 norm_region += ',sR5,sR6'
-            
+                fit_range.append('fR5')
 
             N_1stSR_TTj = rt.RooRealVar("N_1stSR_TTj","N_1stSR_TTj", boxes[box].getFitPDF("ePDF1st_TTj").expectedEvents(vars)*
                                         boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars,0,norm_region).getVal()/
@@ -593,7 +594,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
-            fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+            fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
 
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
@@ -626,7 +627,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "fitDataSet.numEntries() = %f" %fitDataSet.numEntries()
 
                     #sum the toys
-                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(fit_range))
                     tot_toy.append(sig_toy)
                     tot_toy.append(fitDataSet)
                     print "Total Yield = %f" %tot_toy.numEntries()
@@ -640,7 +641,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
                     bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
-                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(["fR1","fR2","fR3","fR4"]))
+                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(fit_range))
                     tot_toy.append(fitDataSet)
                     tot_toy.SetName("bkg")
                     del bkg_toy
