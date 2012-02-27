@@ -300,6 +300,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         # triggerLepton 3% per trigger set
         muTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
         eleTriggerFactor =  math.pow(1.03,gRnd.Gaus(0.,1.))
+        #take 5% for the trigger being poorly emulated in MC
+        dataMCTriggerFactor =  math.pow(1.05,gRnd.Gaus(0.,1.))
         btagFactor = math.pow(1.06,gRnd.Gaus(0.,1.))
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         #xsecFactor = gRnd.Gaus(0., 1.)
@@ -348,6 +350,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                     if nominal != 0:
                         # add lumi systematics
                         newvalue = nominal*lumiFactor
+                        if doMultijet: newvalue = newvalue*dataMCTriggerFactor
                         if box == "BJet" or btag> 0.0: newvalue = newvalue*btagFactor
                         # add the lep trigger eff
                         if box == "MuMu" or box == "MuEle" or box == "Mu": newvalue = newvalue*muTriggerFactor
