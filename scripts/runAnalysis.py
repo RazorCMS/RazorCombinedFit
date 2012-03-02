@@ -46,6 +46,8 @@ def defineParser():
                   help="Run the Razor MultiJet analysis")
     parser.add_option('--full-region',dest="full_region", default=False, action='store_true',
                   help="Perform the fit in the FULL region")
+    parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
+                  help="Do not save the RooWorkspaces to save disk space for limit setting")
 
     return parser
 

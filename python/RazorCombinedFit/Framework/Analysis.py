@@ -53,7 +53,11 @@ class Analysis(object):
         pass
         
     def final(self):
-        self.store(self.workspace)
+        #turn off the workspace saving in some cases
+        if hasattr(self,'options') and self.options.nosave_workspace:
+            pass
+        else:
+            self.store(self.workspace)
         #write out any stored objects at the end
         self.rootFile.write()
         

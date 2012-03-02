@@ -256,8 +256,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             for box, fileName in fileIndex.iteritems():
                 boxes[box].predictBackground(boxes[box].workspace.obj('independentFR'), fileName)
         
-        for box in boxes.keys():
-            self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
+        #skip saving the workspace if the option is set
+        if not self.options.nosave_workspace:
+            for box in boxes.keys():
+                self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
     def limit(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
@@ -635,6 +637,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     tot_toy.SetName("sigbkg")
 
                     del sigData
+                    del sigNorm
                     del sigGenPdf
                     del sig_toy
                     del bkg_toy
