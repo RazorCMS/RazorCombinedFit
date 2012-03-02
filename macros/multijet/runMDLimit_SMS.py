@@ -96,9 +96,9 @@ if __name__ == '__main__':
             # run SMS
             outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
             # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xsec,seed,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
+            outputfile.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xsec,seed,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
             # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xsec,seed,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
+            outputfile.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xsec,seed,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
             # copy output files
             outputfile.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root wreece@lxcms127.cern.ch:/data/wreece/LimitSetting/T2tt/0_01/\n" %(mydir,outputFileName,options.tree_name,i))
             outputfile.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgToys_%s_%s_%i.root wreece@lxcms127.cern.ch:/data/wreece/LimitSetting/T2tt/0_01/\n" %(mydir,outputFileName,options.tree_name,i))
