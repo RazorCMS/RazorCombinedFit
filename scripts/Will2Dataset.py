@@ -19,9 +19,9 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMin):
     else:
         output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
-    data.Write()
+    for d in data:
+        d.Write()
     output.Close()
-    return data.numEntries()
 
 def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin, bMax, run, write = True):
     """This defines the format of the RooDataSet"""
@@ -35,6 +35,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     #
     workspace.factory('nBtag[0,0,2.0]')
     workspace.factory('nLepton[0,0,15.0]')
+    workspace.factory('nElectron[0,0,15.0]')
+    workspace.factory('nMuon[0,0,15.0]')
+    workspace.factory('nTau[0,0,15.0]')
     workspace.factory('nVertex[1,0.,50.]')
     workspace.factory('nJet[0,0,15.0]')
     workspace.factory('W[0,0,+INF]')
@@ -54,6 +57,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
 
     nLeptons = 0
     
+    nLooseElectrons = rt.TH2D('nLooseElectrons','nLooseElectrons',350,mRmin,mRmax,100,rsqMin,rsqMax)
+    nLooseMuons = rt.TH2D('nLooseMuons','nLooseMuons',350,mRmin,mRmax,100,rsqMin,rsqMax)
+    nLooseTaus = rt.TH2D('nLooseTaus','nLooseTaus',350,mRmin,mRmax,100,rsqMin,rsqMax)
+    
     for entry in xrange(tree.GetEntries()):
         tree.GetEntry(entry)
         
@@ -71,6 +78,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
             nLeptons += 1
             continue
         
+        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.mRMB,tree.RsqMB)
+        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.mRMB,tree.RsqMB)
+        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.mRMB,tree.RsqMB)
         
         nBtag = len([t for t in (tree.maxTCHE,tree.nextTCHE) if t >= 3.3])
         if bMin >= 0 and nBtag < bMin: continue
@@ -93,6 +103,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
         a.setRealValue('Rsq',tree.RsqMB, True)
         a.setRealValue('nBtag',nBtag)
         a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
+        a.setRealValue('nElectron',tree.nElectronLoose)
+        a.setRealValue('nMuon',tree.nMuonLoose)
+        a.setRealValue('nTau',tree.nTauLoose)
         a.setRealValue('nJet',tree.nJet)
         a.setRealValue('nVertex',tree.nVertex)        
         a.setRealValue('W',1.0)
@@ -104,7 +117,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:
-        writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, bMin)
+        writeTree2DataSet([rdata,nLooseElectrons,nLooseMuons,nLooseTaus], outputFile, outputBox, rMin, mRmin, bMin)
     print 'nLeptons',nLeptons
     return rdata
 

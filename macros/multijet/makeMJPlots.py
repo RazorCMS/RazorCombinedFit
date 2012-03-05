@@ -75,8 +75,8 @@ class PlotCount(object):
         pad1.SetGridx()
         pad1.SetGridy()
 
-        leg = rt.TLegend(0.71, 0.5, 0.9, 0.9)
-        leg.SetTextSize(0.05)
+        leg = rt.TLegend(0.50, 0.5, 0.9, 0.9)
+        leg.SetTextSize(0.03)
         leg.SetLineColor(rt.kWhite)
         leg.SetFillColor(rt.kWhite)
         leg.SetShadowColor(rt.kWhite)
@@ -126,7 +126,8 @@ class PlotCount(object):
             ratio = histo.Clone('ratio%s' % histo.GetName())
             ratio.Sumw2()
             ratio.Divide(inc)
-            ratio.Draw(option)
+            ratio.DrawNormalized(option)
+            #ratio.Draw(option)
             
             ratio.GetXaxis().SetTitleFont(132)
             ratio.GetYaxis().SetTitleFont(132)
@@ -154,6 +155,8 @@ class PlotCount(object):
         
         self.store.add(leg,dir=dir)
         self.store.add(canvas,dir=dir)
+        canvas.SaveAs('%s.pdf' % canvas.GetName())
+        canvas.SaveAs('%s.C' % canvas.GetName())
         print 'max %s = %i' % (self.count_var,self.max_count)
 
 
@@ -232,6 +235,78 @@ class PlotLeptonRsq(PlotRsq,PlotLeptonCount):
         PlotRsq.__init__(self)        
         PlotLeptonCount.__init__(self, store, 'Rsq') 
 
+#Electrons
+class PlotElectronCount(PlotCount):
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nElectron', [(0,4),(1,1),(2,4)])
+        self.yaxis = "R(N_{Electron}^{i} / N_{Electron}^{INCL})"
+    def rangeLabel(self, range):
+        if range[0] == range[1]:
+            if range[0] == 1:
+                return '[%i Loose Electron]' % range[0]
+            else:
+                return '[%i Loose Electrons]' % range[0]
+        else:
+            return '[%d-%d Loose Electrons]' % (range[0],range[1])
+
+class PlotElectronMR(PlotMR,PlotElectronCount):
+    def __init__(self, store):
+        PlotMR.__init__(self)        
+        PlotElectronCount.__init__(self, store, 'MR')
+        
+class PlotElectronRsq(PlotRsq,PlotElectronCount):
+    def __init__(self, store):
+        PlotRsq.__init__(self)        
+        PlotElectronCount.__init__(self, store, 'Rsq')
+        
+#Muons
+class PlotMuonCount(PlotCount):
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nMuon', [(0,4),(1,1),(2,4)])
+        self.yaxis = "R(N_{Muon}^{i} / N_{Muon}^{INCL})"
+    def rangeLabel(self, range):
+        if range[0] == range[1]:
+            if range[0] == 1:
+                return '[%i Loose Muon]' % range[0]
+            else:
+                return '[%i Loose Muons]' % range[0]
+        else:
+            return '[%d-%d Loose Muons]' % (range[0],range[1])
+
+class PlotMuonMR(PlotMR,PlotMuonCount):
+    def __init__(self, store):
+        PlotMR.__init__(self)        
+        PlotMuonCount.__init__(self, store, 'MR')
+        
+class PlotMuonRsq(PlotRsq,PlotMuonCount):
+    def __init__(self, store):
+        PlotRsq.__init__(self)        
+        PlotMuonCount.__init__(self, store, 'Rsq') 
+        
+#Taus
+class PlotTauCount(PlotCount):
+    def __init__(self, store, var):
+        PlotCount.__init__(self, store, var, 'nTau', [(0,4),(1,1),(2,4)])
+        self.yaxis = "R(N_{Tau}^{i} / N_{Tau}^{INCL})"
+    def rangeLabel(self, range):
+        if range[0] == range[1]:
+            if range[0] == 1:
+                return '[%i Loose Tau]' % range[0]
+            else:
+                return '[%i Loose Taus]' % range[0]
+        else:
+            return '[%d-%d Loose Taus]' % (range[0],range[1])
+
+class PlotTauMR(PlotMR,PlotTauCount):
+    def __init__(self, store):
+        PlotMR.__init__(self)        
+        PlotTauCount.__init__(self, store, 'MR')
+        
+class PlotTauRsq(PlotRsq,PlotTauCount):
+    def __init__(self, store):
+        PlotRsq.__init__(self)        
+        PlotTauCount.__init__(self, store, 'Rsq') 
+
 
 if __name__ ==  '__main__':
     
@@ -239,7 +314,10 @@ if __name__ ==  '__main__':
     rt.gStyle.SetOptTitle(0)
 
     store = RootTools.RootFile.RootFile('razorMJControlPlots.root')
-    plotters = [PlotNPVMR(store),PlotNPVRsq(store),PlotBTagMR(store),PlotBTagRsq(store),PlotJetMR(store),PlotJetRsq(store),PlotLeptonMR(store),PlotLeptonRsq(store)]
+    plotters = [PlotNPVMR(store),PlotNPVRsq(store),PlotBTagMR(store),PlotBTagRsq(store),\
+                PlotJetMR(store),PlotJetRsq(store),PlotLeptonMR(store),PlotLeptonRsq(store),\
+                PlotElectronMR(store),PlotElectronRsq(store),PlotMuonMR(store),PlotMuonRsq(store),\
+                PlotTauMR(store),PlotTauRsq(store)]
     #plotters = [PlotJetMR(store),PlotJetRsq(store)]
 
     def loop(fileName):
