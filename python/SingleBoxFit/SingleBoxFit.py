@@ -60,6 +60,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
         return boxes
 
     def toystudy(self, inputFiles, nToys):
+
+        fit_range = "fR1,fR2,fR3,fR4"
+        if self.options.full_region:
+            fit_range = "FULL"
+        elif self.options.doMultijet:
+            fit_range = "fR1,fR2,fR3,fR4,fR5"
+            print 'Using the fit range: %s' % fit_range 
         
         random = rt.RooRandom.randomGenerator()
         
@@ -75,7 +82,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box in boxes:    
             data_yield = boxes[box].workspace.data('RMRTree').numEntries()
             
-            study = boxes[box].getMCStudy()
+            study = boxes[box].getMCStudy(boxes[box].fitmodel, boxes[box].fitmodel,rt.RooFit.Range(fit_range))
             study.generateAndFit(nToys,data_yield)
             
             qual_ = rt.RooRealVar('quality','quality',-1)
