@@ -123,11 +123,11 @@ class RazorBjetBox(RazorBox.RazorBox):
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
 
         # define 1D histograms
-        histoData = rt.TH1D("histoData", "histoData",nbins, xmin, xmax)
-        histoToy = rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax)
-        histoToyTTj = rt.TH1D("histoToyTTj", "histoToyTTj",nbins, xmin, xmax)
-        histoToyWln = rt.TH1D("histoToyWln", "histoToyWln",nbins, xmin, xmax)
-        histoToyZnn = rt.TH1D("histoToyZnn", "histoToyZnn",nbins, xmin, xmax)
+        histoData = self.setPoissonErrors(rt.TH1D("histoData", "histoData",nbins, xmin, xmax))
+        histoToy = self.setPoissonErrors(rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax))
+        histoToyTTj = self.setPoissonErrors(rt.TH1D("histoToyTTj", "histoToyTTj",nbins, xmin, xmax))
+        histoToyWln = self.setPoissonErrors(rt.TH1D("histoToyWln", "histoToyWln",nbins, xmin, xmax))
+        histoToyZnn = self.setPoissonErrors(rt.TH1D("histoToyZnn", "histoToyZnn",nbins, xmin, xmax))
 
         def setName(h, name):
             h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(),name,'_'.join(ranges)) )
