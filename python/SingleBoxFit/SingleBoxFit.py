@@ -154,7 +154,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if self.options.save_toys_from_fit.find("/") != -1:
                     boxes[box].writeBackgroundDataToys(f, data_yield*self.options.scale_lumi, box, nToys, self.options.save_toys_from_fit)
                 else:
-                    boxes[box].writeBackgroundDataToys(f, data_yield, box, nToys)
+                    boxes[box].writeBackgroundDataToys(f, data_yield*self.options.scale_lumi, box, nToys)
                 continue
 
             #use an MCStudy to store everything
