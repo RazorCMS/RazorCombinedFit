@@ -16,6 +16,8 @@ def defineParser():
                   help="Name of the root file to store everything in")
     parser.add_option('--options',dest="options", default=False,action='store_true',
                   help="Use the options parser output")
+    parser.add_option('--store-cuts',dest="store_cuts", default=False,action='store_true',
+                  help="Write the cuts to a pickle file")    
     return parser
 
 if __name__ == '__main__':
@@ -61,14 +63,22 @@ if __name__ == '__main__':
     rt.gROOT.ProcessLine(magicString)
     from ROOT import MyStruct
 
+    cuts = {}
     # associate the bins to the corresponding variables in the structure
     s = MyStruct()
     for ix in range(0, len(MRbins)-1):
         for iy in range(0, len(Rsqbins)-1):
             myBin = ["b%s_%i_%i" %(Box,ix,iy), MRbins[ix], MRbins[ix+1], Rsqbins[iy], Rsqbins[iy+1]]
             varName = "bin_%i_%i" %(ix, iy) 
+            cuts[myBin[0]] = "MR>%f && MR<=%f && Rsq>%f && Rsq<=%f" % (MRbins[ix],MRbins[ix+1], Rsqbins[iy],Rsqbins[iy+1])
             # only the signal-region bins go in the Tree
             myTree.Branch(myBin[0], rt.AddressOf(s,varName),'%s/D' %varName)
+    
+    #write out a map of cuts for later
+    if options.store_cuts:
+        import pickle
+        output = options.output.replace('.root','.pkl')
+        pickle.dump(cuts, file(output,'wb'))
     
     treeName = "RMRTree"
     for i in xrange(len(inputFiles)):
