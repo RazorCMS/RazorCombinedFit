@@ -12,20 +12,76 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
-def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, bMin):
+class HadBox(object):
+    """The Had search box used in the analysis"""
+    def __init__(self):
+        self.name = 'Had'
+    def __call__(self, tree):
+        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
+        return tree.nJet >= 6 and tree.maxTCHE < 3.3 and nLepton == 0
     
-    if bMin >= 0:
-        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_nBtag_'+str(bMin)+'_'+outputBox,'RECREATE')
-    else:
-        output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
+class BJetBox(object):
+    """The BJet search box used in the analysis"""
+    def __init__(self):
+        self.name = 'BJet'
+    def __call__(self, tree):
+        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
+        return tree.nJet >= 6 and tree.maxTCHE >= 3.3 and nLepton == 0
+
+class BJet5JBox(object):
+    """The BJet search box used in the analysis, but with >= 5 jets rather than 6"""
+    def __init__(self):
+        self.name = 'BJet5J'
+    def __call__(self, tree):
+        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
+        return tree.nJet >= 5 and tree.maxTCHE >= 3.3 and nLepton == 0
+    
+class CR5JBVetoBox(object):
+    """A control region for the hadronic shape without signal: No leptons, no bjets"""
+    def __init__(self):
+        self.name = 'CR5JBVeto'
+    def __call__(self,tree):
+        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
+        #this is a tight veto on the btagging
+        return tree.nJet == 5 and tree.maxTCHE < 1.7 and nLepton == 0
+
+class CR5JSingleLeptonBVetoBox(object):
+    """A control region for the hadronic shape without signal: Signal lepton, no bjets"""
+    def __init__(self):
+        self.name = 'CR5JSingleLeptonBVeto'
+    def __call__(self,tree):
+        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        #this is a tight veto on the btagging
+        return tree.nJet == 5 and tree.maxTCHE < 1.7 and nLepton == 1
+    
+class CR6JSingleLeptonBVetoBox(object):
+    """A control region for the Had box: One lepton, no bjets - Should give handle on W+Jets"""
+    def __init__(self):
+        self.name = 'CR6JSingleLeptonBVeto'
+    def __call__(self, tree):
+        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        return tree.nJet >= 6 and tree.maxTCHE < 3.3 and nLepton == 1
+    
+class CR6JSingleLeptonBJetBox(object):
+    """A control region for the BJet box: One lepton, at least one bjet - Should give handle on TTbar"""
+    def __init__(self):
+        self.name = 'CR6JSingleLeptonBJet'
+    def __call__(self, tree):
+        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        return tree.nJet >= 6 and tree.maxTCHE >= 3.3 and nLepton == 1
+
+def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
+    
+    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
     for d in data:
         d.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin, bMax, run, write = True):
+def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write = True):
     """This defines the format of the RooDataSet"""
     
+    box = filter.name
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
     #
@@ -55,8 +111,6 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     rMin = rt.TMath.Sqrt(rsqMin)
     rMax = rt.TMath.Sqrt(rsqMax)
 
-    nLeptons = 0
-    
     nLooseElectrons = rt.TH2D('nLooseElectrons','nLooseElectrons',350,mRmin,mRmax,100,rsqMin,rsqMax)
     nLooseMuons = rt.TH2D('nLooseMuons','nLooseMuons',350,mRmin,mRmax,100,rsqMin,rsqMax)
     nLooseTaus = rt.TH2D('nLooseTaus','nLooseTaus',350,mRmin,mRmax,100,rsqMin,rsqMax)
@@ -64,33 +118,40 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     for entry in xrange(tree.GetEntries()):
         tree.GetEntry(entry)
         
-        if tree.mRMB > mRmax or tree.mRMB < mRmin or tree.RsqMB < rsqMin or tree.RsqMB > rsqMax:
-            continue
-        if not tree.triggerFilter: continue
-        if hasattr(tree,'selectionFilter') and not tree.selectionFilter: continue
+        ####First, apply a common selection
         
+        #take only events in the MR and R2 region
+        if tree.mR > mRmax or tree.mR < mRmin or tree.Rsq < rsqMin or tree.Rsq > rsqMax:
+            continue
+        #events must have passed one of our triggers
+        if not tree.triggerFilter: continue
+        
+        #veto events with suspect btagging
+        if tree.maxTCHE < 0 or tree.nextTCHE < 0: continue
+        
+        #apply all those MET tail filters
         if tree.HBHENoiseFilterResultProducer2011NonIsoRecommended == 0 or tree.goodPrimaryVertexFilter == 0 or \
             tree.ecalDeadCellTPfilter == 0 or tree.eeNoiseFilter == 0 or tree.recovRecHitFilter == 0:
             continue
+
+        #apply the box based filter class
+        if not filter(tree): continue
         
-        #veto leptons to remove known sources of MET
-        if tree.nMuonTight > 0 or tree.nElectronTight > 0 or tree.nTauTight > 0:
-            nLeptons += 1
-            continue
+        #veto events with multiple loose leptons
+        nLeptonLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        if nLeptonLoose > 1: continue
         
-        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.mRMB,tree.RsqMB)
-        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.mRMB,tree.RsqMB)
-        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.mRMB,tree.RsqMB)
-        
-        nBtag = len([t for t in (tree.maxTCHE,tree.nextTCHE) if t >= 3.3])
-        if bMin >= 0 and nBtag < bMin: continue
-        if bMax >= 0 and nBtag > bMax: continue
+        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.mR,tree.Rsq)
+        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.mR,tree.Rsq)
+        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.mR,tree.Rsq)
         
         try:
             if tree.run <= run:
                 continue
         except AttributeError:
             pass
+        
+        nBtag = len([t for t in (tree.maxTCHE,tree.nextTCHE) if t >= 3.3])
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
@@ -99,8 +160,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
         a.setRealValue('Lumi',tree.lumi)
         a.setRealValue('Event',tree.event)
         
-        a.setRealValue('MR',tree.mRMB, True)
-        a.setRealValue('Rsq',tree.RsqMB, True)
+        a.setRealValue('MR',tree.mR, True)
+        a.setRealValue('Rsq',tree.Rsq, True)
         a.setRealValue('nBtag',nBtag)
         a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
         a.setRealValue('nElectron',tree.nElectronLoose)
@@ -117,23 +178,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:
-        writeTree2DataSet([rdata,nLooseElectrons,nLooseMuons,nLooseTaus], outputFile, outputBox, rMin, mRmin, bMin)
-    print 'nLeptons',nLeptons
+        writeTree2DataSet([rdata,nLooseElectrons,nLooseMuons,nLooseTaus], outputFile, '%s.root' % filter.name, rMin, mRmin)
     return rdata
-
-def printEfficiencies(tree, outputFile, config, flavour):
-    """Backout the MC efficiency from the weights"""
-    print 'ERROR:: This functionality produces incorrect results as we\'re missing a factor somewhere...'
-    
-    cross_section = cross_sections[flavour]
-    
-    for box in boxMap:
-        ds = convertTree2Dataset(tree, outputFile, 'Dummy', config, box, 0, -1, -1, write = False)
-        row = ds.get(0)
-        W = ds.mean(row['W'])
-        n_i = (cross_section*lumi)/W
-        n_f = ds.numEntries()
-        print 'Efficienty: %s: %f (n_i=%f; n_f=%i)' % (box,n_f/n_i,n_i, n_f)  
 
 if __name__ == '__main__':
     
@@ -177,5 +223,10 @@ if __name__ == '__main__':
                 fName = name[:-5]
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
-    convertTree2Dataset(chain,fName, 'Had.root', cfg,'Had',options.min,options.max,-1,0,options.run)
-    convertTree2Dataset(chain,fName, 'BJet.root', cfg,'BJet',options.min,options.max,1,-1,options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,HadBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJet5JBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR5JBVetoBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR5JSingleLeptonBVetoBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBJetBox(),options.run)
