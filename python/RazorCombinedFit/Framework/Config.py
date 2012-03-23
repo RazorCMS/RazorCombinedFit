@@ -12,10 +12,24 @@ class Config(object):
     def __checkBox(self, box):
         if box not in self.config.sections():
             raise KeyError("The box '%s' was not found" % box)
+        
+    def get(self, box, var):
+        result = None
+        if self.config.has_option(box, var):
+            result = self.config.get(box, var)
+        elif self.config.defaults().has_key(var):
+            result = self.config.defaults()[var]
+        return result
+    
+    def has_option(self, box, var):
+        result = False
+        if self.config.has_option(box, var) or self.config.defaults().has_key(var):
+            result = True
+        return result
     
     def getVariables(self, box, lineTag='variables'):
         self.__checkBox(box)
-        return eval(self.config.get(box,lineTag))
+        return eval(self.get(box,lineTag))
     
     def getVariablesRange(self, box, lineTag, workspace):
         #first define the variables
@@ -56,7 +70,7 @@ class Config(object):
         varNames = [v.split('[')[0] for v in vars]
         result = True
         for v in varNames:
-            if not self.config.has_option(box, 'signal_%s' % v):
+            if not self.has_option(box, 'signal_%s' % v):
                 result = False
                 break
         return result
@@ -69,7 +83,7 @@ class Config(object):
         varNames = [v.split('[')[0] for v in vars]
         result = []
         for v in varNames:
-            result.append(eval(self.config.get(box, 'signal_%s' %  v)) )
+            result.append(eval(self.get(box, 'signal_%s' %  v)) )
         return result        
         
         
