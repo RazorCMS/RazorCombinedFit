@@ -10,7 +10,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         super(RazorMultiJetBox,self).__init__(name, variables)
         
         # DATA DEFAULT
-        self.zeros = {'TTj':['CR5JSingleLeptonBVeto','CR6JSingleLeptonBVeto'], 'QCD':[]}
+        self.zeros = {'TTj':[], 'QCD':[]}
         # MC FIT: QCD
         #self.zeros = {'TTj':['Had','QCD'], 'QCD':[]}
         # MC FIT: TTj
@@ -61,11 +61,12 @@ class RazorMultiJetBox(RazorBox.RazorBox):
                     floatSomething(z)
                     fixed.append(z)
         
-        #we take the 2nd component of the TTj from our control region
-        if self.name in ['Had','BJet','BJet5J']:
-            self.fix1stComponent("TTj")
-            self.workspace.var("f2_TTj").setVal(0.999)
-            self.workspace.var("f2_TTj").setConstant(rt.kTRUE)
+        #remove redundant second components
+        self.fix2ndComponent("QCD")
+        self.workspace.var("f2_QCD").setVal(0.)
+        self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
+
+        #self.fix2ndComponent("TTj")
                     
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
         
