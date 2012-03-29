@@ -303,6 +303,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         #take 5% for the trigger being poorly emulated in MC
         dataMCTriggerFactor =  math.pow(1.05,gRnd.Gaus(0.,1.))
         btagFactor = math.pow(1.06,gRnd.Gaus(0.,1.))
+        #up to 30% of events have a gen level tau, where the 
+        tauFactor = math.pow(1.02,gRnd.Gaus(0.,1.))
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         #xsecFactor = gRnd.Gaus(0., 1.)
         for ibox in range(0,len(boxes)):
@@ -357,6 +359,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                         if box == "EleEle" or box == "Ele": newvalue = newvalue*eleTriggerFactor
                         #ignore leptons for the hadronic boxes
                         if box not in ['Had','BJet']: newvalue = newvalue*lepFactor
+                        if doMultijet:
+                            newvalue = newvalue*tauFactor
                         # add xsec systematics
                         #if xsecFactor > 0: newvalue = newvalue* + xsecFactor*(wHisto_xsecup[ibox].GetBinContent(ix,iy)-nominal)
                         #else: newvalue = newvalue*math.pow( + xsecFactor*(wHisto_xsecdown[ibox].GetBinContent(ix,iy)-nominal))
