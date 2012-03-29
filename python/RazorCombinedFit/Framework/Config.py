@@ -60,6 +60,8 @@ class Config(object):
     
     def getBoxes(self):
         """Returns the names of the boxes defined in the config file"""
+        if self.config.defaults().has_key('boxes'):
+            return eval(self.config.defaults()['boxes'])
         return self.config.sections()
     
     def hasBinning(self, box):
