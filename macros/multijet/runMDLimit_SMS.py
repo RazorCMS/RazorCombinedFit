@@ -93,16 +93,19 @@ if __name__ == '__main__':
             clock = now.GetTime()
             seed = today+clock+pid+137*i
         
+            #download the files locally
+            outputfile.write("cmsStage %s .\n" % input)
+            outputfile.write("cmsStage %s . \n" % signalpath)
             # run SMS
-            outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
+            outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, os.path.basename(signalpath),makePDFOptions))
             
             def writeJob(stream, xs, seedlocal):
                 fn = "%s_%s_xsec_%f" %(signal, options.tree_name, xs)
                 stream.write("\n########## Start %f\n" % xs)
                 # perform limit toys(signal + bkgd) setting fits
-                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
+                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,outputFileName,options.tree_name,i,os.path.basename(input),mydir,signal,toys,runOptions))
                 # perform limit toys(bkgd only) setting fits
-                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
+                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,outputFileName,options.tree_name,i,os.path.basename(input),mydir,signal,toys,runOptions))
                 # copy output files
                 strxc = str(xc).replace('.','_')
                 stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,strxc))
