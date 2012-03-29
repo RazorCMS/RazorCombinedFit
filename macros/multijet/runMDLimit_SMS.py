@@ -64,14 +64,13 @@ if __name__ == '__main__':
             outputname = os.path.join(jobdir,"%s_%i.src" %(outputFileName,i))
             outputfile = file(outputname,'w')
             outputfile.write('#!/bin/bash\n')
-            #outputfile.write('sleep %i\n' % random.randint(0,300) )
-            #outputfile.write('cd '+pwd+'\n')
             mydir = "/tmp/wreece/%s_%s_xsec_%f_%i" %(signal,options.tree_name,xsec,i)
             outputfile.write("mkdir %s\n" %mydir)
             outputfile.write("cd %s\n" %mydir)
             outputfile.write("scramv1 project CMSSW CMSSW_4_2_8\n")
             outputfile.write("cd CMSSW_4_2_8/src\n")
-            outputfile.write("eval `scramv1 run -sh`\n")            
+            outputfile.write("eval `scramv1 run -sh`\n")  
+            outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.33.02/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")          
             outputfile.write("cmsStage /store/cmst3/user/wreece/Razor2011/MultiJetAnalysis/everything.tgz .\n")            
             outputfile.write("tar zxvf everything.tgz >& /dev/null\n")
             outputfile.write("cd RazorCombinedFit\n")
@@ -93,19 +92,27 @@ if __name__ == '__main__':
             today = now.GetDate()
             clock = now.GetTime()
             seed = today+clock+pid+137*i
+        
             # run SMS
             outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
-            # perform limit toys(signal + bkgd) setting fits
-            outputfile.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xsec,seed,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
-            # perform limit toys(bkgd only) setting fits
-            outputfile.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xsec,seed,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
-            # copy output files
-            outputfile.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root wreece@lxcms127.cern.ch:/data/wreece/LimitSetting/T2tt/0_01/\n" %(mydir,outputFileName,options.tree_name,i))
-            outputfile.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgToys_%s_%s_%i.root wreece@lxcms127.cern.ch:/data/wreece/LimitSetting/T2tt/0_01/\n" %(mydir,outputFileName,options.tree_name,i))
-                        
-            #outputfile.write("cmsStage -f %s/LimitBkgSigToys_%s_%s_%i.root /store/cmst3/user/wreece/Razor2011/MultiJetAnalysis/scratch0/T2tt3\n" %(mydir,outputFileName,options.tree_name,i))
-            #outputfile.write("cmsStage -f %s/LimitBkgToys_%s_%s_%i.root /store/cmst3/user/wreece/Razor2011/MultiJetAnalysis/scratch0/T2tt3\n" %(mydir,outputFileName,options.tree_name,i))
-            # remove output files                                                          
+            
+            def writeJob(stream, xs, seedlocal):
+                fn = "%s_%s_xsec_%f" %(signal, options.tree_name, xs)
+                stream.write("\n########## Start %f\n" % xs)
+                # perform limit toys(signal + bkgd) setting fits
+                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
+                # perform limit toys(bkgd only) setting fits
+                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,outputFileName,options.tree_name,i,input,mydir,signal,toys,runOptions))
+                # copy output files
+                strxc = str(xc).replace('.','_')
+                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,strxc))
+                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,strxc))
+                stream.write("########## End %f\n\n" % xs)
+
+            import random
+            random.seed(seed)
+            for xc in [10,5,1,0.5,0.1,0.05,0.01,0.001]:
+                writeJob(outputfile,xc,random.randint(0,1000000000000))
             #outputfile.write("cd /tmp; rm -rf %s\n" %(mydir))
             outputfile.close
             # submit to batch
@@ -113,10 +120,6 @@ if __name__ == '__main__':
             cmd = "bsub -q "+options.queue+" -J "+name+" source  "+pwd+"/"+outputname
             print cmd
             print "sleep 0.75"
-            #os.system("bsub -q "+options.queue+" -J "+name+" source "+pwd+"/"+outputname)
-            #os.system("bsub -q "+options.queue+" -o job_"+str(i)+".log source "+pwd+"/"+outputname)
-            #time.sleep(1)
-            #os.system("gzip "+pwd+"/"+outputname)
             continue
 
         print 'popd'
