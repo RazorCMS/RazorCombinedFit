@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import os
 import sys
-import ROOT as rt
 from optparse import OptionParser
 import time, random
 
@@ -57,7 +56,8 @@ if __name__ == '__main__':
         jobdir = 'Job_%i_%s' % (mStop,mLSP)
         if not os.path.exists(jobdir):
             os.mkdir(jobdir)
-        print 'pushd %s' % jobdir              
+        print 'pushd %s' % jobdir      
+        time.sleep(1)#just to make extra sure the seed is unique        
         for i in range(options.iJob,options.iJob+options.numJobs):
 
             outputFileName = "%s_%s_xsec_%f" %(signal, options.tree_name, xsec)
@@ -88,10 +88,8 @@ if __name__ == '__main__':
 
             # convert original signal file to box-by-box datasets
             pid = os.getpid()
-            now = rt.TDatime()
-            today = now.GetDate()
-            clock = now.GetTime()
-            seed = today+clock+pid+137*i
+            now = int(time.mktime(time.gmtime()))#seconds since the start of the UNIX epoch
+            seed = now+pid+137*i
         
             #download the files locally
             outputfile.write("cmsStage %s .\n" % input)
@@ -114,15 +112,17 @@ if __name__ == '__main__':
 
             import random
             random.seed(seed)
-            for xc in [10,5,1,0.5,0.1,0.05,0.01,0.001]:
+            xsecs = [10,5,1,0.5,0.1,0.05,0.01,0.001]
+            random.shuffle(xsecs)
+            for xc in xsecs:
                 writeJob(outputfile,xc,random.randint(0,1000000000000))
-            #outputfile.write("cd /tmp; rm -rf %s\n" %(mydir))
+            outputfile.write("cd /tmp; rm -rf %s\n" %(mydir))
             outputfile.close
             # submit to batch
             name = '%s_%f' % (options.tree_name,xsec)
             cmd = "bsub -q "+options.queue+" -J "+name+" source  "+pwd+"/"+outputname
             print cmd
-            print "sleep 0.75"
+            print "sleep 0.1"
             continue
 
         print 'popd'
