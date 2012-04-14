@@ -44,6 +44,8 @@ def defineParser():
                   help="Run the RazorB analysis")
     parser.add_option('--multijet',dest="doMultijet", default=False, action='store_true',
                   help="Run the Razor MultiJet analysis")
+    parser.add_option('--tau',dest="doTau", default=False, action='store_true',
+                  help="Run the Razor Tau analysis")
     parser.add_option('--full-region',dest="full_region", default=False, action='store_true',
                   help="Perform the fit in the FULL region")
     parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
@@ -89,6 +91,7 @@ if __name__ == '__main__':
     analysis = "INCLUSIVE"
     if options.doBjet: analysis = "BJET"
     if options.doMultijet: analysis = "MULTIJET"
+    if options.doTau: analysis = "TAU"
     
     if options.analysis is not None:
         a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg),
