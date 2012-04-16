@@ -23,6 +23,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorBox
         import RazorBjetBox
         import RazorMultiJetBox
+        import RazorTauBox
         boxes = {}
 
         #start by setting all box configs the same
@@ -30,6 +31,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print 'Configuring box %s' % box
             if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
+            elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             if self.Analysis != "MULTIJET":
@@ -41,18 +43,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].defineSet("pdf1pars_Zll", self.config.getVariables(box, "pdf1_Zll"))
                 boxes[box].defineSet("pdf2pars_Zll", self.config.getVariables(box, "pdf2_Zll"))
                 boxes[box].defineSet("otherpars_Zll", self.config.getVariables(box, "others_Zll"))
-                # Znn
-                boxes[box].defineSet("pdf1pars_Znn", self.config.getVariables(box, "pdf1_Znn"))
-                boxes[box].defineSet("pdf2pars_Znn", self.config.getVariables(box, "pdf2_Znn"))
-                boxes[box].defineSet("otherpars_Znn", self.config.getVariables(box, "others_Znn"))
+                if self.Analysis != "TAU":
+                    # Znn
+                    boxes[box].defineSet("pdf1pars_Znn", self.config.getVariables(box, "pdf1_Znn"))
+                    boxes[box].defineSet("pdf2pars_Znn", self.config.getVariables(box, "pdf2_Znn"))
+                    boxes[box].defineSet("otherpars_Znn", self.config.getVariables(box, "others_Znn"))
             # TTj
             boxes[box].defineSet("pdf1pars_TTj", self.config.getVariables(box, "pdf1_TTj"))
             boxes[box].defineSet("pdf2pars_TTj", self.config.getVariables(box, "pdf2_TTj"))
             boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
-            # QCD
-            boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
-            boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
-            boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
+            if self.Analysis != "TAU":
+                # QCD
+                boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
+                boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
+                boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
 
             if not self.options.limit: boxes[box].addDataSet(fileName)
             boxes[box].define(fileName)
