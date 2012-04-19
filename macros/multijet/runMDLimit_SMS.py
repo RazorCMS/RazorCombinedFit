@@ -96,11 +96,11 @@ if __name__ == '__main__':
             #outputfile.write("cmsStage %s . \n" % signalpath)
             
             def writeJob(stream, xs, seedlocal):
-                # run SMS - the seed is set internally
-                stream.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
-                #
                 fn = "%s_%s_xsec_%f" %(signal, options.tree_name, xs)
                 stream.write("\n########## Start %f\n" % xs)
+                # run SMS - the seed is set internally
+                stream.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
+                #                
                 # perform limit toys(signal + bkgd) setting fits
                 stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,i,input,mydir,signal,toys,runOptions))
                 # perform limit toys(bkgd only) setting fits
