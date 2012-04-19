@@ -94,10 +94,11 @@ if __name__ == '__main__':
             #download the files locally
             #outputfile.write("cmsStage %s .\n" % input)
             #outputfile.write("cmsStage %s . \n" % signalpath)
-            # run SMS
-            outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
             
             def writeJob(stream, xs, seedlocal):
+                # run SMS - the seed is set internally
+                stream.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
+                #
                 fn = "%s_%s_xsec_%f" %(signal, options.tree_name, xs)
                 stream.write("\n########## Start %f\n" % xs)
                 # perform limit toys(signal + bkgd) setting fits
