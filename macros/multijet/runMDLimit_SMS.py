@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
         mStop = int(treeName.split('_')[-2])
         mLSP = int(treeName.split('_')[-1])
-        signal = 'SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_080212-SMS-ByPoint'
+        signal = 'SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint'
         print "#Creating jobs for %s\n" % ('SMS-T2tt-%i-%i' % (mStop,mLSP))
 
         jobdir = 'Job_%i_%s' % (mStop,mLSP)
