@@ -7,7 +7,7 @@ def makeTreeList(step):
     """Make a list of trees to look at with a toy"""
 
     import pickle
-    fileName = "SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_080212-SMS-NoSkim.pkl"
+    fileName = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint.pkl"
     SMSPoints = pickle.load(file(fileName))
     keys = sorted(SMSPoints.keys())
 
@@ -40,9 +40,8 @@ if __name__ == "__main__":
     index = 1001
 
     config = "config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg"
-    #fitName = "root://eoscms//eos/cms/store/cmst3/user/wreece/Razor2011/MultiJetAnalysis/FitResults/razorMJ_Penalties_Staircase_3_All.root"
     fitName = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/BJet_FitRegion_10b.root"
-    SMSTree = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_080212-SMS-ByPoint.root"
+    SMSTree = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint.root"
 
     treeList = makeTreeList(50)
     for tree in treeList:
