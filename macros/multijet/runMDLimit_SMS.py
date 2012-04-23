@@ -71,7 +71,10 @@ if __name__ == '__main__':
             outputfile.write("cd CMSSW_4_2_8/src\n")
             outputfile.write("eval `scramv1 run -sh`\n")  
             outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.33.02/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")          
-            outputfile.write("cmsStage /store/cmst3/user/wreece/Razor2011/MultiJetAnalysis/everything.tgz .\n")            
+            
+            #outputfile.write("cmsStage /store/cmst3/user/wreece/Razor2011/MultiJetAnalysis/everything.tgz .\n")
+            outputfile.write("cp /afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/everything.tgz .\n")
+                        
             outputfile.write("tar zxvf everything.tgz >& /dev/null\n")
             outputfile.write("cd RazorCombinedFit\n")
             outputfile.write("source setup.sh\n")
@@ -90,33 +93,31 @@ if __name__ == '__main__':
             pid = os.getpid()
             now = int(time.mktime(time.gmtime()))#seconds since the start of the UNIX epoch
             seed = now+pid+137*i
-        
-            #download the files locally
-            #outputfile.write("cmsStage %s .\n" % input)
-            #outputfile.write("cmsStage %s . \n" % signalpath)
-            
-            def writeJob(stream, xs, seedlocal):
+            random.seed(seed)
+
+            def writeJob(stream, xs, seedlocal, index):
                 fn = "%s_%s_xsec_%f" %(signal, options.tree_name, xs)
-                stream.write("\n########## Start %f\n" % xs)
-                # run SMS - the seed is set internally
-                stream.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
-                #                
+                stream.write("\n########## Start %f - %d\n" % (xs,index))
                 # perform limit toys(signal + bkgd) setting fits
                 stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,i,input,mydir,signal,toys,runOptions))
                 # perform limit toys(bkgd only) setting fits
                 stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,i,input,mydir,signal,toys,runOptions))
                 # copy output files
                 strxc = str(xc).replace('.','_')
-                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,strxc))
-                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,strxc))
-                stream.write("########## End %f\n\n" % xs)
+                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root %s/LimitBkgToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,mydir,fn,options.tree_name,i,strxc))
+                stream.write("########## End %f - %d\n\n" % (xs,index))
 
-            import random
-            random.seed(seed)
+            #run ten jobs in 1 to maximise CPU use
             xsecs = [10,5,1,0.5,0.1,0.05,0.01,0.001]
-            random.shuffle(xsecs)
-            for xc in xsecs:
-                writeJob(outputfile,xc,random.randint(0,1000000000000))
+            for j in xrange(24):
+                # run SMS - the seed is set internally
+                outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
+                random.shuffle(xsecs)
+
+                for xc in xsecs:
+                    writeJob(outputfile,xc,random.randint(0,1000000000000),j)
+            
+            
             outputfile.write("cd /tmp; rm -rf %s\n" %(mydir))
             outputfile.close
             # submit to batch

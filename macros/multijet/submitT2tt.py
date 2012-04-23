@@ -45,6 +45,6 @@ if __name__ == "__main__":
 
     treeList = makeTreeList(50)
     for tree in treeList:
-        cmd = "python runMDLimit_SMS.py --multijet -t 250 -i %i -n 25 -q 8nh --xsec %f --input %s --tree_name %s --config %s %s" % (index,xsec,fitName,tree,config,SMSTree)
+        cmd = "python runMDLimit_SMS.py --multijet -t 50 -i %i -n 20 -q 2nd --xsec %f --input %s --tree_name %s --config %s %s" % (index,xsec,fitName,tree,config,SMSTree)
         print cmd
         #print 'sleep 120'
