@@ -203,8 +203,20 @@ class Box(object):
     
     def resizeDataSet(self, dataset, size):
         """Remove entries from a RooDataSet to make it size"""
-        if dataset.numEntries() == size: return dataset
-        return dataset.reduce(rt.RooFit.EventRange(0,size))
+        if dataset.numEntries() <= size: return dataset
+        ds = dataset.emptyClone()
+        
+        import random
+        index = range(0,dataset.numEntries())
+        random.shuffle(index)
+        index = index[0:size]
+        
+        for i in index:
+            row = dataset.get(i)
+            #print 'i',i,row.getRealValue('MR'),row.getRealValue('Rsq')
+            ds.add(row)
+        assert ds.numEntries() == size
+        return ds
 
 
     def plotObservables(self, inputFile, name = None, range = ''):
