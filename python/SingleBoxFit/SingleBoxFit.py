@@ -633,7 +633,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "bkgGenNum = %f" % bkgGenNum
                     print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
-                    sig_toy = sigGenPdf.generate(vars,PSigGenNum)
+                    #this is a work around for a bug in RooHistPdf, where the number of events generated is not what we asked for
+                    sig_toy = boxes[box].resizeDataSet(sigGenPdf.generate(vars,PSigGenNum),PSigGenNum)
                     bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
                     
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
