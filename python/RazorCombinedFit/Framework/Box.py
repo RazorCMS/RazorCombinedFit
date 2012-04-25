@@ -217,6 +217,26 @@ class Box(object):
             ds.add(row)
         assert ds.numEntries() == size
         return ds
+    
+    def sampleDatasetFromHistogram2D(self, xvar, yvar, hist, num):
+
+        vars = rt.RooArgSet(xvar,yvar)
+        ds = rt.RooDataSet('sampledFrom%s' % hist.GetName(), hist.GetTitle(), vars)
+        
+        x = rt.Double()
+        y = rt.Double()
+        
+        xname = xvar.GetName()
+        yname = yvar.GetName()
+        
+        for i in xrange(num):
+            hist.GetRandom2(x,y)
+            vars.setRealValue(xname,x)
+            vars.setRealValue(yname,y)
+            ds.add(vars)
+            
+        assert ds.numEntries() == num
+        return ds
 
 
     def plotObservables(self, inputFile, name = None, range = ''):

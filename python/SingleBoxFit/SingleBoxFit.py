@@ -616,10 +616,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if self.options.expectedlimit == False:
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"              
-                    #sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree')
                     sigNorm =  RootTools.getHistNorm(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
-                    sigData = RootTools.getDataSet(fileIndex[box],'RMRHistTree_%s_%i'%(boxes[box].name,i))
-                    sigGenPdf = rt.RooHistPdf('%sPdf_%i' % ('Signal',i),'%sPdf_%i' % ('Signal',i),vars,sigData)
                     #get nominal number of entries, including 17% SIGNAL NORMALIZATION SYSTEMATIC                
                     print "calculate number of sig events to generate"
                     if self.options.signal_xsec > 0.:   
@@ -627,14 +624,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigNorm*self.options.signal_xsec
                     else:
                         # for CMSSM
-                        print sigData.sum(False)
                         sigGenNum = boxes[box].workspace.var('Lumi').getVal()*sigNorm/1000
                     print "sigGenNum = %f" % sigGenNum
                     print "bkgGenNum = %f" % bkgGenNum
                     print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
-                    #this is a work around for a bug in RooHistPdf, where the number of events generated is not what we asked for
-                    sig_toy = boxes[box].resizeDataSet(sigGenPdf.generate(vars,PSigGenNum),PSigGenNum)
+                    print 'PSigGenNum = %d' % PSigGenNum 
+
+                    #this is a work around for a bug in RooHistPdf, where the number of events generated is not what we asked for                    
+                    sigHist = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
+                    sig_toy = boxes[box].sampleDatasetFromHistogram2D(boxes[box].workspace.var('MR'),\
+                                                                        boxes[box].workspace.var('Rsq'),\
+                                                                        sigHist, PSigGenNum)
                     bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
                     
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
@@ -648,9 +649,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "Total Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
-                    del sigData
-                    del sigNorm
-                    del sigGenPdf
                     del sig_toy
                     del bkg_toy
                 else:                    

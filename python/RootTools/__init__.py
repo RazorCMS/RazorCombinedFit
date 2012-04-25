@@ -5,6 +5,18 @@ import Utils
 
 import ROOT as rt
 
+def getObject(fileName, dsName):
+    result = None
+    input = None
+    try:
+        input = rt.TFile.Open(fileName)
+        result = input.Get(dsName)
+        print result
+    finally:
+        pass
+        #if input is not None: input.Close()
+    return result
+
 def getHistNorm(fileName, dsName, cut = None):
     result = None
     input = None
