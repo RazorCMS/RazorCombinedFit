@@ -200,6 +200,11 @@ class Box(object):
         """Generate a toy dataset with the number of events the same as that in the workspace"""
         data = self.workspace.data('RMRTree')
         return self.generateToyWithYield(genmodel, data.numEntries(), *options)
+    
+    def resizeDataSet(self, dataset, size):
+        """Remove entries from a RooDataSet to make it size"""
+        if dataset.numEntries() == size: return dataset
+        return dataset.reduce(rt.RooFit.EventRange(0,size))
 
 
     def plotObservables(self, inputFile, name = None, range = ''):
