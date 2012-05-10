@@ -608,6 +608,50 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
             fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
+            
+            #use the same binning as the signal model
+            significance = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,0))
+            significance = significance.Clone('%s_significance' % boxes[box].name)
+            significance.Reset()
+            sigSum = 0
+            
+            def calcSignificance(binning, sig_toy, bkg_toy):
+                """Make a histogram of S/sqrt(S+B) from the signal and background datasets"""
+
+                def fill(h, ds):
+                    for i in xrange(ds.numEntries()):
+                        row = ds.get(i)
+                        h.Fill(row.getRealValue('MR'),row.getRealValue('Rsq'))
+
+                #make the histograms
+                sigHist = binning.Clone('S')
+                sigHist.Reset()
+                fill(sigHist,sig_toy)
+                
+                bgHist = binning.Clone('B')
+                bgHist.Reset()
+                fill(bgHist,bkg_toy)
+                
+                significanceToy = binning.Clone('SignificanceToy')
+                significanceToy.Reset()
+                
+                #calculate the significance
+                xaxis = sigHist.GetXaxis()
+                yaxis = sigHist.GetYaxis()
+    
+                for i in xrange(1,xaxis.GetNbins()+1):
+                    for j in xrange(1,yaxis.GetNbins()+1):
+                        bin = sigHist.GetBin(i,j)
+            
+                        S = sigHist.GetBinContent(bin)
+                        B = bgHist.GetBinContent(bin)
+            
+                        sig = 0.0
+                        if B > 0.0:
+                            sig = S/rt.TMath.Sqrt(B)
+                        significanceToy.SetBinContent(bin,sig)                
+                
+                return significanceToy            
 
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
@@ -635,7 +679,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     sigHist = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
                     sig_toy = boxes[box].sampleDatasetFromHistogram2D(boxes[box].workspace.var('MR'),\
                                                                         boxes[box].workspace.var('Rsq'),\
-                                                                        sigHist, PSigGenNum)
+                                                                        sigHist, PSigGenNum)                   
                     bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
                     
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
@@ -644,6 +688,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                     #sum the toys
                     tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(fit_range))
+                    
+                    #make the significance plot
+                    sigtoyHisto = calcSignificance(significance, sig_toy, tot_toy)
+                    print 'significance = %f' % sigtoyHisto.Integral()
+                    sigSum += sigtoyHisto.Integral()
+                    significance.Add(sigtoyHisto)                     
+                    
                     tot_toy.append(sig_toy)
                     tot_toy.append(fitDataSet)
                     print "Total Yield = %f" %tot_toy.numEntries()
@@ -730,6 +781,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #self.store(hist_H1, dir=box)
             #self.store(values, dir=box)
             #self.store(valuesSR, dir=box)
+            
+            sigSum /= (1.*nToys)
+            print 'Mean total significance',sigSum
+            if significance.Integral() > 0.0:
+                significance.Scale(sigSum/significance.Integral())
+            self.store(significance, dir=box)            
 
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)
