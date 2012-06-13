@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
         mStop = int(treeName.split('_')[-2])
         mLSP = int(treeName.split('_')[-1])
-        signal = 'SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint'
+        signal = 'SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint-2'
         print "#Creating jobs for %s\n" % ('SMS-T2tt-%i-%i' % (mStop,mLSP))
 
         jobdir = 'Job_%i_%s' % (mStop,mLSP)
@@ -99,25 +99,27 @@ if __name__ == '__main__':
                 fn = "%s_%s_xsec_%f" %(signal, options.tree_name, xs)
                 stream.write("\n########## Start %f - %d\n" % (xs,index))
                 # perform limit toys(signal + bkgd) setting fits
-                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,i,input,mydir,signal,toys,runOptions))
+                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgSigToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,index,input,mydir,signal,toys,runOptions))
+                #update the seed
+                seedlocal += 1000
                 # perform limit toys(bkgd only) setting fits
-                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,i,input,mydir,signal,toys,runOptions))
+                stream.write("python scripts/runAnalysis.py --nosave-workspace -a SingleBoxFit --xsec %f -s %i -c %s -o %s/LimitBkgToys_%s_%s_%i.root -i %s %s/CMSSW_4_2_8/src/RazorCombinedFit/%s_MR*.root -b --limit -e -t %i %s >& /dev/null \n" %(xs,seedlocal,options.config,mydir,fn,options.tree_name,index,input,mydir,signal,toys,runOptions))
                 #sleep for some time to spread the scp load
-                stream.write("sleep %d\n" % random.randint(0,120))
+                stream.write("sleep %d\n" % random.randint(0,180))
                 # copy output files
                 strxc = str(xc).replace('.','_')
-                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root %s/LimitBkgToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,i,mydir,fn,options.tree_name,i,strxc))
+                stream.write("scp -o StrictHostKeyChecking=no -o ConnectionAttempts=10 %s/LimitBkgSigToys_%s_%s_%i.root %s/LimitBkgToys_%s_%s_%i.root wreece@cmsphys09.cern.ch:/nfsdisk/wreece/LimitSetting/T2tt/%s/\n" %(mydir,fn,options.tree_name,index,mydir,fn,options.tree_name,index,strxc))
                 stream.write("########## End %f - %d\n\n" % (xs,index))
 
             #run ten jobs in 1 to maximise CPU use
             xsecs = [10,5,1,0.5,0.1,0.05,0.01,0.001]
-            for j in xrange(24):
+            for j in xrange(8):
                 # run SMS - the seed is set internally
                 outputfile.write("python scripts/%s %s --tree_name %s -c %s --sms -t %i %s %s >& /dev/null\n" %(script, runOptions, options.tree_name, options.config, toys, signalpath,makePDFOptions))
                 random.shuffle(xsecs)
 
                 for xc in xsecs:
-                    writeJob(outputfile,xc,random.randint(0,1000000000000),j)
+                    writeJob(outputfile,xc,random.randint(0,1000000000000),(i*10 + j) )
             
             
             outputfile.write("cd /tmp; rm -rf %s\n" %(mydir))

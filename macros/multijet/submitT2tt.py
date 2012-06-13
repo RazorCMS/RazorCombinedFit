@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     config = "config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg"
     fitName = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/BJet_FitRegion_10b.root"
-    SMSTree = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint.root"
+    SMSTree = "/afs/cern.ch/user/w/wreece/work/LimitSetting/RazorMultiJet2011/SMS-T2tt_Mstop-225to1200_mLSP-50to1025_7TeV-Pythia6Z-Summer11-PU_START42_V11_FastSim-v1-wreece_030412-ByPoint-2.root"
 
     treeList = makeTreeList(50)
     for tree in treeList:
