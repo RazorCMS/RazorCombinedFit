@@ -73,6 +73,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
     #wHisto_xsecdown = []
     wHisto_pdfCEN = []
     wHisto_pdfSYS = []
+    wHisto_btagup = []
+    wHisto_btagdown = []    
 
     plotByProcess = []
     plotByProcessJESUP = []
@@ -81,6 +83,9 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
     #plotByProcessXSECDOWN = []
     plotByProcessPDFCEN = []
     plotByProcessPDFSYS = []
+    
+    plotByProcessBTAGUP = []
+    plotByProcessBTAGDOWN = []
 
     yieldByProcess = []
 
@@ -190,6 +195,18 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         histo = rt.TH2D("wHisto_JESdown_PROC%i" %i,"wHisto_JESdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
         tree.Project("wHisto_JESdown_PROC%i" %i, "RSQ_JES_DOWN:MR_JES_DOWN", 'LEP_W*%s*(MR_JES_DOWN >= %f && MR_JES_DOWN <= %f && RSQ_JES_DOWN >= %f && RSQ_JES_DOWN <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
         plotByProcessJESDOWN.append(histo.Clone())
+        
+    
+        if doMultijet:
+            #BTag up
+            histo = rt.TH2D("wHisto_btagup_PROC%i" %i,"wHisto_btagup_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
+            tree.Project("wHisto_btagup_PROC%i" %i,  "RSQ:MR",  '(LEP_W+LEP_W_SYS)*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
+            plotByProcessBTAGUP.append(histo.Clone())            
+            
+            #BTag down
+            histo = rt.TH2D("wHisto_btagdown_PROC%i" %i,"wHisto_btagdown_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
+            tree.Project("wHisto_btagdown_PROC%i" %i,  "RSQ:MR",  '(LEP_W-LEP_W_SYS)*%s*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (PROC == %i) && (BTAG_TrackCount[0]>=%f || BTAG_TrackCount[1]>=%f))' % (weight,mRmin,mRmax,rsqMin,rsqMax,i,btag,btag))
+            plotByProcessBTAGDOWN.append(histo.Clone())            
 
         # XSEC UP
         #histo = rt.TH2D("wHisto_xsecup_PROC%i" %i,"wHisto_xsecup_PROC%i" %i, nbinx, binedgex, nbiny, binedgey)
@@ -238,6 +255,30 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                 thisYield = yieldByProcessThisBox[1][iProc]
                 if thishisto.Integral() != 0. : histo_JESdown.Add(thishisto,thisYield/thishisto.Integral())
         wHisto_JESdown.append(histo_JESdown.Clone())
+
+        if doMultijet:
+            
+            #Btag UP
+            histo_btagup = rt.TH2D("wHisto_btagup_%s" %box,"wHisto_btagup_%s" %box, nbinx, binedgex, nbiny, binedgey)
+            for yieldByProcessThisBox in yieldByProcess:
+                if yieldByProcessThisBox[0] != box: continue
+                for iProc in range(0,len(yieldByProcessThisBox[1])):
+                    thishisto = plotByProcessBTAGUP[iProc]
+                    thisYield = yieldByProcessThisBox[1][iProc]
+                    if thishisto.Integral() != 0. : histo_btagup.Add(thishisto,thisYield/thishisto.Integral())                
+            wHisto_btagup.append(histo_btagup.Clone())
+
+            #Btag down            
+            histo_btagdown = rt.TH2D("wHisto_btagdown_%s" %box,"wHisto_btagdown_%s" %box, nbinx, binedgex, nbiny, binedgey)
+            for yieldByProcessThisBox in yieldByProcess:
+                if yieldByProcessThisBox[0] != box: continue
+                for iProc in range(0,len(yieldByProcessThisBox[1])):
+                    thishisto = plotByProcessBTAGDOWN[iProc]
+                    thisYield = yieldByProcessThisBox[1][iProc]
+                    if thishisto.Integral() != 0. : histo_btagdown.Add(thishisto,thisYield/thishisto.Integral())                
+            wHisto_btagdown.append(histo_btagdown.Clone())
+            
+            
 
         # xsec UP
         #histo_xsecup = rt.TH2D("wHisto_xsecup_%s" %box,"wHisto_xsecup_%s" %box, nbinx, binedgex, nbiny, binedgey)
@@ -305,6 +346,8 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
         btagFactor = math.pow(1.06,gRnd.Gaus(0.,1.))
         #up to 30% of events have a gen level tau, where the 
         tauFactor = math.pow(1.02,gRnd.Gaus(0.,1.))
+        # correlated systematics: Btag scale factor corrections ADDITIVE (scaled bin by bin)
+        btagSFFactor  = gRnd.Gaus(0., 1.) 
         # correlated systematics: xsection ADDITIVE (scaled bin by bin)
         #xsecFactor = gRnd.Gaus(0., 1.)
         for ibox in range(0,len(boxes)):
@@ -353,7 +396,7 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                         # add lumi systematics
                         newvalue = nominal*lumiFactor
                         if doMultijet: newvalue = newvalue*dataMCTriggerFactor
-                        if box == "BJet" or btag> 0.0: newvalue = newvalue*btagFactor
+                        if not doMultijet and box == "BJet" or btag> 0.0: newvalue = newvalue*btagFactor
                         # add the lep trigger eff
                         if box == "MuMu" or box == "MuEle" or box == "Mu": newvalue = newvalue*muTriggerFactor
                         if box == "EleEle" or box == "Ele": newvalue = newvalue*eleTriggerFactor
@@ -361,6 +404,11 @@ def convertTree2Dataset(tree, outputFile, config, minH, maxH, btag, nToys, varBi
                         if box not in ['Had','BJet']: newvalue = newvalue*lepFactor
                         if doMultijet:
                             newvalue = newvalue*tauFactor
+                        if doMultijet:
+                            # add btag systematics
+                            mBtag, sBtag = getMeanSigma(nominal, wHisto_btagup[ibox].GetBinContent(ix,iy), wHisto_btagdown[ibox].GetBinContent(ix,iy))
+                            if mBtag > 0: newvalue = newvalue*mBtag/nominal*math.pow(1.+sBtag/mBtag, btagSFFactor)
+                        
                         # add xsec systematics
                         #if xsecFactor > 0: newvalue = newvalue* + xsecFactor*(wHisto_xsecup[ibox].GetBinContent(ix,iy)-nominal)
                         #else: newvalue = newvalue*math.pow( + xsecFactor*(wHisto_xsecdown[ibox].GetBinContent(ix,iy)-nominal))
