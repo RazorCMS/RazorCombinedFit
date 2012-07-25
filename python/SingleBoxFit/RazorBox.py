@@ -2,107 +2,115 @@ from RazorCombinedFit.Framework import Box
 import math
 import RootTools
 import ROOT as rt
+from array import *
+
+fitMode = "3D"
+
+#this is global, to be reused in the plot making
+def getBinning(boxName, varName):
+    if boxName == "Had" or boxName == "TauTau":
+        if varName == "MR" : return [400, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
+        if varName == "Rsq" : return [0.18,0.23,0.28,0.32,0.37,0.41,0.46,0.51,0.57,0.63,0.70,0.80,1.5]
+        if varName == "nBtag" : return [0,1,2,3,4,5]
+    else:
+        if varName == "MR" : return [300, 350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
+        if varName == "Rsq" : return [0.10,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
+        if varName == "nBtag" : return [0,1,2,3,4,5]
 
 class RazorBox(Box.Box):
     
     def __init__(self, name, variables):
         super(RazorBox,self).__init__(name, variables)
-        
-        #self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle'],'QCD':['Ele', 'Mu', 'MuEle','MuMu','EleEle','Had']}
-        # this is what we did in 2011
-        # self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
-        # now we switch off the redundant Znn component in the Had box
-        self.zeros = {'TTj':[],'Wln':['Mu','MuMu','EleEle','MuEle'],'Zll':['MuEle','Mu','Ele','Had'],'Znn':['Ele','MuMu','EleEle','MuEle']}
+        #data
+        #self.zeros = {'UEC':['Had','TauTau','Mu','MuTau','MuEle','Ele','EleTau','EleEle','MuMu'],'TTj':[],'Vpj':['MuEle']}
+        self.zeros = {'UEC':['Ele'],'TTj':['MuEle'],'Vpj':['MuEle']}
+        self.cut = 'MR >= 0.0'        
 
-        self.cut = 'MR >= 0.0'
-
-    def addTailPdf(self, flavour):
+    def addTailPdf(self, flavour, doSYS):
         
         label = '_%s' % flavour
+        # 2D FIT
+        if fitMode == "2D":
+            # define the R^2 vs MR
+            if doSYS == True:
+                self.workspace.factory("RooRazor2DTail_SYS::PDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s[1.,0.8,5.0])" %(label,label,label,label,label))
+                #tail-systematic parameter
+                self.workspace.var("n%s" %label).setConstant(rt.kFALSE)
+            else:
+                self.workspace.factory("RooRazor2DTail::PDF%s(MR,Rsq,MR0%s,R0%s,b%s)" %(label,label,label,label))
+            #associate the yields to the pdfs through extended PDFs
+            self.workspace.factory("RooExtendPdf::ePDF%s(PDF%s, Ntot%s)" %(label, label, label))
+        # 3D fit
+        if fitMode == "3D":
+            # define the R^2 vs MR
+            if doSYS == True:
+                self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s[1.,0.8,10.0])" %(label,label,label,label,label))
+                # tail-systematic parameter
+                self.workspace.var("n%s" %label).setConstant(rt.kFALSE)
+            else:
+                self.workspace.factory("RooRazor2DTail::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s)" %(label,label,label,label))
+            ## define the nB pdf
+            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s,f4%s)"%(label,label,label,label,label))
+            ## the total PDF is the product of the two
+            self.workspace.factory("PROD::PDF%s(RazPDF%s,BtagPDF%s)"%(label,label,label))
+            ##associate the yields to the pdfs through extended PDFs
+            self.workspace.factory("RooExtendPdf::ePDF%s(PDF%s, Ntot%s)"%(label,label,label))
 
-        #define a flavour specific yield
-        #self.yieldToCrossSection(flavour)
-        # define the two components
-        self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
-        self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
-        #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)',Ntot"+label+",f2"+label+")")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1',Ntot"+label+",f2"+label+")")
-
-        #associate the yields to the pdfs through extended PDFs
-        self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
-        self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
-        #float the efficiency with a penalty term if a sigma is provided
-
-    def addTailPdfVjets(self, flavour, flavourW):
-        
-        label = '_%s' % flavour
-        labelW = '_%s' % flavourW
-
-        #define a flavour specific yield
-        #self.yieldToCrossSection(flavour)
-        # define the two components
-        self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
-        self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+labelW+",R02nd"+labelW+",b2nd"+labelW+")")
-        #define the two yields
-        self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)*@2',Ntot"+label+",f2"+label+")")
-        self.workspace.factory("expr::N_2nd"+label+"('@0*@1*@2',Ntot"+label+",f2"+label+")")
-        #associate the yields to the pdfs through extended PDFs
-        self.workspace.factory("RooExtendPdf::ePDF1st"+label+"(PDF1st"+label+", N_1st"+label+")")
-        self.workspace.factory("RooExtendPdf::ePDF2nd"+label+"(PDF2nd"+label+", N_2nd"+label+")")
-        #float the efficiency with a penalty term if a sigma is provided
+        # 4D fit
+        if fitMode == "4D":
+            # define the R^2 vs MR
+            if doSYS == True:
+                self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s[1.,0.8,5.0])" %(label,label,label,label,label))
+                # tail-systematic parameter
+                self.workspace.var("n%s" %label).setConstant(rt.kFALSE)
+            else:
+                self.workspace.factory("RooRazor2DTail::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s)" %(label,label,label,label))
+            ## define the nB pdf
+            self.workspace.Print()
+            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s,f4%s)"%(label,label,label,label,label))
+            ## for each charge, the 4D PDF is the product of the two * the charge 
+            self.workspace.factory("PROD::PDF%sPlus(RazPDF%s,BtagPDF%s,PlusPDF)"%(label,label,label))
+            self.workspace.factory("PROD::PDF%sMinus(RazPDF%s,BtagPDF%s,MinusPDF)"%(label,label,label))
+            #define the plus and minus yields
+            self.workspace.factory("expr::N_minus%s('@0*(1-@1)',Ntot%s,fplus%s)" %(label,label,label))
+            self.workspace.factory("expr::N_plus%s('@0*@1',Ntot%s,fplus%s)" %(label,label,label))
+            ##associate the yields to the pdfs through extended PDFs
+            self.workspace.factory("RooExtendPdf::ePDFPlus%s(PDF%sPlus, N_plus%s)"%(label,label,label))
+            self.workspace.factory("RooExtendPdf::ePDFMinus%s(PDF%sMinus, N_minus%s)"%(label,label,label))
+            thisPDFlist = rt.RooArgList(self.workspace.pdf("ePDFPlus%s" %label), self.workspace.pdf("ePDFMinus%s" %label))
+            model = rt.RooAddPdf("ePDF%s" %label, "ePDF%s" %label, thisPDFlist)
 
     def switchOff(self, species) :
         self.workspace.var("Ntot_"+species).setVal(0.)
         self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
-        self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
 
     #add penalty terms and float
-    def float1stComponentWithPenalty(self,flavour, alsoB):
-        self.fixParsPenalty("MR01st_%s" % flavour)
-        self.fixParsPenalty("R01st_%s" % flavour)
-        self.fixPars("MR01st_%s_s" % flavour)
-        self.fixPars("R01st_%s_s" % flavour)
+    def floatComponentWithPenalty(self,flavour, alsoB):
+        self.fixParsPenalty("MR0_%s" % flavour)
+        self.fixParsPenalty("R0_%s" % flavour)
+        self.fixPars("MR0_%s_s" % flavour)
+        self.fixPars("R0_%s_s" % flavour)
         if alsoB == True:
-            self.fixParsPenalty("b1st_%s" % flavour)
-            self.fixPars("b1st_%s_s" % flavour)
+            self.fixParsPenalty("b_%s" % flavour)
+            self.fixPars("b_%s_s" % flavour)
         else:
-            self.fixParsExact("b1st_%s" % flavour, False)
-
-    def float2ndComponentWithPenalty(self,flavour, alsoB):
-        self.fixParsPenalty("R02nd_%s" % flavour)
-        self.fixPars("R02nd_%s_s" % flavour)
-        self.fixParsPenalty("MR02nd_%s" % flavour)
-        self.fixPars("MR02nd_%s_s" % flavour)
-        if alsoB == True:
-            self.fixParsPenalty("b2nd_%s" % flavour)
-            self.fixPars("b2nd_%s_s" % flavour)
-        else:
-            self.fixParsExact("b2nd_%s" % flavour, False)
-            
-    def float1stComponent(self,flavour):
-        self.fixParsExact("MR01st_%s" % flavour, False)
-        self.fixParsExact("R01st_%s" % flavour, False)
-        self.fixParsExact("b1st_%s" % flavour, False)
-    def float2ndComponent(self,flavour):
-        self.fixParsExact("MR02nd_%s" % flavour, False)
-        self.fixParsExact("R02nd_%s" % flavour, False)
-        self.fixParsExact("b2nd_%s" % flavour, False)        
-    def floatFractionWithPenalty(self,flavour):
-        self.fixParsPenalty("f2_%s" % flavour)
-        self.fixPars("f2_%s_s" % flavour)
-    def floatFraction(self,flavour):
+            self.fixParsExact("b_%s" % flavour, False)
+    def floatBTag(self,flavour):
+        self.fixParsExact("f1_%s" % flavour, False)
         self.fixParsExact("f2_%s" % flavour, False)
+        self.fixParsExact("f3_%s" % flavour, False)
+        self.fixParsExact("f4_%s" % flavour, False)
+            
+    def floatComponent(self,flavour):
+        self.fixParsExact("MR0_%s" % flavour, False)
+        self.fixParsExact("R0_%s" % flavour, False)
+        self.fixParsExact("b_%s" % flavour, False)
     def floatYield(self,flavour):
         self.fixParsExact("Ntot_%s" % flavour, False)
-    def fix2ndComponent(self,flavour):
-        self.fixParsExact("MR02nd_%s" % flavour, True)
-        self.fixParsExact("R02nd_%s" % flavour, True)
-        self.fixParsExact("b2nd_%s" % flavour, True)        
-    def fix1stComponent(self,flavour):
-        self.fixParsExact("MR01st_%s" % flavour, True)
-        self.fixParsExact("R01st_%s" % flavour, True)
-        self.fixParsExact("b1st_%s" % flavour, True)        
+    def fixComponent(self,flavour):
+        self.fixParsExact("MR0_%s" % flavour, True)
+        self.fixParsExact("R0_%s" % flavour, True)
+        self.fixParsExact("b_%s" % flavour, True)        
     
     def addDataSet(self, inputFile):
         #create the dataset
@@ -115,28 +123,29 @@ class RazorBox(Box.Box):
         #define the ranges
         mR  = self.workspace.var("MR")
         Rsq = self.workspace.var("Rsq")
+
+        # charge +1 pdf
+        if fitMode == "4D":
+            self.workspace.factory("RooTwoBin::PlusPDF(CHARGE,plusOne[1.])")
+            self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
         # add the different components:
         # - W+jets
-        # - Zll+jets
-        # - Znn+jets
         # - ttbar+jets
-        self.addTailPdf("Wln")    
-        self.addTailPdf("Zll")
-        self.addTailPdf("Znn")
-        #self.addTailPdfVjets("Zll", "Wln")
-        #self.addTailPdfVjets("Znn", "Wln")
-        self.addTailPdf("TTj")
-        #self.addTailPdf("QCD")
+        # - UEC
+        #self.addTailPdf("Vpj", False)    
+        #self.addTailPdf("TTj", False)
+        self.addTailPdf("Vpj", True)
+        self.addTailPdf("TTj", True)
+        self.addTailPdf("UEC", True)
+        #self.addTailPdf("UEC", False)
 
         # build the total PDF
-        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_Wln"),self.workspace.pdf("ePDF2nd_Wln"),
-                                  self.workspace.pdf("ePDF1st_Zll"),self.workspace.pdf("ePDF2nd_Zll"),
-                                                                    self.workspace.pdf("ePDF1st_Znn"),self.workspace.pdf("ePDF2nd_Znn"),
-                                                                    self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"))
-        #myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
-        #myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))    
-        model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)        
+        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj"), self.workspace.pdf("ePDF_UEC"))
+        #myPDFlist.add(self.workspace.pdf("ePDF_Zll"))
+        #myPDFlist.add(self.workspace.pdf("ePDF_Znn"))
+        #myPDFlist.add(self.workspace.pdf("ePDF_QCD"))
+        model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
         # import the model in the workspace.
         self.importToWS(model)
@@ -144,30 +153,35 @@ class RazorBox(Box.Box):
         self.workspace.Print()
 
         ##### THIS IS A SIMPLIFIED FIT
-        # fix all pdf parameters to the initial value
-        self.fixPars("Zll")
-        self.fixPars("Znn")
-        self.fixPars("Wln")
-        self.fixPars("TTj")
-        #self.fixPars("QCD")
+        # fix all pdf parameters (except the n) to the initial value
+        self.fixPars("MR0_")
+        self.fixPars("R0_")
+        self.fixPars("b_")
+        self.fixPars("f1")
+        self.fixPars("f2")
+        self.fixPars("f3")
+        self.fixPars("f4")
 
         def floatSomething(z):
             """Switch on or off whatever you want here"""
+            # float BTAG
+            self.floatBTag(z)
             # the "effective" first component in the Had box
-            if z == "Wln" and self.name == "Had": self.float1stComponent(z)
-            else : self.float1stComponentWithPenalty(z, True)
-            # the b2nd parameter is floated in the 1Lep boxes (no penalty term)
-            if self.name == "Mu" or self.name == "Ele" and z == "TTj": self.float2ndComponentWithPenalty(z, False)
-            #if self.name == "Mu" and z == "TTj": self.float2ndComponentWithPenalty(z, False)
-            elif self.name != "Had": self.float2ndComponentWithPenalty(z, True)
+            #if z == "Vpj" and self.name == "Had": self.floatComponent(z)
+            # the b parameter in UEC is floated w/o penalty term in the 1Lep and Had boxes 
+            #elif self.name == "Mu" and z == "UEC": self.floatComponentWithPenalty(z, False)
+            #elif self.name == "Ele" and z == "UEC": self.floatComponentWithPenalty(z, False)
+            #elif self.name == "Had" and z == "UEC": self.floatComponentWithPenalty(z, False)
+            # otherwise the full component gets penalty terms 
+            #else : self.floatComponentWithPenalty(z, True)
+            #else :
+            self.floatComponent(z)
             self.floatYield(z)
-            if self.name != "Had": self.floatFraction(z)
 
         # switch off not-needed components (box by box)
         fixed = []
         for z in self.zeros:
             if self.name in self.zeros[z]:
-                #floatSomething(z)
                 self.fixPars(z)
                 self.switchOff(z)
             else:
@@ -175,23 +189,24 @@ class RazorBox(Box.Box):
                     floatSomething(z)
                     fixed.append(z)
 
-        if self.name == "Had": self.workspace.var("b1st_TTj").setConstant(rt.kFALSE)
-
-        #remove redundant second components
-        if self.name == "Ele":
-            self.fix2ndComponent("Wln")
-            self.workspace.var("f2_Wln").setVal(0.)
-            self.workspace.var("f2_Wln").setConstant(rt.kTRUE)
-        if self.name == "Mu":
-            self.fix2ndComponent("Znn")
-            self.workspace.var("f2_Znn").setVal(0.)
-            self.workspace.var("f2_Znn").setConstant(rt.kTRUE)
-        #if self.name == "EleEle":
-        if self.name == "MuMu" or self.name == "EleEle":
-            self.fix2ndComponent("Zll")
-            self.workspace.var("f2_Zll").setVal(0.)
-            self.workspace.var("f2_Zll").setConstant(rt.kTRUE)
-
+        # switch off V+jets in the high-btag bins
+        #self.workspace.var("f2_Vpj").setVal(0.)
+        #self.workspace.var("f2_Vpj").setConstant(rt.kTRUE)
+        self.workspace.var("f3_Vpj").setVal(0.)
+        self.workspace.var("f3_Vpj").setConstant(rt.kTRUE)
+        self.workspace.var("f4_Vpj").setVal(0.)
+        self.workspace.var("f4_Vpj").setConstant(rt.kTRUE)
+        # I am having troubles with the fit...
+        #self.workspace.var("f4_UEC").setVal(0.)
+        #self.workspace.var("f4_UEC").setConstant(rt.kTRUE)
+        #self.workspace.var("f4_TTj").setVal(0.)
+        #self.workspace.var("f4_TTj").setConstant(rt.kTRUE)
+        ##### 
+        #self.workspace.var("MR0_TTj").setVal(0.)
+        #self.workspace.var("MR0_TTj").setConstant(rt.kTRUE)
+        #self.workspace.var("MR0_Vpj").setVal(0.)
+        #self.workspace.var("MR0_Vpj").setConstant(rt.kTRUE)
+ 
     def addSignalModel(self, inputFile, signalXsec, modelName = None):
         
         if modelName is None:
@@ -231,28 +246,36 @@ class RazorBox(Box.Box):
         return extended.GetName()
         
     def plot(self, inputFile, store, box):
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1', 'fR2','fR3','fR4']), dir=box)
-        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1', 'fR2','fR3','fR4']), dir=box)
+        #store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['FULL']), dir=box)
+
         #[store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['fR1', 'fR2','fR3','fR4'])]
         #[store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['fR1', 'fR2','fR3','fR4'])]
         #[store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "MR", ranges=['FULL'])]
         #[store.store(s, dir=box) for s in self.plot1DHisto(inputFile, "Rsq", ranges=['FULL'])]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
+
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['fR1', 'fR2','fR3','fR4'])]
+
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['FULL'])]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['FULL'])]
-                                        
-    def plot1D(self, inputFile, varname, nbin=200, xmin=-99, xmax=-99, range = ''):
-        
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 5, ranges=['FULL'])]
+
+        #store.store(self.plot1D(inputFile, "MR", 80, ranges=['FULL']), dir=box)
+        #store.store(self.plot1D(inputFile, "Rsq", 25, ranges=['FULL']), dir=box)
+        #store.store(self.plot1D(inputFile, "nBtag", 5, ranges=['FULL']), dir=box)
+
+    def plot1D(self, inputFile, varname, nbin=200, ranges=None):
+
+        rangeCut = self.getVarRangeCutNamed(ranges=ranges)
         # set the integral precision
         rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-10) ;
         rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-10) ;
         # get the max and min (if different than default)
-        if xmax==xmin:
-            xmin = self.workspace.var(varname).getMin()
-            xmax = self.workspace.var(varname).getMax()
+        xmin = self.workspace.var(varname).getMin()
+        xmax = self.workspace.var(varname).getMax()
         data = RootTools.getDataSet(inputFile,'RMRTree')
-        data = data.reduce(rt.RooFit.CutRange(range))
+        data = data.reduce(rt.RooFit.CutRange(rangeCut))
         data_cut = data.reduce(self.cut)
         
         # project the data on the variable
@@ -264,62 +287,33 @@ class RazorBox(Box.Box):
         data_cut.plotOn(frameMR)
         
         # project the full PDF on the data
-        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.Range(range))
+        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.Range(rangeCut))
 
-        # plot each individual component: Wln
-        N1_Wln = self.workspace.function("Ntot_Wln").getVal()*(1-self.workspace.var("f2_Wln").getVal())
-        N2_Wln = self.workspace.function("Ntot_Wln").getVal()*self.workspace.var("f2_Wln").getVal()
-        # plot each individual component: Zll
-        N1_Zll = self.workspace.function("Ntot_Zll").getVal()*(1-self.workspace.var("f2_Zll").getVal())
-        N2_Zll = self.workspace.function("Ntot_Zll").getVal()*self.workspace.var("f2_Zll").getVal()
-        # plot each individual component: Znn
-        N1_Znn = self.workspace.function("Ntot_Znn").getVal()*(1-self.workspace.var("f2_Znn").getVal())
-        N2_Znn = self.workspace.function("Ntot_Znn").getVal()*self.workspace.var("f2_Znn").getVal()
+        # plot each individual component: Vpj
+        N_Vpj = self.workspace.function("Ntot_Vpj").getVal()
         # plot each individual component: TTj
-        N1_TTj = self.workspace.function("Ntot_TTj").getVal()*(1-self.workspace.var("f2_TTj").getVal())
-        N2_TTj = self.workspace.function("Ntot_TTj").getVal()*self.workspace.var("f2_TTj").getVal()
+        N_TTj = self.workspace.function("Ntot_TTj").getVal()
+        # plot each individual component: UEC
+        N_UEC = self.workspace.function("Ntot_UEC").getVal()
+        # plot each individual component: Zll
+        #N_Zll = self.workspace.function("Ntot_Zll").getVal()
+        # plot each individual component: Znn
+        #N_Znn = self.workspace.function("Ntot_Znn").getVal()
         # plot each individual component: QCD
-        N1_QCD = 0 #self.workspace.function("Ntot_QCD").getVal()*(1-self.workspace.var("f2_QCD").getVal())
-        N2_QCD = 0 #self.workspace.function("Ntot_QCD").getVal()*self.workspace.var("f2_QCD").getVal()        
+        #N_QCD = 0 #self.workspace.function("Ntot_QCD").getVal() 
 
-        Ntot = N1_Wln+N2_Wln+N1_Zll+N2_Zll+N1_Znn+N2_Znn+N1_TTj+N2_TTj+N1_QCD+N2_QCD
+        Ntot = N_Vpj+N_TTj+N_UEC#+N_QCD+N_Zll+N_Znn
 
-        if N1_Wln+N2_Wln >0:
-            # project the first component: Wln
-            self.workspace.pdf("PDF1st_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Wln/Ntot), rt.RooFit.Range(range))
-            # project the second component: Wln
-            self.workspace.pdf("PDF2nd_Wln").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Wln/Ntot), rt.RooFit.Range(range))
-        if N1_Zll+N2_Zll >0:
-            # project the first component: Zll
-            self.workspace.pdf("PDF1st_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Zll/Ntot), rt.RooFit.Range(range))
-            # project the second component: Zll
-            self.workspace.pdf("PDF2nd_Zll").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Zll/Ntot), rt.RooFit.Range(range))
-        if N1_Znn+N2_Znn >0:
-            # project the first component: Znn
-            self.workspace.pdf("PDF1st_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_Znn/Ntot), rt.RooFit.Range(range))
-            # project the second component: Znn
-            self.workspace.pdf("PDF2nd_Znn").plotOn(frameMR, rt.RooFit.LineColor(rt.kGreen), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_Znn/Ntot), rt.RooFit.Range(range))
-        if N1_TTj+N2_TTj >0:
+        if N_Vpj >0:
+            # project the first component: Vpj
+            self.workspace.pdf("PDF_Vpj").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_Vpj/Ntot), rt.RooFit.Range(rangeCut))
+        if N_TTj >0:
             # project the first component: TTj
-            self.workspace.pdf("PDF1st_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_TTj/Ntot), rt.RooFit.Range(range))
-            # project the second component: TTj
-            self.workspace.pdf("PDF2nd_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_TTj/Ntot), rt.RooFit.Range(range))
-        if N1_QCD+N2_QCD >0:
-            # project the first component: TTj
-            self.workspace.pdf("PDF1st_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N1_QCD/Ntot), rt.RooFit.Range(range))
-            # project the second component: TTj
-            self.workspace.pdf("PDF2nd_QCD").plotOn(frameMR, rt.RooFit.LineColor(rt.kViolet), rt.RooFit.LineStyle(9), rt.RooFit.Normalization(N2_QCD/Ntot), rt.RooFit.Range(range))            
-
-        #leg = rt.TLegend("leg", "leg", 0.6, 0.6, 0.9, 0.9)
-        #leg.AddEntry("PDF1st_Wln", "W+jets 1st")
-        #leg.AddEntry("PDF2nd_Wln", "W+jets 2nd")
-        #leg.AddEntry("PDF1st_Zll", "Z(ll)+jets 1st")
-        #leg.AddEntry("PDF2nd_Zll", "Z(ll)+jets 2nd")
-        #leg.AddEntry("PDF1st_Znn", "Z(#nu#nu)+jets 1st")
-        #leg.AddEntry("PDF2nd_Znn", "Z(#nu#nu)+jets 2nd")
-        #leg.AddEntry("PDF1st_TTj", "t#bar{t}+jets 1st")
-        #leg.AddEntry("PDF2nd_TTj", "t#bar{t}+jets 2nd")
-        
+            self.workspace.pdf("PDF_TTj").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj/Ntot), rt.RooFit.Range(rangeCut))
+        if N_UEC >0:
+            # project the first component: UEC
+            self.workspace.pdf("PDF_UEC").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_UEC/Ntot), rt.RooFit.Range(rangeCut))
+            
         return frameMR
 
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
@@ -329,7 +323,6 @@ class RazorBox(Box.Box):
             rangeNone = True
             ranges = ['']
             
-        #before I find a better way
         rangeCut = self.getVarRangeCutNamed(ranges=ranges)
         if data is None:
             data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
@@ -337,41 +330,62 @@ class RazorBox(Box.Box):
         toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), 50*data.numEntries())
         toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
 
-        if self.name != "MuEle":
-            # no ttbar
-            Ntt = self.workspace.var("Ntot_TTj").getVal()
-            self.workspace.var("Ntot_TTj").setVal(0.)
-            # no znn+jets [this is ONLY for the Had box]
-            Nznn = 0
-            if self.name == "Had":
-                Nznn = self.workspace.var("Ntot_Znn").getVal()
-                self.workspace.var("Ntot_Znn").setVal(0.)
+        # no ttbar
+        Ntt = self.workspace.var("Ntot_TTj").getVal()
+        self.workspace.var("Ntot_TTj").setVal(0.)
+        # no UEC
+        Nuec = self.workspace.var("Ntot_UEC").getVal()
+        self.workspace.var("Ntot_UEC").setVal(0.)
+        Nvpj = 0
+        #if self.name != "MuEle": Nvpj = self.workspace.var("Ntot_Vpj").getVal()
+        if self.workspace.var("Ntot_Vpj") != None: Nvpj = self.workspace.var("Ntot_Vpj").getVal()
+        if Nvpj>0:
+            toyDataVpj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nuec)))
+            toyDataVpj = toyDataVpj.reduce(self.getVarRangeCutNamed(ranges=ranges))
             
-            toyDataWln = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nznn)))
-            toyDataWln = toyDataWln.reduce(self.getVarRangeCutNamed(ranges=ranges))
-            if self.name == "Had":
-                Nwj = self.workspace.var("Ntot_Wln").getVal()
-                self.workspace.var("Ntot_Wln").setVal(0.)
-                self.workspace.var("Ntot_Znn").setVal(Nznn)
-                toyDataZnn = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nwj)))
-                toyDataZnn = toyDataZnn.reduce(self.getVarRangeCutNamed(ranges=ranges))
-                self.workspace.var("Ntot_Wln").setVal(Nwj)
-                
-            self.workspace.var("Ntot_TTj").setVal(Ntt)
+        self.workspace.var("Ntot_Vpj").setVal(0.)
+        self.workspace.var("Ntot_UEC").setVal(Nuec)
+        if self.workspace.var("Ntot_UEC") != None and Nuec>0 :
+            toyDataUEC = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nvpj)))
+            toyDataUEC = toyDataUEC.reduce(self.getVarRangeCutNamed(ranges=ranges))
+                        
+        self.workspace.var("Ntot_TTj").setVal(Ntt)
+        self.workspace.var("Ntot_Vpj").setVal(Nvpj)
+        #self.workspace.var("Ntot_Znn").setVal(Nznn)
 
         xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
 
+        # variable binning for plots
+        bins = getBinning(self.name, xvarname)
+        xedge = array("d",bins)
+        print bins
+        
         # define 1D histograms
-        histoData = self.setPoissonErrors(rt.TH1D("histoData", "histoData",nbins, xmin, xmax))
-        histoToy = self.setPoissonErrors(rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax))
-        histoToyTTj = self.setPoissonErrors(rt.TH1D("histoToyTTj", "histoToyTTj",nbins, xmin, xmax))
-        histoToyWln = self.setPoissonErrors(rt.TH1D("histoToyWln", "histoToyWln",nbins, xmin, xmax))
-        histoToyZnn = self.setPoissonErrors(rt.TH1D("histoToyZnn", "histoToyZnn",nbins, xmin, xmax))
+        histoData = self.setPoissonErrors(rt.TH1D("histoData", "histoData",len(bins)-1, xedge))
+        histoToy = self.setPoissonErrors(rt.TH1D("histoToy", "histoToy",len(bins)-1, xedge))
+        histoToyTTj = self.setPoissonErrors(rt.TH1D("histoToyTTj", "histoToyTTj",len(bins)-1, xedge))
+        histoToyUEC = self.setPoissonErrors(rt.TH1D("histoToyUEC", "histoToyUEC",len(bins)-1, xedge))
+        histoToyVpj = self.setPoissonErrors(rt.TH1D("histoToyVpj", "histoToyVpj",len(bins)-1, xedge))
+        #histoToyZnn = self.setPoissonErrors(rt.TH1D("histoToyZnn", "histoToyZnn",len(bins)-1, xedge))
 
         def setName(h, name):
             h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(),name,'_'.join(ranges)) )
-            h.GetXaxis().SetTitle(name)
+            # x axis
+            if name == "MR": h.GetXaxis().SetTitle("M_{R} [GeV]")
+            elif name == "Rsq": h.GetXaxis().SetTitle("R^{2}")
+            elif name == "nBtag": h.GetXaxis().SetTitle("n_{Bjet}")
+            # y axis
+            if name == "MR": h.GetYaxis().SetTitle("Events/(%i GeV)" %h.GetXaxis().GetBinWidth(1))
+            elif name == "Rsq": h.GetYaxis().SetTitle("Events/(%4.3f)" %h.GetXaxis().GetBinWidth(1))
+            elif name == "nBtag": h.GetYaxis().SetTitle("Events")
+            # axis labels
+            h.GetXaxis().SetTitleSize(0.05)
+            h.GetYaxis().SetTitleSize(0.05)
+            h.GetXaxis().SetLabelSize(0.05)
+            h.GetYaxis().SetLabelSize(0.05)
+            h.GetXaxis().SetTitleOffset(0.90)
+            h.GetYaxis().SetTitleOffset(0.93)
         
         def SetErrors(histo, nbins):
             for i in range(1, nbins+1):
@@ -382,28 +396,33 @@ class RazorBox(Box.Box):
         data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
         toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
         scaleFactor = histoData.Integral()/histoToy.Integral()
-        if self.name != "MuEle":
-            toyDataWln.fillHistogram(histoToyWln,rt.RooArgList(self.workspace.var(xvarname)))
-            toyData.fillHistogram(histoToyTTj,rt.RooArgList(self.workspace.var(xvarname)))
-            histoToyTTj.Add(histoToyWln, -1)
-            if self.name == "Had":
-                toyDataZnn.fillHistogram(histoToyZnn,rt.RooArgList(self.workspace.var(xvarname)))
-                histoToyTTj.Add(histoToyZnn, -1)
-                histoToyZnn.Scale(scaleFactor)
-                SetErrors(histoToyZnn, nbins)
-                setName(histoToyZnn,xvarname)
-                histoToyZnn.SetLineColor(rt.kGreen)    
-            histoToyTTj.Scale(scaleFactor)
-            histoToyWln.Scale(scaleFactor)
-            SetErrors(histoToyTTj, nbins)
-            SetErrors(histoToyWln, nbins)
-            setName(histoToyTTj,xvarname)
-            setName(histoToyWln,xvarname)
-            histoToyTTj.SetLineColor(rt.kOrange)
-            histoToyTTj.SetLineWidth(2)
-            if self.name == "EleEle" or self.name == "MuMu": histoToyWln.SetLineColor(rt.kMagenta)
-            else: histoToyWln.SetLineColor(rt.kRed)
-            histoToyWln.SetLineWidth(2)
+        if self.workspace.var("Ntot_Vpj") != None and Nvpj>0: toyDataVpj.fillHistogram(histoToyVpj,rt.RooArgList(self.workspace.var(xvarname)))
+        if self.workspace.var("Ntot_UEC") != None and Nuec>0 :toyDataUEC.fillHistogram(histoToyUEC,rt.RooArgList(self.workspace.var(xvarname)))
+        toyData.fillHistogram(histoToyTTj,rt.RooArgList(self.workspace.var(xvarname)))
+        if self.workspace.var("Ntot_Vpj") != None and Nvpj>0: histoToyTTj.Add(histoToyVpj, -1)
+        if self.workspace.var("Ntot_UEC") != None and Nuec>0 :histoToyTTj.Add(histoToyUEC, -1)
+        #if self.name == "Had":
+        #    toyDataZnn.fillHistogram(histoToyZnn,rt.RooArgList(self.workspace.var(xvarname)))
+        #    histoToyTTj.Add(histoToyZnn, -1)
+        #    histoToyZnn.Scale(scaleFactor)
+        #    SetErrors(histoToyZnn, nbins)
+        #    setName(histoToyZnn,xvarname)
+        #    histoToyZnn.SetLineColor(rt.kGreen)    
+        histoToyTTj.Scale(scaleFactor)
+        if self.name != "MuEle": histoToyVpj.Scale(scaleFactor)
+        histoToyUEC.Scale(scaleFactor)
+        SetErrors(histoToyTTj, nbins)
+        if self.name != "MuEle": SetErrors(histoToyVpj, nbins)
+        SetErrors(histoToyUEC, nbins)
+        setName(histoToyTTj,xvarname)
+        if self.name != "MuEle": setName(histoToyVpj,xvarname)
+        setName(histoToyUEC,xvarname)
+        histoToyUEC.SetLineColor(rt.kViolet)
+        histoToyUEC.SetLineWidth(2)
+        histoToyTTj.SetLineColor(rt.kOrange)
+        histoToyTTj.SetLineWidth(2)
+        if self.name != "MuEle": histoToyVpj.SetLineColor(rt.kRed)
+        if self.name != "MuEle": histoToyVpj.SetLineWidth(2)
 
         histoToy.Scale(scaleFactor)
         SetErrors(histoToy, nbins)
@@ -414,44 +433,59 @@ class RazorBox(Box.Box):
         histoToy.SetLineWidth(2)
 
         c = rt.TCanvas()
+        c.SetLogy()
         c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
         histoData.Draw("pe")
 
-        if self.name != "MuEle":
-            if self.name == "Had":
-                histoToyZnn.DrawCopy("histsame")
-                histoToyZnn.SetFillColor(rt.kGreen)
-                histoToyZnn.SetFillStyle(3018)
-                histoToyZnn.Draw('e2same')            
-            histoToyWln.DrawCopy("histsame")
-            if self.name == "EleEle" or self.name == "MuMu": histoToyWln.SetFillColor(rt.kMagenta)
-            else: histoToyWln.SetFillColor(rt.kRed)
-            histoToyWln.SetFillStyle(3018)
-            histoToyWln.Draw('e2same')
+        if self.workspace.var("Ntot_Vpj").getVal():
+            histoToyVpj.DrawCopy("histsame")
+            histoToyVpj.SetFillColor(rt.kRed)
+            histoToyVpj.SetFillStyle(3018)
+            histoToyVpj.Draw('e2same')
+        if self.workspace.var("Ntot_UEC").getVal() and self.name != "MuEle":
+            histoToyUEC.DrawCopy("histsame")
+            histoToyUEC.SetFillColor(rt.kViolet)
+            histoToyUEC.SetFillStyle(3018)
+            histoToyUEC.Draw('e2same')
+        if self.workspace.var("Ntot_TTj").getVal():
             histoToyTTj.DrawCopy('histsame')
             histoToyTTj.SetFillColor(rt.kOrange)
             histoToyTTj.SetFillStyle(3018)
             histoToyTTj.Draw('e2same')        
-            histoToy.DrawCopy('histsame')
-
+        # total
+        histoToy.DrawCopy('histsame')
         histoToy.DrawCopy('histsame')
         histoToy.SetFillColor(rt.kBlue)
         histoToy.SetFillStyle(3018)
         histoToy.Draw('e2same')
 
+        # add standard text
+        #pt = rt.TPaveText(0.6,0.6,0.9,0.9,"ndr")
+        #pt.SetBorderSize(0)
+        #pt.SetFillColor(0)
+        #pt.SetFillStyle(0)
+        #pt.SetLineColor(0)
+        #pt.SetTextAlign(13)
+        #pt.SetTextSize(0.04831933)
+        #text = pt.AddText("CMS Preliminary  #sqrt{s} = 7 TeV")
+        #text = pt.AddText("Razor %s box #int Ldt = %3.2f fb^{-1} " %(self.name,self.workspace.var('Lumi').getVal()/1000.))
+        #pt.Draw()
+        
         #histoData.Draw("pesame")
 
         #leg = rt.TLegend(0.6,0.6,0.9,0.9)
         #leg.SetFillColor(0)
-        #leg.AddEntry(histoToyWln.GetName(),"W+jets","l")
-        #leg.AddEntry(histoToyTTj.GetName(),"t#bar{t}","l")
-        #leg.AddEntry(histoToy.GetName(),"Total","l")
-        #leg.Draw()
+        #leg.AddEntry(histoToyVpj,"W+jets","l")
+        #leg.AddEntry(histoToyTTj,"t#bar{t}","l")
+        #leg.AddEntry(histoToyUEC,"UEC","l")
+        #if self.name == "Had": leg.AddEntry(histoToyZnn,"Z(#nu#nu)+jets","l")
+        #leg.AddEntry(histoToy,"Total","l")
+        #leg.Draw("same")
 
         histToReturn = [histoToy, histoData, c]
-        if self.name != "MuEle":
-            histToReturn.append(histoToyTTj)
-            histToReturn.append(histoToyWln)
-            if self.name == "Had": histToReturn.append(histoToyZnn)
+        histToReturn.append(histoToyTTj)
+        if self.name != "MuEle": histToReturn.append(histoToyVpj)
+        histToReturn.append(histoToyUEC)
+        #if self.name == "Had": histToReturn.append(histoToyZnn)
 
         return histToReturn

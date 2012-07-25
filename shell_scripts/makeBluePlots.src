@@ -1,15 +1,15 @@
-python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg DATA2012_TIGHTERR/HT_MR400.0_R0.424264068712_Had.root -i razor_output_TightRsq_Had.root -o pippo_Had.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/HAD/ -t 3500 
-python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg DATA2012_TIGHTERR/MuHad_MR300.0_R0.331662479036_Mu.root -i razor_output_TightRsq_Mu.root -o pippo_Mu.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/MU/ -t 3500 
-python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg DATA2012_TIGHTERR/MuHad_MR300.0_R0.331662479036_MuMu.root -i razor_output_TightRsq_MuMu.root -o pippo_MuMu.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/MUMU/ -t 3500 
-python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg DATA2012_TIGHTERR/MuHad_MR300.0_R0.331662479036_MuEle.root -i razor_output_TightRsq_MuEle.root -o pippo_MuEle.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/MUELE/ -t 3500 
-python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg DATA2012_TIGHTERR/ElectronHad_MR300.0_R0.331662479036_Ele.root -i razor_output_TightRsq_Ele.root -o pippo_Ele.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/ELE/ -t 3500 
-python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_TightRsq.cfg DATA2012_TIGHTERR/ElectronHad_MR300.0_R0.331662479036_EleEle.root -i razor_output_TightRsq_EleEle.root -o pippo_EleEle.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/ELEELE/ -t 3500 
-python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/HAD/frtoydata_Had
-python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/MU/frtoydata_Mu
-python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/MUMU/frtoydata_MuMu
-python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/MUELE/frtoydata_MuEle
-python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/ELE/frtoydata_Ele
-python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_SAMPLES/ELEELE/frtoydata_EleEle
+python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_MC.cfg DATA2012_TIGHTERR/HT_MR400.0_R0.424264068712_Had.root -i TIGHT_Rsq_CLOSUREMC/razor_output_MC_Had.root -o pippo_Had.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/HAD/ -t 1000 
+python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_MC.cfg DATA2012_TIGHTERR/MuHad_MR300.0_R0.331662479036_Mu.root -i TIGHT_Rsq_CLOSUREMC/razor_output_MC_Mu.root -o pippo_Mu.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/MU/ -t 1000 
+python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_MC.cfg DATA2012_TIGHTERR/MuHad_MR300.0_R0.331662479036_MuMu.root -i TIGHT_Rsq_CLOSUREMC/razor_output_MC_MuMu.root -o pippo_MuMu.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/MUMU/ -t 1000 
+python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_MC.cfg DATA2012_TIGHTERR/MuHad_MR300.0_R0.331662479036_MuEle.root -i TIGHT_Rsq_CLOSUREMC/razor_output_MC_MuEle.root -o pippo_MuEle.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/MUELE/ -t 1000 
+python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_MC.cfg DATA2012_TIGHTERR/ElectronHad_MR300.0_R0.331662479036_Ele.root -i TIGHT_Rsq_CLOSUREMC/razor_output_MC_Ele.root -o pippo_Ele.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/ELE/ -t 1000 
+python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/SingleBoxFit_Prompt_fR1fR2fR3fR4_2012_MC.cfg DATA2012_TIGHTERR/ElectronHad_MR300.0_R0.331662479036_EleEle.root -i TIGHT_Rsq_CLOSUREMC/razor_output_MC_EleEle.root -o pippo_EleEle.root --save-toys-from-fit ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/ELEELE/ -t 1000 
+python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/HAD/frtoydata_Had
+python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/MU/frtoydata_Mu
+python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/MUMU/frtoydata_MuMu
+python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/MUELE/frtoydata_MuEle
+python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/ELE/frtoydata_Ele
+python scripts/convertToyToROOT.py  ~/RAZOR_SAMPLES/2012/TOY_MCCLOSURE/ELEELE/frtoydata_EleEle
 source convert_sigbin.src Had HAD
 source convert_sigbin.src Mu MU
 source convert_sigbin.src MuEle MUELE

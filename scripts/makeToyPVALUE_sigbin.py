@@ -3,6 +3,14 @@ import ROOT as rt
 from array import *
 import sys
 
+def HadFR(MR, Rsq):
+    FR = False
+    if Rsq<0.18: FR = True
+    if Rsq<0.20 and MR<1000: FR = True
+    if Rsq<0.30 and MR < 650: FR = True
+    if MR<500: FR = True
+    return FR
+
 def Rebin(h):
     myhisto = rt.TH1D("%s_REBIN" %h.GetName(), "%s_REBIN" %h.GetName(), 5000, 0., 5000.)
     for i in range(1,1001):
@@ -61,12 +69,15 @@ def findMedian(myHisto):
     prob = 0
     median = 0
     for i in range(1, myHisto.GetNbinsX()+1):
-        if prob < 0.5 and prob+myHisto.GetBinContent(i) > 0.5:
+        if prob <= 0.5 and prob+myHisto.GetBinContent(i) > 0.5:
             median = myHisto.GetBinCenter(i)
         prob = prob + myHisto.GetBinContent(i)
     return median
     
 def find68ProbRange(hToy, probVal=0.68):
+    minVal = 0.
+    maxVal = 100000.
+    if hToy.Integral()<=0: return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
     # get the bin contents
     probsList = []
     for  i in range(1, hToy.GetNbinsX()+1):
@@ -87,7 +98,8 @@ def find68ProbRange(hToy, probVal=0.68):
     foundMax = False
     for  i in range(0, hToy.GetNbinsX()):
         if not foundMin and hToy.GetBinContent(i+1) >= prob68:
-            #if i == 0: minVal = 0.
+            #minVal = 0.
+            #if i == 0: 
             #else:
             fraction = (prob68-hToy.GetBinContent(i))/(hToy.GetBinContent(i+1)-hToy.GetBinContent(i))
             #print fraction
@@ -109,6 +121,7 @@ def getPValue(n, hToy):
     Prob = 0
     for i in range(1, hToy.GetNbinsX()+1):
         if hToy.GetBinContent(i)<= Prob_n: Prob += hToy.GetBinContent(i)
+    if hToy.Integral() <= 0.: return 0.,hToy,oldToy
     Prob = Prob/hToy.Integral()
     return Prob,hToy,oldToy
     
@@ -117,13 +130,21 @@ if __name__ == '__main__':
     fileName = sys.argv[2]
     datafileName = sys.argv[3]
 
-    # bins in mR
-    MRbins = [300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2800, 3500]
-    # bins in R^2
-    Rsqbins =  [0.09, 0.16, 0.20, 0.30, 0.40, 0.50]
+    if Box == "TauTau" or Box == "Had":    
+        MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
+        Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
+    else:
+        MRbins = [300, 350, 400, 450, 500, 550, 600, 700, 800, 1000, 1200, 1600, 2500, 4500]
+        Rsqbins = [0.11, 0.13, 0.15, 0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.8, 1.5]        
+
+    #MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
+    #Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
+
     x = array("d",MRbins)
     y = array("d",Rsqbins)
     h =  rt.TH2D("h","", len(MRbins)-1, x, len(Rsqbins)-1, y)
+    hOBS =  rt.TH2D("hOBS","hOBS", len(MRbins)-1, x, len(Rsqbins)-1, y)
+    hEXP =  rt.TH2D("hEXP","hEXP", len(MRbins)-1, x, len(Rsqbins)-1, y)
     
     h.GetXaxis().SetTitle("M_{R}[GeV]")
     h.GetYaxis().SetTitle("R^{2}")
@@ -136,27 +157,41 @@ if __name__ == '__main__':
     alldata = dataFile.Get("RMRTree")
     fileOUT = rt.TFile.Open("pvalue_%s.root" %Box, "recreate")
 
-    # translate from upper to lower case
-    boxName = [["HAD","Had"], ["MU", "Mu"], ["ELE", "Ele"], ["MUMU", "MuMu"], ["MUELE", "MuEle"], ["ELEELE", "EleEle"]]
-    thisBoxName = ""
-    for bn in boxName:
-        if bn[0] == Box: thisBoxName = bn[1]
-
     # p-values 1D plot
     pValHist = rt.TH1D("pVal%s" %Box, "pVal%s" %Box, 20, 0., 1.)
 
-    print "%s Box & Observed & Predicted Mode & Predicted Median & Predicted 68 Prob. Range & p-value \\\\" %Box
+    #prepare the latex table
+    table = open("table_%s.tex" %Box,"w")
+    table.write("\\errorcontextlines=9\n")
+    table.write("\\documentclass[12pt]{article}\n")
+    table.write("\\begin{document}\n")
+    table.write("\\begin{table}[!ht]\n")
+    table.write("\\begin{tiny}\n")
+    table.write("\\begin{center}\n")
+    table.write("\\begin{tabular}{|c|c|c|c|c|c|c|}\n")
+    table.write("\\hline\n")
+    table.write("$M_R$ Range & $R^2$ Range & Observed & Predicted Mode & Predicted Median & Predicted 68 Prob. Range & p-value \\\\\n")
+    table.write("\\hline\n")
     # loop over regions
     result = []
     for i in range(0,len(MRbins)-1):
         for j in range(0,len(Rsqbins)-1):
-            varName = "b%s_%i_%i" %(Box,i,j)
+            varName = "b%i_%i" %(i,j)
             histoName = "Histo_%s" %varName
+            # make an histogram of the expected yield                                                                                                                                                 
+            myTree.Draw(varName)
+            htemp = rt.gPad.GetPrimitive("htemp");
+            mean = htemp.GetMean()
+            rms = htemp.GetRMS()            
             # make an histogram of the expected yield
-            myhisto = rt.TH1D(histoName, histoName, 5000, 0., 5000.)
+            myhisto = rt.TH1D(histoName, histoName, 30, max(0.,mean-5.*rms), mean+5.*rms)
+            if myhisto.GetXaxis().GetBinWidth(2) <1:
+                maxX = int(myhisto.GetXaxis().GetXmax())
+                del myhisto
+                myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
             myTree.Project(histoName, varName)
             if myhisto.GetEntries() != 0: 
-                myhisto.Scale(1./myhisto.Integral())
+                if myhisto.Integral()>0: myhisto.Scale(1./myhisto.Integral())
                 # get the observed number of events
                 data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1]))
                 nObs = data.numEntries()
@@ -165,9 +200,19 @@ if __name__ == '__main__':
                 pval,myhisto,oldhisto = getPValue(nObs, myhisto)
                 h.SetBinContent(i+1, j+1, pval)
                 if pval >0.99: pval = 0.99 
-                print "%s & %i & %f & %f & $[%f, %f]$ & %f \\\\" %(varName, nObs, modeVal, medianVal, rangeMin, rangeMax, pval)
+                #if not HadFR(MRbins[i], Rsqbins[j]):
+                hOBS.SetBinContent(i+1, j+1, nObs)
+                hEXP.SetBinContent(i+1, j+1, (rangeMax+rangeMin)/2)
+                hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
+                if (rangeMax+rangeMin)/2 == 50000.: continue
+                #if not (pval ==0.99 and nObs == 0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval))
+                if pval<0.15: table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval))
+
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
-                if pval !=-99 or modeVal != 0.5 : pValHist.Fill(pval)
+                if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
+                #else:
+                #    hEXP.SetBinContent(i+1, j+1, 0)
+                #    hEXP.SetBinError(i+1, j+1, 0)
                 BoxName = ""
                 if Box == "Had": BoxName = "HAD"
                 if Box == "Mu": BoxName = "MU"
@@ -184,19 +229,41 @@ if __name__ == '__main__':
     pValHist.Write()
     fileOUT.Close()
 
+    # finish writing the table and close the tex file
+    table.write("\\hline\n")
+    table.write("\\end{tabular}\n")
+    table.write("\\end{center}\n")
+    table.write("\\end{tiny}\n")
+    table.write("\\end{table}\n")
+    table.write("\\end{document}\n")
+    table.close()
+
+    fileOUTint = rt.TFile.Open("ExpectedObserved_RazorHad_Winter2012.root", "recreate")
+    hOBS.Write()
+    hEXP.Write()
+    fileOUTint.Close()
+
     # the gray lines
     xLines = []
     yLines = []
 
-    for i in range(1,5):
-        xLines.append(rt.TLine(x[0], y[i], x[16], y[i]))
+    lastX = len(x)-1
+    lastY = len(y)-1
+
+    for i in range(1,lastY):
+        xLines.append(rt.TLine(x[0], y[i], x[lastX], y[i]))
         xLines[i-1].SetLineStyle(2);
         xLines[i-1].SetLineColor(rt.kGray);
         
-    for i in range(1,16):
-        yLines.append(rt.TLine(x[i], y[0], x[i], y[5]))
+    for i in range(1,lastX):
+        yLines.append(rt.TLine(x[i], y[0], x[i], y[lastY]))
         yLines[i-1].SetLineStyle(2)
         yLines[i-1].SetLineColor(rt.kGray)
+
+    # Has has a tighter baseline
+    #if Box == "Had":
+    #    for i in range(1,len(MRbins)): h.SetBinContent(i,1, 0.)
+    #    for i in range(1,len(Rsqbins)): h.SetBinContent(1,i, 0.)
                       
     c1 = rt.TCanvas("c1","c1", 900, 600)
     c1.SetLogz()
@@ -205,25 +272,25 @@ if __name__ == '__main__':
     rt.gStyle.SetPalette(900)
     h.Draw("colz")
 
-    for i in range(0,4): xLines[i].Draw()
-    for i in range(0,15): yLines[i].Draw()
+    for i in range(0,len(xLines)): xLines[i].Draw()
+    for i in range(0,len(yLines)): yLines[i].Draw()
 
     # the fit region in green
     frLines = []
-    minRsq = 0.09
+    minRsq = 0.11
     minMR = 300.
     if Box == "Had":
-        frLines.append(rt.TLine(400,0.16,800,0.16))
-        frLines.append(rt.TLine(800,0.16,800,0.2))
+        frLines.append(rt.TLine(400,0.18,800,0.18))
+        frLines.append(rt.TLine(800,0.18,800,0.2))
         frLines.append(rt.TLine(650,0.2,800,0.2))
         frLines.append(rt.TLine(650,0.2,650,0.3))
         frLines.append(rt.TLine(450,0.3,650,0.3))
         frLines.append(rt.TLine(450,0.3,450,0.5))
         frLines.append(rt.TLine(450,0.5,400,0.5))
-        frLines.append(rt.TLine(400,0.16,400,0.5))
+        frLines.append(rt.TLine(400,0.18,400,0.5))
 
     if Box == "Mu" or Box == "Ele":
-        frLines.append(rt.TLine(800,0.09,800,0.2))
+        frLines.append(rt.TLine(800,0.11,800,0.2))
         frLines.append(rt.TLine(650,0.2,800,0.2))
         frLines.append(rt.TLine(650,0.2,650,0.3))
         frLines.append(rt.TLine(450,0.3,650,0.3))
@@ -231,18 +298,17 @@ if __name__ == '__main__':
         frLines.append(rt.TLine(450,0.5,300,0.5))
 
     if Box == "MuMu" or Box == "EleEle" or Box == "MuEle":
-        frLines.append(rt.TLine(650,0.09,650,0.2))
-        frLines.append(rt.TLine(650,0.2,450,0.2))
-        frLines.append(rt.TLine(450,0.2,450,0.3))
-        frLines.append(rt.TLine(400,0.3,450,0.3))
-        frLines.append(rt.TLine(400,0.3,400,0.5))
+        frLines.append(rt.TLine(1000,0.15,1000,0.2))
+        frLines.append(rt.TLine(1000,0.2,650,0.2))
+        frLines.append(rt.TLine(650,0.2,650,0.3))
+        frLines.append(rt.TLine(650,0.3,500,0.3))
+        frLines.append(rt.TLine(500,0.3,500,0.5))
 
     ci = rt.TColor.GetColor("#006600");
-    for frLine in frLines:
-        frLine.SetLineColor(ci)
-        frLine.SetLineStyle(2)
-        frLine.SetLineWidth(2)
-        frLine.Draw()
+    #for frLine in frLines:
+    #    frLine.SetLineColor(ci)
+    #    frLine.SetLineWidth(2)
+    #    frLine.Draw()
 
     c1.SaveAs("pvalue_sigbin_%s.C" %Box)
     c1.SaveAs("pvalue_sigbin_%s.pdf" %Box)

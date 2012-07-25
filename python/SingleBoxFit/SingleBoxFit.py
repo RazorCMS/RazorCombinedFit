@@ -35,29 +35,34 @@ class SingleBoxAnalysis(Analysis.Analysis):
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             if self.Analysis != "MULTIJET":
-                # Wln
-                boxes[box].defineSet("pdf1pars_Wln", self.config.getVariables(box, "pdf1_Wln"))
-                boxes[box].defineSet("pdf2pars_Wln", self.config.getVariables(box, "pdf2_Wln"))
-                boxes[box].defineSet("otherpars_Wln", self.config.getVariables(box, "others_Wln"))
-                # Zll
-                boxes[box].defineSet("pdf1pars_Zll", self.config.getVariables(box, "pdf1_Zll"))
-                boxes[box].defineSet("pdf2pars_Zll", self.config.getVariables(box, "pdf2_Zll"))
-                boxes[box].defineSet("otherpars_Zll", self.config.getVariables(box, "others_Zll"))
-                if self.Analysis != "TAU":
-                    # Znn
-                    boxes[box].defineSet("pdf1pars_Znn", self.config.getVariables(box, "pdf1_Znn"))
-                    boxes[box].defineSet("pdf2pars_Znn", self.config.getVariables(box, "pdf2_Znn"))
-                    boxes[box].defineSet("otherpars_Znn", self.config.getVariables(box, "others_Znn"))
+                # Vpj
+                boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"))
+                boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"))
+                ## Zll
+                #boxes[box].defineSet("pdfpars_Zll", self.config.getVariables(box, "pdf_Zll"))
+                #boxes[box].defineSet("otherpars_Zll", self.config.getVariables(box, "others_Zll"))
+                #if self.Analysis != "TAU":
+                #    # Znn
+                #    boxes[box].defineSet("pdfpars_Znn", self.config.getVariables(box, "pdf_Znn"))
+                #    boxes[box].defineSet("otherpars_Znn", self.config.getVariables(box, "others_Znn"))
             # TTj
-            boxes[box].defineSet("pdf1pars_TTj", self.config.getVariables(box, "pdf1_TTj"))
-            boxes[box].defineSet("pdf2pars_TTj", self.config.getVariables(box, "pdf2_TTj"))
+            boxes[box].defineSet("pdfpars_TTj", self.config.getVariables(box, "pdf_TTj"))
             boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
-            if self.Analysis != "TAU":
+            boxes[box].defineSet("pdfpars_UEC", self.config.getVariables(box, "pdf_UEC"))
+            boxes[box].defineSet("otherpars_UEC", self.config.getVariables(box, "others_UEC"))
+            if self.Analysis == "MULTIJET":
                 # QCD
-                boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
-                boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
+                boxes[box].defineSet("pdfpars_QCD", self.config.getVariables(box, "pdf_QCD"))
                 boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
-
+            # the BTAG
+            if self.Analysis != "TAU" and self.Analysis != "MULTIJET":
+                boxes[box].defineSet("btagpars_TTj", self.config.getVariables(box, "btag_TTj"))
+                boxes[box].defineSet("btagpars_UEC", self.config.getVariables(box, "btag_UEC"))
+                boxes[box].defineSet("btagpars_Vpj", self.config.getVariables(box, "btag_Vpj"))
+                #boxes[box].defineSet("btagpars_Zll", self.config.getVariables(box, "btag_Zll"))
+                #boxes[box].defineSet("btagpars_Znn", self.config.getVariables(box, "btag_Znn"))
+                            
+            
             if not self.options.limit: boxes[box].addDataSet(fileName)
             boxes[box].define(fileName)
 
@@ -608,50 +613,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "calculate number of bkg events to generate"
             bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
             fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
-            
-            #use the same binning as the signal model
-            significance = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,0))
-            significance = significance.Clone('%s_significance' % boxes[box].name)
-            significance.Reset()
-            sigSum = 0
-            
-            def calcSignificance(binning, sig_toy, bkg_toy):
-                """Make a histogram of S/sqrt(S+B) from the signal and background datasets"""
-
-                def fill(h, ds):
-                    for i in xrange(ds.numEntries()):
-                        row = ds.get(i)
-                        h.Fill(row.getRealValue('MR'),row.getRealValue('Rsq'))
-
-                #make the histograms
-                sigHist = binning.Clone('S')
-                sigHist.Reset()
-                fill(sigHist,sig_toy)
-                
-                bgHist = binning.Clone('B')
-                bgHist.Reset()
-                fill(bgHist,bkg_toy)
-                
-                significanceToy = binning.Clone('SignificanceToy')
-                significanceToy.Reset()
-                
-                #calculate the significance
-                xaxis = sigHist.GetXaxis()
-                yaxis = sigHist.GetYaxis()
-    
-                for i in xrange(1,xaxis.GetNbins()+1):
-                    for j in xrange(1,yaxis.GetNbins()+1):
-                        bin = sigHist.GetBin(i,j)
-            
-                        S = sigHist.GetBinContent(bin)
-                        B = bgHist.GetBinContent(bin)
-            
-                        sig = 0.0
-                        if B > 0.0:
-                            sig = S/rt.TMath.Sqrt(B)
-                        significanceToy.SetBinContent(bin,sig)                
-                
-                return significanceToy            
 
             for i in xrange(nToys):
                 print 'Setting limit %i experiment' % i
@@ -679,7 +640,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     sigHist = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
                     sig_toy = boxes[box].sampleDatasetFromHistogram2D(boxes[box].workspace.var('MR'),\
                                                                         boxes[box].workspace.var('Rsq'),\
-                                                                        sigHist, PSigGenNum)                   
+                                                                        sigHist, PSigGenNum)
                     bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
                     
                     print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
@@ -688,13 +649,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                     #sum the toys
                     tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(fit_range))
-                    
-                    #make the significance plot
-                    sigtoyHisto = calcSignificance(significance, sig_toy, tot_toy)
-                    print 'significance = %f' % sigtoyHisto.Integral()
-                    sigSum += sigtoyHisto.Integral()
-                    significance.Add(sigtoyHisto)                     
-                    
                     tot_toy.append(sig_toy)
                     tot_toy.append(fitDataSet)
                     print "Total Yield = %f" %tot_toy.numEntries()
@@ -781,12 +735,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #self.store(hist_H1, dir=box)
             #self.store(values, dir=box)
             #self.store(valuesSR, dir=box)
-            
-            sigSum /= (1.*nToys)
-            print 'Mean total significance',sigSum
-            if significance.Integral() > 0.0:
-                significance.Scale(sigSum/significance.Integral())
-            self.store(significance, dir=box)            
 
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)

@@ -5,7 +5,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':5}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'TauTau':7,'Had':8}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -28,7 +28,6 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
     
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
-    workspace.factory('nBtag[0,0,2.0]')
     workspace.factory('W[0,0,+INF]')
 
     args = workspace.allVars()
@@ -69,6 +68,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, bMin
         a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
         a.setRealValue('Rsq',tree.RSQ)
         a.setRealValue('nBtag',tree.BTAG_NUM)
+        a.setRealValue('CHARGE',tree.CHARGE)
         try:
             a.setRealValue('W',tree.WPU)
         except AttributeError:
@@ -138,13 +138,15 @@ if __name__ == '__main__':
                 if options.box != None:
                     convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.btag,options.run)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'BJet.root', cfg,'BJet',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.btag,options.run)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.btag,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTau.root', cfg,'TauTau',options.min,options.max,options.btag,options.run)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
