@@ -3,6 +3,18 @@ import ROOT as rt
 from array import *
 import sys
 
+def set2DStyle(h) :
+    h.GetXaxis().SetTitle("M_{R}[GeV]")
+    h.GetYaxis().SetTitle("R^{2}")
+    h.GetXaxis().SetTitleSize(0.055)
+    h.GetXaxis().SetLabelSize(0.055)
+    h.GetYaxis().SetTitleSize(0.055)
+    h.GetYaxis().SetLabelSize(0.055)
+
+def setCanvasStyle(c):
+    c.SetLeftMargin(0.1127232)
+    c.SetBottomMargin(0.1311189)
+
 def HadFR(MR, Rsq):
     FR = False
     if Rsq<0.18: FR = True
@@ -111,19 +123,27 @@ def find68ProbRange(hToy, probVal=0.68):
             foundMax = True
     return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
 
-def getPValue(n, hToy):
-    oldToy = hToy
-    #if hToy.GetMaximumBin() >4:
-    #    hToy = Rebin(hToy)
-    #    hToy.Smooth()
+def getSigma(n, hToy):
     # find the probability of the bin corresponding to the observed n
+    binN = hToy.FindBin(n)
+    Prob_n = hToy.GetBinContent(binN)
+    Prob = 0
+    for i in range(1, binN+1): Prob += hToy.GetBinContent(i)
+    if hToy.Integral() == 0.: return 0.
+    if Prob ==1.: return 0.
+    if Prob ==0.: Prob = 0.001
+    Prob = Prob/hToy.Integral()
+     # convert the one-sided p-value in a number of sigmas
+    return rt.TMath.NormQuantile(Prob)
+
+def getPValue(n, hToy):
     Prob_n = hToy.GetBinContent(hToy.FindBin(n+0.1))
     Prob = 0
     for i in range(1, hToy.GetNbinsX()+1):
         if hToy.GetBinContent(i)<= Prob_n: Prob += hToy.GetBinContent(i)
-    if hToy.Integral() <= 0.: return 0.,hToy,oldToy
+    if hToy.Integral() <= 0.: return 0.
     Prob = Prob/hToy.Integral()
-    return Prob,hToy,oldToy
+    return Prob
     
 if __name__ == '__main__':
     Box = sys.argv[1]
@@ -144,12 +164,13 @@ if __name__ == '__main__':
     y = array("d",Rsqbins)
     h =  rt.TH2D("h","", len(MRbins)-1, x, len(Rsqbins)-1, y)
     hOBS =  rt.TH2D("hOBS","hOBS", len(MRbins)-1, x, len(Rsqbins)-1, y)
-    hEXP =  rt.TH2D("hEXP","hEXP", len(MRbins)-1, x, len(Rsqbins)-1, y)
-    
-    h.GetXaxis().SetTitle("M_{R}[GeV]")
-    h.GetYaxis().SetTitle("R^{2}")
+    hEXP =  rt.TH2D("hEXP","hEXP", len(MRbins)-1, x, len(Rsqbins)-1, y)    
+    set2DStyle(h)
     h.SetMaximum(1.)
     h.SetMinimum(0.)
+
+    hNS =  rt.TH2D("hNS","", len(MRbins)-1, x, len(Rsqbins)-1, y)
+    set2DStyle(hNS)
     
     fileIn = rt.TFile.Open(fileName)
     myTree = fileIn.Get("myTree")
@@ -184,7 +205,7 @@ if __name__ == '__main__':
             mean = htemp.GetMean()
             rms = htemp.GetRMS()            
             # make an histogram of the expected yield
-            myhisto = rt.TH1D(histoName, histoName, 30, max(0.,mean-5.*rms), mean+5.*rms)
+            myhisto = rt.TH1D(histoName, histoName, 20, int(max(0.,mean-5.*rms)), int(mean+5.*rms))
             if myhisto.GetXaxis().GetBinWidth(2) <1:
                 maxX = int(myhisto.GetXaxis().GetXmax())
                 del myhisto
@@ -197,8 +218,10 @@ if __name__ == '__main__':
                 nObs = data.numEntries()
                 modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
                 medianVal = findMedian(myhisto)
-                pval,myhisto,oldhisto = getPValue(nObs, myhisto)
+                pval = getPValue(nObs, myhisto)
                 h.SetBinContent(i+1, j+1, pval)
+                nsigma = getSigma(nObs, myhisto)
+                hNS.SetBinContent(i+1, j+1, nsigma)
                 if pval >0.99: pval = 0.99 
                 #if not HadFR(MRbins[i], Rsqbins[j]):
                 hOBS.SetBinContent(i+1, j+1, nObs)
@@ -223,7 +246,6 @@ if __name__ == '__main__':
                 result.append([varName, BoxName, nObs, rangeMin, rangeMax, pval, modeVal, medianVal])
                 #myhisto.GetXaxis().SetRangeUser(0., rangeMax*2.)
                 myhisto.Write()
-                oldhisto.Write()
                 del data
     h.Write()
     pValHist.Write()
@@ -267,6 +289,7 @@ if __name__ == '__main__':
                       
     c1 = rt.TCanvas("c1","c1", 900, 600)
     c1.SetLogz()
+    setCanvasStyle(c1)
     rt.gStyle.SetOptStat(0)
     rt.gStyle.SetOptTitle(0)
     rt.gStyle.SetPalette(900)
@@ -312,3 +335,23 @@ if __name__ == '__main__':
 
     c1.SaveAs("pvalue_sigbin_%s.C" %Box)
     c1.SaveAs("pvalue_sigbin_%s.pdf" %Box)
+
+    c2 = rt.TCanvas("c2","c2", 900, 600)
+    setCanvasStyle(c2)
+    # French flag Palette
+    Red = array('d',[0.00, 1.00, 1.00])
+    Green = array('d',[0.00, 1.00, 0.00])
+    Blue = array('d',[1.00, 1.00, 0.00])
+    Length = array('d',[0.00, 0.50, 1.00])
+    rt.TColor.CreateGradientColorTable(3,Length,Red,Green,Blue,11)
+    hNS.SetMaximum(5.5)
+    hNS.SetMinimum(-5.5)
+    hNS.SetContour(11);
+    hNS.Draw("colz")
+    #for i in range(0,11):
+    #    print -5.+i
+    #    hNS.SetContourLevel(i,-5. +i)
+    for i in range(0,len(xLines)): xLines[i].Draw()
+    for i in range(0,len(yLines)): yLines[i].Draw()
+    c2.SaveAs("nSigma_%s.C" %Box)
+    c2.SaveAs("nSigma_%s.pdf" %Box)

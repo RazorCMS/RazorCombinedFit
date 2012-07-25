@@ -95,7 +95,9 @@ if __name__ == '__main__':
                 data = alldata.reduce("MR> %f && MR< %f && Rsq > %f && Rsq < %f" %(MRbins[ix], MRbins[ix+1], Rsqbins[iy], Rsqbins[iy+1]))
                 nObs = data.numEntries()
                 pval = getPValue(nObs, myhisto)
+                nsigma = getSigma(nObs, myhisto)
                 h.SetBinContent(ix+1, iy+1, pval)
+                hNS.SetBinContent(ix+1, iy+1, nsigma)
                 rangeMin,rangeMax = find68ProbRange(myhisto)
                 if pval >0.99: pval = 0.99 
                 print "%s & %i & $[%i, %i]$ & 0.%i \\\\" %(varName, nObs, int(rangeMin), int(rangeMax), int(pval*100))
@@ -103,8 +105,8 @@ if __name__ == '__main__':
                 myhisto.Write()
                 del data
     h.Write()
+    hNS.Write()
     fileOUT.Close()
-
 
     xLines = []
     yLines = []
@@ -126,3 +128,22 @@ if __name__ == '__main__':
     for i in range(0,8): yLines[i].Draw()
     c1.SaveAs("pValue_%s.C" %Box)
     c1.SaveAs("pValue_%s.pdf" %Box)
+
+    c2 = rt.TCanvas("c2","c2", 900, 600)
+    colors = []
+    takeOut = [0,4,7,9,10]
+    #add the red (darker to lighter)
+    for i in range(0,6): colors.append(rt.kRed-takeOut[i])
+    # add the white
+    colors.append(rt.kWhite)
+    #add the blue (lighter to darker)
+    for i in range(0,6): colors.append(rt.kBlue-5+takeOut[i])
+    rt.gStyle.SetPalette(11,colors)
+    hNS.Draw("colz")
+    hNS.SetMaximum(5.5)
+    hNS.SetMinimum(-5.5)
+    for i in range(0,12): hNS.SetContoueLevel(i,-5.5 +i*11.)
+    for i in range(0,5): xLines[i].Draw()
+    for i in range(0,8): yLines[i].Draw()
+    c1.SaveAs("nSigma_%s.C" %Box)
+    c1.SaveAs("nSigma_%s.pdf" %Box)
