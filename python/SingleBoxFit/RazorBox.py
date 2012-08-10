@@ -5,7 +5,7 @@ import ROOT as rt
 from array import *
 
 fitMode = "3D"
-btag = "NoBtag"
+btag = "Btag"
 
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName):
@@ -110,6 +110,16 @@ class RazorBox(Box.Box):
         self.fixParsExact("f2_%s" % flavour, False)
         self.fixParsExact("f3_%s" % flavour, False)
         self.fixParsExact("f4_%s" % flavour, False)
+
+    def floatBTagWithPenalties(self,flavour):
+        self.fixParsPenalty("f1_%s" % flavour)
+        self.fixParsPenalty("f2_%s" % flavour)
+        self.fixParsPenalty("f3_%s" % flavour)
+        self.fixParsPenalty("f4_%s" % flavour)
+        self.fixPars("f1_%s_s" % flavour)
+        self.fixPars("f2_%s_s" % flavour)
+        self.fixPars("f3_%s_s" % flavour)
+        self.fixPars("f4_%s_s" % flavour)
             
     def floatComponent(self,flavour):
         self.fixParsExact("MR0_%s" % flavour, False)
@@ -175,7 +185,9 @@ class RazorBox(Box.Box):
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             # float BTAG
-            if not (z == "Vpj" and btag == "Btag"): self.floatBTag(z)
+            if(btag == "Btag"):
+                if (z == "TTj" and self.name != "MuMu" and self.name != "EleMu" and self.name != "EleEle"): self.floatBTagWithPenalties(z)
+                else: self.floatBTag(z)
             # the "effective" first component in the Had box
             #if z == "Vpj" and self.name == "Had": self.floatComponent(z)
             # the b parameter in UEC is floated w/o penalty term in the 1Lep and Had boxes 
@@ -250,15 +262,18 @@ class RazorBox(Box.Box):
         #self.workspace.var("f1_Vpj").setConstant(rt.kTRUE)
         #self.workspace.var("f2_Vpj").setVal(0.)
         #self.workspace.var("f2_Vpj").setConstant(rt.kTRUE)
-        #self.workspace.var("f3_Vpj").setVal(0.)
-        #self.workspace.var("f3_Vpj").setConstant(rt.kTRUE)
-        #self.workspace.var("f4_Vpj").setVal(0.)
-        #self.workspace.var("f4_Vpj").setConstant(rt.kTRUE)
+        self.workspace.var("f3_Vpj").setVal(0.)
+        self.workspace.var("f3_Vpj").setConstant(rt.kTRUE)
+        self.workspace.var("f4_Vpj").setVal(0.)
+        self.workspace.var("f4_Vpj").setConstant(rt.kTRUE)
         # I am having troubles with the fit...
         #self.workspace.var("f4_UEC").setVal(0.)
         #self.workspace.var("f4_UEC").setConstant(rt.kTRUE)
         #self.workspace.var("f4_TTj").setVal(0.)
         #self.workspace.var("f4_TTj").setConstant(rt.kTRUE)
+        #self.workspace.var("f3_TTj").setConstant(rt.kTRUE)
+        #self.workspace.var("f1_TTj").setConstant(rt.kTRUE)
+        #self.workspace.var("f2_TTj").setConstant(rt.kTRUE)
         ##### 
         #self.workspace.var("MR0_TTj").setVal(0.)
         #self.workspace.var("MR0_TTj").setConstant(rt.kTRUE)
