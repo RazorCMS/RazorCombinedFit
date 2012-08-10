@@ -74,7 +74,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if self.options.full_region:
             fit_range = "FULL"
         elif self.options.doMultijet:
-            fit_range = "fR1,fR2,fR3,fR4,fR5"
+            fit_range = "fR1,fR2"
             print 'Using the fit range: %s' % fit_range 
         
         random = rt.RooRandom.randomGenerator()
@@ -221,7 +221,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].workspace.Print('V')
 
                 # perform the fit
-                fit_range = "fR1,fR2,fR3,fR4"
+                fit_range = boxes[box].fitregion
                 if self.options.full_region:
                     fit_range = "FULL"
                 elif self.options.doMultijet:

@@ -2,6 +2,7 @@ from optparse import OptionParser
 import ROOT as rt
 from array import *
 import sys
+import makeBluePlot
 
 def set2DStyle(h) :
     h.GetXaxis().SetTitle("M_{R}[GeV]")
@@ -124,16 +125,18 @@ def find68ProbRange(hToy, probVal=0.68):
     return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
 
 def getSigma(n, hToy):
+    if hToy.GetMaximumBin() == hToy.FindBin(n): return 0
     # find the probability of the bin corresponding to the observed n
     binN = hToy.FindBin(n)
     Prob_n = hToy.GetBinContent(binN)
     Prob = 0
     for i in range(1, binN+1): Prob += hToy.GetBinContent(i)
     if hToy.Integral() == 0.: return 0.
-    if Prob ==1.: return 0.
-    if Prob ==0.: Prob = 0.001
-    Prob = Prob/hToy.Integral()
+    if Prob ==0. : Prob = 1./hToy.GetEntries()
+    elif Prob >= hToy.Integral(): Prob = 1.-1./hToy.GetEntries()
+    else: Prob = Prob/hToy.Integral()
      # convert the one-sided p-value in a number of sigmas
+    print rt.TMath.NormQuantile(Prob)
     return rt.TMath.NormQuantile(Prob)
 
 def getPValue(n, hToy):
@@ -149,13 +152,11 @@ if __name__ == '__main__':
     Box = sys.argv[1]
     fileName = sys.argv[2]
     datafileName = sys.argv[3]
+    noBtag = False
+    for i in range(4,len(sys.argv)):
+        if sys.argv[i] == "--noBtag": noBtag = True
 
-    if Box == "TauTau" or Box == "Had":    
-        MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
-        Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
-    else:
-        MRbins = [300, 350, 400, 450, 500, 550, 600, 700, 800, 1000, 1200, 1600, 2500, 4500]
-        Rsqbins = [0.11, 0.13, 0.15, 0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.8, 1.5]        
+    MRbins, Rsqbins = makeBluePlot.Binning(Box, noBtag)
 
     #MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
     #Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
@@ -207,7 +208,7 @@ if __name__ == '__main__':
             # make an histogram of the expected yield
             myhisto = rt.TH1D(histoName, histoName, 20, int(max(0.,mean-5.*rms)), int(mean+5.*rms))
             if myhisto.GetXaxis().GetBinWidth(2) <1:
-                maxX = int(myhisto.GetXaxis().GetXmax())
+                maxX = int(myhisto.GetXaxis().GetXmax())+10
                 del myhisto
                 myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
             myTree.Project(histoName, varName)
@@ -221,14 +222,18 @@ if __name__ == '__main__':
                 pval = getPValue(nObs, myhisto)
                 h.SetBinContent(i+1, j+1, pval)
                 nsigma = getSigma(nObs, myhisto)
+                # the p-value cannot be one... And we have a limited number of toys
+                pvalmax = 1.-1./myhisto.GetEntries()
+                if pval >pvalmax: pval = pvalmax 
+                # these are those bins where we see 0 and we expect 0
+                if pval == pvalmax and myhisto.GetMaximumBin() == 1: nsigma = 0.
                 hNS.SetBinContent(i+1, j+1, nsigma)
-                if pval >0.99: pval = 0.99 
                 #if not HadFR(MRbins[i], Rsqbins[j]):
                 hOBS.SetBinContent(i+1, j+1, nObs)
                 hEXP.SetBinContent(i+1, j+1, (rangeMax+rangeMin)/2)
                 hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
                 if (rangeMax+rangeMin)/2 == 50000.: continue
-                #if not (pval ==0.99 and nObs == 0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval))
+                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval)
                 if pval<0.15: table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)

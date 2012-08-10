@@ -2,6 +2,7 @@ from optparse import OptionParser
 import ROOT as rt
 import sys
 from array import *
+import makeBluePlot
 
 if __name__ == '__main__':
 
@@ -14,12 +15,7 @@ if __name__ == '__main__':
     label = sys.argv[2]
     Box = sys.argv[3]
 
-    if Box == "TauTau" or Box == "Had":
-        MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
-        Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
-    else:
-        MRbins = [300, 350, 400, 450, 500, 550, 600, 700, 800, 1000, 1200, 1600, 2500, 4500]
-        Rsqbins = [0.11, 0.13, 0.15, 0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.8, 1.5]
+    MRbins, Rsqbins = makeBluePlot.Binning(Box, False)
 
     #MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
     #Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]

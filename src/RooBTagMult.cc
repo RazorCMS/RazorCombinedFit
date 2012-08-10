@@ -40,7 +40,7 @@ Double_t RooBTagMult::evaluate() const
   double thisf1 = f1;
   double thisf2 = f2;
   double thisf3 = f3;
-  if(thisf4+thisf1+thisf2+thisf3 > 1.) return 1.E-10;
+  //if(thisf4+thisf1+thisf2+thisf3 > 1.) return 1.E-10;
     // {
     //   double scale = thisf4+thisf1+thisf2+thisf3+0.0000001;
     //   thisf4 *= 1./scale;
@@ -48,7 +48,7 @@ Double_t RooBTagMult::evaluate() const
     //   thisf2 *= 1./scale;
     //   thisf3 *= 1./scale;
     // }
-  double thisf0 = max(0.0000001,1.-thisf4-thisf1-thisf2-thisf3);
+  double thisf0 = max(0.00000000001,1.-thisf4-thisf1-thisf2-thisf3);
   if(X<1.) return thisf0/(thisf0+thisf1+thisf2+thisf3+thisf4);
   else if(X<2.) return thisf1/(thisf0+thisf1+thisf2+thisf3+thisf4);
   else if(X<3.) return thisf2/(thisf0+thisf1+thisf2+thisf3+thisf4);
@@ -58,7 +58,11 @@ Double_t RooBTagMult::evaluate() const
 
 // //---------------------------------------------------------------------------
 Int_t RooBTagMult::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
-  return 1;
+  double thisf4 = f4;
+  double thisf1 = f1;
+  double thisf2 = f2;
+  double thisf3 = f3;
+  return f1+f2+f3+f4;
 }
 
 // //---------------------------------------------------------------------------
