@@ -125,7 +125,7 @@ def find68ProbRange(hToy, probVal=0.68):
     return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
 
 def getSigma(n, hToy):
-    if hToy.GetMaximumBin() == hToy.FindBin(n): return 0
+    if hToy.GetMaximumBin() == hToy.FindBin(n): return 0.
     # find the probability of the bin corresponding to the observed n
     binN = hToy.FindBin(n)
     Prob_n = hToy.GetBinContent(binN)
