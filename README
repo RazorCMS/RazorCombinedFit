@@ -6,7 +6,7 @@ Make sure ROOT is installed, and ROOTSYS is set. You will need pyROOT to be work
 
 Then do the following:
 
-export CVSROOT=:gserver:cmssw.cvs.cern.ch:/cvs/CMSSW
+export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW
 cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit
 cd RazorCombinedFit
 source setup.sh
