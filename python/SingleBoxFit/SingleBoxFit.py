@@ -744,6 +744,23 @@ class SingleBoxAnalysis(Analysis.Analysis):
     def limit_profile(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
         
+        def mergeDatasets(datasets, cat):
+            """Take all of the RooDatasets and merge them into a new one with a RooCategory column"""
+            
+            keys = datasets.keys()
+            data = datasets[keys[0]]
+            args = data.get(0)
+            args.add(cat)
+        
+            args_tuple = ['RMRTree','RMRTree',args,rt.RooFit.Index(cat),rt.RooFit.Import(keys[0],data)]
+            for k in keys[1:]:
+                args_tuple.append(rt.RooFit.Import(k,datasets[k]))
+        
+            a = tuple(args_tuple)
+            merged = rt.RooDataSet(*a)
+        
+            return merged
+        
         print 'Running the profile limit setting code'
             
         fileIndex = self.indexInputFiles(inputFiles)
@@ -758,6 +775,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
         
         pdf_names = {}
+        datasets = {}
         
         #start by restoring all the workspaces etc
         for box, fileName in fileIndex.iteritems():
@@ -781,19 +799,22 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #TODO: Use the input files given to get the histograms needed to build the signal PDF
             # make a RooAddPdf of the signal and background and make sure that all the nuisance etc parameters are sorted
-        
+            
+            datasets[box] = boxes[box].workspace.data('RMRTree')
+
+
+        #make a RooDataset with *all* of the data
+        pData = mergeDatasets(datasets, workspace.cat('Boxes'))
+        RootTools.Utils.importToWS(workspace,pData)
         
         #TODO: Once we have the S+B models for all the boxes, we need to multiply them all together
         # Probably the best is to make a RooSimultanious, and then multiply it by the Gaussian terms for X
         # we will need to combine all of the datasets with a RooCategory?
         simultaneous = rt.RooSimultaneous('CombinedLikelihood','CombinedLikelihood',workspace.cat('Boxes'))
         for box, pdf_name in pdf_names.iteritems():
-            print 'adding',pdf_name
             simultaneous.addPdf(workspace.pdf(pdf_name),box)
         RootTools.Utils.importToWS(workspace,simultaneous)
 
-        workspace.Print("V")
-        
         #the signal + background model
         pSbModel = rt.RooStats.ModelConfig("SbModel")
         pSbModel.SetWorkspace(workspace)
@@ -808,7 +829,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #this should be right at the bottom
         RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
-        
+
+        #print out the workspace contents and store to a ROOT file        
+        workspace.Print("V")
         self.store(workspace, dir='CombinedLikelihood')
         
         
