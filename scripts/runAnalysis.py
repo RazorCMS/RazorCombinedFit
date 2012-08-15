@@ -50,6 +50,12 @@ def defineParser():
                   help="Perform the fit in the FULL region")
     parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
                   help="Do not save the RooWorkspaces to save disk space for limit setting")
+    parser.add_option('--fitmode',dest="fitMode",type="string",default='3D',
+                  help="Type of fit to run - 2D, 3D, 4D are all valid options")
+    parser.add_option('--btag',dest="btag",action="store_true",default=False,
+                  help="Include the btag dimension in the fits")
+    parser.add_option('--run-cls',dest="runCLS",action="store_true",default=False,
+                  help="Run the 2012 profile style CLS code")        
 
     return parser
 
@@ -107,8 +113,11 @@ if __name__ == '__main__':
                         aa.runtoys(args, options.toys)
                 else:
                     aa.analysis(args)
-                    if options.limit:    
-                        aa.limit(args,options.toys)
+                    if options.limit:
+                        if not options.runCLS:
+                            aa.limit(args,options.toys)
+                        else:
+                            aa.limit_profile(args,options.toys)
                 aa.final()
         
     else:
