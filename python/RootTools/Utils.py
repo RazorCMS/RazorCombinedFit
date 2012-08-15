@@ -94,3 +94,8 @@ def  determineNumberOfCPUs():
         pass
 
     raise Exception('Can not determine number of CPUs on this system')
+
+def importToWS(workspace, *args):
+        """Utility function to call the RooWorkspace::import methods"""
+        return getattr(workspace,'import')(*args)
+

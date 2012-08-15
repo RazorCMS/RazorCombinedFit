@@ -749,7 +749,66 @@ class SingleBoxAnalysis(Analysis.Analysis):
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
         
-        
-        
         if self.options.input is None:
             raise Exception('Limit setting code needs a fit result file as input. None given')
+        
+        workspace = rt.RooWorkspace('limit_profile')
+        
+        #create a RooCatagory with the name of each box in it
+        workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
+        
+        pdf_names = {}
+        
+        #start by restoring all the workspaces etc
+        for box, fileName in fileIndex.iteritems():
+            wsName = '%s/Box%s_workspace' % (box,box)
+            print "Restoring the workspace from %s" % self.options.input
+            boxes[box].restoreWorkspace(self.options.input, wsName)
+            
+            #this is the background only PDF used in the fit
+            background_pdf = boxes[box].getFitPDF(graphViz=None)
+            
+            #we import this into the workspace, but we rename things so that they don't clash
+            var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
+            RootTools.Utils.importToWS(workspace,background_pdf,\
+                                        rt.RooFit.RenameAllNodes(box),\
+                                        rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
+            
+            #TODO: This should be the S+B PDF not the B only PDF
+            pdf_names[box] = '%s_%s' % (background_pdf.GetName(),box)
+            
+            #signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
+            
+            #TODO: Use the input files given to get the histograms needed to build the signal PDF
+            # make a RooAddPdf of the signal and background and make sure that all the nuisance etc parameters are sorted
+        
+        
+        #TODO: Once we have the S+B models for all the boxes, we need to multiply them all together
+        # Probably the best is to make a RooSimultanious, and then multiply it by the Gaussian terms for X
+        # we will need to combine all of the datasets with a RooCategory?
+        simultaneous = rt.RooSimultaneous('CombinedLikelihood','CombinedLikelihood',workspace.cat('Boxes'))
+        for box, pdf_name in pdf_names.iteritems():
+            print 'adding',pdf_name
+            simultaneous.addPdf(workspace.pdf(pdf_name),box)
+        RootTools.Utils.importToWS(workspace,simultaneous)
+
+        workspace.Print("V")
+        
+        #the signal + background model
+        pSbModel = rt.RooStats.ModelConfig("SbModel")
+        pSbModel.SetWorkspace(workspace)
+        pSbModel.SetPdf(simultaneous)
+
+        #the background only model
+        pBModel = rt.RooStats.ModelConfig(pSbModel)
+        pBModel.SetName("BModel")
+        pBModel.SetWorkspace(workspace)
+        
+        
+        #this should be right at the bottom
+        RootTools.Utils.importToWS(workspace,pSbModel)
+        RootTools.Utils.importToWS(workspace,pBModel)
+        
+        self.store(workspace, dir='CombinedLikelihood')
+        
+        
