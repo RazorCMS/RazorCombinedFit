@@ -32,7 +32,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
-            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
+            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag)
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             if self.Analysis != "MULTIJET":
                 # Vpj
@@ -741,3 +741,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
             del sDATA
             del s
 
+    def limit_profile(self, inputFiles, nToys):
+        """Set a limit based on the model dependent method"""
+        
+        print 'Running the profile limit setting code'
+            
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+        
+        
+        
+        if self.options.input is None:
+            raise Exception('Limit setting code needs a fit result file as input. None given')

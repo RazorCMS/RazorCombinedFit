@@ -4,11 +4,8 @@ import RootTools
 import ROOT as rt
 from array import *
 
-fitMode = "3D"
-btag = "Btag"
-
 #this is global, to be reused in the plot making
-def getBinning(boxName, varName):
+def getBinning(boxName, varName, btag):
     if boxName == "Had" or boxName == "TauTau":
         if varName == "MR" : return [400, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
         if varName == "Rsq" : return [0.18,0.23,0.28,0.32,0.37,0.41,0.46,0.51,0.57,0.63,0.70,0.80,1.5]
@@ -24,7 +21,7 @@ def getBinning(boxName, varName):
 
 class RazorBox(Box.Box):
     
-    def __init__(self, name, variables):
+    def __init__(self, name, variables, fitMode = '3D', btag = True):
         super(RazorBox,self).__init__(name, variables)
         #data
         #self.zeros = {'UEC':['Had','TauTau','Mu','MuTau','MuEle','Ele','EleTau','EleEle','MuMu'],'TTj':[],'Vpj':['MuEle']}
@@ -35,12 +32,17 @@ class RazorBox(Box.Box):
         self.cut = 'MR >= 0.0'
         #self.fitregion = 'SidebandMR'
         self.fitregion = 'SidebandRsq'
-
+        self.fitMode = fitMode
+        if not btag:
+            self.btag = "NoBtag"
+        else:
+            self.btag = "Btag"
+            
     def addTailPdf(self, flavour, doSYS):
         
         label = '_%s' % flavour
         # 2D FIT
-        if fitMode == "2D":
+        if self.fitMode == "2D":
             # define the R^2 vs MR
             if doSYS == True:
                 self.workspace.factory("RooRazor2DTail_SYS::PDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" %(label,label,label,label,label))
@@ -51,7 +53,7 @@ class RazorBox(Box.Box):
             #associate the yields to the pdfs through extended PDFs
             self.workspace.factory("RooExtendPdf::ePDF%s(PDF%s, Ntot%s)" %(label, label, label))
         # 3D fit
-        if fitMode == "3D":
+        elif self.fitMode == "3D":
             # define the R^2 vs MR
             if doSYS == True:
                 self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" %(label,label,label,label,label))
@@ -67,7 +69,7 @@ class RazorBox(Box.Box):
             self.workspace.factory("RooExtendPdf::ePDF%s(PDF%s, Ntot%s)"%(label,label,label))
 
         # 4D fit
-        if fitMode == "4D":
+        elif self.fitMode == "4D":
             # define the R^2 vs MR
             if doSYS == True:
                 self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s[1.,0.8,5.0])" %(label,label,label,label,label))
@@ -145,7 +147,7 @@ class RazorBox(Box.Box):
         Rsq = self.workspace.var("Rsq")
 
         # charge +1 pdf
-        if fitMode == "4D":
+        if self.fitMode == "4D":
             self.workspace.factory("RooTwoBin::PlusPDF(CHARGE,plusOne[1.])")
             self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
@@ -185,7 +187,7 @@ class RazorBox(Box.Box):
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             # float BTAG
-            if(btag == "Btag"):
+            if(self.btag == "Btag"):
                 if (z == "TTj" and self.name != "MuMu" and self.name != "EleMu" and self.name != "EleEle"): self.floatBTagWithPenalties(z)
                 else: self.floatBTag(z)
             # the "effective" first component in the Had box
@@ -221,7 +223,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_UEC").setVal(Ndata*Nuec/(Nttj+Nuec+Nvpj))
         self.workspace.var("Ntot_Vpj").setVal(Ndata*Nvpj/(Nttj+Nuec+Nvpj))
         # switch off btag fractions if no events
-        if fitMode == "3D" or fitMode == "4D":
+        if self.fitMode == "3D" or self.fitMode == "4D":
             data1b = data.reduce("nBtag>=1&&nBtag<2")
             data2b = data.reduce("nBtag>=2&&nBtag<3")
             data3b = data.reduce("nBtag>=3&&nBtag<4")
@@ -451,7 +453,7 @@ class RazorBox(Box.Box):
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
 
         # variable binning for plots
-        bins = getBinning(self.name, xvarname)
+        bins = getBinning(self.name, xvarname, self.btag)
         xedge = array("d",bins)
         print bins
         

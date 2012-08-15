@@ -43,6 +43,10 @@ class Analysis(object):
         """Set a limit based on the model dependent method"""
         return None
     
+    def limit_profile(self, inputFiles):
+        """Set a limit using profiling"""
+        return None
+    
     def analysis(self, inputFiles):
         return None
     
