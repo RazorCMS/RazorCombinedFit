@@ -783,6 +783,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             
+            #add nuisance parameters and variables if not already defined
+            boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
+            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = workspace)            
+            boxes[box].defineSet("variables", self.config.getVariables(box, "variables"), workspace = workspace)
+            
             #this is the background only PDF used in the fit
             background_pdf = boxes[box].getFitPDF(graphViz=None)
             
@@ -814,24 +819,49 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box, pdf_name in pdf_names.iteritems():
             simultaneous.addPdf(workspace.pdf(pdf_name),box)
         RootTools.Utils.importToWS(workspace,simultaneous)
+        
+        #multiply the likelihood by some gaussians
+        model = simultaneous.GetName()
+        for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+            workspace.factory('RooGaussian::%s_nuisance_pdf(%s,%s_mean[0,-5,5],%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
+            #keep track of the new name, as this is the name of our final pdf
+            modelName = '%s_npdf_%s' % (model, var.GetName())
+            workspace.factory('PROD::%s(%s,%s_nuisance_pdf)' % (modelName,model,var.GetName()))
+            model = modelName
+        #store the name incase we need it
+        RootTools.Utils.importToWS(workspace,rt.TObjString(modelName),'fullSplusBPDF')
 
         #the signal + background model
         pSbModel = rt.RooStats.ModelConfig("SbModel")
         pSbModel.SetWorkspace(workspace)
-        pSbModel.SetPdf(simultaneous)
+        pSbModel.SetPdf(modelName)
+        pSbModel.SetParametersOfInterest(workspace.set('poi'))
+        pSbModel.SetNuisanceParameters(workspace.set('nuisance'))
+        pSbModel.SetObservables(workspace.set('variables'))
 
         #the background only model
         pBModel = rt.RooStats.ModelConfig(pSbModel)
         pBModel.SetName("BModel")
         pBModel.SetWorkspace(workspace)
         
+        #print out the workspace contents and store to a ROOT file
+        print 'Starting the limit setting procedure'
+        workspace.Print("V")
+
+        #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
         
+        #find global maximum with the signal+background model
+        #with conditional MLEs for nuisance parameters
+        #and save the parameter point snapshot in the Workspace
+        #- safer to keep a default name because some RooStats calculators
+        #    will anticipate it
+        pNll = pSbModel.GetPdf().createNLL(pData)
+        pProfile = pNll.createProfile(rt.RooArgSet())
+        pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
+
         #this should be right at the bottom
         RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
-
-        #print out the workspace contents and store to a ROOT file        
-        workspace.Print("V")
+                                           
         self.store(workspace, dir='CombinedLikelihood')
-        
-        
+

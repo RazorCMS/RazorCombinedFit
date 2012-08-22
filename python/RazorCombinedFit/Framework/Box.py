@@ -56,11 +56,13 @@ class Box(object):
             cut = '(%s) || (%s)' % (cut, self.getVarRangeCut(r) )
         return cut
 
-    def defineSet(self, name, variables):
-        self.workspace.defineSet(name,'')
+    def defineSet(self, name, variables, workspace = None):
+        if workspace is None:
+            workspace = self.workspace
+        workspace.defineSet(name,'')
         for v in variables:
-            r = self.workspace.factory(v)
-            self.workspace.extendSet(name,r.GetName())     
+            r = workspace.factory(v)
+            workspace.extendSet(name,r.GetName())     
             
     def restoreWorkspace(self, inputFile, workspace, name = 'independentFRPDF'):
         input = rt.TFile.Open(inputFile)
