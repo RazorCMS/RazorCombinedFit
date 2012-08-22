@@ -218,6 +218,11 @@ class RazorBox(Box.Box):
         Nuec = self.workspace.var("Ntot_UEC").getVal()
         Nvpj = self.workspace.var("Ntot_Vpj").getVal()
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+
+        #in the case that the input file is an MC input file
+        if data is None or not data:
+            return None
+        
         Ndata = data.numEntries()
         self.workspace.var("Ntot_TTj").setVal(Ndata*Nttj/(Nttj+Nuec+Nvpj))
         self.workspace.var("Ntot_UEC").setVal(Ndata*Nuec/(Nttj+Nuec+Nvpj))

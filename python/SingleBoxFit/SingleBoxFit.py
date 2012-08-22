@@ -761,6 +761,31 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
             return merged
         
+        def getSignalPdf(workspace, inputFile, box):
+            """Makes a signal PDF from the input histograms"""
+            
+            wHisto = RootTools.getObject(inputFile,'wHisto')
+            btag =  RootTools.getObject(inputFile,'BTAGerr')
+            jes =  RootTools.getObject(inputFile,'JESerr')
+            pdf =  RootTools.getObject(inputFile,'PDFerr')
+            
+            def renameAndImport(histo):
+                histo.SetName('%s_%s' % (histo.GetName(),box))
+                RootTools.Utils.importToWS(workspace,histo)
+                return histo
+            wHisto = renameAndImport(wHisto)
+            btag = renameAndImport(btag)
+            jes = renameAndImport(jes)
+            pdf = renameAndImport(pdf)
+            
+            signal = rt.RooRazor2DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
+                                         workspace.var('MR'),workspace.var('Rsq'),
+                                         wHisto,jes,pdf,btag,
+                                         workspace.var('x_jes'),workspace.var('x_pdf'),workspace.var('x_btag'))
+            RootTools.Utils.importToWS(workspace,signal)
+            return (signal, wHisto.Integral())
+            
+        
         print 'Running the profile limit setting code'
             
         fileIndex = self.indexInputFiles(inputFiles)
@@ -799,6 +824,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #TODO: This should be the S+B PDF not the B only PDF
             pdf_names[box] = '%s_%s' % (background_pdf.GetName(),box)
+            
+            signal_pdf = getSignalPdf(workspace, fileName, box)
             
             #signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
             
@@ -863,5 +890,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
                                            
-        self.store(workspace, dir='CombinedLikelihood')
-
+        #self.store(workspace, dir='CombinedLikelihood')
+        
+        #for some reason, it does not like it when we write everything to the same file
+        workspace_name = '%s_CombinedLikelihood_workspace.root' % self.options.output.lower().replace('.root','')
+        workspace.writeToFile(workspace_name,True)

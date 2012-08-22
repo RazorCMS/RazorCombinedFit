@@ -19,28 +19,43 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
   Y("Y", "Y Observable", this, _y),
   xJes("xJes", "xJes", this, _xJes),
   xPdf("xPdf", "xPdf", this, _xPdf),
-  xBtag("xBtag", "xBtag", this, _xBtag)
-{
-  Hnonimal = _nominal;
-  Hjes = _jes;
-  Hpdf = _pdf;
-  Hbtag = _btag;
-  iBinX = Hnonimal->GetXaxis()->GetNbins();
-  iBinY = Hnonimal->GetYaxis()->GetNbins();
+  xBtag("xBtag", "xBtag", this, _xBtag),
+  Hnonimal(_nominal),
+  Hjes(_jes),
+  Hpdf(_pdf),
+  Hbtag(_btag),
+  iBinX(_nominal->GetXaxis()->GetNbins()),
+  iBinY(_nominal->GetYaxis()->GetNbins()){
 }
-//---------------------------------------------------------------------------
-/*
-RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* name) :
-   RooAbsPdf(other, name), 
-   X("X", this, other.X), 
-   Y("Y", this, other.Y), 
-   X0("X0", this, other.X0),
-   Y0("Y0", this, other.Y0),
-   B("B", this, other.B)
-{
+
+//Reads the histograms from the workspace and/or imports them
+Bool_t RooRazor2DSignal::importWorkspaceHook(RooWorkspace& ws){
+
+	std::cout << "RooRazor2DSignal::importWorkspaceHook" << std::endl;
+
+	//check if the histograms are in the workspace or not
+	if(ws.obj(Hnonimal->GetName()) == 0){
+		ws.import(*Hnonimal);
+	}
+	if(ws.obj(Hjes->GetName()) == 0){
+		ws.import(*Hjes);
+	}
+	if(ws.obj(Hpdf->GetName()) == 0){
+		ws.import(*Hpdf);
+	}
+	if(ws.obj(Hbtag->GetName()) == 0){
+		ws.import(*Hbtag);
+	}
+
+	//update the pointers to the workspace versions
+	Hnonimal = dynamic_cast<TH2D*>(ws.obj(Hnonimal->GetName()));
+	Hjes = dynamic_cast<TH2D*>(ws.obj(Hjes->GetName()));
+	Hpdf = dynamic_cast<TH2D*>(ws.obj(Hpdf->GetName()));
+	Hbtag = dynamic_cast<TH2D*>(ws.obj(Hbtag->GetName()));
+
+	return kFALSE;
+
 }
-*/
-//---------------------------------------------------------------------------
 
 Double_t RooRazor2DSignal::evaluate() const
 {

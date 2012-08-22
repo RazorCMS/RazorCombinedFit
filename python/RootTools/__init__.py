@@ -8,13 +8,20 @@ import ROOT as rt
 def getObject(fileName, dsName):
     result = None
     input = None
+    closeFile = False
     try:
         input = rt.TFile.Open(fileName)
         result = input.Get(dsName)
-        print result
+        if result is not None and result:
+            #if we can make memory resident then do
+            if hasattr(result,'SetDirectory'):
+                result = result.Clone()
+                result.SetDirectory(0)
+                closeFile = True
+        else:
+            result = None    
     finally:
-        pass
-        #if input is not None: input.Close()
+        if input is not None and closeFile: input.Close()
     return result
 
 def getHistNorm(fileName, dsName, cut = None):
@@ -35,12 +42,13 @@ def getDataSet(fileName, dsName, cut = None):
     try:
         input = rt.TFile.Open(fileName)
         result = input.Get(dsName)
-        result.Print('V')
-        if result is not None and cut is not None:
-            before = result.numEntries()
-            result = result.reduce(rt.RooFit.Cut(cut))
-            after = result.numEntries()
-            print "Cut '%s' removed %i entries from %s" % (cut,before-after,dsName)
+        if result is not None and result:
+            result.Print('V')
+            if cut is not None:
+                before = result.numEntries()
+                result = result.reduce(rt.RooFit.Cut(cut))
+                after = result.numEntries()
+                print "Cut '%s' removed %i entries from %s" % (cut,before-after,dsName)
     finally:
         if input is not None: input.Close()
     return result
