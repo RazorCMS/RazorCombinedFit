@@ -1,0 +1,22 @@
+These packages will provide a tool for CLs calculations.  Use
+cls_analysis.py (see its documentation) to run the code.
+
+Overview of files:
+cls_analysis.py: Runs workspace_preparer.C, then Standard...Demo.C.
+Has optional flags for input.
+
+StandardHypoTestInvDemo.C: Performs the actual cls calculations.  Needs a
+  specially formatted workspace passed to it.
+
+workspace_preparer.C: Prepares this specially formatted workspace.
+, etc.
+
+run.sh: an example that shows how to run the program on Josh's data (which
+was not included).
+
+THE OUTPUT: Currently, the CLs values are produced as text in the standard
+output.  The final graphs are saved as ***.ps
+
+
+Also: The attached RooRazor2DSignal files are the ones I currently use.
+Put them in the right place so that the make command compiles them.
