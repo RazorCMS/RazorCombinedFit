@@ -34,6 +34,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag)
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
+            
+            if self.options.input is not None:
+                continue
+            
             if self.Analysis != "MULTIJET":
                 # Vpj
                 boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"))
@@ -781,10 +785,37 @@ class SingleBoxAnalysis(Analysis.Analysis):
             signal = rt.RooRazor2DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
                                          workspace.var('MR'),workspace.var('Rsq'),
                                          wHisto,jes,pdf,btag,
-                                         workspace.var('x_jes'),workspace.var('x_pdf'),workspace.var('x_btag'))
+                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
             RootTools.Utils.importToWS(workspace,signal)
-            return (signal, wHisto.Integral())
             
+            #set the eff value
+            workspace.var('eff_value').setVal(wHisto.Integral())
+            return signal
+        
+        def SetConstants(pWs, pMc):
+            #
+            # Fix all variables in the PDF except observables, POI and
+            # nuisance parameters. Note that global observables are fixed.
+            # If you need global observables floated, you have to set them
+            # to float separately.
+            #
+            pMc.SetWorkspace(pWs)
+
+            pPdf = pMc.GetPdf()
+            pVars = pPdf.getVariables()
+
+            #these are the things to float
+            pFloated = rt.RooArgSet(pMc.GetObservables())
+            pFloated.add(pMc.GetParametersOfInterest())
+            pFloated.add(pMc.GetNuisanceParameters())
+            
+            for var in RootTools.RootIterator.RootIterator(pVars):
+                pFloatedObj = pFloated.find(var.GetName())
+                if pFloatedObj is not None and pFloatedObj:
+                    var.setConstant(False)
+                else:
+                    var.setConstant(True)
+
         
         print 'Running the profile limit setting code'
             
@@ -794,13 +825,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if self.options.input is None:
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
-        workspace = rt.RooWorkspace('limit_profile')
+        workspace = rt.RooWorkspace('newws')
         
         #create a RooCatagory with the name of each box in it
         workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
-        
-        pdf_names = {}
-        datasets = {}
         
         #start by restoring all the workspaces etc
         for box, fileName in fileIndex.iteritems():
@@ -810,11 +838,24 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #add nuisance parameters and variables if not already defined
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
+            boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = workspace)            
             boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = workspace)            
             boxes[box].defineSet("variables", self.config.getVariables(box, "variables"), workspace = workspace)
             
-            #this is the background only PDF used in the fit
-            background_pdf = boxes[box].getFitPDF(graphViz=None)
+            #add the log-normals for the lumi and efficiency (these are not in the signal PDF)
+            workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+            workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
+        
+        workspace.extendSet('variables','Boxes')
+        
+        pdf_names = {}
+        datasets = {}
+        
+        #start by restoring all the workspaces etc
+        for box, fileName in fileIndex.iteritems():
+
+            #this is the background only PDF used in the fit - we take the version with *no penalty terms* 
+            background_pdf = boxes[box].getFitPDF(graphViz=None,name='fitmodel')
             
             #we import this into the workspace, but we rename things so that they don't clash
             var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
@@ -822,49 +863,84 @@ class SingleBoxAnalysis(Analysis.Analysis):
                                         rt.RooFit.RenameAllNodes(box),\
                                         rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
             
-            #TODO: This should be the S+B PDF not the B only PDF
-            pdf_names[box] = '%s_%s' % (background_pdf.GetName(),box)
+            #get the renamed PDF back from the workspace
+            background_pdf = workspace.pdf('%s_%s' % (background_pdf.GetName(),box))
             
+            #build the signal PDF for this box
             signal_pdf = getSignalPdf(workspace, fileName, box)
             
-            #signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
+            #now extend the signal PDF
+            workspace.factory("expr::S_%s('@0*@1*@2', lumi, sigma, eff)" % box )
+            signal_pdf_extended = workspace.factory("RooExtendPdf::%s_extended(%s,S_%s)" % (signal_pdf.GetName(),signal_pdf.GetName(),box) )
             
-            #TODO: Use the input files given to get the histograms needed to build the signal PDF
-            # make a RooAddPdf of the signal and background and make sure that all the nuisance etc parameters are sorted
-            
+            #finally add the signal + background PDFs together to get the final PDF
+            #everything is already extended so no additional coefficients
+            full_pdf = rt.RooAddPdf('SplusBPDF_%s' % box, 'SplusBPDF_%s' % box, rt.RooArgList(signal_pdf_extended,background_pdf))
+            RootTools.Utils.importToWS(workspace,full_pdf)
+
+            #store the name of the final PDF            
+            pdf_names[box] = full_pdf.GetName() 
+
+            #store the dataset from this box
             datasets[box] = boxes[box].workspace.data('RMRTree')
+            
+            #set the parameters constant
+            [p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
 
 
         #make a RooDataset with *all* of the data
         pData = mergeDatasets(datasets, workspace.cat('Boxes'))
         RootTools.Utils.importToWS(workspace,pData)
         
-        #TODO: Once we have the S+B models for all the boxes, we need to multiply them all together
-        # Probably the best is to make a RooSimultanious, and then multiply it by the Gaussian terms for X
-        # we will need to combine all of the datasets with a RooCategory?
+        #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
         simultaneous = rt.RooSimultaneous('CombinedLikelihood','CombinedLikelihood',workspace.cat('Boxes'))
         for box, pdf_name in pdf_names.iteritems():
             simultaneous.addPdf(workspace.pdf(pdf_name),box)
         RootTools.Utils.importToWS(workspace,simultaneous)
         
         #multiply the likelihood by some gaussians
-        model = simultaneous.GetName()
+        pdf_products = [simultaneous.GetName()]
+        
+        #used for the global observables
+        workspace.defineSet('global','')
         for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
-            workspace.factory('RooGaussian::%s_nuisance_pdf(%s,%s_mean[0,-5,5],%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
-            #keep track of the new name, as this is the name of our final pdf
-            modelName = '%s_npdf_%s' % (model, var.GetName())
-            workspace.factory('PROD::%s(%s,%s_nuisance_pdf)' % (modelName,model,var.GetName()))
-            model = modelName
-        #store the name incase we need it
-        RootTools.Utils.importToWS(workspace,rt.TObjString(modelName),'fullSplusBPDF')
+            #make a Gaussian for each nuisance parameter
+            workspace.factory('RooGaussian::%s_pdf(%s,nom_%s[0,-5,5],%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
+            pdf_products.append('%s_pdf' % var.GetName())
+            
+            #keep track of the Gaussian means, as these are global observables
+            workspace.extendSet('global','nom_%s' % var.GetName())
+
+        #multiply the various PDFs together        
+        simultaneous_product = workspace.factory('PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products)))
+        #store the name in case we need it later
+        RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
+        
+        #set the global observables constant at their nominal values
+        for p in RootTools.RootIterator.RootIterator(workspace.set('global')): p.setConstant(True)
 
         #the signal + background model
         pSbModel = rt.RooStats.ModelConfig("SbModel")
         pSbModel.SetWorkspace(workspace)
-        pSbModel.SetPdf(modelName)
+        pSbModel.SetPdf(simultaneous_product)
         pSbModel.SetParametersOfInterest(workspace.set('poi'))
         pSbModel.SetNuisanceParameters(workspace.set('nuisance'))
+        pSbModel.SetGlobalObservables(workspace.set('global'))
         pSbModel.SetObservables(workspace.set('variables'))
+        
+        SetConstants(workspace, pSbModel)
+        RootTools.Utils.importToWS(workspace,pSbModel)
+        
+        print 'This is the final PDF'
+        pdf_params = simultaneous_product.getParameters(pData)
+        print 'Parameters'
+        pdf_params.Print("V")
+        print 'Observables'
+        pdf_obs = simultaneous_product.getObservables(pData)
+        pdf_obs.Print('V')
+        
+        for p in RootTools.RootIterator.RootIterator(pdf_params):
+            print p.GetName(),p.isConstant()        
 
         #the background only model
         pBModel = rt.RooStats.ModelConfig(pSbModel)
@@ -887,7 +963,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
 
         #this should be right at the bottom
-        RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
                                            
         #self.store(workspace, dir='CombinedLikelihood')
