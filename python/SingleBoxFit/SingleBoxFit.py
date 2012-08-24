@@ -905,7 +905,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         workspace.defineSet('global','')
         for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
             #make a Gaussian for each nuisance parameter
-            workspace.factory('RooGaussian::%s_pdf(%s,nom_%s[0,-5,5],%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
+            workspace.factory('RooGaussian::%s_pdf(nom_%s[0,-5,5],%s,%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
             pdf_products.append('%s_pdf' % var.GetName())
             
             #keep track of the Gaussian means, as these are global observables
@@ -916,8 +916,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #store the name in case we need it later
         RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
         
-        #set the global observables constant at their nominal values
-        for p in RootTools.RootIterator.RootIterator(workspace.set('global')): p.setConstant(True)
+        #set the global observables to float from their nominal values - is this needed
+        #for p in RootTools.RootIterator.RootIterator(workspace.set('global')): p.setConstant(False)
 
         #the signal + background model
         pSbModel = rt.RooStats.ModelConfig("SbModel")
@@ -938,9 +938,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         print 'Observables'
         pdf_obs = simultaneous_product.getObservables(pData)
         pdf_obs.Print('V')
-        
-        for p in RootTools.RootIterator.RootIterator(pdf_params):
-            print p.GetName(),p.isConstant()        
+
+        #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
+        #fr.Print("V")
 
         #the background only model
         pBModel = rt.RooStats.ModelConfig(pSbModel)
