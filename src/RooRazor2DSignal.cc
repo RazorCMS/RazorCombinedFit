@@ -72,7 +72,9 @@ Double_t RooRazor2DSignal::evaluate() const
     rhoPdf = pow(1.+pdfVal,xPdf);
     rhoBtag = pow(1.+btagVal,xBtag);
   }
-  return nomVal*rhoJes*rhoPdf*rhoBtag;
+  Double_t result = nomVal*rhoJes*rhoPdf*rhoBtag;
+  //the signal PDF is often empty at low MR. Truncate so we don't get zeros everywhere
+  return (result == 0.0) ? 1e-8 : result;
 }
 
 // //---------------------------------------------------------------------------
