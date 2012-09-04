@@ -790,6 +790,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #set the eff value
             workspace.var('eff_value').setVal(wHisto.Integral())
+            print 'eff_value for box %s is %f' % (box,workspace.var('eff_value').getVal())
             return signal
         
         def SetConstants(pWs, pMc):
@@ -934,10 +935,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
         print 'This is the final PDF'
         pdf_params = simultaneous_product.getParameters(pData)
         print 'Parameters'
-        pdf_params.Print("V")
-        print 'Observables'
-        pdf_obs = simultaneous_product.getObservables(pData)
-        pdf_obs.Print('V')
+        for var in RootTools.RootIterator.RootIterator(pdf_params):
+            print '\tisConstant=%r\t\t' % var.isConstant(),
+            var.Print()
+        #pdf_params.Print("V")
 
         #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
         #fr.Print("V")
@@ -960,7 +961,31 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #    will anticipate it
         pNll = pSbModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(rt.RooArgSet())
-        pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
+        minSplusB = pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
+        print '\nS+B: %f' % minSplusB 
+        
+        #save a snap-shot
+        poiValueForBModel = 0.0
+        pPoiAndNuisance = rt.RooArgSet()
+        pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
+        pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
+        pSbModel.SetSnapshot(pPoiAndNuisance)
+        
+        del pNll, pProfile, pPoiAndNuisance
+        
+        #Find a parameter point for generating pseudo-data
+        #with the background-only data.
+        #Save the parameter point snapshot in the Workspace
+        pNll = pBModel.GetPdf().createNLL(pData)
+        pProfile = pNll.createProfile(workspace.set('poi'))
+        workspace.var('sigma').setVal(poiValueForBModel)
+        minBonly = pProfile.getVal() #this will do fit and set nuisance parameters to profiled values
+        print '\nB only: %f' % minBonly
+        
+        pPoiAndNuisance = rt.RooArgSet()
+        pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
+        pPoiAndNuisance.add(pBModel.GetParametersOfInterest())
+        pBModel.SetSnapshot(pPoiAndNuisance)        
 
         #this should be right at the bottom
         RootTools.Utils.importToWS(workspace,pBModel)
@@ -970,3 +995,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #for some reason, it does not like it when we write everything to the same file
         workspace_name = '%s_CombinedLikelihood_workspace.root' % self.options.output.lower().replace('.root','')
         workspace.writeToFile(workspace_name,True)
+        
+        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
+        #                                number of points, xmin, xmax, number of toys, use number counting)
+        print 'StandardHypoTestInvDemo("%s","%s","%s","%s","%s")'\
+                                            % (workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName())
