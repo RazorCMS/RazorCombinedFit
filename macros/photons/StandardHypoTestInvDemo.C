@@ -532,10 +532,11 @@ RooStats::HypoTestInvTool::AnalyzeResult( HypoTestInverterResult * r,
          pl->SetLogYaxis(true);
          pl->Draw();
       }
+      c2->Print(output_name_bells);
    }
 
   c1->Print(output_name_cls);
-  c2->Print(output_name_bells);
+
 }
 
 
