@@ -27,6 +27,27 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
   iBinY(_nominal->GetYaxis()->GetNbins()){
 }
 
+//this is used in the case where there is only one error histogram
+RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
+				   RooAbsReal &_x, 	RooAbsReal &_y,
+				   TH2D* _nominal, TH2D* _error,
+				   RooAbsReal &_xError) : RooAbsPdf(name, title),
+  X("X", "X Observable", this, _x),
+  Y("Y", "Y Observable", this, _y),
+  xJes("xError", "xError", this, _xError),
+  xPdf("xDummy1", "Dummy 1", this, _xError),
+  xBtag("xDummy2", "Dummy 2", this, _xError),
+  Hnonimal(_nominal),
+  Hjes(_error),
+  Hpdf(dynamic_cast<TH2D*>(_error->Clone())),
+  Hbtag(dynamic_cast<TH2D*>(_error->Clone())),
+  iBinX(_nominal->GetXaxis()->GetNbins()),
+  iBinY(_nominal->GetYaxis()->GetNbins()){
+	Hpdf->Reset();//set to zero
+	Hbtag->Reset();//set to zero
+}
+
+
 //Reads the histograms from the workspace and/or imports them
 Bool_t RooRazor2DSignal::importWorkspaceHook(RooWorkspace& ws){
 
@@ -73,9 +94,10 @@ Double_t RooRazor2DSignal::evaluate() const
   double area = dx*dy;
 
   if(nomVal>0.) {
-    rhoJes = pow(1.+jesVal,xJes);
-    rhoPdf = pow(1.+pdfVal,xPdf);
-    rhoBtag = pow(1.+btagVal,xBtag);
+	//1.0 to the power anything is 1.0, so empty bins don't do anything
+    rhoJes = pow(1.0 + jesVal,xJes);
+    rhoPdf = pow(1.0 + pdfVal,xPdf);
+    rhoBtag = pow(1.0 + btagVal,xBtag);
   }
   double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
   return (result == 0.0) ? 1e-12 : result;
@@ -101,9 +123,9 @@ Int_t RooRazor2DSignal::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& ana
 		for (int ix = 1; ix <= iBinX; ix++) {
 			for (int iy = 1; iy <= iBinY; iy++) {
 				double nom = Hnonimal->GetBinContent(ix, iy);
-				double jes = pow(1 + Hjes->GetBinContent(ix, iy), xJes);
-				double pdf = pow(1 + Hpdf->GetBinContent(ix, iy), xPdf);
-				double btag = pow(1 + Hbtag->GetBinContent(ix, iy), xBtag);
+				double jes = pow(1.0 + Hjes->GetBinContent(ix, iy), xJes);
+				double pdf = pow(1.0 + Hpdf->GetBinContent(ix, iy), xPdf);
+				double btag = pow(1.0 + Hbtag->GetBinContent(ix, iy), xBtag);
 				intPdf += nom * jes * pdf * btag;
 			}
 		}
