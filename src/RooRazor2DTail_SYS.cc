@@ -67,7 +67,7 @@ Int_t RooRazor2DTail_SYS::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& a
 
    // integral on both X and Y
 
-  //if (matchArgs(allVars, analVars, X, Y)) return 1;
+  if (matchArgs(allVars, analVars, X, Y)) return 1;
 
    // // // integral over X
    //else if (matchArgs(allVars, analVars, X) && Y0<(1+B*X0-B*xmin*Y)/(B*X0-B*xmin)) return 2;

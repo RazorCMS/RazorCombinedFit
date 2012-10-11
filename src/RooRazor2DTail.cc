@@ -61,8 +61,8 @@ Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analV
    // std::cout << "Proj 2: " << analyticalIntegral(2,rangeName) << std::endl;
    // std::cout << "Proj 3: " << analyticalIntegral(3,rangeName) << std::endl;
 
-   const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
-   const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
+   //const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
+   //const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
 
    // integral on both X and Y
    if (matchArgs(allVars, analVars, X, Y)) return 1;
