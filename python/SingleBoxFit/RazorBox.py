@@ -11,7 +11,7 @@ def getBinning(boxName, varName, btag):
         if varName == "Rsq" : return [0.18,0.23,0.28,0.32,0.37,0.41,0.46,0.51,0.57,0.63,0.70,0.80,1.5]
         if varName == "nBtag" : return [0,1,2,3,4,5]
     else:
-        if varName == "MR" : return [300, 350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
+        if varName == "MR" : return [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
         #if varName == "Rsq" : return [0.10,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
         #if varName == "MR" : return [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
         if varName == "Rsq" :
@@ -24,20 +24,20 @@ class RazorBox(Box.Box):
     def __init__(self, name, variables, fitMode = '3D', btag = True):
         super(RazorBox,self).__init__(name, variables)
         #data
-        #self.zeros = {'UEC':['Had','TauTau','Mu','MuTau','MuEle','Ele','EleTau','EleEle','MuMu'],'TTj':[],'Vpj':['MuEle']}
-        if btag == "NoBtag":
-            self.zeros = {'UEC':['MuEle','Ele','EleTau','EleEle','MuMu'],'TTj':[],'Vpj':['MuEle']}
-        else:
-            self.zeros = {'UEC':['MuEle','EleEle','MuMu','EleTau','Ele'],'TTj':[],'Vpj':['MuEle','EleEle','MuMu','EleTau']}
-        self.cut = 'MR >= 0.0'
-        #self.fitregion = 'SidebandMR'
-        self.fitregion = 'SidebandRsq'
-        self.fitMode = fitMode
         if not btag:
             self.btag = "NoBtag"
         else:
             self.btag = "Btag"
-            
+        #self.zeros = {'UEC':['Had','TauTau','Mu','MuTau','MuEle','Ele','EleTau','EleEle','MuMu'],'TTj':[],'Vpj':['MuEle']}
+        if self.btag == "NoBtag":
+            self.zeros = {'UEC':[],'TTj':['Ele','Mu','EleTau','MuTau','MuMu','MuEle','EleEle'],'Vpj':['MuEle']}
+        else:
+            self.zeros = {'UEC':[],'TTj':['MuEle','EleEle','MuMu'],'Vpj':['MuEle','EleEle','MuMu']}
+        self.cut = 'MR >= 0.0'
+        #self.fitregion = 'SidebandMR'
+        self.fitregion = 'SidebandRsq'
+        self.fitMode = fitMode
+        
     def addTailPdf(self, flavour, doSYS):
         
         label = '_%s' % flavour
@@ -269,10 +269,10 @@ class RazorBox(Box.Box):
         #self.workspace.var("f1_Vpj").setConstant(rt.kTRUE)
         #self.workspace.var("f2_Vpj").setVal(0.)
         #self.workspace.var("f2_Vpj").setConstant(rt.kTRUE)
-        self.workspace.var("f3_Vpj").setVal(0.)
-        self.workspace.var("f3_Vpj").setConstant(rt.kTRUE)
-        self.workspace.var("f4_Vpj").setVal(0.)
-        self.workspace.var("f4_Vpj").setConstant(rt.kTRUE)
+        #self.workspace.var("f3_Vpj").setVal(0.)
+        #self.workspace.var("f3_Vpj").setConstant(rt.kTRUE)
+        #self.workspace.var("f4_Vpj").setVal(0.)
+        #self.workspace.var("f4_Vpj").setConstant(rt.kTRUE)
         # I am having troubles with the fit...
         #self.workspace.var("f4_UEC").setVal(0.)
         #self.workspace.var("f4_UEC").setConstant(rt.kTRUE)
