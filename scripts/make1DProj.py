@@ -16,7 +16,7 @@ def GetProbRange(h):
     # find the maximum
     binMax = h.GetMaximumBin()
     # move left and right until integrating 68%
-    prob = h.GetMaximum()
+    prob = h.GetMaximum()/h.Integral()
     iLeft = 1
     iRight = 1
     while prob < 0.68 and binMax+iRight <= h.GetXaxis().GetNbins():
@@ -36,12 +36,25 @@ def GetProbRange(h):
                 iLeft += 1
     return h.GetXaxis().GetBinUpEdge(binMax+iRight), h.GetXaxis().GetBinLowEdge(binMax-iLeft)
             
-def GetErrors(nbinx, nbiny, myTree):
+def GetErrorsX(nbinx, nbiny, myTree):
     err = []
     # for each bin of x, get the error on the sum of the y bins
     for i in range(0,nbinx-1):
         varName = ""
         for j in range(0,nbiny-1): varName = varName+"b%i_%i+" %(i,j)
+        myTree.Draw(varName[:-1])
+        htemp = rt.gPad.GetPrimitive("htemp");
+        xmax, xmin = GetProbRange(htemp)
+        print xmin, xmax
+        err.append((xmax-xmin)/2.)
+    return err
+
+def GetErrorsY(nbinx, nbiny, myTree):
+    err = []
+    # for each bin of x, get the error on the sum of the y bins
+    for j in range(0,nbiny-1):
+        varName = ""
+        for i in range(0,nbinx-1): varName = varName+"b%i_%i+" %(i,j)
         myTree.Draw(varName[:-1])
         htemp = rt.gPad.GetPrimitive("htemp");
         xmax, xmin = GetProbRange(htemp)
@@ -113,8 +126,9 @@ def goodPlot(varname, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, h
     if noBtag: leg.AddEntry(hMRData,"Data %s no Btag" %Box,"lep")
     else: leg.AddEntry(hMRData,"Data %s #geq 1 Btag" %Box,"lep")
     leg.AddEntry(hMRTOTcopy,"Total Background")
-    if showTTj and showVpj:
+    if showVpj:
         leg.AddEntry(hMRVpj,"W+jets","l")
+    if showTTj:
         leg.AddEntry(hMRTTj,"t#bar{t}+jets","l")
     leg.Draw("same")
 
@@ -165,6 +179,8 @@ if __name__ == '__main__':
     y = array("d",Rsqbins)
     #z = array("d",nBtagbins)
 
+    print MRbins
+
     hMR =  rt.TH1D("hMR","hMR", len(MRbins)-1, x)
     hRSQ =  rt.TH1D("hRSQ","hRSQ", len(Rsqbins)-1, y)
     #if noBtag: hBTAG = rt.TH1D("hBTAG","hBTAG", len(Rsqbins)-1, z)
@@ -200,11 +216,12 @@ if __name__ == '__main__':
     hRSQData = fitFile.Get("%s/histoData_Rsq_FULL_ALLCOMPONENTS" %Box)
     #hBTAGData = fitFile.Get("%s/histoData_nBtag_FULL_ALLCOMPONENTS")
 
-    errMR = GetErrors(len(MRbins),len(Rsqbins),myTree)
-    errRSQ = GetErrors(len(Rsqbins),len(MRbins),myTree)
+    errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree)
+    errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree)
     hMRTOTcopy = hMRTOT.Clone()
     hMRTOTcopy.SetName(hMRTOT.GetName()+"COPY")
     for i in range(1,len(errMR)+1):
+        print hMRTOT.GetBinContent(i),errMR[i-1],hMRTOT.GetBinError(i)
         hMRTOTcopy.SetBinError(i,max(errMR[i-1],hMRTOT.GetBinError(i)))
         hMRTOT.SetBinError(i,0.)
     hRSQTOTcopy = hRSQTOT.Clone()
