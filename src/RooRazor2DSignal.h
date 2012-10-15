@@ -23,6 +23,10 @@ public:
 		  RooAbsReal &_x, RooAbsReal &_y, 
 		  TH2D* _nominal, TH2D* _jes, TH2D* _pdf, TH2D* _btag,
 		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+   RooRazor2DSignal(const char *name, const char *title,
+		  RooAbsReal &_x, RooAbsReal &_y,
+		  TH2D* _nominal, TH2D* _error,
+		  RooAbsReal &_xError);
    TObject* clone(const char* newname) const {
 	   TNamed* result = new RooRazor2DSignal(*this);
 	   result->SetName(newname);
