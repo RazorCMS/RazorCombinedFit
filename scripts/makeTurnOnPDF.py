@@ -37,7 +37,10 @@ if __name__ == '__main__':
                   help="Name of the config file to use")
     parser.add_option('-o','--output',dest="output",type="string",default='turnon.root',
                   help="Name of the output file")
-      
+    parser.add_option('-b','--box', dest="box", type="string",default='Had',
+                  help="Name of the box")
+
+
     (options,args) = parser.parse_args()
     
     MR = rt.RooRealVar("MR", "MR", 450., 4000.)

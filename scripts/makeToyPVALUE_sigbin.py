@@ -4,6 +4,7 @@ from array import *
 import sys
 import makeBluePlot
 
+
 def set2DStyle(h) :
     h.GetXaxis().SetTitle("M_{R}[GeV]")
     h.GetYaxis().SetTitle("R^{2}")
@@ -87,6 +88,17 @@ def findMedian(myHisto):
         prob = prob + myHisto.GetBinContent(i)
     return median
     
+def getHistoKDE(kde, nToys, histoName,minX,maxX, probVal=0.68):
+    f1 = rt.TF1("f1",kde,minX,maxX,0)
+    hToy = rt.TH1F(histoName,histoName,maxX-minX,minX,maxX)
+    hToy.Add(f1,1,"I")
+    hToy.Scale(1./hToy.Integral())
+    binEdges = []
+    for k in range(1,hToy.GetNbinsX()+2):
+        binEdges.append(hToy.GetBinLowEdge(k))
+    if hToy.GetEntries()==0.0: hToy.SetEntries(nToys)
+    return hToy
+
 def find68ProbRange(hToy, probVal=0.68):
     minVal = 0.
     maxVal = 100000.
@@ -127,24 +139,29 @@ def find68ProbRange(hToy, probVal=0.68):
 def getSigma(n, hToy):
     if hToy.GetMaximumBin() == hToy.FindBin(n): return 0.
     # find the probability of the bin corresponding to the observed n
-    binN = hToy.FindBin(n)
-    Prob_n = hToy.GetBinContent(binN)
-    Prob = 0
-    for i in range(1, binN+1): Prob += hToy.GetBinContent(i)
-    if hToy.Integral() == 0.: return 0.
-    if Prob ==0. : Prob = 1./hToy.GetEntries()
-    elif Prob >= hToy.Integral(): Prob = 1.-1./hToy.GetEntries()
-    else: Prob = Prob/hToy.Integral()
+    #binN = hToy.FindBin(n)
+    #Prob_n = hToy.GetBinContent(binN)
+    #Prob = 0
+    #for i in range(1, binN): Prob += hToy.GetBinContent(i)
+    #if hToy.Integral() == 0.: return 0.
+    #if Prob ==0. : Prob = 1./hToy.GetEntries()
+    #elif Prob >= hToy.Integral(): Prob = 1.-1./hToy.GetEntries()
+    #else: Prob = Prob/hToy.Integral()
      # convert the one-sided p-value in a number of sigmas
-    print rt.TMath.NormQuantile(Prob)
-    return rt.TMath.NormQuantile(Prob)
+    #print rt.TMath.NormQuantile(Prob)
+    #return rt.TMath.NormQuantile(Prob)
+    medianVal = findMedian(myhisto)
+    pVal = 1.-getPValue(n,hToy)
+    if n>medianVal: return rt.TMath.NormQuantile(0.5 + pVal/2.)
+    else: return -rt.TMath.NormQuantile(0.5 + pVal/2.)
+
 
 def getPValue(n, hToy):
-    Prob_n = hToy.GetBinContent(hToy.FindBin(n+0.1))
+    if hToy.Integral() <= 0.: return 0.
+    Prob_n = hToy.GetBinContent(hToy.FindBin(n))
     Prob = 0
     for i in range(1, hToy.GetNbinsX()+1):
         if hToy.GetBinContent(i)<= Prob_n: Prob += hToy.GetBinContent(i)
-    if hToy.Integral() <= 0.: return 0.
     Prob = Prob/hToy.Integral()
     return Prob
     
@@ -157,9 +174,6 @@ if __name__ == '__main__':
         if sys.argv[i] == "--noBtag": noBtag = True
 
     MRbins, Rsqbins = makeBluePlot.Binning(Box, noBtag)
-
-    #MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
-    #Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
 
     x = array("d",MRbins)
     y = array("d",Rsqbins)
@@ -175,6 +189,7 @@ if __name__ == '__main__':
     
     fileIn = rt.TFile.Open(fileName)
     myTree = fileIn.Get("myTree")
+    nToys  = myTree.GetEntries()
     dataFile = rt.TFile.Open(datafileName)
     alldata = dataFile.Get("RMRTree")
     fileOUT = rt.TFile.Open("pvalue_%s.root" %Box, "recreate")
@@ -190,9 +205,9 @@ if __name__ == '__main__':
     table.write("\\begin{table}[!ht]\n")
     table.write("\\begin{tiny}\n")
     table.write("\\begin{center}\n")
-    table.write("\\begin{tabular}{|c|c|c|c|c|c|c|}\n")
+    table.write("\\begin{tabular}{|c|c|c|c|c|c|c|c|}\n")
     table.write("\\hline\n")
-    table.write("$M_R$ Range & $R^2$ Range & Observed & Predicted Mode & Predicted Median & Predicted 68 Prob. Range & p-value \\\\\n")
+    table.write("$M_R$ Range & $R^2$ Range & Observed & Predicted Mode & Predicted Median & Predicted 68 Prob. Range & p-value & n$\\sigma$ \\\\\n")
     table.write("\\hline\n")
     # loop over regions
     result = []
@@ -200,23 +215,42 @@ if __name__ == '__main__':
         for j in range(0,len(Rsqbins)-1):
             varName = "b%i_%i" %(i,j)
             histoName = "Histo_%s" %varName
-            # make an histogram of the expected yield                                                                                                                                                 
-            myTree.Draw(varName)
-            htemp = rt.gPad.GetPrimitive("htemp");
-            mean = htemp.GetMean()
-            rms = htemp.GetRMS()            
             # make an histogram of the expected yield
-            myhisto = rt.TH1D(histoName, histoName, 20, int(max(0.,mean-5.*rms)), int(mean+5.*rms))
-            if myhisto.GetXaxis().GetBinWidth(2) <1:
-                maxX = int(myhisto.GetXaxis().GetXmax())+10
-                del myhisto
-                myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
+            myTree.Draw(varName)
+            htemp = rt.gPad.GetPrimitive("htemp")
+            mean = htemp.GetMean()
+            rms = htemp.GetRMS()
+            del htemp
+            
+            maxX = int(max(mean+5.*rms,20.0))
+            minX = int(max(0.0,mean-5.*rms))
+
+            myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
             myTree.Project(histoName, varName)
+            myhisto.Scale(1./myhisto.Integral())
+
             if myhisto.GetEntries() != 0: 
-                if myhisto.Integral()>0: myhisto.Scale(1./myhisto.Integral())
                 # get the observed number of events
                 data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1]))
                 nObs = data.numEntries()
+                if maxX==20.0:
+                    print "maxX == 20.0"
+                else:
+                    numBin = array('f',[0])
+                    myTree.ResetBranchAddresses()
+                    myTree.SetBranchAddress(varName, numBin )
+                    numBinList, k = [], 0
+                    while myTree.GetEntry(k):
+                        k += 1
+                        numBinList.append( numBin[0] )
+                    print len(numBinList)
+                    numBinArray = array('d',numBinList)
+                    rho = 2.0
+                    kde = rt.TKDE(nToys, numBinArray, minX,maxX, "", rho)
+                    del myhisto
+                    myhisto = getHistoKDE(kde,nToys,histoName,minX,maxX)
+                    del kde
+                    del numBin
                 modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
                 medianVal = findMedian(myhisto)
                 pval = getPValue(nObs, myhisto)
@@ -233,8 +267,8 @@ if __name__ == '__main__':
                 hEXP.SetBinContent(i+1, j+1, (rangeMax+rangeMin)/2)
                 hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
                 if (rangeMax+rangeMin)/2 == 50000.: continue
-                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval)
-                if pval<0.15: table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval))
+                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
+                if pval<0.15: table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
                 if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
