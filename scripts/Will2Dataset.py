@@ -1,77 +1,157 @@
 from optparse import OptionParser
-import os
+import os, array
 
 import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':6}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
 lumi = 1.0
 
+class HadDumper(object):
+
+    def headers_for_MVA(self):
+        return ['thetaH1','thetaH2','topMass1','topMass2','wMass1','wMass2',\
+                    'jet1mult','jet2mult','jet3mult','jet4mult','jet5mult','jet6mult',\
+                    'jet1girth','jet2girth','jet3girth','jet4girth','jet5girth','jet6girth']
+
+    def __init__(self, tree):
+
+        self.tree = tree
+
+        self.vars = {}
+        self.reader = rt.TMVA.Reader()
+        for h in self.headers_for_MVA():
+            self.vars['%s_var'%h] = array.array('f',[0])
+            self.reader.AddVariable(h,self.vars['%s_var'%h])
+
+        self.vars['mr_var'] = array.array('f',[0])
+        self.vars['rsq_var'] = array.array('f',[0])
+        
+        self.reader.AddSpectator('MR',self.vars['mr_var'])
+        self.reader.AddSpectator('RSQ',self.vars['rsq_var'])
+        self.reader.BookMVA('BDT','/afs/cern.ch/user/w/wreece/work/CMGTools/V5_6_0/CMGTools/CMSSW_5_3_3_patch3/src/CMGTools/Susy/prod/MultiJet/TMVAClassification_BDT.weights.xml')        
+
+    def thetaH1(self):
+        if self.tree.bestHemi == 1:
+            return self.tree.hemi1ThetaH
+        return self.tree.hemi2ThetaH
+    def thetaH2(self):
+        if self.tree.bestHemi == 2:
+            return self.tree.hemi1ThetaH
+        return self.tree.hemi2ThetaH
+
+    def topMass1(self):
+        if self.tree.bestHemi == 1:
+            return self.tree.hemi1TopMass
+        return self.tree.hemi2TopMass
+    def topMass2(self):
+        if self.tree.bestHemi == 2:
+            return self.tree.hemi1TopMass
+        return self.tree.hemi2TopMass
+
+    def wMass1(self):
+        if self.tree.bestHemi == 1:
+            return self.tree.hemi1WMass
+        return self.tree.hemi2WMass
+    def wMass2(self):
+        if self.tree.bestHemi == 2:
+            return self.tree.hemi1WMass
+        return self.tree.hemi2WMass
+
+    def jetNpt(self, n):
+        return self.tree.jet_pt.at(n)
+
+    def jet1pt(self):
+        return self.jetNpt(0)
+    def jet2pt(self):
+        return self.jetNpt(1)
+    def jet3pt(self):
+        return self.jetNpt(2)
+    def jet4pt(self):
+        return self.jetNpt(3)
+    def jet5pt(self):
+        return self.jetNpt(4)
+    def jet6pt(self):
+        return self.jetNpt(5)
+
+    def jet1mult(self):
+        return self.tree.jet_mult.at(0)
+    def jet2mult(self):
+        return self.tree.jet_mult.at(1)
+    def jet3mult(self):
+        return self.tree.jet_mult.at(2)
+    def jet4mult(self):
+        return self.tree.jet_mult.at(3)
+    def jet5mult(self):
+        return self.tree.jet_mult.at(4)
+    def jet6mult(self):
+        return self.tree.jet_mult.at(5)
+
+    def jet1girth(self):
+        return self.tree.jet_girth.at(0)
+    def jet2girth(self):
+        return self.tree.jet_girth.at(1)
+    def jet3girth(self):
+        return self.tree.jet_girth.at(2)
+    def jet4girth(self):
+        return self.tree.jet_girth.at(3)
+    def jet5girth(self):
+        return self.tree.jet_girth.at(4)
+    def jet6girth(self):
+        return self.tree.jet_girth.at(5)
+    
+    def bdt(self):
+        
+        for h in self.headers_for_MVA():
+            self.vars['%s_var'%h][0] = getattr(self,h)()
+        self.vars['mr_var'] = self.tree.MR
+        self.vars['rsq_var'] = self.tree.RSQ
+        return self.reader.EvaluateMVA('BDT')
+
+
 class HadBox(object):
     """The Had search box used in the analysis"""
-    def __init__(self):
+    def __init__(self, dumper):
         self.name = 'Had'
+        self.dumper = dumper
     def __call__(self, tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        return tree.nJet >= 6 and tree.maxTCHE < 3.3 and nLepton == 0
+        nTight = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
+        nLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        return tree.metFilter and not tree.muTriggerFilter and not tree.eleTriggerFilter and\
+            tree.MR >= 450 and tree.RSQ >= 0.03 and tree.hadBoxFilter and tree.hadTriggerFilter and\
+            tree.nJet >= 6 and tree.nCSVL == 0 and nTight == 0 and nLoose == 0
     
 class BJetBox(object):
     """The BJet search box used in the analysis"""
-    def __init__(self):
+    def __init__(self, dumper):
         self.name = 'BJet'
+        self.dumper = dumper
     def __call__(self, tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        return tree.nJet >= 6 and tree.maxTCHE >= 3.3 and nLepton == 0
+        nTight = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
+        nLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        return tree.metFilter and not tree.muTriggerFilter and not tree.eleTriggerFilter and\
+             tree.MR >= 450 and tree.RSQ >= 0.03 and tree.hadBoxFilter and tree.hadTriggerFilter\
+              and tree.nJet >= 6 and tree.nCSVM > 0 and nTight == 0 and nLoose == 0        
 
-class BJet5JBox(object):
-    """The BJet search box used in the analysis, but with >= 5 jets rather than 6"""
-    def __init__(self):
-        self.name = 'BJet5J'
-    def __call__(self, tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        return tree.nJet >= 5 and tree.maxTCHE >= 3.3 and nLepton == 0
-    
-class CR5JBVetoBox(object):
-    """A control region for the hadronic shape without signal: No leptons, no bjets"""
-    def __init__(self):
-        self.name = 'CR5JBVeto'
-    def __call__(self,tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        #this is a tight veto on the btagging
-        return tree.nJet == 5 and tree.maxTCHE < 1.7 and nLepton == 0
-
-class CR5JSingleLeptonBVetoBox(object):
-    """A control region for the hadronic shape without signal: Signal lepton, no bjets"""
-    def __init__(self):
-        self.name = 'CR5JSingleLeptonBVeto'
-    def __call__(self,tree):
-        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        #this is a tight veto on the btagging
-        return tree.nJet == 5 and tree.maxTCHE < 1.7 and nLepton == 1
-    
 class CR6JSingleLeptonBVetoBox(object):
     """A control region for the Had box: One lepton, no bjets - Should give handle on W+Jets"""
     def __init__(self):
         self.name = 'CR6JSingleLeptonBVeto'
+        self.dumper = None
     def __call__(self, tree):
-        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        return tree.nJet >= 6 and tree.maxTCHE < 3.3 and nLepton == 1
+        nTight = tree.nMuonTight + tree.nElectronTight
+        nLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
+        return tree.metFilter and\
+             tree.MR >= 450 and tree.RSQ >= 0.03 and tree.hadBoxFilter and tree.hadTriggerFilter\
+             and tree.nJet >= 6 and tree.nCSVL == 0 and nTight == 1 and nLoose == 1        
     
-class CR6JSingleLeptonBJetBox(object):
-    """A control region for the BJet box: One lepton, at least one bjet - Should give handle on TTbar"""
-    def __init__(self):
-        self.name = 'CR6JSingleLeptonBJet'
-    def __call__(self, tree):
-        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        return tree.nJet >= 6 and tree.maxTCHE >= 3.3 and nLepton == 1
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
-    
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
     for d in data:
@@ -89,7 +169,6 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     workspace.factory('Lumi[0,0,+INF]')
     workspace.factory('Event[0,0,+INF]')
     #
-    workspace.factory('nBtag[0,0,2.0]')
     workspace.factory('nLepton[0,0,15.0]')
     workspace.factory('nElectron[0,0,15.0]')
     workspace.factory('nMuon[0,0,15.0]')
@@ -97,6 +176,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     workspace.factory('nVertex[1,0.,50.]')
     workspace.factory('nJet[0,0,15.0]')
     workspace.factory('W[0,0,+INF]')
+    workspace.factory('BDT[0,-INF,+INF]')
 
     args = workspace.allVars()
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
@@ -121,29 +201,22 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         ####First, apply a common selection
         
         #take only events in the MR and R2 region
-        if tree.mR > mRmax or tree.mR < mRmin or tree.Rsq < rsqMin or tree.Rsq > rsqMax:
-            continue
-        #events must have passed one of our triggers
-        if not tree.triggerFilter: continue
-        
-        #veto events with suspect btagging
-        if tree.maxTCHE < 0 or tree.nextTCHE < 0: continue
-        
-        #apply all those MET tail filters
-        if tree.HBHENoiseFilterResultProducer2011NonIsoRecommended == 0 or tree.goodPrimaryVertexFilter == 0 or \
-            tree.ecalDeadCellTPfilter == 0 or tree.eeNoiseFilter == 0 or tree.recovRecHitFilter == 0:
+        if tree.MR > mRmax or tree.MR < mRmin or tree.RSQ < rsqMin or tree.RSQ > rsqMax:
             continue
 
         #apply the box based filter class
         if not filter(tree): continue
+        bdt = -9999.
+        if filter.dumper is not None:
+            bdt = filter.dumper.bdt()
         
         #veto events with multiple loose leptons
         nLeptonLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
         if nLeptonLoose > 1: continue
         
-        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.mR,tree.Rsq)
-        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.mR,tree.Rsq)
-        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.mR,tree.Rsq)
+        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.MR,tree.RSQ)
+        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.MR,tree.RSQ)
+        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.MR,tree.RSQ)
         
         try:
             if tree.run <= run:
@@ -151,7 +224,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         except AttributeError:
             pass
         
-        nBtag = len([t for t in (tree.maxTCHE,tree.nextTCHE) if t >= 3.3])
+        nBtag = tree.NBJET
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
@@ -160,8 +233,8 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         a.setRealValue('Lumi',tree.lumi)
         a.setRealValue('Event',tree.event)
         
-        a.setRealValue('MR',tree.mR, True)
-        a.setRealValue('Rsq',tree.Rsq, True)
+        a.setRealValue('MR',tree.MR, True)
+        a.setRealValue('Rsq',tree.RSQ, True)
         a.setRealValue('nBtag',nBtag)
         a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
         a.setRealValue('nElectron',tree.nElectronLoose)
@@ -170,6 +243,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         a.setRealValue('nJet',tree.nJet)
         a.setRealValue('nVertex',tree.nVertex)        
         a.setRealValue('W',1.0)
+        a.setRealValue('BDT',bdt)
         
         data.add(a)
     numEntries = data.numEntries()
@@ -223,10 +297,7 @@ if __name__ == '__main__':
                 fName = name[:-5]
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,HadBox(),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJet5JBox(),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR5JBVetoBox(),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR5JSingleLeptonBVetoBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,HadBox(HadDumper(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(HadDumper(chain)),options.run)
     convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoBox(),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBJetBox(),options.run)
+
