@@ -1,14 +1,15 @@
 import sys
 import os
 
+#this is global, to be reused in the plot making
 def Binning(Box, noBtag):
-    if Box == "TauTau" or Box == "Had":    
-        MRbins = [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0, 800, 900, 1000, 1200, 1600, 2000, 2600, 4500.0]
-        if noBtag == False: Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5, 0.65, 0.80, 1.5]
-        else: Rsqbins = [0.18, 0.21, 0.24, 0.27, 0.3, 0.35, 0.4, 0.5]
+    if Box == "Had" or Box == "TauTau":
+        MRbins = [400, 480, 600, 740, 900, 1200, 1600, 2500]
+        if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
+        else: Rsqbins = [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
     else:
-        MRbins = [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
-        if noBtag == True: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50]
+        MRbins = [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500]
+        if noBtag: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50]
         else: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
     return MRbins, Rsqbins
 
@@ -30,6 +31,7 @@ if __name__ == '__main__':
     else:
         Box = sys.argv[1]
         ToyDir = sys.argv[2]
+        if ToyDir[-1]=="/": ToyDir = ToyDir[:-1]
         Data = sys.argv[3]
         Label = sys.argv[4]
         noBtag = ""
@@ -40,10 +42,14 @@ if __name__ == '__main__':
 
     if not plotOnly:
         os.system("python scripts/convertToyToROOT.py %s/frtoydata_%s" %(ToyDir, Box))
-        os.system("python scripts/expectedYield_sigbin.py 1 expected_sigbin_%s.root %s %s/frtoydata_%s_*root"%(Box, Box, ToyDir, Box))
+        os.system("rm %s.txt" %(ToyDir))
+        os.system("ls %s/frtoydata_*.root > %s.txt" %(ToyDir,ToyDir))
+        os.system("python scripts/expectedYield_sigbin.py 1 expected_sigbin_%s.root %s %s.txt"%(Box, Box, ToyDir))
+        os.system("rm histotest_b*_*.pdf")
         os.system("python scripts/makeToyPVALUE_sigbin.py %s expected_sigbin_%s.root %s %s"%(Box, Box, Data, noBtag))
+        os.system("pdftk histotest_b*_*.pdf cat output histotest_%s.pdf"%(ToyDir))
         os.system("mkdir %s"%(Label))
-        os.system("mv nSigma_%s.* pvalue_sigbin_%s.* pvalue_%s.root expected_sigbin_%s.root table_%s.tex %s"%(Box, Box, Box, Box, Box, Label))
+        os.system("mv histotest_%s.pdf nSigma_%s.* pvalue_sigbin_%s.* pvalue_%s.root expected_sigbin_%s.root table_%s.tex %s"%(ToyDir,Box, Box, Box, Box, Box, Label))
     else:
         os.system("rm %s/pvalue_%s.root" %(Label,Box))
         os.system("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s"%(Box, Label, Box, Data, noBtag))

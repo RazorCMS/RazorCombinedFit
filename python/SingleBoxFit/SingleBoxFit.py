@@ -32,7 +32,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
-            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag)
+            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag,self.options.fitregion)
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             
             if self.options.input is not None:

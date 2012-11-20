@@ -36,73 +36,51 @@ RooRazor2DTail_SYS::RooRazor2DTail_SYS(const RooRazor2DTail_SYS& other, const ch
 //---------------------------------------------------------------------------
 Double_t RooRazor2DTail_SYS::evaluate() const
 {
-  double myexp = B*pow((X-X0)*(Y-Y0),1/N);
-  if(myexp> 700 ) return  1.7e-308;// very bad
-  return fabs(myexp-N)*exp(-myexp);
+  //double myexp = pow(B,2)*pow(fabs(X*Y-X0*Y-Y0*X),1./B);
+  //double mycoeff = B*pow(fabs(X*Y-X0*Y-Y0*X),1./B) - 1.;
+
+  double myexp = B*N*pow(fabs(X-X0)*fabs(Y-Y0),1./N);
+  double mycoeff = B*pow(fabs(X-X0)*fabs(Y-Y0),1./N) - 1.;
+  if(myexp < -700) {
+    std::cout << "MYEXP = "<< myexp << ", < -700 -- BAD" << std::endl;
+    return  1.7e-308;}
+  if(mycoeff < 0) {
+    std::cout << "MYCOEFF = " << mycoeff <<", IS NEGATIVE -- BAD" << std::endl;
+    return  1.7e-308;}
+  return mycoeff*exp(-myexp);
 }
 
 // //---------------------------------------------------------------------------
 Int_t RooRazor2DTail_SYS::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
-
-
-   // const Double_t xmin = X.min(rangeName)-X0; const Double_t xmax = X.max(rangeName)-X0;
-   // const Double_t ymin = Y.min(rangeName)-Y0; const Double_t ymax = Y.max(rangeName)-Y0;
-
-   // std::cout << "RooRazor2DTail_SYS::getAnalyticalIntegral" << std::endl;
-   // std::cout << "X: " << X << std::endl;
-   // std::cout << "Y: " << Y << std::endl;
-   // std::cout << "X0: " << X0 << std::endl;
-   // std::cout << "Y0: " << Y0 << std::endl;
-   // std::cout << "B: " << B << std::endl;
-
-   // std::cout << "xmin: " << xmin << "\t xmax: " << xmax << std::endl;
-   // std::cout << "ymin: " << ymin << "\t ymax: " << ymax << std::endl;
-
-   // std::cout << "Full 1: " << analyticalIntegral(1,rangeName) << std::endl;
-   // std::cout << "Proj 2: " << analyticalIntegral(2,rangeName) << std::endl;
-   // std::cout << "Proj 3: " << analyticalIntegral(3,rangeName) << std::endl;
-
-  //   const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
-  //   const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
-
-   // integral on both X and Y
-
+  // integral on both X and Y
   if (matchArgs(allVars, analVars, X, Y)) return 1;
-
-   // // // integral over X
-   //else if (matchArgs(allVars, analVars, X) && Y0<(1+B*X0-B*xmin*Y)/(B*X0-B*xmin)) return 2;
-   //   else if (matchArgs(allVars, analVars, X) && Y0>=(1+B*X0-B*xmin*Y)/(B*X0-B*xmin)) return 3;
-   // // // integral over Y
-   //   else if (matchArgs(allVars, analVars, Y) && X0<(1+B*Y0-B*ymin*X)/(B*Y0-B*ymin)) return 4;
-   //   else if (matchArgs(allVars, analVars, Y) && X0>=(1+B*Y0-B*ymin*X)/(B*Y0-B*ymin)) return 5;
-   return 0;
+  // // // integral over X
+  else if (matchArgs(allVars, analVars, X)) return 2;
+  // // // integral over Y
+  else if (matchArgs(allVars, analVars, Y)) return 3;
+  return 0;
 }
 
 // //---------------------------------------------------------------------------
 Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeName) const{
 
-   const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
-   const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
+   const Double_t xmin = X.min(); const Double_t xmax = X.max();
+   const Double_t ymin = Y.min(); const Double_t ymax = Y.max();
 
    if(B == 0) return 0.;
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y
-     integral = pow(N,2.)/pow(B,N)*(Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax));
+     integral = N/pow(B*N,N)*(Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax));
    } else if(code == 2) { // integral on X
-     integral = exp(B*(X0-xmax-xmin)*(Y-Y0))*(exp(B*xmin*(Y-Y0))*(X0-xmax)-exp(B*xmax*(Y-Y0))*(X0-xmin));
-   } else if(code == 3) { // integral on X
-     integral = exp(-1-B*(xmax*Y+X0*Y0))*(exp(B*xmax*Y+B*X0*Y0)+B*exp(1+B*X0*Y+B*xmax*Y0)*(X0-xmax)*(Y-Y0))/(B*(Y-Y0));
-   } else if(code == 4) { // integral on Y
-     integral = exp(B*(Y0-ymax-ymin)*(X-X0))*(exp(B*ymin*(X-X0))*(Y0-ymax)-exp(B*ymax*(X-X0))*(Y0-ymin));
-   } else if(code == 5) {
-     integral = exp(-1-B*(ymax*X+Y0*X0))*(exp(B*ymax*X+B*Y0*X0)+B*exp(1+B*Y0*X+B*ymax*X0)*(Y0-ymax)*(X-X0))/(B*(X-X0));
+     integral = ( (xmin-X0)*exp(B*N*pow(xmax-X0,1/N)*pow(Y-Y0,1/N)) - (xmax-X0)*exp(B*N*pow(xmin-X0,1/N)*pow(Y-Y0,1/N)) )*exp(-B*N*(pow(xmin-X0,1/N)+pow(xmax-X0,1/N))*pow(Y-Y0,1/N));
+   } else if(code == 3) { // integral on Y
+     integral = ( (ymin-Y0)*exp(B*N*pow(ymax-Y0,1/N)*pow(X-X0,1/N)) - (ymax-Y0)*exp(B*N*pow(ymin-Y0,1/N)*pow(X-X0,1/N)) )*exp(-B*N*(pow(ymin-Y0,1/N)+pow(ymax-Y0,1/N))*pow(X-X0,1/N));
    } else {
      cout << "WARNING IN RooRazor2DTail_SYS: integration code is not correct" << endl;
      cout << "                           what are you integrating on?" << endl;
      return 0;
    }
-   //   if(!(evaluate()/integral>1.7E-308)) integral = evaluate()/(1.7E-308);
 
    return fabs(integral);
 }

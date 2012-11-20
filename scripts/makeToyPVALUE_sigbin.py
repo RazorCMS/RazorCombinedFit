@@ -87,19 +87,8 @@ def findMedian(myHisto):
             median = myHisto.GetBinCenter(i)
         prob = prob + myHisto.GetBinContent(i)
     return median
-    
-def getHistoKDE(kde, nToys, histoName,minX,maxX, probVal=0.68):
-    f1 = rt.TF1("f1",kde,minX,maxX,0)
-    hToy = rt.TH1F(histoName,histoName,maxX-minX,minX,maxX)
-    hToy.Add(f1,1,"I")
-    hToy.Scale(1./hToy.Integral())
-    binEdges = []
-    for k in range(1,hToy.GetNbinsX()+2):
-        binEdges.append(hToy.GetBinLowEdge(k))
-    if hToy.GetEntries()==0.0: hToy.SetEntries(nToys)
-    return hToy
 
-def find68ProbRange(hToy, probVal=0.68):
+def find68ProbRange(hToy, probVal=0.6827):
     minVal = 0.
     maxVal = 100000.
     if hToy.Integral()<=0: return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
@@ -136,6 +125,95 @@ def find68ProbRange(hToy, probVal=0.68):
             foundMax = True
     return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
 
+def find68ProbRangeFromKDE(maxX,func, probVal=0.6827):
+    funcMax = func.GetMaximum()
+    mode = func.GetX(funcMax,0.,maxX)
+    totalProb = func.Integral(0,maxX)
+    # iterate first with a coarse epsilon
+    # THEN iterate again with a smaller epsilon
+    probRange = 0.
+    newProb=funcMax
+    epsilon=funcMax/10.0
+    above68=False
+    numIter = 0
+    while abs(probRange - probVal)>0.001 and newProb>0 and numIter < 100.:
+        print "Entering loop"
+        numIter += 1
+        if probRange < probVal:
+            above68 = True
+            newProb = newProb-epsilon
+        else:
+            if above68: epsilon = epsilon/10
+            above68 = False
+            newProb = newProb+epsilon
+        if mode == 0.: sigmaMinus = 0
+        else: sigmaMinus = func.GetX(newProb,0.,mode)
+        sigmaPlus = func.GetX(newProb,mode,maxX)
+        if sigmaMinus<sigmaPlus : probRange = func.Integral(sigmaMinus,sigmaPlus)/totalProb
+        else: probRange = 0.
+        print "iteration = %d"%numIter
+        print "newProb = %f"%newProb
+        print "sigmaPlus = %f"%sigmaPlus
+        print "sigmaMinus = %f"%sigmaMinus
+        print "Int_[sigmaMinus,sigmaPlus] f(x) dx = %f"%probRange
+   
+    funcFill68 = func.Clone("funcFill68")
+    funcFill68.SetRange(sigmaMinus,sigmaPlus)
+    funcFill68.SetFillColor(rt.kTeal)
+    funcFill68.SetFillStyle(3144)
+    funcFill68.Draw("same")
+    return mode,sigmaMinus,sigmaPlus,probRange,funcFill68
+
+def find68ProbRangeFromKDEMedian(maxX,func, probVal=0.6827):
+    mean = func.Mean(0.,maxX)
+    funcMax = func.GetMaximum()
+    mode = func.GetX(funcMax,0.,maxX)
+    totalProb = func.Integral(0,maxX)
+    nprobSum = int(1.0)
+    probSum = array("d",[0.5])
+    q = array("d",[0])
+    func.GetQuantiles(nprobSum,q,probSum)
+    median = q[0]
+    print "mean = %f"%mean
+    print "median = %f"%median
+    # iterate first with a coarse epsilon
+    # THEN iterate again with a smaller epsilon
+    probRange = 0.
+    epsilon=median/10.0
+    above68=False
+    numIter = 0
+    sigmaMinus = median
+    sigmaPlus = median
+    while abs(probRange - probVal)>0.001 and numIter < 100.:
+        print "Entering loop"
+        numIter += 1
+        if probRange < probVal:
+            above68 = True
+            sigmaMinus = sigmaMinus - epsilon
+            sigmaPlus = sigmaPlus + epsilon
+        else:
+            if above68: epsilon = epsilon/10.0
+            above68 = False
+            sigmaMinus = sigmaMinus + epsilon
+            sigmaPlus = sigmaPlus - epsilon
+            
+        if sigmaMinus<=0: sigmaMinus = 0.
+        if sigmaPlus>=maxX: sigmaPlus = maxX
+        if sigmaMinus<sigmaPlus : probRange = func.Integral(sigmaMinus,sigmaPlus)/totalProb
+        else: probRange = 0.
+        print "iteration = %d"%numIter
+        print "epsilon = %f"%epsilon
+        print "sigmaPlus = %f"%sigmaPlus
+        print "sigmaMinus = %f"%sigmaMinus
+        print "Int_[sigmaMinus,sigmaPlus] f(x) dx = %f"%probRange
+   
+    funcFill68 = func.Clone("funcFill68")
+    funcFill68.SetRange(sigmaMinus,sigmaPlus)
+    funcFill68.SetFillColor(rt.kTeal)
+    funcFill68.SetFillStyle(3144)
+    funcFill68.Draw("same")
+    return mode,sigmaMinus,sigmaPlus,probRange,funcFill68
+
 def getSigma(n, hToy):
     if hToy.GetMaximumBin() == hToy.FindBin(n): return 0.
     # find the probability of the bin corresponding to the observed n
@@ -150,11 +228,75 @@ def getSigma(n, hToy):
      # convert the one-sided p-value in a number of sigmas
     #print rt.TMath.NormQuantile(Prob)
     #return rt.TMath.NormQuantile(Prob)
-    medianVal = findMedian(myhisto)
+    medianVal = findMedian(hToy)
     pVal = 1.-getPValue(n,hToy)
     if n>medianVal: return rt.TMath.NormQuantile(0.5 + pVal/2.)
     else: return -rt.TMath.NormQuantile(0.5 + pVal/2.)
 
+def getSigmaFromPval(n, hToy, pVal):
+    if hToy.GetMaximumBin() == hToy.FindBin(n): return 0.
+    medianVal = findMedian(hToy)
+    coreProb = 1. - pVal
+    if n>medianVal: return rt.TMath.NormQuantile(0.5 + coreProb/2.)
+    else: return -rt.TMath.NormQuantile(0.5 + coreProb/2.)
+
+def getPValueFromKDE(nObs,maxX,func):
+    funcObs = func.Eval(nObs)
+    funcMax = func.GetMaximum()
+    otherRoot = 0.
+    rightSide = False
+    veryNearMax = False
+    epsilon = max(0.2,nObs/100)
+    pvalKDE = 0
+    totalProb = func.Integral(0,maxX)
+    if abs(float(funcObs)-funcMax)/funcMax < 0.003:
+        veryNearMax = True
+        pvalKDE = 1.
+        otherRoot = nObs
+    elif func.Derivative(nObs)<0.:
+        rightSide = True
+        otherRoot = func.GetX(funcObs,0,nObs-epsilon)
+        if otherRoot >= nObs-epsilon:
+            otherRoot = func.GetX(funcObs-0.0005,0,nObs-epsilon)
+        if otherRoot < nObs-epsilon:
+            pvalKDE = func.Integral(0,otherRoot)
+        pvalKDE += func.Integral(nObs,maxX)
+    else:
+        otherRoot = func.GetX(funcObs,nObs+epsilon,maxX)
+        pvalKDE = func.Integral(0,nObs)
+        pvalKDE += func.Integral(otherRoot,maxX)
+    pvalKDE = pvalKDE/totalProb
+    # DRAWING FUNCTION AND FILLS
+    func.SetLineColor(rt.kViolet)
+    funcFillRight = func.Clone("funcFillRight")
+    funcFillLeft = func.Clone("funcFillLeft")
+    if veryNearMax:
+        funcFillRight.SetRange(nObs,maxX)
+        funcFillLeft.SetRange(0,nObs)
+    elif rightSide:
+        funcFillRight.SetRange(nObs,maxX)
+        funcFillLeft.SetRange(0,otherRoot)
+    else:
+        funcFillRight.SetRange(otherRoot,maxX)
+        funcFillLeft.SetRange(0,nObs)
+    funcFillRight.SetFillColor(rt.kViolet)
+    funcFillRight.SetFillStyle(3002)
+    funcFillLeft.SetFillColor(rt.kViolet)
+    funcFillLeft.SetFillStyle(3002)
+    func.Draw("same")
+    funcFillRight.Draw("fcsame")
+    if (rightSide and otherRoot < nObs-epsilon) or not rightSide:
+        funcFillLeft.Draw("fcsame")
+    # PRINTING INFORMATION
+    print varName
+    print "nObs =  %d"%(nObs)
+    print "f(nObs) =  %f"%(funcObs)
+    print "fMax = %f"%(funcMax)
+    print "percent diff = %f"%(abs(float(funcObs)-funcMax)/funcMax)
+    print "other root = %f"%(otherRoot)
+    print "total prob =  %f"%(totalProb)
+    print "pvalKDE = %f"%pvalKDE
+    return pvalKDE,funcFillRight,funcFillLeft
 
 def getPValue(n, hToy):
     if hToy.Integral() <= 0.: return 0.
@@ -220,54 +362,97 @@ if __name__ == '__main__':
             htemp = rt.gPad.GetPrimitive("htemp")
             mean = htemp.GetMean()
             rms = htemp.GetRMS()
+            numBin = array('f',[0])
+
+            switchToKDE = False #this is set true or false later
+            printPlots = True
+            
+            maxX = int(max(10.0,mean+5.*rms))
+            minX = int(max(0.0,mean-5.*rms))
+            htemp.Scale(1./htemp.Integral())
+            
+            # GET THE OBSERVED NUMBER OF EVENTS
+            data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1]))
+            nObs = data.numEntries()
+            
+            if htemp.GetBinContent(htemp.FindBin(0)) > 0.85 or maxX==10 or nObs==0:
+                maxX = int(10.0)
+                switchToKDE = False
+                print "DO NOT SWITCH TO KDE bin %i = %f"%(htemp.FindBin(0),htemp.GetBinContent(htemp.FindBin(0)))
+            else:
+                switchToKDE = True
+                print "SWITCH TO KDE"
             del htemp
             
-            maxX = int(max(mean+5.*rms,20.0))
-            minX = int(max(0.0,mean-5.*rms))
-
             myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
             myTree.Project(histoName, varName)
             myhisto.Scale(1./myhisto.Integral())
+            orighisto = myhisto.Clone("orighisto")
+            c = rt.TCanvas("canvas","canvas",800,600)
+            orighisto.SetLineColor(rt.kBlack)
+            orighisto.Draw()
+            if myhisto.GetEntries() != 0:
+                if switchToKDE:
+                    # USING ROOKEYSPDF
+                    nExp = rt.RooRealVar(varName,varName,0,maxX)
+                    dataset = rt.RooDataSet("dataset","dataset",myTree,rt.RooArgSet(nExp))
+                    rho = 1.0
+                    rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",nExp,dataset,rt.RooKeysPdf.NoMirror,rho)
+                    func = rkpdf.asTF(rt.RooArgList(nExp))
+                    # GETTING THE P-VALUE
+                    pvalKDE,funcFillRight,funcFillLeft = getPValueFromKDE(nObs,maxX,func)
+                    for ib in range(0,maxX):
+                        nExp.setVal(ib)
+                        myhisto.SetBinContent(myhisto.FindBin(ib),rkpdf.getVal())
+                    myhisto.Scale(1./myhisto.Integral())
+    
+                if switchToKDE: modeVal,rangeMin,rangeMax,probRange,funcFill68 = find68ProbRangeFromKDEMedian(maxX,func)
 
-            if myhisto.GetEntries() != 0: 
-                # get the observed number of events
-                data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1]))
-                nObs = data.numEntries()
-                if maxX==20.0:
-                    print "maxX == 20.0"
-                else:
-                    numBin = array('f',[0])
-                    myTree.ResetBranchAddresses()
-                    myTree.SetBranchAddress(varName, numBin )
-                    numBinList, k = [], 0
-                    while myTree.GetEntry(k):
-                        k += 1
-                        numBinList.append( numBin[0] )
-                    print len(numBinList)
-                    numBinArray = array('d',numBinList)
-                    rho = 2.0
-                    kde = rt.TKDE(nToys, numBinArray, minX,maxX, "", rho)
-                    del myhisto
-                    myhisto = getHistoKDE(kde,nToys,histoName,minX,maxX)
-                    del kde
-                    del numBin
-                modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
+                else: modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
+
                 medianVal = findMedian(myhisto)
-                pval = getPValue(nObs, myhisto)
-                h.SetBinContent(i+1, j+1, pval)
-                nsigma = getSigma(nObs, myhisto)
+                if switchToKDE: pval = pvalKDE
+                else: pval = getPValue(nObs, myhisto)
+                    
                 # the p-value cannot be one... And we have a limited number of toys
                 pvalmax = 1.-1./myhisto.GetEntries()
+                pvalmin = 0.+1./(10*myhisto.GetEntries())
                 if pval >pvalmax: pval = pvalmax 
                 # these are those bins where we see 0 and we expect 0
                 if pval == pvalmax and myhisto.GetMaximumBin() == 1: nsigma = 0.
+                if pval==0: pval = pvalmin
+                # use the adjusted p-value 
+                h.SetBinContent(i+1, j+1, pval)
+                nsigma = getSigmaFromPval(nObs, myhisto,pval)
+                if pval==pvalmin: nsigma = 5.0
+
+                
+                # FINISHING PLOTTING AND LEGEND
+                if printPlots: 
+                    nObsLine = rt.TLine(nObs,0.,nObs,1.05*orighisto.GetMaximum())
+                    nObsLine.SetLineColor(rt.kPink+10)
+                    nObsLine.SetLineWidth(3)
+                    nObsLine.Draw("same")
+                    tleg = rt.TLegend(0.65,.65,.9,.9)
+                    tleg.AddEntry(nObsLine,"nObs = %d"%nObs,"l")
+                    if switchToKDE:
+                        tleg.AddEntry(funcFillRight,"p-value = %.2f"%pval,"f")
+                        tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,rangeMin,rangeMax),"f")
+                    else:
+                        tleg.AddEntry(myhisto,"p-value = %.2f"%pval,"f")
+                        tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(rangeMin,rangeMax),"f")
+                    tleg.SetFillColor(rt.kWhite)
+                    tleg.Draw("same")
+                    rt.gStyle.SetOptStat(0)
+                    c.Print("histotest_%s.pdf"%varName)
+                
                 hNS.SetBinContent(i+1, j+1, nsigma)
                 #if not HadFR(MRbins[i], Rsqbins[j]):
                 hOBS.SetBinContent(i+1, j+1, nObs)
                 hEXP.SetBinContent(i+1, j+1, (rangeMax+rangeMin)/2)
                 hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
                 if (rangeMax+rangeMin)/2 == 50000.: continue
-                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
+                #print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
                 if pval<0.15: table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)

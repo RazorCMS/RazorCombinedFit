@@ -20,7 +20,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
     output.Close()
     return data.numEntries()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, write = True):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, calo, write = True,):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
@@ -44,11 +44,14 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     btagmax =  args['nBtag'].getMax()
     label ="BTAG_"
     if btagmax <= 1.: label = "NoBTAG_"
+    if not calo: label += "PF_"
+    else: label += "CALO_"
 
     print btagmax
 
-    #iterate over selected entries in the input tree    
-    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
+    #iterate over selected entries in the input tree
+    if not calo: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
+    else: tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;
@@ -57,7 +60,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         if entry == -1: break
         tree.GetEntry(entry)
         
-        if tree.BTAG_NUM < btagmin or tree.BTAG_NUM >= btagmax: continue
+        if not calo:
+            if tree.BTAG_NUM < btagmin or tree.BTAG_NUM >= btagmax: continue
+        else:
+            if tree.BTAG_NUM_CALO < btagmin or tree.BTAG_NUM_CALO >= btagmax: continue
 
         runrange = run.split(":")
         if len(runrange) == 2:
@@ -68,11 +74,19 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
-        a.setRealValue('MR',tree.MR)
-        a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
-        a.setRealValue('Rsq',tree.RSQ)
-        a.setRealValue('nBtag',tree.BTAG_NUM)
-        a.setRealValue('CHARGE',tree.CHARGE)
+        
+        if not calo:
+            a.setRealValue('MR',tree.MR)
+            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
+            a.setRealValue('Rsq',tree.RSQ)
+            a.setRealValue('nBtag',tree.BTAG_NUM)
+            a.setRealValue('CHARGE',tree.CHARGE)
+        else:
+            a.setRealValue('MR',tree.MR_CALO_NOMU)
+            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_CALO_NOMU))
+            a.setRealValue('Rsq',tree.RSQ_CALO_NOMU)
+            a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
+            a.setRealValue('CHARGE',tree.CHARGE)          
         try:
             a.setRealValue('W',tree.WPU)
         except AttributeError:
@@ -122,6 +136,8 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
+    parser.add_option('-l','--calo',dest="calo",default=False,action='store_true',
+                  help="Use CALO jets, instead of PF jets")
       
     (options,args) = parser.parse_args()
     
@@ -140,17 +156,17 @@ if __name__ == '__main__':
             if not options.eff:
                 #dump the trees for the different datasets
                 if options.box != None:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTau.root', cfg,'TauTau',options.min,options.max,options.run)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTau.root', cfg,'TauTau',options.min,options.max,options.run,options.calo)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             

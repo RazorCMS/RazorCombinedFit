@@ -14,6 +14,8 @@ if __name__ == '__main__':
     ScaleFactor = int(sys.argv[1])
     label = sys.argv[2]
     Box = sys.argv[3]
+    listfileName = sys.argv[4]
+    listfile = open(listfileName)
 
     MRbins, Rsqbins = makeBluePlot.Binning(Box, False)
 
@@ -41,9 +43,11 @@ if __name__ == '__main__':
             myTree.Branch(branchName, rt.AddressOf(s1,varName),'%s/F' %varName)
     
     treeName = "RMRTree"
-    for i in range(4,len(sys.argv)):
-        myfile = rt.TFile(sys.argv[i])
-        #myfile = rt.TFile("%s_%i.root" %(sys.argv[4],i))
+    #for i in range(4,len(sys.argv)):
+        #myfile = rt.TFile(sys.argv[i])
+    for line in listfile:
+        filename = line.split('\n')[0]
+        myfile = rt.TFile(filename)
         gdata = myfile.Get(treeName)
         if gdata == None: continue
         if gdata.InheritsFrom("TTree") != True: continue

@@ -5,37 +5,50 @@ import ROOT as rt
 from array import *
 
 #this is global, to be reused in the plot making
-def getBinning(boxName, varName, btag):
+#this binning is poss
+def getBinning_fine(boxName, varName, btag):
     if boxName == "Had" or boxName == "TauTau":
-        if varName == "MR" : return [400, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
-        if varName == "Rsq" : return [0.18,0.23,0.28,0.32,0.37,0.41,0.46,0.51,0.57,0.63,0.70,0.80,1.5]
+        if varName == "MR" : return [400, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500]
+        if varName == "Rsq" : 
+            if btag == "NoBtag": return [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
+            else: return [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
         if varName == "nBtag" : return [0,1,2,3,4,5]
     else:
-        if varName == "MR" : return [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
-        #if varName == "Rsq" : return [0.10,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
-        #if varName == "MR" : return [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500, 4500]
+        if varName == "MR" : return [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500]
         if varName == "Rsq" :
-            if btag == "NoBtag":return [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50]
+            if btag == "NoBtag": return [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50]
             else: return [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
         if varName == "nBtag" : return [0,1,2,3,4,5]
 
+def getBinning(boxName, varName, btag):
+    if boxName == "Had" or boxName == "TauTau":
+        if varName == "MR" : return [400, 480, 600, 740, 900, 1200, 1600, 2500]
+        if varName == "Rsq" : 
+            if btag == "NoBtag": return [0.18,0.24,0.35,0.50]
+            else: return [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
+        if varName == "nBtag" : return [0,1,2,3,4,5]
+    else:
+        if varName == "MR" : return [350, 410, 490, 600, 740, 900, 1200, 1600, 2500]
+        if varName == "Rsq" :
+            if btag == "NoBtag": return [0.11,0.17,0.23,0.35,0.50]
+            else: return [0.11,0.17,0.23,0.32,0.41,0.52,0.64,0.80,1.5]
+        if varName == "nBtag" : return [0,1,2,3,4,5]
+            
 class RazorBox(Box.Box):
     
-    def __init__(self, name, variables, fitMode = '3D', btag = True):
+    def __init__(self, name, variables, fitMode = '3D', btag = True, fitregion = 'SidebandMR'):
         super(RazorBox,self).__init__(name, variables)
         #data
         if not btag:
             self.btag = "NoBtag"
+            self.zeros = {'UEC':['Had'],'TTj':['Ele','Mu','EleTau','MuTau','MuMu','MuEle','EleEle','TauTau'],'Vpj':['Ele','Mu','EleTau','MuTau','MuMu','MuEle','EleEle','Had','TauTau']}
         else:
             self.btag = "Btag"
-        #self.zeros = {'UEC':['Had','TauTau','Mu','MuTau','MuEle','Ele','EleTau','EleEle','MuMu'],'TTj':[],'Vpj':['MuEle']}
-        if self.btag == "NoBtag":
-            self.zeros = {'UEC':[],'TTj':['Ele','Mu','EleTau','MuTau','MuMu','MuEle','EleEle'],'Vpj':['MuEle']}
-        else:
-            self.zeros = {'UEC':[],'TTj':['MuEle','EleEle','MuMu'],'Vpj':['MuEle','EleEle','MuMu']}
+            self.zeros = {'UEC':[],'TTj':['MuEle','EleEle','MuMu','Had','Mu','Ele','MuTau','EleTau','TauTau'],'Vpj':['MuEle','EleEle','MuMu','Had','Mu','Ele','MuTau','EleTau','TauTau']}
         self.cut = 'MR >= 0.0'
+        self.fitregion = fitregion
         #self.fitregion = 'SidebandMR'
-        self.fitregion = 'SidebandRsq'
+        #self.fitregion = 'SidebandRsq'
         self.fitMode = fitMode
         
     def addTailPdf(self, flavour, doSYS):
@@ -155,12 +168,9 @@ class RazorBox(Box.Box):
         # - W+jets
         # - ttbar+jets
         # - UEC
-        #self.addTailPdf("Vpj", False)    
-        #self.addTailPdf("TTj", False)
         self.addTailPdf("Vpj", False)
-        self.addTailPdf("TTj", True)
+        self.addTailPdf("TTj", False)
         self.addTailPdf("UEC", True)
-        #self.addTailPdf("UEC", False)
 
         # build the total PDF
         myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj"), self.workspace.pdf("ePDF_UEC"))
@@ -218,6 +228,11 @@ class RazorBox(Box.Box):
         Nuec = self.workspace.var("Ntot_UEC").getVal()
         Nvpj = self.workspace.var("Ntot_Vpj").getVal()
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+        # fix shape parameters -- FOR TESTING
+        #self.workspace.var("n_UEC").setConstant(rt.kTRUE)
+        #self.workspace.var("b_UEC").setConstant(rt.kTRUE)
+        #self.workspace.var("R0_UEC").setConstant(rt.kTRUE)
+        #self.workspace.var("MR0_UEC").setConstant(rt.kTRUE)
 
         #in the case that the input file is an MC input file
         if data is None or not data:
@@ -414,6 +429,7 @@ class RazorBox(Box.Box):
             ranges = ['']
             
         rangeCut = self.getVarRangeCutNamed(ranges=ranges)
+
         if data is None:
             data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
             data = data.reduce(rangeCut)
@@ -431,7 +447,7 @@ class RazorBox(Box.Box):
             Nvpj = self.workspace.var("Ntot_Vpj").getVal()
             if Nvpj>1:
                 #toyDataVpj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nuec)))
-                toyDataVpj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(Nvpj)))
+                toyDataVpj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(100*(Nvpj)))
                 toyDataVpj = toyDataVpj.reduce(self.getVarRangeCutNamed(ranges=ranges))
 
         # Generate a sample of UEC
@@ -439,7 +455,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_UEC").setVal(Nuec)
         if self.workspace.var("Ntot_UEC") != None and Nuec>1 :
             #toyDataUEC = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nvpj)))
-            toyDataUEC = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(Nuec)))
+            toyDataUEC = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(100*(Nuec)))
             toyDataUEC = toyDataUEC.reduce(self.getVarRangeCutNamed(ranges=ranges))
                         
         # Generate a sample of TTj
@@ -447,7 +463,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_UEC").setVal(0.)
         if self.workspace.var("Ntot_TTj") != None and Ntt>1 :
             #toyDataUEC = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(data.numEntries()-Ntt-Nvpj)))
-            toyDataTTj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(Ntt)))
+            toyDataTTj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(100*(Ntt)))
             toyDataTTj = toyDataTTj.reduce(self.getVarRangeCutNamed(ranges=ranges))
              
         self.workspace.var("Ntot_UEC").setVal(Nuec)
@@ -459,7 +475,9 @@ class RazorBox(Box.Box):
 
         # variable binning for plots
         bins = getBinning(self.name, xvarname, self.btag)
+        nbins =len(bins)-1
         xedge = array("d",bins)
+        print "Binning in variable %s is "%xvarname
         print bins
         
         # define 1D histograms
@@ -591,4 +609,5 @@ class RazorBox(Box.Box):
         histToReturn.append(histoToyUEC)
         #if self.name == "Had": histToReturn.append(histoToyZnn)
 
+        c.Print("razor_canvas_%s.pdf"%(xvarname))
         return histToReturn

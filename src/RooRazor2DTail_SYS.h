@@ -20,7 +20,7 @@ public:
    RooRazor2DTail_SYS(const char *name, const char *title,
 		  RooAbsReal &_x, RooAbsReal &_y, 
 		  RooAbsReal &_x0, RooAbsReal &_y0,
-		  RooAbsReal &_b, RooAbsReal &_n);
+		      RooAbsReal &_b, RooAbsReal &_n);
    RooRazor2DTail_SYS(const RooRazor2DTail_SYS& other,
       const char* name = 0);
    virtual TObject* clone(const char* newname) const { return new RooRazor2DTail_SYS(*this,newname); }
@@ -38,14 +38,14 @@ protected:
 	   return Chop(TMath::Power(x,y));
    }
    Double_t Gamma(const Double_t a, const Double_t x) const{
-	   return Chop(ROOT::Math::inc_gamma(a,x));
+	   return Chop(ROOT::Math::inc_gamma_c(a,x));
    }
    Double_t ExpIntegralEi(const Double_t z) const{
 	   return Chop(ROOT::Math::expint(z));
    }
 
    Double_t Gfun(const Double_t x, const Double_t y) const{
-     return TMath::Gamma(N)*Gamma(N,B*pow(x-X0,1/N)*pow(y-Y0,1/N));
+     return TMath::Gamma(N)*Gamma(N,B*N*pow(x-X0,1/N)*pow(y-Y0,1/N));
    }
 
    RooRealProxy X;        // dependent variable

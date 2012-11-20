@@ -3,8 +3,9 @@ import ROOT as rt
 from array import *
 import sys
 import makeBluePlot
-import plotStyle
+#import plotStyle
 import makeToyPVALUE_sigbin
+import os
 
 def FindLastBin(h):
     for i in range(1,h.GetXaxis().GetNbins()):
@@ -39,30 +40,115 @@ def GetProbRange(h):
 def GetErrorsX(nbinx, nbiny, myTree):
     err = []
     # for each bin of x, get the error on the sum of the y bins
+    d = rt.TCanvas("canvas","canvas",800,600)
     for i in range(0,nbinx-1):
-        varName = ""
-        for j in range(0,nbiny-1): varName = varName+"b%i_%i+" %(i,j)
-        myTree.Draw(varName[:-1])
-        htemp = rt.gPad.GetPrimitive("htemp");
-        xmax, xmin = GetProbRange(htemp)
+        sumName = ""
+        varNames = []
+        for j in range(0,nbiny-1):
+            sumName = sumName+"b%i_%i+" %(i,j)
+            varNames.append("b%i_%i" %(i,j))
+        myTree.Draw(sumName[:-1])
+        htemp = rt.gPad.GetPrimitive("htemp")
+        mean = htemp.GetMean()
+        rms = htemp.GetRMS()
+        print "rms = %f"%rms
+        maxX = int(max(10.0,mean+5.*rms))
+        htemp.Scale(1./htemp.Integral())
+        
+        myhisto = rt.TH1D("hsum", "hsum", maxX, 0., maxX)
+        myTree.Project("hsum", sumName[:-1])
+        myhisto.Scale(1./myhisto.Integral())
+        switchToKDE = True
+        if myhisto.GetMaximumBin() <= myhisto.FindBin(3): switchToKDE = False
+        # USING ROOKEYSPDF
+        if switchToKDE:
+            nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
+            nExpSet = rt.RooArgSet("nExpSet")
+            nExpList = rt.RooArgList("nExpList")
+            for j in range(0,nbiny-1):
+                nExpSet.add(nExp[j])
+                nExpList.add(nExp[j])
+            dataset = rt.RooDataSet("dataset","dataset",myTree,nExpSet)
+            sumExp = rt.RooFormulaVar("sumExp","sumExp",sumName[:-1],nExpList)
+            sumExpData = dataset.addColumn(sumExp)
+            sumExpData.setRange(0,maxX)
+            rho = 1.0
+            rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
+            func = rkpdf.asTF(rt.RooArgList(sumExpData))
+            myhisto.Draw()
+            func.Draw("same")
+            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMean(maxX,func)
+            tleg = rt.TLegend(0.6,.65,.9,.9)
+            if switchToKDE:
+                tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+            else:
+                tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
+            tleg.SetFillColor(rt.kWhite)
+            tleg.Draw("same")
+            rt.gStyle.SetOptStat(0)
+            d.Print("functest_X_%i.pdf"%i)
+        else:
+            xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
         err.append((xmax-xmin)/2.)
     return err
-
+            
 def GetErrorsY(nbinx, nbiny, myTree):
     err = []
-    # for each bin of x, get the error on the sum of the y bins
+    # for each bin of y, get the error on the sum of the x bins
+    d = rt.TCanvas("canvas","canvas",800,600)
     for j in range(0,nbiny-1):
-        varName = ""
-        for i in range(0,nbinx-1): varName = varName+"b%i_%i+" %(i,j)
-        myTree.Draw(varName[:-1])
-        htemp = rt.gPad.GetPrimitive("htemp");
-        xmax, xmin = GetProbRange(htemp)
+        sumName = ""
+        varNames = []
+        for i in range(0,nbinx-1):
+            sumName = sumName+"b%i_%i+" %(i,j)
+            varNames.append("b%i_%i" %(i,j))
+        myTree.Draw(sumName[:-1])
+        htemp = rt.gPad.GetPrimitive("htemp")
+        mean = htemp.GetMean()
+        rms = htemp.GetRMS()
+        maxX = int(max(10.0,mean+5.*rms))
+        htemp.Scale(1./htemp.Integral())
+        
+        myhisto = rt.TH1D("hsum", "hsum", maxX, 0., maxX)
+        myTree.Project("hsum", sumName[:-1])
+        myhisto.Scale(1./myhisto.Integral())
+        switchToKDE = True
+        if myhisto.GetMaximumBin() <= myhisto.FindBin(3): switchToKDE = False
+        # USING ROOKEYSPDF
+        if switchToKDE:
+            nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
+            nExpSet = rt.RooArgSet("nExpSet")
+            nExpList = rt.RooArgList("nExpList")
+            for i in range(0,nbinx-1):
+                nExpSet.add(nExp[i])
+                nExpList.add(nExp[i])
+            dataset = rt.RooDataSet("dataset","dataset",myTree,nExpSet)
+            sumExp = rt.RooFormulaVar("sumExp","sumExp",sumName[:-1],nExpList)
+            sumExpData = dataset.addColumn(sumExp)
+            sumExpData.setRange(0,maxX)
+            rho = 1.0
+            rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
+            func = rkpdf.asTF(rt.RooArgList(sumExpData))
+            myhisto.Draw()
+            func.Draw("same")
+            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDE(maxX,func)
+            tleg = rt.TLegend(0.6,.65,.9,.9)
+            if switchToKDE:
+                tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+            else:
+                tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
+            tleg.SetFillColor(rt.kWhite)
+            tleg.Draw("same")
+            rt.gStyle.SetOptStat(0)
+            d.Print("functest_Y_%i.pdf"%j)
+        else:
+            xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
         err.append((xmax-xmin)/2.)
     return err
 
-def goodPlot(varname, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, hMRData):
+def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, hMRData):
     rt.gStyle.SetOptStat(0000)
     rt.gStyle.SetOptTitle(0)
     c1 = rt.TCanvas("c%s" %varname,"c%s" %varname, 900, 600)
@@ -148,8 +234,8 @@ def goodPlot(varname, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, h
     
     c1.Update()
 
-    c1.SaveAs("%s_%s.pdf" %(varname,Label))
-    c1.SaveAs("%s_%s.C" %(varname,Label))
+    c1.SaveAs("%s/%s_%s.pdf" %(outFolder,varname,Label))
+    c1.SaveAs("%s/%s_%s.C" %(outFolder,varname,Label))
     
 if __name__ == '__main__':
     rt.gStyle.SetOptStat(0)
@@ -159,6 +245,8 @@ if __name__ == '__main__':
     Box = sys.argv[1]
     fileName = sys.argv[2]
     fitfileName = sys.argv[3]
+    outFolder = sys.argv[4]
+    if outFolder[-1] == "/": outFolder = outFolder[:-1]
     noBtag = False
     Lumi = 5.
     Energy = 8.
@@ -230,5 +318,7 @@ if __name__ == '__main__':
         hRSQTOTcopy.SetBinError(i,max(errRSQ[i-1],hRSQTOT.GetBinError(i)))
         hRSQTOT.SetBinError(i,0.)
 
-    goodPlot("MR", Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, hMRData)
-    goodPlot("RSQ", Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj, hRSQVpj, hRSQData)
+    goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, hMRData)
+    goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj, hRSQVpj, hRSQData)
+    
+    os.system("pdftk functest*.pdf cat output %s/functest_%s.pdf"%(outFolder,outFolder))
