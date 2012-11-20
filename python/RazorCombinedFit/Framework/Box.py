@@ -41,7 +41,8 @@ class Box(object):
     def getVarRangeCut(self, range = ''):
         cut = ''
         def var_cut(v):
-            return '( (%s >= %f) && (%s < %f) )' % (v.GetName(),v.getMin(range),v.GetName(),v.getMax(range))
+            if v.GetName()=="CHARGE": return '( (%s >= %f) && (%s <= %f) )' % (v.GetName(),v.getMin(range),v.GetName(),v.getMax(range))
+            else: return '( (%s >= %f) && (%s < %f) )' % (v.GetName(),v.getMin(range),v.GetName(),v.getMax(range))
         vars = [v for v in RootTools.RootIterator.RootIterator(self.workspace.set('variables'))]
         if vars:
             cut = var_cut(vars[0])
@@ -155,6 +156,7 @@ class Box(object):
     def fit(self, inputFile, reduce = None, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
         data = self.workspace.data("RMRTree")
+        
         return self.fitData(self.getFitPDF(), data, *options)
 
     def fitDataSilent(self, pdf, data, *options):
@@ -180,10 +182,17 @@ class Box(object):
         
         if data.isWeighted():
             print 'The dataset is weighted: Performing a SumW2 fit'
+            print 'Fitting to %.1f weighted events'%data.sumEntries()
+        else:
+            print 'The dataset is unweighted: Performing a normal fit'
+            print 'Fitting to %d unweighted events'%data.numEntries()
+            
 
         result = self.fitDataSilent(pdf, data, *options)
         result.Print('V')
-        if result.status() != 0 or result.covQual() != 3:
+        if result.status() == 0 and result.covQual() == -1:
+            print 'Covariance matrix externally provided. OK for weighted datset!'
+        elif result.status() != 0 or result.covQual() != 3:
             print 'WARNING:: The fit did not converge with high quality. Consider this result suspect!'
         
         return result 

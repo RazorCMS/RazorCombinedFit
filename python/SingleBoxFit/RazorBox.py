@@ -238,7 +238,7 @@ class RazorBox(Box.Box):
         if data is None or not data:
             return None
         
-        Ndata = data.numEntries()
+        Ndata = data.sumEntries()
         self.workspace.var("Ntot_TTj").setVal(Ndata*Nttj/(Nttj+Nuec+Nvpj))
         self.workspace.var("Ntot_UEC").setVal(Ndata*Nuec/(Nttj+Nuec+Nvpj))
         self.workspace.var("Ntot_Vpj").setVal(Ndata*Nvpj/(Nttj+Nuec+Nvpj))

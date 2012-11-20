@@ -88,7 +88,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
             a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
             a.setRealValue('CHARGE',tree.CHARGE)          
         try:
-            a.setRealValue('W',tree.WPU)
+            a.setRealValue('W',tree.WXSEC)
         except AttributeError:
             a.setRealValue('W',1.0)
         data.add(a)
@@ -97,6 +97,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     if max < 0: max = numEntries
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
+    wdata = rt.RooDataSet(rdata.GetName(),rdata.GetTitle(),rdata,rdata.get(),"MR>0","W")
+    print "Number of Entries in Box %s = %d"%(box,rdata.numEntries())
+    print "Sum of Weights in Box %s = %.1f"%(box,wdata.sumEntries())
     if write:
         writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, label)
     return rdata

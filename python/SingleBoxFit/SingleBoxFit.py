@@ -190,6 +190,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 
                 fr = boxes[box].fitData(pdf, gdata_cut)
                 predictions = boxes[box].predictBackgroundData(fr, gdata, nRepeats = 5, verbose = False)
+               
                 if not fr.status() == 0 and fr.covQual() == 3:
                     print 'WARNING:: The toy fit %i did not converge with high quality. Consider this result suspect!' % i
                 print 'Fit result %d for box %s' % (i,box)
@@ -230,7 +231,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     fit_range = "FULL"
                 elif self.options.doMultijet:
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
-                print 'Using the fit range: %s' % fit_range    
+                print 'Using the fit range: %s' % fit_range
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
                 
                 self.store(fr, name = 'independentFR', dir=box)

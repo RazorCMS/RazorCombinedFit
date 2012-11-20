@@ -20,7 +20,8 @@ def writeCocktail(box, files):
         ds.append(RootTools.getDataSet(f,'RMRTree'))
     if not ds:
         raise Exception('Not enough datasets found: %i' % len(ds))
-    
+    print files
+    print ds
     row = ds[0].get()
     row.Print("V")
     
@@ -28,9 +29,10 @@ def writeCocktail(box, files):
     rsqMin = row['Rsq'].getMin()
     rMin = rt.TMath.Sqrt(rsqMin)
     
-    wData = rt.RooDataSet('RMRTree','Weighted Cocktail',row,'W')
+    tData = rt.RooDataSet('RMRTree','Total Dataset',row)
     for d in ds:
-        wData.append(d)
+        tData.append(d)
+    wData = rt.RooDataSet('RMRTree','Weighted Cocktail',tData,row,'MR>0','W')
 
     output = rt.TFile.Open("SMCocktail_MR"+str(mRmin)+"_R"+str(rMin)+"_"+box+'.root','RECREATE')
     print 'Writing',output.GetName()
