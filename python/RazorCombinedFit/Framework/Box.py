@@ -355,6 +355,20 @@ class Box(object):
             if p.getVal() == p.getMin() or p.getVal() == p.getMax(): parsAtLimit = True
         return pars, parsAtLimit
 
+    def isMinCoeffNegative(self, vars, pars, component = 'UEC'):
+        xmin = vars['MR'].getMin()
+        ymin = vars['Rsq'].getMin()
+        btoy = pars['b_%s'%component].getVal()
+        x0toy =  pars['MR0_%s'%component].getVal()
+        y0toy =  pars['R0_%s'%component].getVal()
+        ntoy = pars['n_%s'%component].getVal()
+        toyMinCoeff = btoy*rt.TMath.Power((xmin - x0toy)*(ymin -y0toy), 1.0/ntoy) - 1.0 
+        print "MY MIN COEFFICIENT: b[(xmin-x0)(ymin-y0)]^(1/n)-1 = %f"%toyMinCoeff
+        if toyMinCoeff < 0:
+            print "NEGATIVE! RETHROW TOY"
+            return True
+        return False
+    
     def generateToyFRWithYield(self, genmodel, fr, number, *options):
         """Generate a toy dataset with the specified number of events"""
         
@@ -368,7 +382,8 @@ class Box(object):
         parsAtLimit = True
         while parsAtLimit :
             pars, parsAtLimit = self.smearParsWithCovariance(fr)
-
+            if not parsAtLimit: parsAtLimit = self.isMinCoeffNegative(vars, pars, 'UEC')
+            
         for name, value in pars.iteritems():
             print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())

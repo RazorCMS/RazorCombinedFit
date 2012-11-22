@@ -4,7 +4,6 @@ from array import *
 import sys
 import makeBluePlot
 
-
 def set2DStyle(h) :
     h.GetXaxis().SetTitle("M_{R}[GeV]")
     h.GetYaxis().SetTitle("R^{2}")
@@ -124,6 +123,20 @@ def find68ProbRange(hToy, probVal=0.6827):
             maxVal = hToy.GetBinLowEdge(hToy.GetNbinsX()-i)+hToy.GetBinWidth(hToy.GetNbinsX()-i)*(1-fraction)
             foundMax = True
     return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
+
+def decideToUseKDE(minX,maxX,htemp):
+    if maxX<=10:
+        return False
+    if htemp.GetMaximumBin() <= htemp.FindBin(3):
+        return False
+    return True
+
+def useThisRho(minX,maxX,htemp):
+    if max>10. and maxX<=20:
+        return 2.0
+    if max>10. and maxX<=40:
+        return 1.5
+    return 1.0
 
 def find68ProbRangeFromKDE(maxX,func, probVal=0.6827):
     funcMax = func.GetMaximum()
@@ -311,8 +324,13 @@ if __name__ == '__main__':
     Box = sys.argv[1]
     fileName = sys.argv[2]
     datafileName = sys.argv[3]
+    outFolder = sys.argv[4]
+    
     noBtag = False
-    for i in range(4,len(sys.argv)):
+    
+    printPlots = True
+
+    for i in range(5,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
 
     MRbins, Rsqbins = makeBluePlot.Binning(Box, noBtag)
@@ -334,13 +352,13 @@ if __name__ == '__main__':
     nToys  = myTree.GetEntries()
     dataFile = rt.TFile.Open(datafileName)
     alldata = dataFile.Get("RMRTree")
-    fileOUT = rt.TFile.Open("pvalue_%s.root" %Box, "recreate")
+    fileOUT = rt.TFile.Open("%s/pvalue_%s.root" %(outFolder,Box), "recreate")
 
     # p-values 1D plot
     pValHist = rt.TH1D("pVal%s" %Box, "pVal%s" %Box, 20, 0., 1.)
 
     #prepare the latex table
-    table = open("table_%s.tex" %Box,"w")
+    table = open("%s/table_%s.tex" %(outFolder,Box),"w")
     table.write("\\errorcontextlines=9\n")
     table.write("\\documentclass[12pt]{article}\n")
     table.write("\\begin{document}\n")
@@ -363,9 +381,6 @@ if __name__ == '__main__':
             mean = htemp.GetMean()
             rms = htemp.GetRMS()
             numBin = array('f',[0])
-
-            switchToKDE = False #this is set true or false later
-            printPlots = True
             
             maxX = int(max(10.0,mean+5.*rms))
             minX = int(max(0.0,mean-5.*rms))
@@ -375,13 +390,8 @@ if __name__ == '__main__':
             data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1]))
             nObs = data.numEntries()
             
-            if htemp.GetBinContent(htemp.FindBin(0)) > 0.85 or maxX==10 or nObs==0:
-                maxX = int(10.0)
-                switchToKDE = False
-                print "DO NOT SWITCH TO KDE bin %i = %f"%(htemp.FindBin(0),htemp.GetBinContent(htemp.FindBin(0)))
-            else:
-                switchToKDE = True
-                print "SWITCH TO KDE"
+            switchToKDE = decideToUseKDE(minX,maxX,htemp) #this is set true or false later
+
             del htemp
             
             myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
@@ -396,7 +406,7 @@ if __name__ == '__main__':
                     # USING ROOKEYSPDF
                     nExp = rt.RooRealVar(varName,varName,0,maxX)
                     dataset = rt.RooDataSet("dataset","dataset",myTree,rt.RooArgSet(nExp))
-                    rho = 1.0
+                    rho = useThisRho(minX,maxX,orighisto)
                     rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",nExp,dataset,rt.RooKeysPdf.NoMirror,rho)
                     func = rkpdf.asTF(rt.RooArgList(nExp))
                     # GETTING THE P-VALUE
@@ -424,27 +434,28 @@ if __name__ == '__main__':
                 # use the adjusted p-value 
                 h.SetBinContent(i+1, j+1, pval)
                 nsigma = getSigmaFromPval(nObs, myhisto,pval)
-                if pval==pvalmin: nsigma = 5.0
+                if pval==pvalmin:
+                    if nsigma<0: nsigma = -5.0
+                    else: nsigma = 5.0
 
                 
                 # FINISHING PLOTTING AND LEGEND
-                if printPlots: 
-                    nObsLine = rt.TLine(nObs,0.,nObs,1.05*orighisto.GetMaximum())
-                    nObsLine.SetLineColor(rt.kPink+10)
-                    nObsLine.SetLineWidth(3)
-                    nObsLine.Draw("same")
-                    tleg = rt.TLegend(0.65,.65,.9,.9)
-                    tleg.AddEntry(nObsLine,"nObs = %d"%nObs,"l")
-                    if switchToKDE:
-                        tleg.AddEntry(funcFillRight,"p-value = %.2f"%pval,"f")
-                        tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,rangeMin,rangeMax),"f")
-                    else:
-                        tleg.AddEntry(myhisto,"p-value = %.2f"%pval,"f")
-                        tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(rangeMin,rangeMax),"f")
-                    tleg.SetFillColor(rt.kWhite)
-                    tleg.Draw("same")
-                    rt.gStyle.SetOptStat(0)
-                    c.Print("histotest_%s.pdf"%varName)
+                nObsLine = rt.TLine(nObs,0.,nObs,1.05*orighisto.GetMaximum())
+                nObsLine.SetLineColor(rt.kPink+10)
+                nObsLine.SetLineWidth(3)
+                nObsLine.Draw("same")
+                tleg = rt.TLegend(0.65,.65,.9,.9)
+                tleg.AddEntry(nObsLine,"nObs = %d"%nObs,"l")
+                if switchToKDE:
+                    tleg.AddEntry(funcFillRight,"p-value = %.2f"%pval,"f")
+                    tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,rangeMin,rangeMax),"f")
+                else:
+                    tleg.AddEntry(myhisto,"p-value = %.2f"%pval,"f")
+                    tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(rangeMin,rangeMax),"f")
+                tleg.SetFillColor(rt.kWhite)
+                tleg.Draw("same")
+                rt.gStyle.SetOptStat(0)
+                if printPlots: c.Print("%s/histotest_%s.pdf"%(outFolder,varName))
                 
                 hNS.SetBinContent(i+1, j+1, nsigma)
                 #if not HadFR(MRbins[i], Rsqbins[j]):
@@ -484,7 +495,7 @@ if __name__ == '__main__':
     table.write("\\end{document}\n")
     table.close()
 
-    fileOUTint = rt.TFile.Open("ExpectedObserved_RazorHad_Winter2012.root", "recreate")
+    fileOUTint = rt.TFile.Open("%s/ExpectedObserved_RazorHad_Winter2012.root"%outFolder, "recreate")
     hOBS.Write()
     hEXP.Write()
     fileOUTint.Close()
@@ -557,8 +568,8 @@ if __name__ == '__main__':
     #    frLine.SetLineWidth(2)
     #    frLine.Draw()
 
-    c1.SaveAs("pvalue_sigbin_%s.C" %Box)
-    c1.SaveAs("pvalue_sigbin_%s.pdf" %Box)
+    c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
+    c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
 
     c2 = rt.TCanvas("c2","c2", 900, 600)
     setCanvasStyle(c2)
@@ -577,5 +588,5 @@ if __name__ == '__main__':
     #    hNS.SetContourLevel(i,-5. +i)
     for i in range(0,len(xLines)): xLines[i].Draw()
     for i in range(0,len(yLines)): yLines[i].Draw()
-    c2.SaveAs("nSigma_%s.C" %Box)
-    c2.SaveAs("nSigma_%s.pdf" %Box)
+    c2.SaveAs("%s/nSigma_%s.C" %(outFolder,Box))
+    c2.SaveAs("%s/nSigma_%s.pdf" %(outFolder,Box))

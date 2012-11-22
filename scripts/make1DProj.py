@@ -58,8 +58,9 @@ def GetErrorsX(nbinx, nbiny, myTree):
         myhisto = rt.TH1D("hsum", "hsum", maxX, 0., maxX)
         myTree.Project("hsum", sumName[:-1])
         myhisto.Scale(1./myhisto.Integral())
-        switchToKDE = True
-        if myhisto.GetMaximumBin() <= myhisto.FindBin(3): switchToKDE = False
+        
+        switchToKDE = makeToyPVALUE_sigbin.decideToUseKDE(0.,maxX,myhisto)
+        
         # USING ROOKEYSPDF
         if switchToKDE:
             nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
@@ -72,12 +73,12 @@ def GetErrorsX(nbinx, nbiny, myTree):
             sumExp = rt.RooFormulaVar("sumExp","sumExp",sumName[:-1],nExpList)
             sumExpData = dataset.addColumn(sumExp)
             sumExpData.setRange(0,maxX)
-            rho = 1.0
+            rho = makeToyPVALUE_sigbin.useThisRho(0.,maxX,myhisto)
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
             myhisto.Draw()
             func.Draw("same")
-            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMean(maxX,func)
+            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMedian(maxX,func)
             tleg = rt.TLegend(0.6,.65,.9,.9)
             if switchToKDE:
                 tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
@@ -113,8 +114,9 @@ def GetErrorsY(nbinx, nbiny, myTree):
         myhisto = rt.TH1D("hsum", "hsum", maxX, 0., maxX)
         myTree.Project("hsum", sumName[:-1])
         myhisto.Scale(1./myhisto.Integral())
-        switchToKDE = True
-        if myhisto.GetMaximumBin() <= myhisto.FindBin(3): switchToKDE = False
+        
+        switchToKDE = makeToyPVALUE_sigbin.decideToUseKDE(0.,maxX,myhisto)
+        
         # USING ROOKEYSPDF
         if switchToKDE:
             nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
@@ -127,7 +129,7 @@ def GetErrorsY(nbinx, nbiny, myTree):
             sumExp = rt.RooFormulaVar("sumExp","sumExp",sumName[:-1],nExpList)
             sumExpData = dataset.addColumn(sumExp)
             sumExpData.setRange(0,maxX)
-            rho = 1.0
+            rho = makeToyPVALUE_sigbin.useThisRho(0.,maxX,myhisto)
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
             myhisto.Draw()
@@ -321,4 +323,5 @@ if __name__ == '__main__':
     goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, hMRData)
     goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj, hRSQVpj, hRSQData)
     
-    os.system("pdftk functest*.pdf cat output %s/functest_%s.pdf"%(outFolder,outFolder))
+    os.system("pdftk functest*.pdf cat output %s/functest_%s.pdf"%(outFolder,outFolder.split("/")[-1]))
+    os.system("mv functest*.pdf %s/"%outFolder)

@@ -2,7 +2,7 @@ import sys
 import os
 
 #this is global, to be reused in the plot making
-def Binning(Box, noBtag):
+def Binning_fine(Box, noBtag):
     if Box == "Had" or Box == "TauTau":
         MRbins = [400, 480, 600, 740, 900, 1200, 1600, 2500]
         if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
@@ -11,6 +11,17 @@ def Binning(Box, noBtag):
         MRbins = [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500]
         if noBtag: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50]
         else: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
+    return MRbins, Rsqbins
+
+def Binning(Box, noBtag):
+    if Box == "Had" or Box == "TauTau":
+        MRbins = [400, 480, 600, 740, 900, 1200, 1600, 2500]
+        if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
+        else: Rsqbins = [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
+    else:
+        MRbins = [350, 410, 490, 600, 740, 900, 1200, 1600, 2500]
+        if noBtag: Rsqbins = [0.11,0.17,0.23,0.35,0.50]
+        else: Rsqbins = [0.11,0.17,0.23,0.32,0.41,0.52,0.64,0.80,1.5]
     return MRbins, Rsqbins
 
 if __name__ == '__main__':
@@ -43,17 +54,14 @@ if __name__ == '__main__':
     if not plotOnly:
         os.system("python scripts/convertToyToROOT.py %s/frtoydata_%s" %(ToyDir, Box))
         os.system("rm %s.txt" %(ToyDir))
-        os.system("ls %s/frtoydata_*.root > %s.txt" %(ToyDir,ToyDir))
-        os.system("python scripts/expectedYield_sigbin.py 1 expected_sigbin_%s.root %s %s.txt"%(Box, Box, ToyDir))
-        os.system("rm histotest_b*_*.pdf")
-        os.system("python scripts/makeToyPVALUE_sigbin.py %s expected_sigbin_%s.root %s %s"%(Box, Box, Data, noBtag))
-        os.system("pdftk histotest_b*_*.pdf cat output histotest_%s.pdf"%(ToyDir))
-        os.system("mkdir %s"%(Label))
-        os.system("mv histotest_%s.pdf nSigma_%s.* pvalue_sigbin_%s.* pvalue_%s.root expected_sigbin_%s.root table_%s.tex %s"%(ToyDir,Box, Box, Box, Box, Box, Label))
+        os.system("ls %s/frtoydata_*.root > %s.txt" %(ToyDir, ToyDir))
+        os.system("mkdir -p %s"%(Label))
+        os.system("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt"%(Label,Box, Box, ToyDir))
+        os.system("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s"%(Box, Label, Box, Data, Label, noBtag))
     else:
+        os.system("mkdir -p %s"%(Label))
         os.system("rm %s/pvalue_%s.root" %(Label,Box))
-        os.system("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s"%(Box, Label, Box, Data, noBtag))
-        os.system("mv nSigma_%s.* pvalue_sigbin_%s.* pvalue_%s.root table_%s.tex %s"%(Box,Box, Box, Box, Label))
+        os.system("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s"%(Box, Label, Box, Data, Label, noBtag))
 
     # compile the latex table
     os.system("cd %s; pdflatex table_%s.tex" %(Label, Box))
