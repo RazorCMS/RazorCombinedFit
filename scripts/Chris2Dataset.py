@@ -5,7 +5,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'TauTau':7,'Had':8}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'TauTauJet':8,'MultiJet':9}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -20,7 +20,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
     output.Close()
     return data.numEntries()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, calo, write = True,):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, calo, useWeight, write = True):
     """This defines the format of the RooDataSet"""
     
     workspace = rt.RooWorkspace(box)
@@ -86,11 +86,15 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
             a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_CALO_NOMU))
             a.setRealValue('Rsq',tree.RSQ_CALO_NOMU)
             a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
-            a.setRealValue('CHARGE',tree.CHARGE)          
-        try:
-            a.setRealValue('W',tree.WXSEC)
-        except AttributeError:
+            a.setRealValue('CHARGE',tree.CHARGE)
+        if useWeight:
+            try:
+                a.setRealValue('W',tree.WXSEC)
+            except AttributeError:
+                a.setRealValue('W',1.0)
+        else:
             a.setRealValue('W',1.0)
+            
         data.add(a)
     numEntries = data.numEntries()
     if min < 0: min = 0
@@ -141,6 +145,8 @@ if __name__ == '__main__':
                   help="Specify only one box")
     parser.add_option('-l','--calo',dest="calo",default=False,action='store_true',
                   help="Use CALO jets, instead of PF jets")
+    parser.add_option('-w','--weight',dest="useWeight",default=False,action='store_true',
+                  help="Use weights, if available, default is WXSEC")
       
     (options,args) = parser.parse_args()
     
@@ -159,17 +165,18 @@ if __name__ == '__main__':
             if not options.eff:
                 #dump the trees for the different datasets
                 if options.box != None:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo,options.useWeight)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Had.root', cfg,'Had',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.calo)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTau.root', cfg,'TauTau',options.min,options.max,options.run,options.calo)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
