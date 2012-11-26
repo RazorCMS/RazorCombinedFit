@@ -22,7 +22,7 @@ RooRazor2DTurnOn::RooRazor2DTurnOn(const char *name, const char *title,
   Herror(_error)
 {}
 
-/*
+
 //Reads the histograms from the workspace and/or imports them
 Bool_t RooRazor2DTurnOn::importWorkspaceHook(RooWorkspace& ws){
   
@@ -41,7 +41,7 @@ Bool_t RooRazor2DTurnOn::importWorkspaceHook(RooWorkspace& ws){
   Herror = dynamic_cast<TH2D*>(ws.obj(Herror->GetName()));
   return kTRUE;
 }
-*/
+
 
 Double_t RooRazor2DTurnOn::evaluate() const
 {
