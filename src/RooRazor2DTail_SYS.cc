@@ -81,7 +81,9 @@ Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeNam
      cout << "                           what are you integrating on?" << endl;
      return 0;
    }
-
+   if (fabs(integral)==0){  
+     integral = 1.7e-308;
+   }   
    return fabs(integral);
 }
 // //---------------------------------------------------------------------------
