@@ -227,9 +227,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                 # perform the fit
                 fit_range = boxes[box].fitregion
-                if self.options.full_region:
-                    fit_range = "FULL"
-                elif self.options.doMultijet:
+                if self.options.doMultijet:
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))

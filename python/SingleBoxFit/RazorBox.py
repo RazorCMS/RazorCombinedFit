@@ -7,7 +7,7 @@ from array import *
 #this is global, to be reused in the plot making
 #this binning is poss
 def getBinning_fine(boxName, varName, btag):
-    if boxName == "Had" or boxName == "TauTau":
+    if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
         if varName == "MR" : return [400, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500]
         if varName == "Rsq" : 
             if btag == "NoBtag": return [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
@@ -21,7 +21,7 @@ def getBinning_fine(boxName, varName, btag):
         if varName == "nBtag" : return [0,1,2,3,4,5]
 
 def getBinning(boxName, varName, btag):
-    if boxName == "Had" or boxName == "TauTau":
+    if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
         if varName == "MR" : return [400, 480, 600, 740, 900, 1200, 1600, 2500]
         if varName == "Rsq" : 
             if btag == "NoBtag": return [0.18,0.24,0.35,0.50]
@@ -36,19 +36,18 @@ def getBinning(boxName, varName, btag):
             
 class RazorBox(Box.Box):
     
-    def __init__(self, name, variables, fitMode = '3D', btag = True, fitregion = 'SidebandMR'):
+    def __init__(self, name, variables, fitMode = '2D', btag = True, fitregion = 'FULL'):
         super(RazorBox,self).__init__(name, variables)
         #data
         if not btag:
             self.btag = "NoBtag"
-            self.zeros = {'UEC':['Had'],'TTj':['Ele','Mu','EleTau','MuTau','MuMu','MuEle','EleEle','TauTau'],'Vpj':['Ele','Mu','EleTau','MuTau','MuMu','MuEle','EleEle','Had','TauTau']}
+            self.zeros = {'UEC':[],'TTj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','Jet','TauTauJet','MultiJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','Jet','TauTauJet','MultiJet']}
         else:
             self.btag = "Btag"
-            self.zeros = {'UEC':[],'TTj':['MuEle','EleEle','MuMu','Had','Mu','Ele','MuTau','EleTau','TauTau'],'Vpj':['MuEle','EleEle','MuMu','Had','Mu','Ele','MuTau','EleTau','TauTau']}
-        self.cut = 'MR >= 0.0'
-        self.fitregion = fitregion
-        #self.fitregion = 'SidebandMR'
-        #self.fitregion = 'SidebandRsq'
+            self.zeros = {'UEC':[],'TTj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','Jet','TauTauJet','MultiJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','Jet','TauTauJet','MultiJet']}
+        self.cut = 'MR>=0'
+        if fitregion=="SidebandL": self.fitregion = "SidebandMR,SidebandRsq"
+        else: self.fitregion = fitregion
         self.fitMode = fitMode
         
     def addTailPdf(self, flavour, doSYS):
@@ -228,12 +227,7 @@ class RazorBox(Box.Box):
         Nuec = self.workspace.var("Ntot_UEC").getVal()
         Nvpj = self.workspace.var("Ntot_Vpj").getVal()
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
-        # fix shape parameters -- FOR TESTING
-        #self.workspace.var("n_UEC").setConstant(rt.kTRUE)
-        #self.workspace.var("b_UEC").setConstant(rt.kTRUE)
-        #self.workspace.var("R0_UEC").setConstant(rt.kTRUE)
-        #self.workspace.var("MR0_UEC").setConstant(rt.kTRUE)
-
+        
         #in the case that the input file is an MC input file
         if data is None or not data:
             return None
@@ -364,7 +358,7 @@ class RazorBox(Box.Box):
 
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['FULL'])]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['FULL'])]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 5, ranges=['FULL'])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 5, ranges=['FULL'])]
 
         #store.store(self.plot1D(inputFile, "MR", 80, ranges=['FULL']), dir=box)
         #store.store(self.plot1D(inputFile, "Rsq", 25, ranges=['FULL']), dir=box)

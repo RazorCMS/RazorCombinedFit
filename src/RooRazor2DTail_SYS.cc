@@ -64,10 +64,10 @@ Int_t RooRazor2DTail_SYS::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& a
 // //---------------------------------------------------------------------------
 Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeName) const{
 
-   const Double_t xmin = X.min(); const Double_t xmax = X.max();
-   const Double_t ymin = Y.min(); const Double_t ymax = Y.max();
+   const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
+   const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
 
-   if(B == 0) return 0.;
+   if(B == 0) return 1.;
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y
@@ -79,11 +79,9 @@ Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeNam
    } else {
      cout << "WARNING IN RooRazor2DTail_SYS: integration code is not correct" << endl;
      cout << "                           what are you integrating on?" << endl;
-     return 0;
+     return 1.;
    }
-   if (fabs(integral)==0){  
-     integral = 1.7e-308;
-   }   
+
    return fabs(integral);
 }
 // //---------------------------------------------------------------------------

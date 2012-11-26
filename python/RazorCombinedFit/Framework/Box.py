@@ -172,7 +172,9 @@ class Box(object):
             
         if data.isWeighted():
             opt.Add(rt.RooFit.SumW2Error(True))
-        
+        print "About to fit data %s with options:"%data.GetName()
+        data.Print()
+        opt.Print("")
         result = pdf.fitTo(data, opt)
         return result 
 
