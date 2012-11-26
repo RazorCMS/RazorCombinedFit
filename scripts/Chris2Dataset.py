@@ -46,6 +46,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     if btagmax <= 1.: label = "NoBTAG_"
     if not calo: label += "PF_"
     else: label += "CALO_"
+    if useWeight: label += "WEIGHT_"
 
     print btagmax
 
