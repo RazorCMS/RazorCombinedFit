@@ -37,7 +37,7 @@ def GetProbRange(h):
                 iLeft += 1
     return h.GetXaxis().GetBinUpEdge(binMax+iRight), h.GetXaxis().GetBinLowEdge(binMax-iLeft)
             
-def GetErrorsX(nbinx, nbiny, myTree):
+def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder):
     err = []
     # for each bin of x, get the error on the sum of the y bins
     d = rt.TCanvas("canvas","canvas",800,600)
@@ -87,14 +87,14 @@ def GetErrorsX(nbinx, nbiny, myTree):
             tleg.SetFillColor(rt.kWhite)
             tleg.Draw("same")
             rt.gStyle.SetOptStat(0)
-            d.Print("functest_X_%i.pdf"%i)
+            if printPlots: d.Print("%s/functest_X_%i.pdf"%(outFolder,i))
         else:
             xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
         err.append((xmax-xmin)/2.)
     return err
             
-def GetErrorsY(nbinx, nbiny, myTree):
+def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder):
     err = []
     # for each bin of y, get the error on the sum of the x bins
     d = rt.TCanvas("canvas","canvas",800,600)
@@ -143,7 +143,7 @@ def GetErrorsY(nbinx, nbiny, myTree):
             tleg.SetFillColor(rt.kWhite)
             tleg.Draw("same")
             rt.gStyle.SetOptStat(0)
-            d.Print("functest_Y_%i.pdf"%j)
+            if printPlots: d.Print("%s/functest_Y_%i.pdf"%(outFolder,i))
         else:
             xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
@@ -305,9 +305,11 @@ if __name__ == '__main__':
     hMRData = fitFile.Get("%s/histoData_MR_FULL_ALLCOMPONENTS" %Box)
     hRSQData = fitFile.Get("%s/histoData_Rsq_FULL_ALLCOMPONENTS" %Box)
     #hBTAGData = fitFile.Get("%s/histoData_nBtag_FULL_ALLCOMPONENTS")
-
-    errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree)
-    errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree)
+    
+    printPlots = True
+    
+    errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder)
+    errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder)
     hMRTOTcopy = hMRTOT.Clone()
     hMRTOTcopy.SetName(hMRTOT.GetName()+"COPY")
     for i in range(1,len(errMR)+1):
@@ -323,5 +325,3 @@ if __name__ == '__main__':
     goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj, hMRVpj, hMRData)
     goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj, hRSQVpj, hRSQData)
     
-    os.system("pdftk functest*.pdf cat output %s/functest_%s.pdf"%(outFolder,outFolder.split("/")[-1]))
-    os.system("mv functest*.pdf %s/"%outFolder)

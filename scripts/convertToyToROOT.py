@@ -8,7 +8,7 @@ if __name__ == '__main__':
     Rsq = rt.RooRealVar("Rsq", "Rsq", 0.11, 1.5)
     dir = sys.argv[1] 
     # to add the category
-    for i in range(0,3000):
+    for i in range(0,2000):
         tree = rt.TTree()
         filename = sys.argv[1]+"_"+str(i)+".txt"
         tree.ReadFile(filename,"MR/D:Rsq/D")
@@ -17,7 +17,10 @@ if __name__ == '__main__':
         tree.SetName("RMRTree")
         tree.Write()
         myfile.Close()
+	tree.Delete()
+	myfile.Delete()
         del tree
+	del myfile
         continue
 
 

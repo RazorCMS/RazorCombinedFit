@@ -18,9 +18,7 @@ def setCanvasStyle(c):
 
 def HadFR(MR, Rsq):
     FR = False
-    if Rsq<0.18: FR = True
-    if Rsq<0.20 and MR<1000: FR = True
-    if Rsq<0.30 and MR < 650: FR = True
+    if Rsq<0.24: FR = True
     if MR<500: FR = True
     return FR
 
@@ -329,9 +327,12 @@ if __name__ == '__main__':
     noBtag = False
     
     printPlots = True
+    showSidebandL = False
+    
 
     for i in range(5,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
+        if sys.argv[i] == "--SidebandL": showSidebandL = True
 
     MRbins, Rsqbins = makeBluePlot.Binning(Box, noBtag)
 
@@ -535,38 +536,29 @@ if __name__ == '__main__':
 
     # the fit region in green
     frLines = []
-    minRsq = 0.11
-    minMR = 300.
-    if Box == "Had":
-        frLines.append(rt.TLine(400,0.18,800,0.18))
-        frLines.append(rt.TLine(800,0.18,800,0.2))
-        frLines.append(rt.TLine(650,0.2,800,0.2))
-        frLines.append(rt.TLine(650,0.2,650,0.3))
-        frLines.append(rt.TLine(450,0.3,650,0.3))
-        frLines.append(rt.TLine(450,0.3,450,0.5))
-        frLines.append(rt.TLine(450,0.5,400,0.5))
-        frLines.append(rt.TLine(400,0.18,400,0.5))
 
-    if Box == "Mu" or Box == "Ele":
-        frLines.append(rt.TLine(800,0.11,800,0.2))
-        frLines.append(rt.TLine(650,0.2,800,0.2))
-        frLines.append(rt.TLine(650,0.2,650,0.3))
-        frLines.append(rt.TLine(450,0.3,650,0.3))
-        frLines.append(rt.TLine(450,0.3,450,0.5))
-        frLines.append(rt.TLine(450,0.5,300,0.5))
+    if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
+        frLines.append(rt.TLine(400,0.18,2500,0.18))
+        frLines.append(rt.TLine(550,0.24,2500,0.24))
+        frLines.append(rt.TLine(550,0.24,550,1.5))
+        frLines.append(rt.TLine(400,0.18,400,1.5))
+        frLines.append(rt.TLine(400,1.5,550,1.5))
+        frLines.append(rt.TLine(2500,0.18,2500,0.24))
 
-    if Box == "MuMu" or Box == "EleEle" or Box == "MuEle":
-        frLines.append(rt.TLine(1000,0.15,1000,0.2))
-        frLines.append(rt.TLine(1000,0.2,650,0.2))
-        frLines.append(rt.TLine(650,0.2,650,0.3))
-        frLines.append(rt.TLine(650,0.3,500,0.3))
-        frLines.append(rt.TLine(500,0.3,500,0.5))
+    else:
+        frLines.append(rt.TLine(350,0.11,2500,0.11))
+        frLines.append(rt.TLine(500,0.15,2500,0.15))
+        frLines.append(rt.TLine(500,0.15,500,1.5))
+        frLines.append(rt.TLine(350,0.11,350,1.5))
+        frLines.append(rt.TLine(350,1.5,500,1.5))
+        frLines.append(rt.TLine(2500,0.11,2500,0.15))
 
     ci = rt.TColor.GetColor("#006600");
-    #for frLine in frLines:
-    #    frLine.SetLineColor(ci)
-    #    frLine.SetLineWidth(2)
-    #    frLine.Draw()
+    if showSidebandL:
+        for frLine in frLines:
+            frLine.SetLineColor(ci)
+            frLine.SetLineWidth(2)
+            frLine.Draw()
 
     c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
     c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
@@ -588,5 +580,10 @@ if __name__ == '__main__':
     #    hNS.SetContourLevel(i,-5. +i)
     for i in range(0,len(xLines)): xLines[i].Draw()
     for i in range(0,len(yLines)): yLines[i].Draw()
+    if showSidebandL:
+        for frLine in frLines:
+            frLine.SetLineColor(ci)
+            frLine.SetLineWidth(2)
+            frLine.Draw()
     c2.SaveAs("%s/nSigma_%s.C" %(outFolder,Box))
     c2.SaveAs("%s/nSigma_%s.pdf" %(outFolder,Box))
