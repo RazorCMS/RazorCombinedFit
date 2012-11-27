@@ -15,13 +15,13 @@ def Binning_fine(Box, noBtag):
 
 def Binning(Box, noBtag):
     if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-        MRbins = [400, 480, 600, 740, 900, 1200, 1600, 2500]
+        MRbins = [400, 470, 550, 700, 900, 1200, 1600, 2500]
         if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
         else: Rsqbins = [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
     else:
-        MRbins = [350, 410, 490, 600, 740, 900, 1200, 1600, 2500]
+        MRbins = [350, 420, 500, 600, 740, 900, 1200, 1600, 2500]
         if noBtag: Rsqbins = [0.11,0.17,0.23,0.35,0.50]
-        else: Rsqbins = [0.11,0.17,0.23,0.32,0.41,0.52,0.64,0.80,1.5]
+        else: Rsqbins = [0.11,0.15,0.22,0.31,0.41,0.52,0.64,0.80,1.5]
     return MRbins, Rsqbins
 
 if __name__ == '__main__':
@@ -52,8 +52,8 @@ if __name__ == '__main__':
             if sys.argv[i] == "--plotOnly": plotOnly = True
 
     if not plotOnly:
-        #os.system("python scripts/convertToyToROOT.py %s/frtoydata_%s" %(ToyDir, Box))
-        #os.system("rm %s.txt" %(ToyDir))
+        os.system("python scripts/convertToyToROOT.py %s/frtoydata_%s" %(ToyDir, Box))
+        os.system("rm %s.txt" %(ToyDir))
         os.system("ls %s/frtoydata_*.root > %s.txt" %(ToyDir, ToyDir))
         os.system("mkdir -p %s"%(Label))
         os.system("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt"%(Label,Box, Box, ToyDir))

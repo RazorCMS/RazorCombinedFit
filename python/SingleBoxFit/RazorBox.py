@@ -22,16 +22,16 @@ def getBinning_fine(boxName, varName, btag):
 
 def getBinning(boxName, varName, btag):
     if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
-        if varName == "MR" : return [400, 480, 600, 740, 900, 1200, 1600, 2500]
+        if varName == "MR" : return [400, 470, 550, 700, 900, 1200, 1600, 2500]
         if varName == "Rsq" : 
             if btag == "NoBtag": return [0.18,0.24,0.35,0.50]
             else: return [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
         if varName == "nBtag" : return [0,1,2,3,4,5]
     else:
-        if varName == "MR" : return [350, 410, 490, 600, 740, 900, 1200, 1600, 2500]
+        if varName == "MR" : return [350, 420, 500, 600, 740, 900, 1200, 1600, 2500]
         if varName == "Rsq" :
             if btag == "NoBtag": return [0.11,0.17,0.23,0.35,0.50]
-            else: return [0.11,0.17,0.23,0.32,0.41,0.52,0.64,0.80,1.5]
+            else: return [0.11,0.15,0.22,0.31,0.41,0.52,0.64,0.80,1.5]
         if varName == "nBtag" : return [0,1,2,3,4,5]
             
 class RazorBox(Box.Box):
