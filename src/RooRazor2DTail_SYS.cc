@@ -54,10 +54,11 @@ Double_t RooRazor2DTail_SYS::evaluate() const
 Int_t RooRazor2DTail_SYS::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
   // integral on both X and Y
   if (matchArgs(allVars, analVars, X, Y)) return 1;
-  // // // integral over X
+  // integral over X
   else if (matchArgs(allVars, analVars, X)) return 2;
-  // // // integral over Y
+  // integral over Y
   else if (matchArgs(allVars, analVars, Y)) return 3;
+  // integrating nothing
   return 0;
 }
 
@@ -67,10 +68,15 @@ Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeNam
    const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
    const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
 
-   if(B == 0) return 1.;
+   if(B == 0 || N == 0) return 1.;
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y
+     //cout << "Gfun(xmin=" << xmin << ",ymin=" << ymin << ") = " << Gfun(xmin,ymin) << endl;
+     //cout << "Gfun(xmin=" << xmin << ",ymax=" << ymax << ") = " << Gfun(xmin,ymax) << endl;
+     //cout << "Gfun(xmax=" << xmax << ",ymin=" << ymin << ") = " << Gfun(xmax,ymin) << endl;
+     //cout << "Gfun(xmax=" << xmax << ",ymax=" << ymax << ") = " << Gfun(xmax,ymax) << endl;
+     //cout << "Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax) = " << Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax) << endl;
      integral = N/pow(B*N,N)*(Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax));
    } else if(code == 2) { // integral on X
      integral = ( (xmin-X0)*exp(B*N*pow(xmax-X0,1/N)*pow(Y-Y0,1/N)) - (xmax-X0)*exp(B*N*pow(xmin-X0,1/N)*pow(Y-Y0,1/N)) )*exp(-B*N*(pow(xmin-X0,1/N)+pow(xmax-X0,1/N))*pow(Y-Y0,1/N));
@@ -82,7 +88,7 @@ Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeNam
      return 1.;
    }
 
-   return fabs(integral);
+   return integral;
 }
 // //---------------------------------------------------------------------------
 

@@ -8,6 +8,7 @@
 class RooRealVar;
 class RooAbsReal;
 
+#include "Riostream.h"
 #include "TMath.h"
 #include "Math/SpecFuncMathCore.h"
 #include "Math/SpecFuncMathMore.h"
@@ -32,20 +33,21 @@ public:
 protected:
 
    Double_t Chop(const Double_t x) const{
-	   return (TMath::Abs(x - 0) < 1e-10) ? TMath::Sign(0.0,x) : x;
+           return (TMath::Abs(x - 0) < 1e-30) ? TMath::Sign(0.0,x) : x;
    }
    Double_t Power(const Double_t x, const Double_t y) const{
 	   return Chop(TMath::Power(x,y));
    }
    Double_t Gamma(const Double_t a, const Double_t x) const{
-	   return Chop(ROOT::Math::inc_gamma_c(a,x));
+	   return TMath::Gamma(a)*ROOT::Math::inc_gamma_c(a,x);
    }
    Double_t ExpIntegralEi(const Double_t z) const{
 	   return Chop(ROOT::Math::expint(z));
    }
 
    Double_t Gfun(const Double_t x, const Double_t y) const{
-     return TMath::Gamma(N)*Gamma(N,B*N*pow(x-X0,1/N)*pow(y-Y0,1/N));
+     //std::cout << "Gamma(N=" << N << ",BN[(x-X0)(y-Y0)]^(1/N)=" << B*N*pow(x-X0,1/N)*pow(y-Y0,1/N) <<") = " <<  Gamma(N,B*N*pow(x-X0,1/N)*pow(y-Y0,1/N)) << std::endl;
+     return Gamma(N,B*N*pow(x-X0,1/N)*pow(y-Y0,1/N));
    }
 
    RooRealProxy X;        // dependent variable

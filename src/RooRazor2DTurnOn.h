@@ -43,7 +43,7 @@ class RooRazor2DTurnOn : public RooAbsPdf
    TH2D* Herror;
 
    Double_t evaluate() const;
-   //   Bool_t importWorkspaceHook(RooWorkspace& ws);
+   Bool_t importWorkspaceHook(RooWorkspace& ws);
 
 private:
   ClassDef(RooRazor2DTurnOn,1) // Razor2DTurnOn function

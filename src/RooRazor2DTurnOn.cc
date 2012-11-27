@@ -30,16 +30,19 @@ Bool_t RooRazor2DTurnOn::importWorkspaceHook(RooWorkspace& ws){
   
   //check if the histograms are in the workspace or not
   if(ws.obj(Hnonimal->GetName()) == 0){
+    cout << "Importing " << Hnonimal->GetName() << endl;
     ws.import(*Hnonimal);
+    //update the pointers to the workspace versions
+    Hnonimal = dynamic_cast<TH2D*>(ws.obj(Hnonimal->GetName()));
   }
   if(ws.obj(Herror->GetName()) == 0){
+    cout << "Importing " << Hnonimal->GetName() << endl;
     ws.import(*Herror);
+    //update the pointers to the workspace versions
+    Herror = dynamic_cast<TH2D*>(ws.obj(Herror->GetName()));
   }
   
-  //update the pointers to the workspace versions
-  Hnonimal = dynamic_cast<TH2D*>(ws.obj(Hnonimal->GetName()));
-  Herror = dynamic_cast<TH2D*>(ws.obj(Herror->GetName()));
-  return kTRUE;
+  return kFALSE;
 }
 
 
