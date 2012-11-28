@@ -9,16 +9,14 @@ if __name__ == '__main__':
     dir = sys.argv[1] 
     # to add the category
     for i in range(0,2000):
-        tree = rt.TTree()
+        rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"RMRTree\");")
+        tree = rt.TTree("RMRTree","RMRTree")
         filename = sys.argv[1]+"_"+str(i)+".txt"
         tree.ReadFile(filename,"MR/D:Rsq/D")
         if tree.GetEntries() <1: continue
         myfile = rt.TFile.Open("%s_%i.root" %(dir, i), "recreate")
-        tree.SetName("RMRTree")
         tree.Write()
         myfile.Close()
-	tree.Delete()
-	myfile.Delete()
         del tree
 	del myfile
         continue
