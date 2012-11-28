@@ -22,7 +22,7 @@ def getBinning_fine(boxName, varName, btag):
 
 def getBinning(boxName, varName, btag):
     if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
-        if varName == "MR" : return [400, 470, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" : return [400, 550, 700, 900, 1200, 1600, 2500]
         if varName == "Rsq" : 
             if btag == "NoBtag": return [0.18,0.24,0.35,0.50]
             else: return [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]

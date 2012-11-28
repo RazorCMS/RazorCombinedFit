@@ -15,7 +15,7 @@ def Binning_fine(Box, noBtag):
 
 def Binning(Box, noBtag):
     if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-        MRbins = [400, 470, 550, 700, 900, 1200, 1600, 2500]
+        MRbins = [400, 550, 700, 900, 1200, 1600, 2500]
         if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
         else: Rsqbins = [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
     else:

@@ -148,7 +148,6 @@ def find68ProbRangeFromKDE(maxX,func, probVal=0.6827):
     above68=False
     numIter = 0
     while abs(probRange - probVal)>0.001 and newProb>0 and numIter < 100.:
-        print "Entering loop"
         numIter += 1
         if probRange < probVal:
             above68 = True
@@ -162,11 +161,10 @@ def find68ProbRangeFromKDE(maxX,func, probVal=0.6827):
         sigmaPlus = func.GetX(newProb,mode,maxX)
         if sigmaMinus<sigmaPlus : probRange = func.Integral(sigmaMinus,sigmaPlus)/totalProb
         else: probRange = 0.
-        print "iteration = %d"%numIter
-        print "newProb = %f"%newProb
-        print "sigmaPlus = %f"%sigmaPlus
-        print "sigmaMinus = %f"%sigmaMinus
-        print "Int_[sigmaMinus,sigmaPlus] f(x) dx = %f"%probRange
+        if numIter%5 == 0: print "iteration = %d"%numIter
+    print "sigmaPlus = %f"%sigmaPlus
+    print "sigmaMinus = %f"%sigmaMinus
+    print "Int_[sigmaMinus,sigmaPlus] f(x) dx = %f"%probRange
    
     funcFill68 = func.Clone("funcFill68")
     funcFill68.SetRange(sigmaMinus,sigmaPlus)
@@ -185,8 +183,6 @@ def find68ProbRangeFromKDEMedian(maxX,func, probVal=0.6827):
     q = array("d",[0])
     func.GetQuantiles(nprobSum,q,probSum)
     median = q[0]
-    print "mean = %f"%mean
-    print "median = %f"%median
     # iterate first with a coarse epsilon
     # THEN iterate again with a smaller epsilon
     probRange = 0.
@@ -196,7 +192,6 @@ def find68ProbRangeFromKDEMedian(maxX,func, probVal=0.6827):
     sigmaMinus = median
     sigmaPlus = median
     while abs(probRange - probVal)>0.001 and numIter < 100.:
-        print "Entering loop"
         numIter += 1
         if probRange < probVal:
             above68 = True
@@ -212,11 +207,10 @@ def find68ProbRangeFromKDEMedian(maxX,func, probVal=0.6827):
         if sigmaPlus>=maxX: sigmaPlus = maxX
         if sigmaMinus<sigmaPlus : probRange = func.Integral(sigmaMinus,sigmaPlus)/totalProb
         else: probRange = 0.
-        print "iteration = %d"%numIter
-        print "epsilon = %f"%epsilon
-        print "sigmaPlus = %f"%sigmaPlus
-        print "sigmaMinus = %f"%sigmaMinus
-        print "Int_[sigmaMinus,sigmaPlus] f(x) dx = %f"%probRange
+        if numIter%5 == 0: print "iteration = %d"%numIter
+    print "sigmaPlus = %f"%sigmaPlus
+    print "sigmaMinus = %f"%sigmaMinus
+    print "Int_[sigmaMinus,sigmaPlus] f(x) dx = %f"%probRange
    
     funcFill68 = func.Clone("funcFill68")
     funcFill68.SetRange(sigmaMinus,sigmaPlus)
@@ -395,10 +389,14 @@ if __name__ == '__main__':
 
             del htemp
             
-            myhisto = rt.TH1D(histoName, histoName, maxX, 0., maxX)
-            myTree.Project(histoName, varName)
+            rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"myhisto\");")
+            myhisto = rt.TH1D("myhisto", histoName, maxX, 0., maxX)
+            myTree.Project("myhisto", varName)
             myhisto.Scale(1./myhisto.Integral())
+            rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"orighisto\");")
             orighisto = myhisto.Clone("orighisto")
+            
+            rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"canvas\");")
             c = rt.TCanvas("canvas","canvas",800,600)
             orighisto.SetLineColor(rt.kBlack)
             orighisto.Draw()
@@ -457,6 +455,7 @@ if __name__ == '__main__':
                 tleg.Draw("same")
                 rt.gStyle.SetOptStat(0)
                 if printPlots: c.Print("%s/histotest_%s.pdf"%(outFolder,varName))
+                del c
                 
                 hNS.SetBinContent(i+1, j+1, nsigma)
                 #if not HadFR(MRbins[i], Rsqbins[j]):
@@ -523,6 +522,7 @@ if __name__ == '__main__':
     #    for i in range(1,len(MRbins)): h.SetBinContent(i,1, 0.)
     #    for i in range(1,len(Rsqbins)): h.SetBinContent(1,i, 0.)
                       
+    rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c1\");")
     c1 = rt.TCanvas("c1","c1", 900, 600)
     c1.SetLogz()
     setCanvasStyle(c1)
@@ -563,17 +563,28 @@ if __name__ == '__main__':
     c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
     c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
 
+    rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c2\");")
     c2 = rt.TCanvas("c2","c2", 900, 600)
     setCanvasStyle(c2)
     # French flag Palette
-    Red = array('d',[0.00, 1.00, 1.00])
+    Red = array('d',[0.00, 1.0, 1.0])
     Green = array('d',[0.00, 1.00, 0.00])
-    Blue = array('d',[1.00, 1.00, 0.00])
+    Blue = array('d',[1.0, 1.00, 0.00])
     Length = array('d',[0.00, 0.50, 1.00])
     rt.TColor.CreateGradientColorTable(3,Length,Red,Green,Blue,11)
     hNS.SetMaximum(5.5)
     hNS.SetMinimum(-5.5)
     hNS.SetContour(11);
+    #levels = array('d',list(range(0,11)))
+    #print "CONTOUR LEVELS"
+    #hNS.GetContour(levels)
+    #print levels
+    #this works
+    hNS.SetContourLevel(6,1.5)
+    hNS.SetContourLevel(5,-1.5)
+    # add this?
+    hNS.SetContourLevel(7,2.5)
+    hNS.SetContourLevel(4,-2.5)    
     hNS.Draw("colz")
     #for i in range(0,11):
     #    print -5.+i
