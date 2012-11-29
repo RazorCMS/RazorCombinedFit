@@ -57,9 +57,9 @@ if __name__ == '__main__':
     outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt -b \n"%(ffDir, box, box, toyDir))
     outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s -b \n"%(box, ffDir, box, datasetMap[datasetName], ffDir,showSidebandL))
     if datasetName.find("Run") != -1:
-        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir))
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,showSidebandL))
     else:
-        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName))
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,showSidebandL))
     
     outputfile.close
     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)

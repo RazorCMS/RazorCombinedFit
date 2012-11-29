@@ -184,7 +184,8 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOTcopy.GetXaxis().SetTitleOffset(1.1)
     hMRTOTcopy.GetXaxis().SetRange(0,FindLastBin(hMRTOTcopy))
     hMRTOTcopy.GetYaxis().SetTitle("Events")
-    if varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
+    if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
+    elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
     if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(10.0)
     elif hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=1.: hMRTOTcopy.SetMinimum(1.0)
     hMRTOTcopy.Draw("e2")
@@ -264,6 +265,21 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         text = pt.AddText("Razor %s #int L = %3.2f fb^{-1}" %(Box,Lumi))
     pt.Draw()
     
+    frLines = []
+    if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
+        if varname=="MR": frLines.append(rt.TLine(550,hMRTOTcopy.GetMinimum(),550,hMRTOTcopy.GetMaximum()))
+        elif varname=="RSQ": frLines.append(rt.TLine(0.24,hMRTOTcopy.GetMinimum(),0.24,hMRTOTcopy.GetMaximum()))
+    else:
+        if varname=="MR": frLines.append(rt.TLine(500,hMRTOTcopy.GetMinimum(),500,hMRTOTcopy.GetMaximum()))
+        elif varname=="RSQ": frLines.append(rt.TLine(0.15,hMRTOTcopy.GetMinimum(),0.15,hMRTOTcopy.GetMaximum()))
+
+    ci = rt.TColor.GetColor("#006600");
+    if showSidebandL:
+        for frLine in frLines:
+            frLine.SetLineColor(ci)
+            frLine.SetLineWidth(2)
+            frLine.Draw()
+    
     c1.Update()
 
     c1.SaveAs("%s/%s_%s.pdf" %(outFolder,varname,Label))
@@ -280,12 +296,14 @@ if __name__ == '__main__':
     outFolder = sys.argv[4]
     if outFolder[-1] == "/": outFolder = outFolder[:-1]
     noBtag = False
+    showSidebandL = False
     Lumi = 5.
     Energy = 8.
     Preliminary = "Preliminary"
     datasetName = ""
     for i in range(4,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
+        if sys.argv[i] == "--SidebandL": showSidebandL = True
         if sys.argv[i] == "--forPaper": Preliminary = ""
         if sys.argv[i].find("-MC=") != -1:
             Preliminary = "Simulation"

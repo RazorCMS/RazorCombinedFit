@@ -9,7 +9,7 @@ if __name__ == '__main__':
     datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012AB","ElectronHad-Run2012AB"]
     sidebandNames = ["SidebandL","FULL"]
 
-    includeTable = False
+    includeTable = True
     
     LaTeXMap = {"TTJets":"$t\\bar{t}$","WJets":"$W\\to\\ell\\nu$",
                 "ZJets":"$Z\\to\\ell\\ell$","ZJNuNu":"$Z\\to\\nu\\nu$",
