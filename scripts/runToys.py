@@ -22,7 +22,7 @@ if __name__ == '__main__':
     fitResultMap = {'WJets':'FitResults/razor_output_WJets_%s_%s.root'%(sideband,box),
                     'TTJets':'FitResults/razor_output_TTJets_%s_%s.root'%(sideband,box),
                     'SMCocktail':'FitResults/razor_output_SMCocktail_%s_%s.root'%(sideband,box),
-                    'MuHad-Run2012AB':'FitResults/razor_output_MuHad-Run2012AB_%s_%s.root'%(sideband,box)}
+                    'MuHad-Run2012AB':'FitResults/razor_output_MuHad-Run2012AB_%s_%s.root'%(sideband,box),
                     'ElectronHad-Run2012AB':'FitResults/razor_output_ElectronHad-Run2012AB_%s_%s.root'%(sideband,box)}
     if box == "TauTauJet" or box=="Jet" or box=="MultiJet":
         mRmin = 400.
@@ -56,7 +56,10 @@ if __name__ == '__main__':
     outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
     outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt -b \n"%(ffDir, box, box, toyDir))
     outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s -b \n"%(box, ffDir, box, datasetMap[datasetName], ffDir,showSidebandL))
-    outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir))
+    if datasetName.find("Run") != -1:
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir))
+    else:
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName))
     
     outputfile.close
     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)

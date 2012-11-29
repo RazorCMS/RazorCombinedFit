@@ -283,6 +283,7 @@ if __name__ == '__main__':
     Lumi = 5.
     Energy = 8.
     Preliminary = "Preliminary"
+    datasetName = ""
     for i in range(4,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--forPaper": Preliminary = ""

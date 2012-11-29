@@ -9,7 +9,7 @@ if __name__ == '__main__':
     datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012AB","ElectronHad-Run2012AB"]
     sidebandNames = ["SidebandL","FULL"]
 
-    includeTable = True
+    includeTable = False
     
     LaTeXMap = {"TTJets":"$t\\bar{t}$","WJets":"$W\\to\\ell\\nu$",
                 "ZJets":"$Z\\to\\ell\\ell$","ZJNuNu":"$Z\\to\\nu\\nu$",
@@ -44,8 +44,8 @@ if __name__ == '__main__':
     
     beamerPres.write("\\frame{\\maketitle}\n")
 
-    for box in boxNames:
-        for datasetName in datasetNames:
+    for datasetName in datasetNames:
+        for box in boxNames:
             for sideband in sidebandNames:
                 if not os.path.isdir("toys_%s/%s_%s_FF"%(datasetName,sideband,box)): continue
                 beamerPres.write("\n")
