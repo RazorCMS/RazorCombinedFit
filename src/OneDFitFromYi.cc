@@ -24,6 +24,7 @@
 #include "RooAbsPdf.h"
 #include "RooExponential.h"
 using namespace RooFit;
+using namespace std;
 
 #include "OneDFitFromYi.h"
 
