@@ -36,38 +36,91 @@ RooBTagMult::RooBTagMult(const RooBTagMult& other, const char* name) :
 //---------------------------------------------------------------------------
 Double_t RooBTagMult::evaluate() const
 {
-  double thisf4 = f4;
   double thisf1 = f1;
   double thisf2 = f2;
   double thisf3 = f3;
-  //if(thisf4+thisf1+thisf2+thisf3 > 1.) return 1.E-10;
-    // {
-    //   double scale = thisf4+thisf1+thisf2+thisf3+0.0000001;
-    //   thisf4 *= 1./scale;
-    //   thisf1 *= 1./scale;
-    //   thisf2 *= 1./scale;
-    //   thisf3 *= 1./scale;
-    // }
-  double thisf0 = max(0.00000000001,1.-thisf4-thisf1-thisf2-thisf3);
-  if(X<1.) return thisf0/(thisf0+thisf1+thisf2+thisf3+thisf4);
-  else if(X<2.) return thisf1/(thisf0+thisf1+thisf2+thisf3+thisf4);
-  else if(X<3.) return thisf2/(thisf0+thisf1+thisf2+thisf3+thisf4);
-  else if(X<4.) return thisf3/(thisf0+thisf1+thisf2+thisf3+thisf4);
-  else return thisf4/(thisf0+thisf1+thisf2+thisf3+thisf4);
+  double thisf4 = f4;
+
+  if (X<1.) return 1.7e-308;
+  else if(X>=1. && X<2.) return thisf1;
+  else if(X>=2. && X<3.) return thisf2;
+  else if(X>=3. && X<4.) return thisf3;
+  else return thisf4;
 }
 
 // //---------------------------------------------------------------------------
 Int_t RooBTagMult::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
-  double thisf4 = f4;
-  double thisf1 = f1;
-  double thisf2 = f2;
-  double thisf3 = f3;
-  return f1+f2+f3+f4;
+  // integral over X
+  if (matchArgs(allVars, analVars, X)) return 1;
+  return 0;
 }
 
 // //---------------------------------------------------------------------------
 Double_t RooBTagMult::analyticalIntegral(Int_t code, const char* rangeName) const{
-   return 1.;
+  const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
+
+  double thisf1 = f1;
+  double thisf2 = f2;
+  double thisf3 = f3;
+  double thisf4 = f4;
+
+  double binVol1;
+  double binVol2;
+  double binVol3;
+  double binVol4;
+ 
+  if(code == 1) {
+    if (xmin>=1. && xmin <=2.){
+      if (xmax>1. && xmax <=2.){
+	binVol1 = xmax-xmin; binVol2 = 0.; binVol3 = 0.; binVol4 = 0.;
+	  }
+      else if (xmax>2. && xmax<=3.){
+	binVol1 = 1.; binVol2 = xmax-2.; binVol3 = 0; binVol4 = 0.;
+	  }
+      else if (xmax>3. && xmax<=4.){
+	binVol1 = 1.; binVol2 = 1.; binVol3 = xmax-3.; binVol4 = 0.;
+	  }
+      else if (xmax>4.){
+	binVol1 = 1.; binVol2 = 1.; binVol3 = 1.; binVol4 = xmax-4.;
+      }
+    }
+
+    else if (xmin>=2. && xmin <=3.){
+      if (xmax>2. && xmax <=3.){
+	binVol1 = 0.; binVol2 = xmax-xmin; binVol3 = 0.; binVol4 = 0.;
+	  }
+      else if (xmax>3. && xmax<=4.){
+	binVol1 = 0.; binVol2 = 1.; binVol3 = xmax-3.; binVol4 = 0.;
+	  }
+      else if (xmax>4.){
+	binVol1 = 0.; binVol2 = 1.; binVol3 = 1.; binVol4 = xmax-4.;
+      }
+    }
+
+    else if (xmin>=3. && xmin <=4.){
+      if (xmax>3. && xmax<=4.){
+	binVol1 = 0.; binVol2 = 0.; binVol3 = xmax-xmin; binVol4 = 0.;
+	  }
+      else if (xmax>4.){
+	binVol1 = 0.; binVol2 = 0.; binVol3 = 1.; binVol4 = xmax-4.;
+      }
+    }
+
+    else if (xmin>=4.){
+      if (xmax>4.){
+	binVol1 = 0.; binVol2 = 0.; binVol3 = 0.; binVol4 = xmax-xmin;
+	  }
+    }
+
+    return max(1.7e-308,thisf1*binVol1 + thisf2*binVol2 + thisf3*binVol3 + thisf4*binVol4);
+  }
+
+  else {
+     cout << "WARNING IN RooBTagMult: integration code is not correct" << endl;
+     cout << "                           what are you integrating on?" << endl;
+     return 1.;
+  }
+  return 1.;
 }
 // //---------------------------------------------------------------------------
 

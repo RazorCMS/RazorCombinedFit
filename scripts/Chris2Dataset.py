@@ -10,7 +10,7 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
-lumi = 1.0
+lumi = 18.065
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
     
@@ -90,7 +90,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
             a.setRealValue('CHARGE',tree.CHARGE)
         if useWeight:
             try:
-                a.setRealValue('W',tree.WXSEC)
+                a.setRealValue('W',tree.WXSEC*lumi/5.0)
             except AttributeError:
                 a.setRealValue('W',1.0)
         else:

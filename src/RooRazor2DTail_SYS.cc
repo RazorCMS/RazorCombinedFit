@@ -36,9 +36,6 @@ RooRazor2DTail_SYS::RooRazor2DTail_SYS(const RooRazor2DTail_SYS& other, const ch
 //---------------------------------------------------------------------------
 Double_t RooRazor2DTail_SYS::evaluate() const
 {
-  //double myexp = pow(B,2)*pow(fabs(X*Y-X0*Y-Y0*X),1./B);
-  //double mycoeff = B*pow(fabs(X*Y-X0*Y-Y0*X),1./B) - 1.;
-
   double myexp = B*N*pow(fabs(X-X0)*fabs(Y-Y0),1./N);
   double mycoeff = B*pow(fabs(X-X0)*fabs(Y-Y0),1./N) - 1.;
   if(myexp < -700) {
@@ -72,11 +69,6 @@ Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeNam
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y
-     //cout << "Gfun(xmin=" << xmin << ",ymin=" << ymin << ") = " << Gfun(xmin,ymin) << endl;
-     //cout << "Gfun(xmin=" << xmin << ",ymax=" << ymax << ") = " << Gfun(xmin,ymax) << endl;
-     //cout << "Gfun(xmax=" << xmax << ",ymin=" << ymin << ") = " << Gfun(xmax,ymin) << endl;
-     //cout << "Gfun(xmax=" << xmax << ",ymax=" << ymax << ") = " << Gfun(xmax,ymax) << endl;
-     //cout << "Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax) = " << Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax) << endl;
      integral = N/pow(B*N,N)*(Gfun(xmin,ymin)-Gfun(xmin,ymax)-Gfun(xmax,ymin)+Gfun(xmax,ymax));
    } else if(code == 2) { // integral on X
      integral = ( (xmin-X0)*exp(B*N*pow(xmax-X0,1/N)*pow(Y-Y0,1/N)) - (xmax-X0)*exp(B*N*pow(xmin-X0,1/N)*pow(Y-Y0,1/N)) )*exp(-B*N*(pow(xmin-X0,1/N)+pow(xmax-X0,1/N))*pow(Y-Y0,1/N));
