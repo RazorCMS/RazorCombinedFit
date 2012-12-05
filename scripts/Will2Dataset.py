@@ -1,10 +1,9 @@
 from optparse import OptionParser
-import os, array
+import os, array, sys
 
 import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
-#import CalcBDT
 
 boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':6}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
@@ -13,142 +12,16 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
-class HadDumper(object):
+sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
+from CalcBDT import CalcBDT
 
-    def headers_for_MVA(self):
-        return ['thetaH1','thetaH2','topMass1','topMass2','wMass1','wMass2',\
-                    'jet1mult','jet2mult','jet3mult','jet4mult','jet5mult','jet6mult',\
-                    'jet1girth','jet2girth','jet3girth','jet4girth','jet5girth','jet6girth']
-
-    def __init__(self, tree):
-
-        self.tree = tree
-
-        self.vars = {}
-        self.reader = rt.TMVA.Reader()
-        for h in self.headers_for_MVA():
-            self.vars['%s_var'%h] = array.array('f',[0])
-            self.reader.AddVariable(h,self.vars['%s_var'%h])
-
-        self.vars['mr_var'] = array.array('f',[0])
-        self.vars['rsq_var'] = array.array('f',[0])
-        self.vars['nvertex_var'] = array.array('f',[0])
-        
-        self.reader.AddSpectator('MR',self.vars['mr_var'])
-        self.reader.AddSpectator('RSQ',self.vars['rsq_var'])
-        self.reader.AddSpectator('nVertex',self.vars['nvertex_var'])
-        self.reader.BookMVA('BDT','/afs/cern.ch/user/w/wreece/work/CMGTools/V5_6_0/CMGTools/CMSSW_5_3_3_patch3/src/CMGTools/Susy/prod/MultiJet/TMVAClassification_BDT.weights.xml')        
-        
-        self.jets = []
-
-    def thetaH1(self):
-        if self.tree.bestHemi == 1:
-            return self.tree.hemi1ThetaH
-        return self.tree.hemi2ThetaH
-    def thetaH2(self):
-        if self.tree.bestHemi == 2:
-            return self.tree.hemi1ThetaH
-        return self.tree.hemi2ThetaH
-
-    def topMass1(self):
-        if self.tree.bestHemi == 1:
-            return self.tree.hemi1TopMass
-        return self.tree.hemi2TopMass
-    def topMass2(self):
-        if self.tree.bestHemi == 2:
-            return self.tree.hemi1TopMass
-        return self.tree.hemi2TopMass
-
-    def wMass1(self):
-        if self.tree.bestHemi == 1:
-            return self.tree.hemi1WMass
-        return self.tree.hemi2WMass
-    def wMass2(self):
-        if self.tree.bestHemi == 2:
-            return self.tree.hemi1WMass
-        return self.tree.hemi2WMass
-
-    def tag_jets(self):
-        #order by btag output - high to low
-        jets = sorted([(self.tree.jet_csv.at(i),i) for i in xrange(len(self.tree.jet_csv))],reverse=True)
-        self.jets = [i for b, i in jets]
-
-    def jetNpt(self, n):
-        return self.tree.jet_pt.at(self.jets[n])
-
-    def jet1pt(self):
-        return self.jetNpt(0)
-    def jet2pt(self):
-        return self.jetNpt(1)
-    def jet3pt(self):
-        return self.jetNpt(2)
-    def jet4pt(self):
-        return self.jetNpt(3)
-    def jet5pt(self):
-        return self.jetNpt(4)
-    def jet6pt(self):
-        return self.jetNpt(5)
-
-    def jet1mult(self):
-        return self.tree.jet_mult.at(self.jets[0])
-    def jet2mult(self):
-        return self.tree.jet_mult.at(self.jets[1])
-    def jet3mult(self):
-        return self.tree.jet_mult.at(self.jets[2])
-    def jet4mult(self):
-        return self.tree.jet_mult.at(self.jets[3])
-    def jet5mult(self):
-        return self.tree.jet_mult.at(self.jets[4])
-    def jet6mult(self):
-        return self.tree.jet_mult.at(self.jets[5])
-
-    def jet1girth(self):
-        return self.tree.jet_girth_ch.at(self.jets[0])
-    def jet2girth(self):
-        return self.tree.jet_girth_ch.at(self.jets[1])
-    def jet3girth(self):
-        return self.tree.jet_girth_ch.at(self.jets[2])
-    def jet4girth(self):
-        return self.tree.jet_girth_ch.at(self.jets[3])
-    def jet5girth(self):
-        return self.tree.jet_girth_ch.at(self.jets[4])
-    def jet6girth(self):
-        return self.tree.jet_girth_ch.at(self.jets[5])
-
-    
-    def bdt(self):
-        self.tag_jets()
-        for h in self.headers_for_MVA():
-            self.vars['%s_var'%h][0] = getattr(self,h)()
-        self.vars['mr_var'] = self.tree.MR
-        self.vars['rsq_var'] = self.tree.RSQ
-        self.vars['nvertex_var'] = self.tree.nVertex
-        return self.reader.EvaluateMVA('BDT')
-
-
-class HadBox(object):
-    """The Had search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'Had'
-        self.dumper = dumper
-    def __call__(self, tree):
-        nTight = tree.nMuonTight + tree.nElectronTight
-        nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.metFilter and not tree.muTriggerFilter and not tree.eleTriggerFilter and\
-            tree.MR >= 450 and tree.RSQ >= 0.03 and tree.hadBoxFilter and tree.hadTriggerFilter and\
-            tree.nJet >= 6 and tree.nCSVL == 0 and nTight == 0 and nLoose == 0 and not tree.isolatedTrack10Filter
-    
 class BJetBox(object):
     """The BJet search box used in the analysis"""
     def __init__(self, dumper):
         self.name = 'BJet'
         self.dumper = dumper
     def __call__(self, tree):
-        nTight = tree.nMuonTight + tree.nElectronTight
-        nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.metFilter and not tree.muTriggerFilter and not tree.eleTriggerFilter and\
-             tree.MR >= 450 and tree.RSQ >= 0.03 and tree.hadBoxFilter and tree.hadTriggerFilter\
-              and tree.nJet >= 6 and tree.nCSVM > 0 and nTight == 0 and nLoose == 0 and not tree.isolatedTrack10Filter 
+        return self.dumper.select()
 
 class CR6JSingleLeptonBVetoBox(object):
     """A control region for the Had box: One lepton, no bjets - Should give handle on W+Jets"""
@@ -192,7 +65,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     workspace.factory('genInfo[0,-INF,+INF]')
     
     if filter.dumper is not None:
-        for h in filter.dumper.headers_for_MVA():
+        for h in filter.dumper.sel.headers_for_MVA():
             workspace.factory('%s[0,-INF,+INF]' % h)
     
     args = workspace.allVars()
@@ -265,8 +138,8 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         a.setRealValue('genInfo',tree.genInfo)
         
         if filter.dumper is not None:
-            for h in filter.dumper.headers_for_MVA():
-                a.setRealValue(h,getattr(filter.dumper,h)())
+            for h in filter.dumper.sel.headers_for_MVA():
+                a.setRealValue(h,getattr(filter.dumper.sel,h)())
         
         data.add(a)
     numEntries = data.numEntries()
@@ -322,7 +195,6 @@ if __name__ == '__main__':
                 fName = name[:-5]
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,HadBox(HadDumper(chain)),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(HadDumper(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(CalcBDT(chain)),options.run)
     convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoBox(),options.run)
 
