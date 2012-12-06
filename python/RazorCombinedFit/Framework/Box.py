@@ -367,15 +367,19 @@ class Box(object):
     def isMinCoeffNegative(self, vars, pars, component = 'TTj1b'):
         xmin = vars['MR'].getMin()
         ymin = vars['Rsq'].getMin()
-        btoy = pars['b_%s'%component].getVal()
-        x0toy =  pars['MR0_%s'%component].getVal()
-        y0toy =  pars['R0_%s'%component].getVal()
-        ntoy = pars['n_%s'%component].getVal()
-        toyMinCoeff = btoy*rt.TMath.Power((xmin - x0toy)*(ymin -y0toy), 1.0/ntoy) - 1.0 
-        print "MY MIN COEFFICIENT: b[(xmin-x0)(ymin-y0)]^(1/n)-1 = %f"%toyMinCoeff
-        if toyMinCoeff < 0:
-            print "NEGATIVE! RETHROW TOY"
-            return True
+        try:
+            btoy = pars['b_%s'%component].getVal()
+            x0toy =  pars['MR0_%s'%component].getVal()
+            y0toy =  pars['R0_%s'%component].getVal()
+            ntoy = pars['n_%s'%component].getVal()
+            toyMinCoeff = btoy*rt.TMath.Power((xmin - x0toy)*(ymin -y0toy), 1.0/ntoy) - 1.0 
+            print "%s MIN COEFFICIENT: b[(xmin-x0)(ymin-y0)]^(1/n)-1 = %f"%(component,toyMinCoeff)
+            if toyMinCoeff < 0:
+                print "NEGATIVE! RETHROW TOY"
+                return True
+        except KeyError:
+            return False
+            
         return False
     
     def generateToyFRWithYield(self, genmodel, fr, number, *options):
@@ -391,9 +395,13 @@ class Box(object):
         parsAtLimit = True
         while parsAtLimit :
             pars, parsAtLimit = self.smearParsWithCovariance(fr)
-            if not parsAtLimit:
-                parsAtLimit = self.isMinCoeffNegative(vars, pars, 'TTj1b')
-                parsAtLimit = self.isMinCoeffNegative(vars, pars, 'TTj2b')
+            # find the components that are on (Ntot on)
+            componentsOn = [parName.split('_')[-1] for parName in pars.keys() if parName.find('Ntot')!=-1]
+            # get a list of booleans answering whether the component goes negative
+            negComponents =  [self.isMinCoeffNegative(vars, pars, component) for component in componentsOn]
+            # take the OR of the booleans 
+            anyNegComp = any(negComponents)
+            parsAtLimit = parsAtLimit or anyNegComp
             
         for name, value in pars.iteritems():
             print "FIX PARAMETER: %s " %name
