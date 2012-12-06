@@ -19,7 +19,6 @@ if __name__ == '__main__':
         print "   FitMode = 2D or 3D"
         print ""
         print "After the inputs you can specify the following options"
-        print " --newFR    this is the new fit region"
         sys.exit()
     
     datasetName = sys.argv[1]
@@ -27,14 +26,17 @@ if __name__ == '__main__':
     sideband = sys.argv[3]
     fitmode = sys.argv[4]
     
-    newFR = False
     tagFR = ""
     fit3D = False
     tag3D = ""
-    for i in range(4,len(sys.argv)):
-        if sys.argv[i] == "--newFR":
-            newFR = True
-            tagFR = "--newFR"
+    
+    if sideband == "Sideband":
+        #since we actually want the proection in the full region, use the same tag
+        #tagFR = "--fit-region=LowRsq_LowMR"
+        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
+    if sideband == "FULL":
+        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
+        
     if fitmode == "3D":
         fit3D = True
         tag3D = "--3D"
@@ -42,12 +44,8 @@ if __name__ == '__main__':
     fitResultsDir = "FitResults_%s"%fitmode
     config = "config_summer2012/RazorInclusive2012_%s_btag.config"%fitmode
 
-    if newFR:
-        fitResultsDir = "FitResults_%s_newFR"%fitmode
-        config = "config_summer2012/RazorInclusive2012_%s_newFR_btag.config"%fitmode
-        
     queue = "1nd"
-    nToys = 3225
+    nToys = 2000
     pwd = os.environ['PWD']
     submitDir = "submit"
     fitResultMap = {'WJets':'%s/razor_output_WJets_%s_%s.root'%(fitResultsDir,sideband,box),
@@ -57,13 +55,11 @@ if __name__ == '__main__':
                     'ElectronHad-Run2012AB':'%s/razor_output_ElectronHad-Run2012AB_%s_%s.root'%(fitResultsDir,sideband,box)}
     if box == "TauTauJet" or box=="Jet" or box=="MultiJet":
         mRmin = 400.
-        rMin = 0.424264068712
+        rMin = 0.5
     else:
-        mRmin = 350.
-        rMin = 0.331662479036
-    if newFR:
-        mRmin = 250.
-        rMin = 0.316227766017
+        mRmin = 300.
+        rMin = 0.387298334621
+        
     label = "MR"+str(mRmin)+"_R"+str(rMin)
     datasetMap = {'WJets':'MC/WJetsToLNu_%s_BTAG_PF_%s.root'%(label,box),
                   'TTJets':'MC/TTJets_%s_BTAG_PF_%s.root'%(label,box),
@@ -82,13 +78,13 @@ if __name__ == '__main__':
     outputfile.write('#!/bin/bash\n')
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
-    outputfile.write('eval `scramv1 runtime -sh` \n')
-    outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir));
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,nToys))
-    outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s -b \n" %(toyDir, box))
-    outputfile.write("rm %s.txt \n" %(toyDir))
-    outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
-    outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
+    #outputfile.write('eval `scramv1 runtime -sh` \n')
+    #outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir));
+    #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,nToys))
+    #outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s -b \n" %(toyDir, box))
+    #outputfile.write("rm %s.txt \n" %(toyDir))
+    #outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
+    #outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
     outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s -b \n"%(box, ffDir, box, datasetMap[datasetName], ffDir,tagFR,tag3D))
     if datasetName.find("Run") != -1:
         outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D))
@@ -97,4 +93,4 @@ if __name__ == '__main__':
     
     outputfile.close
     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)

@@ -28,15 +28,19 @@ def getHisto(parName,parFiles):
     binNum = 0
     setAxis = parHisto.GetXaxis()
     setAxis.SetTitle("")
-    for label, parValErr in sorted(parFiles.iteritems()):
-        binNum+=1
-        parVal = parValErr[parName][0]
-        parErr = parValErr[parName][1]
-        parHisto.SetBinContent(binNum,parVal)
-        parHisto.SetBinError(binNum,parErr)
+    for label, parValErr in reversed(sorted(parFiles.iteritems())):
+        binNum +=1
+        try:
+            parVal = parValErr[parName][0]
+            parErr = parValErr[parName][1]
+            parHisto.SetBinContent(binNum,parVal)
+            parHisto.SetBinError(binNum,parErr)
+        except KeyError:
+            print "oh no"
         parHisto.SetMarkerStyle(8)
         parHisto.SetMarkerColor(rt.kViolet)
-        parHisto.SetMarkerSize(1.0)
+        parHisto.SetLineColor(rt.kAzure)
+        parHisto.SetMarkerSize(1.2)
         setAxis.SetBinLabel(binNum,label.replace("_"," "))
     return parHisto
 
@@ -67,7 +71,7 @@ def setstyle():
     rt.gStyle.SetPaperSize(20,26)
     rt.gStyle.SetPadTopMargin(0.075)
     rt.gStyle.SetPadRightMargin(0.17)
-    rt.gStyle.SetPadBottomMargin(0.17)
+    rt.gStyle.SetPadBottomMargin(0.24)
     rt.gStyle.SetPadLeftMargin(0.07)
     
     rt.gStyle.SetTitleFont(132,"xyz") 
@@ -147,6 +151,8 @@ if __name__ == '__main__':
     cfg = Config.Config(options.config)
     print 'Input files are %s' % ', '.join(args)
 
+    setstyle()
+    
     labels = {}
     for f in args:
         if f.lower().endswith('.root'):
@@ -167,7 +173,6 @@ if __name__ == '__main__':
     for parName in parNameList:
         parHisto = getHisto(parName,parFiles)
 
-        setstyle()    
         c = rt.TCanvas("c%s"%parName,"c%s"%parName,800,600)
         parHisto.Draw('E1')
         c.Print("%s/%s.pdf"%(options.outdir,parName))

@@ -45,7 +45,8 @@ Double_t RooBTagMult::evaluate() const
   else if(X>=1. && X<2.) return thisf1;
   else if(X>=2. && X<3.) return thisf2;
   else if(X>=3. && X<4.) return thisf3;
-  else return thisf4;
+  else if(X>=4. && X<5.) return thisf4;
+  else return  1.7e-308;
 }
 
 // //---------------------------------------------------------------------------
@@ -64,10 +65,12 @@ Double_t RooBTagMult::analyticalIntegral(Int_t code, const char* rangeName) cons
   double thisf3 = f3;
   double thisf4 = f4;
 
-  double binVol1;
-  double binVol2;
-  double binVol3;
-  double binVol4;
+  double binVol1 = 0;
+  double binVol2 = 0;
+  double binVol3 = 0;
+  double binVol4 = 0;
+
+  double integral = 0;
  
   if(code == 1) {
     if (xmin>=1. && xmin <=2.){
@@ -112,7 +115,11 @@ Double_t RooBTagMult::analyticalIntegral(Int_t code, const char* rangeName) cons
 	  }
     }
 
-    return max(1.7e-308,thisf1*binVol1 + thisf2*binVol2 + thisf3*binVol3 + thisf4*binVol4);
+    integral = thisf1*binVol1 + thisf2*binVol2 + thisf3*binVol3 + thisf4*binVol4;
+
+    if (integral<=0) return 1.;
+
+    return integral;
   }
 
   else {

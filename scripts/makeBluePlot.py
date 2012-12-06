@@ -2,38 +2,16 @@ import sys
 import os
 
 #this is global, to be reused in the plot making
-def BinningFine(Box, noBtag):
-    if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-        MRbins = [400, 480, 600, 740, 900, 1200, 1600, 2500]
-        if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
-        else: Rsqbins = [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
-    else:
-        MRbins = [350, 410, 480, 560, 650, 750, 860, 980, 1200, 1600, 2500]
-        if noBtag: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50]
-        else: Rsqbins = [0.11,0.15,0.2,0.25,0.30,0.35,0.40,0.45,0.50,0.56,0.62,0.70,0.80,1.5]
-    if noBtag: nBtagbins = [0.0,1.0]
-    else: nBtagbins = [1.0,2.0,3.0,4.0,5.0]
-    return MRbins, Rsqbins, nBtagbins
 
-def Binning(Box, noBtag, newFR):
-    if newFR:
-        if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-            MRbins = [250, 400, 550, 700, 900, 1200, 1600, 2500]
-            if noBtag: Rsqbins =  [0.18,0.24,0.35,0.50]
-            else: Rsqbins = [0.10,0.15,0.21,0.30,0.41,0.52,0.64,0.80,1.5]
-        else:
-            MRbins = [250, 400, 550, 700, 900, 1200, 1600, 2500]
-            if noBtag: Rsqbins = [0.18,0.24,0.35,0.50]
-            else: Rsqbins = [0.10,0.15,0.21,0.30,0.41,0.52,0.64,0.80,1.5]
+def Binning(Box, noBtag):
+    if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
+        MRbins = [400, 450, 550, 700, 900, 1200, 1600, 2500]
+        if noBtag: Rsqbins =  [0.25,0.30,0.40,0.50]
+        else: Rsqbins = [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-            MRbins = [400, 550, 700, 900, 1200, 1600, 2500]
-            if noBtag: Rsqbins = [0.18,0.22,0.26,0.30,0.35,0.40,0.45,0.50]
-            else: Rsqbins = [0.18,0.24,0.32,0.41,0.52,0.64,0.80,1.5]
-        else:
-            MRbins = [350, 420, 500, 600, 740, 900, 1200, 1600, 2500]
-            if noBtag: Rsqbins = [0.11,0.17,0.23,0.35,0.50]
-            else: Rsqbins = [0.11,0.15,0.21,0.30,0.41,0.52,0.64,0.80,1.5]
+        MRbins = [300, 350, 400, 550, 700, 900, 1200, 1600, 2500]
+        if noBtag: Rsqbins = [0.15,0.20,0.30,0.40,0.50]
+        else: Rsqbins = [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if noBtag: nBtagbins = [0.0,1.0]
     else: nBtagbins = [1.0,2.0,3.0,4.0,5.0]
     return MRbins, Rsqbins, nBtagbins

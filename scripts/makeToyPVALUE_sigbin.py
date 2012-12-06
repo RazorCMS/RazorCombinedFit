@@ -260,7 +260,7 @@ def getPValue(n, hToy):
     Prob = Prob/hToy.Integral()
     return Prob
 
-def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFolder, printPlots = False, fit3D = False, btag = 1):
+def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, Box, outFolder, printPlots = True, fit3D = True, btag = 0):
     
     x = array("d",MRbins)
     y = array("d",Rsqbins)
@@ -285,7 +285,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
     pValHist = rt.TH1D("pVal%s" %Box, "pVal%s" %Box, 20, 0., 1.)
 
     #prepare the latex table
-    if fit3D: tableFileName = "%s/table_nBtag%i_%s.tex" %(outFolder,btag,Box)
+    if fit3D: tableFileName = "%s/table_%s.tex" %(outFolder,Box)
     else: tableFileName = "%s/table_%s.tex" %(outFolder,Box)
     table = open(tableFileName,"w")
     table.write("\\errorcontextlines=9\n")
@@ -302,11 +302,16 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
     result = []
     for i in range(0,len(MRbins)-1):
         for j in range(0,len(Rsqbins)-1):
-            if fit3D: varName = "b%i_%i_%i" %(i,j,btag-1)
-            else: varName = "b%i_%i" %(i,j)
+            if fit3D:
+                sumName = "b%i_%i_1+b%i_%i_2+b%i_%i_3+b%i_%i_4+" %(i,j,i,j,i,j,i,j)
+                varNames = ["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j),"b%i_%i_4"%(i,j)]
+                varName = varNames[0]
+            else:
+                varName = "b%i_%i" %(i,j)
+                sumName = "b%i_%i+" %(i,j)
             histoName = "Histo_%s" %varName
             # make an histogram of the expected yield
-            myTree.Draw(varName)
+            myTree.Draw(sumName[:-1])
             htemp = rt.gPad.GetPrimitive("htemp")
             mean = htemp.GetMean()
             rms = htemp.GetRMS()
@@ -317,8 +322,10 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
             htemp.Scale(1./htemp.Integral())
             
             # GET THE OBSERVED NUMBER OF EVENTS
-            if fit3D: data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i && nBtag < %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], btag, btag+1))
-            else: data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1]))
+            if fit3D:
+                data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nBtagbins[0]))
+            else:
+                data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nBtagbins[0]))
             nObs = data.numEntries()
             
             switchToKDE = decideToUseKDE(minX,maxX,htemp)
@@ -327,8 +334,9 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
             
             rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"myhisto\");")
             myhisto = rt.TH1D("myhisto", histoName, maxX, 0., maxX)
-            myTree.Project("myhisto", varName)
+            myTree.Project("myhisto", sumName[:-1])
             myhisto.Scale(1./myhisto.Integral())
+            
             rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"orighisto\");")
             orighisto = myhisto.Clone("orighisto")
             
@@ -338,19 +346,22 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
             orighisto.Draw()
             if myhisto.GetEntries() != 0:
                 if switchToKDE:
-                    # USING ROOKEYSPDF
-                    nExp = rt.RooRealVar(varName,varName,0,maxX)
-                    dataset = rt.RooDataSet("dataset","dataset",myTree,rt.RooArgSet(nExp))
-                    rho = useThisRho(minX,maxX,orighisto)
-                    rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",nExp,dataset,rt.RooKeysPdf.NoMirror,rho)
-                    func = rkpdf.asTF(rt.RooArgList(nExp))
+                    nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
+                    nExpSet = rt.RooArgSet("nExpSet")
+                    nExpList = rt.RooArgList("nExpList")
+                    for j in range(0,len(nExp)):
+                        nExpSet.add(nExp[j])
+                        nExpList.add(nExp[j])
+                    dataset = rt.RooDataSet("dataset","dataset",myTree,nExpSet)
+                    sumExp = rt.RooFormulaVar("sumExp","sumExp",sumName[:-1],nExpList)
+                    sumExpData = dataset.addColumn(sumExp)
+                    sumExpData.setRange(0,maxX)
+                    rho = useThisRho(0.,maxX,myhisto)
+                    rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
+                    func = rkpdf.asTF(rt.RooArgList(sumExpData))
                     # GETTING THE P-VALUE
                     pvalKDE,funcFillRight,funcFillLeft = getPValueFromKDE(nObs,maxX,func)
-                    for ib in range(0,maxX):
-                        nExp.setVal(ib)
-                        myhisto.SetBinContent(myhisto.FindBin(ib),rkpdf.getVal())
-                    myhisto.Scale(1./myhisto.Integral())
-    
+                    
                 if switchToKDE: modeVal,rangeMin,rangeMax,probRange,funcFill68 = find68ProbRangeFromKDEMedian(maxX,func)
 
                 else: modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
@@ -395,7 +406,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
                 del c
                 
                 hNS.SetBinContent(i+1, j+1, nsigma)
-                #if not HadFR(MRbins[i], Rsqbins[j]):
+                if nObs==0 and (rangeMax+rangeMin/2)<1.:
+                    hNS.SetBinContent(i+1, j+1, -999)
                 hOBS.SetBinContent(i+1, j+1, nObs)
                 hEXP.SetBinContent(i+1, j+1, (rangeMax+rangeMin)/2)
                 hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
@@ -427,7 +439,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFol
     table.close()
     return h, hOBS, hEXP, hNS, pValHist
 
-def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, showSidebandL, fit3D, btag):
+def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btagOpt):
     fileOUT = rt.TFile.Open("%s/pvalue_%s.root" %(outFolder,Box), "recreate")
     h.Write()
     hNS.Write()
@@ -471,70 +483,88 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     for i in range(0,len(xLines)): xLines[i].Draw()
     for i in range(0,len(yLines)): yLines[i].Draw()
 
-    # the fit region in green
-    frLines = []
-
-    if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-        frLines.append(rt.TLine(400,0.18,2500,0.18))
-        frLines.append(rt.TLine(550,0.24,2500,0.24))
-        frLines.append(rt.TLine(550,0.24,550,1.5))
-        frLines.append(rt.TLine(400,0.18,400,1.5))
-        frLines.append(rt.TLine(400,1.5,550,1.5))
-        frLines.append(rt.TLine(2500,0.18,2500,0.24))
-
-    else:
-        frLines.append(rt.TLine(350,0.11,2500,0.11))
-        frLines.append(rt.TLine(500,0.15,2500,0.15))
-        frLines.append(rt.TLine(500,0.15,500,1.5))
-        frLines.append(rt.TLine(350,0.11,350,1.5))
-        frLines.append(rt.TLine(350,1.5,500,1.5))
-        frLines.append(rt.TLine(2500,0.11,2500,0.15))
-
-    ci = rt.TColor.GetColor("#006600");
-    if showSidebandL:
-        for frLine in frLines:
-            frLine.SetLineColor(ci)
-            frLine.SetLineWidth(2)
-            frLine.Draw()
-    if fit3D:
-        c1.SaveAs("%s/pvalue_sigbin_nBtag%i_%s.C" %(outFolder,btag,Box))
-        c1.SaveAs("%s/pvalue_sigbin_nBtag%i_%s.pdf" %(outFolder,btag,Box))
-    else:
-        c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
-        c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
+    c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
+    c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
 
     rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c2\");")
     c2 = rt.TCanvas("c2","c2", 900, 600)
     setCanvasStyle(c2)
     # French flag Palette
-    Red = array('d',[0.00, 1.0, 1.0])
-    Green = array('d',[0.00, 1.00, 0.00])
-    Blue = array('d',[1.0, 1.00, 0.00])
-    Length = array('d',[0.00, 0.50, 1.00])
-    rt.TColor.CreateGradientColorTable(3,Length,Red,Green,Blue,11)
-    hNS.SetMaximum(5.5)
-    hNS.SetMinimum(-5.5)
-    hNS.SetContour(11)
+    Red = array('d',  [0.00, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00])
+    Green = array('d',[0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
+    Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
+    Length =array('d',[0.00, 0.20, 0.35, 0.50, 0.65, 0.8, 1.00]) # colors get darker faster at 4sigma
+    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,9999)
+    hNS.SetMaximum(5.1)
+    hNS.SetMinimum(-5.1) # so the binning is 0 2 4
+    hNS.SetContour(9999)
     # changes a few of the level colors by chaning the cut-offs
-    hNS.SetContourLevel(6,1.5)
-    hNS.SetContourLevel(5,-1.5)
-    hNS.SetContourLevel(7,2.5)
-    hNS.SetContourLevel(4,-2.5)    
+    # for external viewing:
+    #hNS.SetContourLevel(6,1.5)
+    #hNS.SetContourLevel(5,-1.5)
+    #hNS.SetContourLevel(7,2.5)
+    #hNS.SetContourLevel(4,-2.5)
+    hNS.SetBinContent(1, 1, -999)
+    hNS.GetXaxis().SetMoreLogLabels()
+    #hNS.GetYaxis().SetMoreLogLabels()
+    hNS.GetXaxis().SetNoExponent()
+    hNS.GetYaxis().SetNoExponent()
     hNS.Draw("colz")
+    fGrayGraphs = []
+    tlatexList = []
+    col1 = rt.gROOT.GetColor(rt.kGray+1)
+    col1.SetAlpha(0.3)
+    for iBinX in range(1,hNS.GetNbinsX()+1):
+        for iBinY in range(1,hNS.GetNbinsY()+1):
+            if hNS.GetBinContent(iBinX,iBinY)!= -999: continue
+            xBinLow = hNS.GetXaxis().GetBinLowEdge(iBinX)
+            xBinHigh = xBinLow+hNS.GetXaxis().GetBinWidth(iBinX)
+            yBinLow = hNS.GetYaxis().GetBinLowEdge(iBinY)
+            yBinHigh = yBinLow+hNS.GetYaxis().GetBinWidth(iBinY)
+            fGray = rt.TGraph(5)
+            fGray.SetPoint(0,xBinLow,yBinLow)
+            fGray.SetPoint(1,xBinLow,yBinHigh)
+            fGray.SetPoint(2,xBinHigh,yBinHigh)
+            fGray.SetPoint(3,xBinHigh,yBinLow)
+            fGray.SetPoint(4,xBinLow,yBinLow)
+            fGray.SetFillColor(rt.kGray+1)
+            fGrayGraphs.append(fGray)
+    for iBinX in range(1,hNS.GetNbinsX()+1):
+        for iBinY in range(1,hNS.GetNbinsY()+1):
+            binCont = hNS.GetBinContent(iBinX,iBinY)
+            if binCont == -999: continue
+            if abs(binCont)< 0.1: continue
+            if binCont>=0:
+                xBin  = hNS.GetXaxis().GetBinLowEdge(iBinX) + .25*hNS.GetXaxis().GetBinWidth(iBinX)
+                yBin = hNS.GetYaxis().GetBinLowEdge(iBinY) + .3*hNS.GetYaxis().GetBinWidth(iBinY)
+            elif binCont<0:
+                xBin  = hNS.GetXaxis().GetBinLowEdge(iBinX) + .1*hNS.GetXaxis().GetBinWidth(iBinX) # left side of TLatex 10% across the binwidth in X
+                yBin = hNS.GetYaxis().GetBinLowEdge(iBinY) + .3*hNS.GetYaxis().GetBinWidth(iBinY) # bottom of TLatex 30% across the binwidth in X
+            tlatex = rt.TLatex(xBin,yBin,"%2.1f"%binCont)
+            tlatex.SetTextSize(0.05)
+            tlatex.SetTextFont(42)
+            tlatexList.append(tlatex)
+    for fGray in fGrayGraphs: fGray.Draw("F")
     for i in range(0,len(xLines)): xLines[i].Draw()
     for i in range(0,len(yLines)): yLines[i].Draw()
-    if showSidebandL:
-        for frLine in frLines:
-            frLine.SetLineColor(ci)
-            frLine.SetLineWidth(2)
-            frLine.Draw()
-            
-    if fit3D:
-        c2.SaveAs("%s/nSigma_%ib_%s.C" %(outFolder,btag,Box))
-        c2.SaveAs("%s/nSigma_%ib_%s.pdf" %(outFolder,btag,Box))
-    else:
-        c2.SaveAs("%s/nSigma_%s.C" %(outFolder,Box))
-        c2.SaveAs("%s/nSigma_%s.pdf" %(outFolder,Box))
+    c2.SaveAs("%s/nSigma_%s.C" %(outFolder,Box))
+    c2.SaveAs("%s/nSigma_%s.pdf" %(outFolder,Box))
+
+    for tlatex in tlatexList: tlatex.Draw()
+        
+    # now for a log scale plot
+    c2.SetLogx()
+    c2.SetLogy()
+    tlabels = []
+    tlabels.append(rt.TLatex(262,0.75, "0.8"))
+    tlabels.append(rt.TLatex(262,0.375, "0.4"))
+    tlabels.append(rt.TLatex(262,0.19, "0.2"))
+    for tlabel in tlabels:
+        tlabel.SetTextSize(0.055)
+        tlabel.SetTextFont(42)
+        tlabel.Draw()
+    c2.SaveAs("%s/nSigmaLog_%s.C" %(outFolder,Box))
+    c2.SaveAs("%s/nSigmaLog_%s.pdf" %(outFolder,Box))
 
   
 if __name__ == '__main__':
@@ -546,31 +576,42 @@ if __name__ == '__main__':
     noBtag = False
     
     printPlots = True
-    showSidebandL = False
 
     fit3D = False
-    newFR = False
     
-
+    frLabels = []
     for i in range(5,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
-        if sys.argv[i] == "--SidebandL": showSidebandL = True
         if sys.argv[i] == "--3D": fit3D = True
-        if sys.argv[i] == "--newFR": newFR = True
+        if sys.argv[i].find("--fit-region=") != -1:
+            frLabelString = sys.argv[i].replace("--fit-region=","")
+            frLabels = frLabelString.split("_")
 
         
-    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag, newFR)
-    if not fit3D: nBtagbins = [1,5]
+    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
     
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
+    btagOpt = 0
+    h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt)
+    hList.append(h)
+    hOBSList.append(hOBS)
+    hEXPList.append(hEXP)
+    hNSList.append(hNS)
+    pValHistList.append(pValHist)
+
     
-    for btag in nBtagbins[:-1]:
-        h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btag)
-        hList.append(h)
-        hOBSList.append(hOBS)
-        hEXPList.append(hEXP)
-        hNSList.append(hNS)
-        pValHistList.append(pValHist)
+    for h, hOBS, hEXP, hNS, pValHist in zip(hList,hOBSList,hEXPList,hNSList,pValHistList):
+        writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btagOpt)
+
+
+    #ignore the individual b-tags for now:
+    #for btag in nBtagbins[:-1]:
+    #    h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btag)
+    #    hList.append(h)
+    #    hOBSList.append(hOBS)
+    #    hEXPList.append(hEXP)
+    #    hNSList.append(hNS)
+    #    pValHistList.append(pValHist)
     
-    for h, hOBS, hEXP, hNS, pValHist, btag in zip(hList,hOBSList,hEXPList,hNSList,pValHistList,nBtagbins[:-1]):
-        writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, showSidebandL, fit3D, btag)
+    #for h, hOBS, hEXP, hNS, pValHist, btag in zip(hList,hOBSList,hEXPList,hNSList,pValHistList,nBtagbins[:-1]):
+    #    writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btag)

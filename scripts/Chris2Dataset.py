@@ -10,7 +10,7 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
-lumi = 18.065
+lumi = 5.0
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
     
@@ -48,7 +48,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     else: label += "CALO_"
     if useWeight: label += "WEIGHT_"
 
-    print btagmax
+    btagcutoff = 4
+    if box == "MuEle" or box =="MuMu" or box == "EleEle" or box == "MuTau" or box == "EleTau" or box=="TauTauJet":
+        btagcutoff = 1
+
 
     #iterate over selected entries in the input tree
     if not calo: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
@@ -62,9 +65,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         tree.GetEntry(entry)
         
         if not calo:
-            if tree.BTAG_NUM < btagmin or tree.BTAG_NUM >= btagmax: continue
+            if tree.BTAG_NUM < btagmin: continue
         else:
-            if tree.BTAG_NUM_CALO < btagmin or tree.BTAG_NUM_CALO >= btagmax: continue
+            if tree.BTAG_NUM_CALO < btagmin: continue
 
         runrange = run.split(":")
         if len(runrange) == 2:
@@ -80,13 +83,19 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
             a.setRealValue('MR',tree.MR)
             a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
             a.setRealValue('Rsq',tree.RSQ)
-            a.setRealValue('nBtag',tree.BTAG_NUM)
+            if tree.BTAG_NUM >= btagcutoff:
+                a.setRealValue('nBtag',btagcutoff)
+            else:
+                a.setRealValue('nBtag',tree.BTAG_NUM)
             a.setRealValue('CHARGE',tree.CHARGE)
         else:
             a.setRealValue('MR',tree.MR_CALO_NOMU)
             a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_CALO_NOMU))
             a.setRealValue('Rsq',tree.RSQ_CALO_NOMU)
-            a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
+            if  tree.BTAG_NUM_CALO >= btagcutoff:
+                a.setRealValue('nBtag',btagcutoff)
+            else:
+                a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
             a.setRealValue('CHARGE',tree.CHARGE)
         if useWeight:
             try:
@@ -102,7 +111,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     if max < 0: max = numEntries
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
-    wdata = rt.RooDataSet(rdata.GetName(),rdata.GetTitle(),rdata,rdata.get(),"MR>0","W")
+    wdata = rt.RooDataSet(rdata.GetName(),rdata.GetTitle(),rdata,rdata.get(),"MR>=0.","W")
     print "Number of Entries in Box %s = %d"%(box,rdata.numEntries())
     print "Sum of Weights in Box %s = %.1f"%(box,wdata.sumEntries())
     if write:

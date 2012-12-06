@@ -61,7 +61,8 @@ def getTree3D(MRbins,Rsqbins,nBtagbins,listfileName):
     for iBinX in range(0,len(MRbins)-1):
         for iBinY in range(0,len(Rsqbins)-1):
             for iBinZ in range(0,len(nBtagbins)-1):
-                stringMyStruct1 = stringMyStruct1+"float b%i_%i_%i;" %(iBinX,iBinY,iBinZ)
+                BinZVal = nBtagbins[iBinZ]
+                stringMyStruct1 = stringMyStruct1+"float b%i_%i_%i;" %(iBinX,iBinY,BinZVal)
     print stringMyStruct1+"};}"
     rando = random.randint(1,999999)
     tempMacro = open("tempMacro_%d.C"%rando,"w")
@@ -75,9 +76,10 @@ def getTree3D(MRbins,Rsqbins,nBtagbins,listfileName):
     s1 = MyStruct1()
     for ix in range(0, len(MRbins)-1):
         for iy in range(0, len(Rsqbins)-1):
-            for iz in range(0, len(nBtagbins)-1):
-                varName = "b%i_%i_%i" %(ix, iy, iz) 
-                branchName = "b%i_%i_%i" %(ix, iy, iz) 
+            for iz in range(0,len(nBtagbins)-1):
+                zVal = nBtagbins[iz]
+                varName = "b%i_%i_%i" %(ix, iy, zVal) 
+                branchName = "b%i_%i_%i" %(ix, iy, zVal) 
                 myTree.Branch(branchName, rt.AddressOf(s1,varName),'%s/F' %varName)
     
     treeName = "RMRTree"
@@ -98,7 +100,8 @@ def getTree3D(MRbins,Rsqbins,nBtagbins,listfileName):
         for iBinY in range(0,len(Rsqbins)-1):
             for iBinX in range(0,len(MRbins)-1):
                 for iBinZ in range(0,len(nBtagbins)-1):
-                    value = setattr(s1, "b%i_%i_%i" %(iBinX,iBinY,iBinZ), float(h.GetBinContent(iBinX+1, iBinY+1, iBinZ+1)/ScaleFactor))
+                    BinZVal = nBtagbins[iBinZ]
+                    value = setattr(s1, "b%i_%i_%i" %(iBinX,iBinY,BinZVal), float(h.GetBinContent(iBinX+1, iBinY+1, iBinZ+1)/ScaleFactor))
         myTree.Fill()
         del gdata
         del h
@@ -120,15 +123,13 @@ if __name__ == '__main__':
     label = sys.argv[2]
     Box = sys.argv[3]
     listfileName = sys.argv[4]
-    newFR = False
     noBtag = False
     fit3D = False
     for i in range(5,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--3D": fit3D = True
-        if sys.argv[i] == "--newFR": newFR = True
 
-    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag ,newFR)
+    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
 
     if fit3D:
         myTree = getTree3D(MRbins,Rsqbins,nBtagbins,listfileName)

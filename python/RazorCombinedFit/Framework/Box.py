@@ -57,6 +57,13 @@ class Box(object):
             cut = '(%s) || (%s)' % (cut, self.getVarRangeCut(r) )
         return cut
 
+    def defineFunctions(self, functions, workspace = None):
+        if workspace is None:
+            workspace = self.workspace
+        for f in functions:
+            r = workspace.factory(f)
+            self.importToWS(r)
+            
     def defineSet(self, name, variables, workspace = None):
         if workspace is None:
             workspace = self.workspace
@@ -357,7 +364,7 @@ class Box(object):
             if p.getVal() == p.getMin() or p.getVal() == p.getMax(): parsAtLimit = True
         return pars, parsAtLimit
 
-    def isMinCoeffNegative(self, vars, pars, component = 'UEC'):
+    def isMinCoeffNegative(self, vars, pars, component = 'TTj1b'):
         xmin = vars['MR'].getMin()
         ymin = vars['Rsq'].getMin()
         btoy = pars['b_%s'%component].getVal()
@@ -384,7 +391,9 @@ class Box(object):
         parsAtLimit = True
         while parsAtLimit :
             pars, parsAtLimit = self.smearParsWithCovariance(fr)
-            if not parsAtLimit: parsAtLimit = self.isMinCoeffNegative(vars, pars, 'UEC')
+            if not parsAtLimit:
+                parsAtLimit = self.isMinCoeffNegative(vars, pars, 'TTj1b')
+                parsAtLimit = self.isMinCoeffNegative(vars, pars, 'TTj2b')
             
         for name, value in pars.iteritems():
             print "FIX PARAMETER: %s " %name
