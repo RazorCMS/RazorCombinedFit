@@ -13,7 +13,7 @@ def Binning(Box, noBtag):
         if noBtag: Rsqbins = [0.15,0.20,0.30,0.40,0.50]
         else: Rsqbins = [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if noBtag: nBtagbins = [0.0,1.0]
-    else: nBtagbins = [1.0,2.0,3.0,4.0,5.0]
+    else: nBtagbins = [1.0,2.0,3.0,4.0]
     return MRbins, Rsqbins, nBtagbins
 
 if __name__ == '__main__':

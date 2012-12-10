@@ -303,8 +303,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     for i in range(0,len(MRbins)-1):
         for j in range(0,len(Rsqbins)-1):
             if fit3D:
-                sumName = "b%i_%i_1+b%i_%i_2+b%i_%i_3+b%i_%i_4+" %(i,j,i,j,i,j,i,j)
-                varNames = ["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j),"b%i_%i_4"%(i,j)]
+                sumName = "b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
+                varNames = ["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)]
                 varName = varNames[0]
             else:
                 varName = "b%i_%i" %(i,j)

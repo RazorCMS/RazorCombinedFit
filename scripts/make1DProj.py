@@ -48,8 +48,8 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         varNames = []
         for j in range(0,nbiny-1):
             if fit3D:
-                sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+b%i_%i_4+" %(i,j,i,j,i,j,i,j)
-                varNames.extend(["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j),"b%i_%i_4"%(i,j)])
+                sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
+                varNames.extend(["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)])
             else:
                 sumName = sumName+"b%i_%i+" %(i,j)
                 varNames.append("b%i_%i" %(i,j))

@@ -18,7 +18,7 @@ def getBinning(boxName, varName, btag):
             elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if varName == "nBtag" :
         if btag == "NoBtag":        return [0,1]
-        elif btag == "Btag":        return [1,2,3,4,5]
+        elif btag == "Btag":        return [1,2,3,4]
                      
 class RazorBox(Box.Box):
     
@@ -71,7 +71,7 @@ class RazorBox(Box.Box):
                 self.workspace.var("n%s" %label).setConstant(rt.kTRUE)
                 
             ## define the nB pdf            
-            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s,f4%s)"%(label,label,label,label,label))
+            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s)"%(label,label,label,label))
             ## the total PDF is the product of the two
             self.workspace.factory("PROD::PDF%s(RazPDF%s,BtagPDF%s)"%(label,label,label))
             ##associate the yields to the pdfs through extended PDFs
@@ -90,7 +90,7 @@ class RazorBox(Box.Box):
                 self.workspace.var("n%s" %label).setVal(1.0)
                 self.workspace.var("n%s" %label).setConstant(rt.kTRUE)
             ## define the nB pdf
-            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s,f4%s)"%(label,label,label,label,label))
+            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s)"%(label,label,label,label))
             ## for each charge, the 4D PDF is the product of the two * the charge 
             self.workspace.factory("PROD::PDF%sPlus(RazPDF%s,BtagPDF%s,PlusPDF)"%(label,label,label))
             self.workspace.factory("PROD::PDF%sMinus(RazPDF%s,BtagPDF%s,MinusPDF)"%(label,label,label))
@@ -120,17 +120,17 @@ class RazorBox(Box.Box):
             self.fixParsExact("b_%s" % flavour, False)
     def floatBTag(self,flavour):
         self.fixParsExact("f3_%s" % flavour, False)
-        self.fixParsExact("f4_%s" % flavour, False)
+        #self.fixParsExact("f4_%s" % flavour, False)
 
     def floatBTagWithPenalties(self,flavour):
         self.fixParsPenalty("f1_%s" % flavour)
         self.fixParsPenalty("f2_%s" % flavour)
         self.fixParsPenalty("f3_%s" % flavour)
-        self.fixParsPenalty("f4_%s" % flavour)
+        #self.fixParsPenalty("f4_%s" % flavour)
         self.fixPars("f1_%s_s" % flavour)
         self.fixPars("f2_%s_s" % flavour)
         self.fixPars("f3_%s_s" % flavour)
-        self.fixPars("f4_%s_s" % flavour)
+        #self.fixPars("f4_%s_s" % flavour)
             
     def floatComponent(self,flavour):
         self.fixParsExact("MR0_%s" % flavour, False)
@@ -187,7 +187,7 @@ class RazorBox(Box.Box):
         self.fixPars("f1")
         self.fixPars("f2")
         self.fixPars("f3")
-        self.fixPars("f4")
+        #self.fixPars("f4")
 
         def floatSomething(z):
             """Switch on or off whatever you want here"""
@@ -226,14 +226,6 @@ class RazorBox(Box.Box):
             data1b = data.reduce("nBtag>=1&&nBtag<2")
             data2b = data.reduce("nBtag>=2&&nBtag<3")
             data3b = data.reduce("nBtag>=3&&nBtag<4")
-            data4b = data.reduce("nBtag>=4&&nBtag<5")
-            if data4b.numEntries() == 0:
-                self.workspace.var("f4_TTj2b").setVal(0.)
-                self.workspace.var("f4_TTj2b").setConstant(rt.kTRUE)
-                self.workspace.var("f4_Vpj").setVal(0.)
-                self.workspace.var("f4_Vpj").setConstant(rt.kTRUE)
-                self.workspace.var("f4_TTj1b").setVal(0.)
-                self.workspace.var("f4_TTj1b").setConstant(rt.kTRUE)
             if data3b.numEntries() == 0:
                 self.workspace.var("f3_TTj2b").setVal(0.)
                 self.workspace.var("f3_TTj2b").setConstant(rt.kTRUE)
@@ -249,7 +241,7 @@ class RazorBox(Box.Box):
                 self.workspace.var("f2_Vpj").setConstant(rt.kTRUE)
                 self.workspace.var("f2_TTj1b").setVal(0.)
                 self.workspace.var("f2_TTj1b").setConstant(rt.kTRUE)
-            del data1b, data2b, data3b, data4b
+            del data1b, data2b, data3b
         del data
         
 
@@ -460,8 +452,7 @@ class RazorBox(Box.Box):
                 h.GetXaxis().SetLabelSize(0.08)
                 h.GetXaxis().SetBinLabel(1,"1")
                 h.GetXaxis().SetBinLabel(2,"2")
-                h.GetXaxis().SetBinLabel(3,"3")
-                h.GetXaxis().SetBinLabel(4,"#geq 4")
+                h.GetXaxis().SetBinLabel(3,"#geq 3")
                 
             # y axis
             if name == "MR": h.GetYaxis().SetTitle("Events/(%i GeV)" %h.GetXaxis().GetBinWidth(1))

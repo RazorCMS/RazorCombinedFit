@@ -19,8 +19,7 @@ public:
    RooBTagMult() {} ;
    RooBTagMult(const char *name, const char *title,
 	       RooAbsReal &_x, 
-	       RooAbsReal &_f0, RooAbsReal &_f1,
-	       RooAbsReal &_f2, RooAbsReal &_f3);
+	       RooAbsReal &_f1, RooAbsReal &_f2, RooAbsReal &_f3);
    RooBTagMult(const RooBTagMult& other,
       const char* name = 0);
    virtual TObject* clone(const char* newname) const { return new RooBTagMult(*this,newname); }
@@ -34,8 +33,7 @@ protected:
    RooRealProxy X;        // dependent variable
    RooRealProxy f1;       // nBtag=1 fraction
    RooRealProxy f2;       // nBtag=2 fraction
-   RooRealProxy f3;       // nBtag=3 fraction
-   RooRealProxy f4;       // nBtag=4 fraction
+   RooRealProxy f3;       // nBtag>=3 fraction
 
    Double_t evaluate() const;
 private:

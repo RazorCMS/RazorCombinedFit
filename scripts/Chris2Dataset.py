@@ -48,8 +48,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     else: label += "CALO_"
     if useWeight: label += "WEIGHT_"
 
-    btagcutoff = 4
-    if box == "MuEle" or box =="MuMu" or box == "EleEle" or box == "MuTau" or box == "EleTau" or box=="TauTauJet":
+    btagcutoff = 3
+    if box == "MuEle" or box =="MuMu" or box == "EleEle" or box=="TauTauJet":
         btagcutoff = 1
 
 
