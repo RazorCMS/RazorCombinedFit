@@ -30,7 +30,7 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':[],'Vpj':[]}
         else:
             self.btag = "Btag"
-            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','MuTau','EleTau','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet']}
+            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','Jet','MultiJet']}
             
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
         elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
@@ -118,19 +118,20 @@ class RazorBox(Box.Box):
             self.fixPars("b_%s_s" % flavour)
         else:
             self.fixParsExact("b_%s" % flavour, False)
-    def floatBTag(self,flavour):
+            
+    def floatBTagf3(self,flavour):
         self.fixParsExact("f3_%s" % flavour, False)
-        #self.fixParsExact("f4_%s" % flavour, False)
+        
+    def floatBTagf2(self,flavour):
+        self.fixParsExact("f2_%s" % flavour, False)
 
     def floatBTagWithPenalties(self,flavour):
         self.fixParsPenalty("f1_%s" % flavour)
         self.fixParsPenalty("f2_%s" % flavour)
         self.fixParsPenalty("f3_%s" % flavour)
-        #self.fixParsPenalty("f4_%s" % flavour)
         self.fixPars("f1_%s_s" % flavour)
         self.fixPars("f2_%s_s" % flavour)
         self.fixPars("f3_%s_s" % flavour)
-        #self.fixPars("f4_%s_s" % flavour)
             
     def floatComponent(self,flavour):
         self.fixParsExact("MR0_%s" % flavour, False)
@@ -165,7 +166,7 @@ class RazorBox(Box.Box):
         # - W+jets
         # - ttbar+jets
         # - TTj1b
-        self.addTailPdf("Vpj", False)
+        self.addTailPdf("Vpj", True)
         self.addTailPdf("TTj1b", True)
         self.addTailPdf("TTj2b", True)
 
@@ -192,7 +193,7 @@ class RazorBox(Box.Box):
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             # float BTAG
-            if(self.btag == "Btag") and z=="TTj2b": self.floatBTag(z)
+            if(self.btag == "Btag") and z=="TTj2b": self.floatBTagf3(z)
             self.floatComponent(z)
             self.floatYield(z)
 
@@ -377,8 +378,11 @@ class RazorBox(Box.Box):
             if N_Vpj>1:
                 toyDataVpj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(N_Vpj)))
                 beforeCutVpj = float(toyDataVpj.sumEntries())
+                print "beforeCutVpj = %f"%beforeCutVpj
                 toyDataVpj = toyDataVpj.reduce(rangeCut)
                 afterCutVpj = float(toyDataVpj.sumEntries())
+                print rangeCut
+                print "afterCutVpj = %f"%afterCutVpj
                 effCutVpj = afterCutVpj / beforeCutVpj
 
         # Generate a sample of TTj1b
@@ -481,6 +485,7 @@ class RazorBox(Box.Box):
         else: scaleFactorTTj2b = 1.
         if N_TTj1b: scaleFactorTTj1b = (N_TTj1b*effCutTTj1b)/histoToyTTj1b.Integral()
         else: scaleFactorTTj1b = 1.
+        print histoToyVpj.Integral()
         if N_Vpj: scaleFactorVpj = (N_Vpj*effCutVpj)/histoToyVpj.Integral()
         else: scaleFactorVpj  = 1.
         scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
@@ -513,8 +518,14 @@ class RazorBox(Box.Box):
         histoToy.SetLineColor(rt.kBlue)
         histoToy.SetLineWidth(2)
 
-        c = rt.TCanvas()
-        c.SetLogy()
+
+        rt.gStyle.SetOptStat(0)
+        c = rt.TCanvas("c","c",800,700)
+        pad1 = rt.TPad("pad1","pad1",0,0.14,1,1)
+        #pad1.SetBottomMargin(0)
+        pad1.Draw()
+        pad1.cd()
+        rt.gPad.SetLogy()
         c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
         #histoData.SetMinimum(1.)
         histoData.Draw("pe")
@@ -572,5 +583,38 @@ class RazorBox(Box.Box):
         histToReturn.append(histoToyVpj)
         histToReturn.append(histoToyTTj1b)
 
-        c.Print("razor_canvas_%s_%s_%s.pdf"%(self.name,'_'.join(ranges), xvarname))
+        c.cd()
+        pad2 = rt.TPad("pad2","pad2",0,0,1,0.14)
+        #pad2.SetTopMargin(0)
+        pad2.SetGrid(1,1)
+        pad2.Draw()
+        pad2.cd()
+        rt.gPad.SetLogy(0)
+        histoData.Sumw2()
+        histoToy.Sumw2()
+        histoDataCOPY = histoData.Clone(histoData.GetName()+"COPY")
+        histoDataCOPY.Sumw2()
+        histoDataCOPY.GetYaxis().SetTitle("Data/Pred.")
+        histoDataCOPY.GetYaxis().SetTitleSize(0.17)
+        histoDataCOPY.GetYaxis().SetTitleOffset(0.3)
+        histoDataCOPY.GetYaxis().SetLabelSize(0.15)
+        histoDataCOPY.GetXaxis().SetLabelOffset(0.5)
+        histoDataCOPY.GetXaxis().SetTitle("")
+        histoDataCOPY.SetTitle("")
+        histoDataCOPY.Divide(histoToy)
+        histoDataCOPY.SetLineWidth(2)
+        histoDataCOPY.SetLineColor(rt.kGreen-3)
+        histoDataCOPY.SetFillColor(rt.kGreen-7)
+        histoDataCOPY.SetFillStyle(1001)
+        histoDataCOPY.GetYaxis().SetNdivisions(505)
+        histoDataCOPY.Draw('pe')
+
+        if self.fitregion == "LowRsq,LowMR,HighMR": fitLabel = "FULL"
+        elif self.fitregion == "LowRsq,LowMR": fitLabel = "Sideband"
+            
+        c.Print("razor_canvas_%s_%s_%s_%s.pdf"%(self.name,fitLabel,'_'.join(ranges), xvarname))
+        
+        rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c\");")
+        rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"pad1\");")
+        rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"pad2\");")
         return histToReturn
