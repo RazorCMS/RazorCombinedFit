@@ -1,4 +1,4 @@
-// @(#)root/tmva $Id: TMVAClassification.C 38895 2011-04-18 11:59:54Z evt $
+// @(#)root/tmva $Id: TMVAClassification.C,v 1.1 2012/10/17 12:41:20 wreece Exp $
 /**********************************************************************************
  * Project   : TMVA - a ROOT-integrated toolkit for multivariate data analysis    *
  * Package   : TMVA                                                               *
@@ -73,7 +73,7 @@ void TMVAClassification( TString myMethodList = "" )
    std::map<std::string,int> Use;
 
    // --- Cut optimisation
-   Use["Cuts"]            = 0;
+   Use["Cuts"]            = 1;
    Use["CutsD"]           = 0;
    Use["CutsPCA"]         = 0;
    Use["CutsGA"]          = 0;
@@ -112,7 +112,7 @@ void TMVAClassification( TString myMethodList = "" )
    // --- Neural Networks (all are feed-forward Multilayer Perceptrons)
    Use["MLP"]             = 0; // Recommended ANN
    Use["MLPBFGS"]         = 0; // Recommended ANN with optional training method
-   Use["MLPBNN"]          = 1; // Recommended ANN with BFGS training method and bayesian regulator
+   Use["MLPBNN"]          = 0; // Recommended ANN with BFGS training method and bayesian regulator
    Use["CFMlpANN"]        = 0; // Depreciated ANN from ALEPH
    Use["TMlpANN"]         = 0; // ROOT's own ANN
    //
@@ -186,24 +186,42 @@ void TMVAClassification( TString myMethodList = "" )
    factory->AddVariable( "topMass2","topMass2", "GeV", 'F' );
    factory->AddVariable( "wMass1","wMass1", "GeV", 'F' );
    factory->AddVariable( "wMass2","wMass2", "GeV", 'F' );
+   //
    //factory->AddVariable( "jet1pt","jet 1 pt", "GeV", 'F' );
    //factory->AddVariable( "jet2pt","jet 2 pt", "GeV", 'F' );
    //factory->AddVariable( "jet3pt","jet 3 pt", "GeV", 'F' );
    //factory->AddVariable( "jet4pt","jet 4 pt", "GeV", 'F' );
    //factory->AddVariable( "jet5pt","jet 5 pt", "GeV", 'F' );
    //factory->AddVariable( "jet6pt","jet 6 pt", "GeV", 'F' );
+   //
+   factory->AddVariable( "jet1mult","jet 1 mult", "GeV", 'I' );
+   factory->AddVariable( "jet2mult","jet 2 mult", "GeV", 'I' );
+   factory->AddVariable( "jet3mult","jet 3 mult", "GeV", 'I' );
+   factory->AddVariable( "jet4mult","jet 4 mult", "GeV", 'I' );
+   factory->AddVariable( "jet5mult","jet 5 mult", "GeV", 'I' );
+   factory->AddVariable( "jet6mult","jet 6 mult", "GeV", 'I' );
+   //
+   factory->AddVariable( "jet1girth","jet 1 girth", "GeV", 'F' );
+   factory->AddVariable( "jet2girth","jet 2 girth", "GeV", 'F' );
+   factory->AddVariable( "jet3girth","jet 3 girth", "GeV", 'F' );
+   factory->AddVariable( "jet4girth","jet 4 girth", "GeV", 'F' );
+   factory->AddVariable( "jet5girth","jet 5 girth", "GeV", 'F' );
+   factory->AddVariable( "jet6girth","jet 6 girth", "GeV", 'F' );
+
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
    // input variables, the response values of all trained MVAs, and the spectator variables
    factory->AddSpectator( "MR",  "MR", "GeV", 'F' );
    factory->AddSpectator( "RSQ",  "RSQ", "", 'F' );
+   factory->AddSpectator( "nVertex",  "nVertex", "", 'F' );
 
    TFile *input1 = TFile::Open("qcd_100-250.root");
    TFile *input2 = TFile::Open("qcd_250-500.root");
    TFile *input3 = TFile::Open("qcd_500-1000.root");
    TFile *input4 = TFile::Open("qcd_1000-inf.root");
    TFile *input5 = TFile::Open("ttbar_mc.root");
+   TFile *input6 = TFile::Open("qcdcr_data.root");
    
    // --- Register the training and test trees
 
@@ -212,13 +230,15 @@ void TMVAClassification( TString myMethodList = "" )
    TTree *background2 = (TTree*)input2->Get("RMRTree");
    TTree *background3 = (TTree*)input3->Get("RMRTree");
    TTree *background4 = (TTree*)input4->Get("RMRTree");
+   TTree *background5 = (TTree*)input6->Get("RMRTree");
    
    // You can add an arbitrary number of signal or background trees
-   factory->AddSignalTree    ( signal, 0.0877972349124);
-   factory->AddBackgroundTree( background1, 523.870980165);
-   factory->AddBackgroundTree( background2, 25.7849904001);
-   factory->AddBackgroundTree( background3, 6.51831302738);
-   factory->AddBackgroundTree( background4, 0.0378068778717);
+   factory->AddSignalTree    ( signal, 0.16922020437172444);
+   //factory->AddBackgroundTree( background1, 523.870980165);
+   //factory->AddBackgroundTree( background2, 25.7849904001);
+   //factory->AddBackgroundTree( background3, 6.51831302738);
+   //factory->AddBackgroundTree( background4, 0.0378068778717);
+   factory->AddBackgroundTree( background5, 1.0);
    
    // To give different trees for training and testing, do as follows:
    //    factory->AddSignalTree( signalTrainingTree, signalTrainWeight, "Training" );
@@ -262,7 +282,8 @@ void TMVAClassification( TString myMethodList = "" )
    // Set individual event weights (the variables must exist in the original TTree)
    //    for signal    : factory->SetSignalWeightExpression    ("weight1*weight2");
    //    for background: factory->SetBackgroundWeightExpression("weight1*weight2");
-   factory->SetBackgroundWeightExpression( "weight" );
+   factory->SetBackgroundWeightExpression( "weight*weightPU" );
+   factory->SetSignalWeightExpression( "weight*weightPU" );
 
    // Apply additional cuts on the signal and background samples (can be different)
    TCut mycuts = ""; // for example: TCut mycuts = "abs(var1)<0.5 && abs(var2-0.5)<1";
