@@ -30,7 +30,7 @@ public:
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;
 
 protected:
-
+   /*
    Double_t Chop(const Double_t x) const{
 	   return (TMath::Abs(x - 0) < 1e-10) ? TMath::Sign(0.0,x) : x;
    }
@@ -43,7 +43,7 @@ protected:
    Double_t ExpIntegralEi(const Double_t z) const{
 	   return Chop(ROOT::Math::expint(z));
    }
-
+   */
 
    RooRealProxy X;        // dependent variable
    RooRealProxy Y;        // dependent variable
