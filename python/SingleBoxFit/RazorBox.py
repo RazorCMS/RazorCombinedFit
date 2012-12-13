@@ -16,15 +16,20 @@ class RazorBox(Box.Box):
 
         self.cut = 'MR >= 0.0'
 
-    def addTailPdf(self, flavour):
+    def addTailPdf(self, flavour, doSYS):
         
         label = '_%s' % flavour
 
         #define a flavour specific yield
         #self.yieldToCrossSection(flavour)
-        # define the two components
-        self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
-        self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
+        if not doSYS:
+            # define the two components
+            self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
+            self.workspace.factory("RooRazor2DTail::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+")")
+        else:
+            self.workspace.factory("RooRazor2DTail::PDF1st"+label+"(MR,Rsq,MR01st"+label+",R01st"+label+",b1st"+label+")")
+            self.workspace.factory("RooRazor2DTail_SYS::PDF2nd"+label+"(MR,Rsq,MR02nd"+label+",R02nd"+label+",b2nd"+label+",n2nd"+label+")")
+            
         #define the two yields
         self.workspace.factory("expr::N_1st"+label+"('@0*(1-@1)',Ntot"+label+",f2"+label+")")
         self.workspace.factory("expr::N_2nd"+label+"('@0*@1',Ntot"+label+",f2"+label+")")

@@ -25,8 +25,8 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         Rsq = self.workspace.var("Rsq")
         
         # add the different components:
-        self.addTailPdf("QCD")
-        self.addTailPdf("TTj")
+        self.addTailPdf("QCD",False)
+        self.addTailPdf("TTj",True)
 
         # build the total PDF
         myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"),
@@ -50,6 +50,8 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             self.floatFraction(z)
+            self.fixParsPenalty("n2nd_%s" % z)
+            #self.fixPars("n2nd_%s" % z)
 
         fixed = []
         for z in self.zeros:
