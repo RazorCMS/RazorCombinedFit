@@ -118,8 +118,8 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         varNames = []
         for i in range(0,nbinx-1):
             if fit3D:
-                sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+b%i_%i_4+" %(i,j,i,j,i,j,i,j)
-                varNames.extend(["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j),"b%i_%i_4"%(i,j)])
+                sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
+                varNames.extend(["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)])
             else:
                 sumName = sumName+"b%i_%i+" %(i,j)
                 varNames.append("b%i_%i" %(i,j))
@@ -153,8 +153,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
             myhisto.Draw()
-            ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
-            func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
+            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
             func.Draw("same")
             mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMedian(maxX,func)
             tleg = rt.TLegend(0.6,.65,.9,.9)
@@ -220,8 +219,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
             myhisto.Draw()
-            ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
-            func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
+            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
             func.Draw("same")
             mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMedian(maxX,func)
             tleg = rt.TLegend(0.6,.65,.9,.9)
@@ -245,33 +243,47 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
     return err
 
 
-def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, fit3D, btag):
+def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, c1, pad1, pad2, fit3D, btag):
     rt.gStyle.SetOptStat(0000)
     rt.gStyle.SetOptTitle(0)
-    c1 = rt.TCanvas("c%s" %varname,"c%s" %varname, 900, 600)
-    c1.SetLogy()
-    c1.SetLeftMargin(0.15)
-    c1.SetRightMargin(0.05)
-    c1.SetTopMargin(0.05)
-    c1.SetBottomMargin(0.15)
+    
+    #c1.SetLeftMargin(0.15)
+    #c1.SetRightMargin(0.05)
+    #c1.SetTopMargin(0.05)
+    #c1.SetBottomMargin(0.05)
+
+    pad1.SetLeftMargin(0.15)
+    pad2.SetLeftMargin(0.15)
+    pad1.SetRightMargin(0.05)
+    pad2.SetRightMargin(0.05)
+    pad1.SetTopMargin(0.05)
+    pad2.SetTopMargin(0.02)
+    pad1.SetBottomMargin(0.02)
+    pad2.SetBottomMargin(0.35)
+    
+    pad1.Draw()
+    pad1.cd()
+    rt.gPad.SetLogy()
 
     # MR PLOT
-    hMRTOTcopy.SetMinimum(0.1)
+    hMRTOTcopy.SetMinimum(0.5)
     hMRTOTcopy.SetFillStyle(1001)
     hMRTOTcopy.SetFillColor(rt.kBlue-10)
     hMRTOTcopy.SetLineColor(rt.kBlue)
     hMRTOTcopy.SetLineWidth(2)
+    hMRTOTcopy.GetXaxis().SetTitle("")
+    hMRTOTcopy.GetXaxis().SetLabelOffset(0.16)
     hMRTOTcopy.GetXaxis().SetLabelSize(0.06)
     hMRTOTcopy.GetYaxis().SetLabelSize(0.06)
     hMRTOTcopy.GetXaxis().SetTitleSize(0.06)
     hMRTOTcopy.GetYaxis().SetTitleSize(0.06)
-    hMRTOTcopy.GetXaxis().SetTitleOffset(1.1)
+    hMRTOTcopy.GetXaxis().SetTitleOffset(1)
     hMRTOTcopy.GetXaxis().SetRange(0,FindLastBin(hMRTOTcopy))
     hMRTOTcopy.GetYaxis().SetTitle("Events")
     if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
-    elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
-    elif varname == "BTAG": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*10.)
-    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(1.0)
+    elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
+    elif varname == "BTAG": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
+    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(5.0)
     hMRTOTcopy.Draw("e2")
 
     # TTj1b is shown only if it has some entry
@@ -316,11 +328,11 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRData.Draw("pesame")
     hMRTOT.SetLineWidth(2)
     hMRTOT.SetFillStyle(0)
-    hMRTOT.DrawCopy("histosame")
+    hMRTOT.DrawCopy("histsame")
     if showTTj2b and showTTj1b:
-        leg = rt.TLegend(0.63,0.63,0.93,0.93)
+        leg = rt.TLegend(0.63,0.62,0.93,0.93)
     else:
-        leg = rt.TLegend(0.63,0.78,0.93,0.93)
+        leg = rt.TLegend(0.63,0.72,0.93,0.93)
     leg.SetFillColor(0)
     leg.SetTextFont(42)
     leg.SetLineColor(0)
@@ -333,10 +345,10 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     elif datasetName=="WJets":
         if noBtag: leg.AddEntry(hMRData,"W+jets %s no b-tag" %Box,"lep")
         else: leg.AddEntry(hMRData,"W+jets %s %s" %(Box,btagLabel),"lep")
-    elif datasetName=="ZJets":
+    elif datasetName=="DYJetsToLL":
         if noBtag: leg.AddEntry(hMRData,"Z(ll)+jets %s no b-tag" %Box,"lep")
         else: leg.AddEntry(hMRData,"Z(ll)+jets %s %s" %(Box,btagLabel),"lep")
-    elif datasetName=="ZNuNu":
+    elif datasetName=="ZJetsToNuNu":
         if noBtag: leg.AddEntry(hMRData,"Z(#nu#nu)+jets %s no b-tag" %Box,"lep")
         else: leg.AddEntry(hMRData,"Z(#nu#nu)+jets %s %s" %(Box,btagLabel),"lep")
     elif datasetName=="SMCocktail":
@@ -353,7 +365,8 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     leg.Draw("same")
 
     # plot labels
-    pt = rt.TPaveText(0.4,0.73,0.4,0.93,"ndc")
+    #pt = rt.TPaveText(0.4,0.73,0.4,0.93,"ndc")
+    pt = rt.TPaveText(0.4,0.8,0.4,0.93,"ndc")
     pt.SetBorderSize(0)
     pt.SetTextSize(0.05)
     pt.SetFillColor(0)
@@ -363,19 +376,51 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     pt.SetTextFont(42)
     pt.SetTextSize(0.042)
     text = pt.AddText("CMS %s #sqrt{s} = %i TeV" %(Preliminary,int(Energy)))
-    if not (datasetName=="TTJets" or datasetName=="WJets"):
+    if not (datasetName=="TTJets" or datasetName=="WJets" or datasetName=="SMCocktail" or datasetName=="ZJetsToNuNu"):
         text = pt.AddText("Razor %s #int L = %3.2f fb^{-1}" %(Box,Lumi))
     pt.Draw()
+    pad1.Draw()
     
     c1.Update()
+    
+    c1.cd()
+    
+    pad2.SetGrid(1,1)
+    pad2.Draw()
+    pad2.cd()
+    rt.gPad.SetLogy(0)
+    hMRData.Sumw2()
+    hMRTOTcopy.Sumw2()
+    hMRDataDivide = hMRData.Clone(hMRData.GetName()+"Divide")
+    hMRDataDivide.Sumw2()
+    hMRDataDivide.GetYaxis().SetTitle("")
+    hMRDataDivide.GetYaxis().SetLabelSize(0.12)
+    hMRDataDivide.SetTitle("")
+    if varname=="BTAG": hMRDataDivide.GetXaxis().SetLabelSize(0.28)
+    else: hMRDataDivide.GetXaxis().SetLabelSize(0.18)
+    hMRDataDivide.GetXaxis().SetTitleSize(0.18)
+    hMRDataDivide.GetXaxis().SetTitleOffset(0.85)
+    hMRDataDivide.Divide(hMRTOTcopy)
+    hMRDataDivide.SetLineWidth(2)
+    hMRDataDivide.SetLineColor(rt.kBlue+1)
+    hMRDataDivide.SetFillColor(rt.kBlue+1)
+    hMRDataDivide.SetMarkerColor(rt.kBlue+1)
+    hMRDataDivide.SetMarkerStyle(21)
+    hMRDataDivide.SetMarkerSize(1)
+    hMRDataDivide.SetFillStyle(1001)
+    hMRDataDivide.GetYaxis().SetNdivisions(504,rt.kTRUE)
+    hMRDataDivide.Draw('pe')
 
+    leg.AddEntry(hMRDataDivide,"Ratio Data/Prediction","lep")
+    c1.cd()
+    
     if fit3D and btag>0:
-        c1.SaveAs("%s/%s_%ib_%s.pdf" %(outFolder,varname,btag,Label))
-        c1.SaveAs("%s/%s_%ib_%s.C" %(outFolder,varname,btag,Label))
+        c1.Print("%s/%s_%ib_%s.pdf" %(outFolder,varname,btag,Label))
+        c1.Print("%s/%s_%ib_%s.C" %(outFolder,varname,btag,Label))
     else:
-        c1.SaveAs("%s/%s_%s.pdf" %(outFolder,varname,Label))
-        c1.SaveAs("%s/%s_%s.C" %(outFolder,varname,Label))
-    del c1
+        c1.Print("%s/%s_%s.pdf" %(outFolder,varname,Label))
+        c1.Print("%s/%s_%s.C" %(outFolder,varname,Label))
+    
 if __name__ == '__main__':
     rt.gStyle.SetOptStat(0)
     rt.gStyle.SetOptTitle(0)
@@ -482,8 +527,11 @@ if __name__ == '__main__':
             hBTAGTOTcopy.SetBinError(i,max(errBTAG[i-1],hBTAGTOT.GetBinError(i)))
             hBTAGTOT.SetBinError(i,0.)
 
+        c1 = rt.TCanvas("c1","c1", 900, 700)
+        pad1 = rt.TPad("pad1","pad1",0,0.25,1,1)
+        pad2 = rt.TPad("pad2","pad2",0,0,1,0.25)
 
-        goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, fit3D, btag)
-        goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQData, fit3D, btag)
-        if fit3D: goodPlot("BTAG", outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGData, fit3D, btag)
+        goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, c1, pad1, pad2, fit3D, btag)
+        goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQData,  c1, pad1, pad2, fit3D, btag)
+        if fit3D: goodPlot("BTAG", outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGData,  c1, pad1, pad2, fit3D, btag)
     

@@ -7,12 +7,12 @@ from array import *
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
     if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
-        if varName == "MR" :        return [400, 450, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [400, 500, 700, 900, 1200, 1600, 2500]
         elif varName == "Rsq" : 
             if btag == "NoBtag":    return [0.25,0.30,0.40,0.50]
             if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        if varName == "MR" :        return [300, 350, 400, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [300, 400, 550, 700, 900, 1200, 1600, 2500]
         elif varName == "Rsq" :
             if btag == "NoBtag":    return [0.15,0.20,0.30,0.40,0.50]
             elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
@@ -37,7 +37,7 @@ class RazorBox(Box.Box):
         else: self.fitregion = fitregion
         self.fitMode = fitMode
         
-        self.cut = 'MR>=0.'
+        self.cut = 'MR>0.'
         
         
     def addTailPdf(self, flavour, doSYS):
@@ -65,9 +65,9 @@ class RazorBox(Box.Box):
                 # tail-systematic parameter
                 self.workspace.var("n%s" %label).setConstant(rt.kFALSE)
             else:
-                self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" %(label,label,label,label,label))
+                self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s_n%s)" %(label,label,label,label,label))
                 #tail-systematic parameter fixed to 1.0
-                #self.workspace.var("n%s" %label).setVal(1.0)
+                self.workspace.var("n%s" %label).setVal(1.0)
                 self.workspace.var("n%s" %label).setConstant(rt.kTRUE)
                 
             ## define the nB pdf            
@@ -286,14 +286,18 @@ class RazorBox(Box.Box):
         
     def plot(self, inputFile, store, box):
         
+        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
+        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
+        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 5, ranges=self.fitregion.split(","))]
+
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
-        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 5, ranges=self.fitregion.split(","))]
+        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=self.fitregion.split(","))]
 
         if self.fitregion!='LowRsq,LowMR,HighMR':
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq','LowMR','HighMR'])]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq','LowMR','HighMR'])]
-            if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 5, ranges=['LowRsq','LowMR','HighMR'])]
+            if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
 
         # the 1b, 2b, 3b, 4b ranges still use the entire MR, Rsq range, so turn it off for the newFR fits
         #if self.fitMode == "3D":
@@ -307,7 +311,7 @@ class RazorBox(Box.Box):
         #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['4b'])]
 
 
-    def plot1D(self, inputFile, varname, nbin=200, ranges=None):
+    def plot1D(self, inputFile, varname, nbin=200, ranges=None, data = None):
 
         rangeCut = self.getVarRangeCutNamed(ranges=ranges)
         # set the integral precision
@@ -316,21 +320,36 @@ class RazorBox(Box.Box):
         # get the max and min (if different than default)
         xmin = self.workspace.var(varname).getMin()
         xmax = self.workspace.var(varname).getMax()
-        data = RootTools.getDataSet(inputFile,'RMRTree')
-        data = data.reduce(rt.RooFit.CutRange(rangeCut))
-        data_cut = data.reduce(self.cut)
+        if data is None:
+            data = RootTools.getDataSet(inputFile,'RMRTree')
+        data_cut = data.reduce(rangeCut)
+        data_cut = data_cut.reduce(self.cut)
         
         # project the data on the variable
-        frameMR = self.workspace.var(varname).frame(rt.RooFit.AutoSymRange(data_cut),rt.RooFit.Bins(nbin))
+        if varname =="nBtag":
+            RooBtagbins = rt.RooBinning(1,4)
+            RooBtagbins.addBoundary(2)
+            RooBtagbins.addBoundary(3)
+            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(1,4),rt.RooFit.Binning(RooBtagbins))
+        else:
+            frameMR = self.workspace.var(varname).frame(rt.RooFit.AutoSymRange(data_cut),rt.RooFit.Bins(nbin))
         frameMR.SetName(varname+"plot")
         frameMR.SetTitle(varname+"plot")
         
-        data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed)) 
-        data_cut.plotOn(frameMR)
+        if varname=="nBtag":
+            #data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed),rt.RooFit.Binning(RooBtagbins))
+            data_cut.plotOn(frameMR, rt.RooFit.Binning(RooBtagbins))
+        else:
+            #data.plotOn(frameMR, rt.RooFit.LineColor(rt.kRed),rt.RooFit.MarkerColor(rt.kRed))
+            data_cut.plotOn(frameMR)
         
         # project the full PDF on the data
-        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.Range(rangeCut))
-
+        if varname=="MR":
+            self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.ProjectionRange("LowMR"),rt.RooFit.Range("LowMR"),rt.RooFit.NormRange("NormRange"))
+        elif varname=="Rsq":
+            self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.ProjectionRange("LowRsq"),rt.RooFit.Range("LowRsq"),rt.RooFit.NormRange("NormRange"))
+        self.workspace.pdf(self.fitmodel).plotOn(frameMR, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.ProjectionRange("HighMR"), rt.RooFit.Range("HighMR"),rt.RooFit.NormRange("NormRange"))
+            
         # plot each individual component: Vpj
         N_Vpj = self.workspace.function("Ntot_Vpj").getVal()
         # plot each individual component: TTj2b
@@ -342,15 +361,30 @@ class RazorBox(Box.Box):
 
         if N_Vpj >0:
             # project the first component: Vpj
-            self.workspace.pdf("PDF_Vpj").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_Vpj/Ntot), rt.RooFit.Range(rangeCut))
+            if varname=="MR":
+                self.workspace.pdf("PDF_Vpj").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_Vpj/Ntot),rt.RooFit.ProjectionRange("LowMR"),rt.RooFit.Range("LowMR"),rt.RooFit.NormRange("NormRange"))
+            elif varname=="Rsq":
+                self.workspace.pdf("PDF_Vpj").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_Vpj/Ntot),rt.RooFit.ProjectionRange("LowRsq"),rt.RooFit.Range("LowRsq"),rt.RooFit.NormRange("NormRange"))
+            self.workspace.pdf("PDF_Vpj").plotOn(frameMR, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_Vpj/Ntot),rt.RooFit.ProjectionRange("HighMR"),rt.RooFit.Range("HighMR"),rt.RooFit.NormRange("NormRange"))
         if N_TTj2b >0:
             # project the first component: TTj2b
-            self.workspace.pdf("PDF_TTj2b").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj2b/Ntot), rt.RooFit.Range(rangeCut))
+            if varname=="MR":
+                self.workspace.pdf("PDF_TTj2b").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj2b/Ntot),rt.RooFit.ProjectionRange("LowMR"),rt.RooFit.Range("LowMR"),rt.RooFit.NormRange("NormRange"))
+            elif varname=="Rsq":
+                self.workspace.pdf("PDF_TTj2b").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj2b/Ntot),rt.RooFit.ProjectionRange("LowRsq"),rt.RooFit.Range("LowRsq"),rt.RooFit.NormRange("NormRange"))
+            self.workspace.pdf("PDF_TTj2b").plotOn(frameMR, rt.RooFit.LineColor(rt.kOrange), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj2b/Ntot),rt.RooFit.ProjectionRange("HighMR"),rt.RooFit.Range("HighMR"),rt.RooFit.NormRange("NormRange"))
         if N_TTj1b >0:
             # project the first component: TTj1b
-            self.workspace.pdf("PDF_TTj1b").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj1b/Ntot), rt.RooFit.Range(rangeCut))
-            
-        return frameMR
+            if varname=="MR":
+                self.workspace.pdf("PDF_TTj1b").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj1b/Ntot),rt.RooFit.ProjectionRange("LowMR"),rt.RooFit.Range("LowMR"),rt.RooFit.NormRange("NormRange"))
+            elif varname=="Rsq":
+                self.workspace.pdf("PDF_TTj1b").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj1b/Ntot),rt.RooFit.ProjectionRange("LowRsq"),rt.RooFit.Range("LowRsq"),rt.RooFit.NormRange("NormRange"))
+            self.workspace.pdf("PDF_TTj1b").plotOn(frameMR, rt.RooFit.LineColor(rt.kMagenta), rt.RooFit.LineStyle(8), rt.RooFit.Normalization(N_TTj1b/Ntot),rt.RooFit.ProjectionRange("HighMR"),rt.RooFit.Range("HighMR"),rt.RooFit.NormRange("NormRange"))
+        d = rt.TCanvas()
+        rt.gPad.SetLogy()
+        frameMR.Draw()
+        d.Print("%s.pdf"%varname)
+        return [frameMR]
 
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
         
@@ -403,15 +437,11 @@ class RazorBox(Box.Box):
         if self.workspace.var("Ntot_TTj2b") != None and N_TTj2b>1 :
             toyDataTTj2b = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(N_TTj2b)))
             beforeCutTTj2b = float(toyDataTTj2b.sumEntries())
-            #toyDataTTj4b = toyDataTTj2b.reduce(rangeCut)
-            #print "before 4b cut %f"%toyDataTTj4b.sumEntries()
-            #toyDataTTj4b = toyDataTTj4b.reduce("nBtag>=4 && nBtag <5")
-            #print "after 4b cut %f"%toyDataTTj4b.sumEntries()
             toyDataTTj2b = toyDataTTj2b.reduce(rangeCut)
             afterCutTTj2b = float(toyDataTTj2b.sumEntries())
             effCutTTj2b = afterCutTTj2b / beforeCutTTj2b
         # set the event yields back to their original values
-        # NOTE: these original values REFER TO THE FULL REGION of MR and Rsq and nBtag!
+        # NOTE: these original values REFER TO THE FULL RANGE OF VARIABLES MR and Rsq and nBtag!
         print "EFFICIENCIES for this rangeCut"
         print "TTj1b %f"%effCutTTj1b
         print "TTj2b %f"%effCutTTj2b
@@ -469,7 +499,7 @@ class RazorBox(Box.Box):
 
         # project the data on the histograms
         data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
-        #toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
+        
         if self.workspace.var("Ntot_Vpj") != None and N_Vpj>1: toyDataVpj.fillHistogram(histoToyVpj,rt.RooArgList(self.workspace.var(xvarname)))
         if self.workspace.var("Ntot_TTj1b") != None and N_TTj1b>1 :toyDataTTj1b.fillHistogram(histoToyTTj1b,rt.RooArgList(self.workspace.var(xvarname)))
         if self.workspace.var("Ntot_TTj2b") != None and N_TTj2b>1 : toyDataTTj2b.fillHistogram(histoToyTTj2b,rt.RooArgList(self.workspace.var(xvarname)))
@@ -477,26 +507,17 @@ class RazorBox(Box.Box):
         if self.workspace.var("Ntot_TTj2b") != None and N_TTj2b>1: histoToy.Add(histoToyTTj2b, +1)
         if self.workspace.var("Ntot_Vpj") != None and N_Vpj>1: histoToy.Add(histoToyVpj, +1)
         if self.workspace.var("Ntot_TTj1b") != None and N_TTj1b>1 :histoToy.Add(histoToyTTj1b, +1)
+            
         # We shouldn't scale to the data, we should scale to our prediction
         #scaleFactor = histoData.Integral()/histoToy.Integral()
         print "DATA NORM %f"%histoData.Integral()
         print "FIT NORM  %f"%(N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)
-        if N_TTj2b: scaleFactorTTj2b = (N_TTj2b*effCutTTj2b)/histoToyTTj2b.Integral()
-        else: scaleFactorTTj2b = 1.
-        if N_TTj1b: scaleFactorTTj1b = (N_TTj1b*effCutTTj1b)/histoToyTTj1b.Integral()
-        else: scaleFactorTTj1b = 1.
-        print histoToyVpj.Integral()
-        if N_Vpj: scaleFactorVpj = (N_Vpj*effCutVpj)/histoToyVpj.Integral()
-        else: scaleFactorVpj  = 1.
         scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
-        print "scaleFacorTTj1b = %f"%scaleFactorTTj1b
-        print "scaleFacorTTj2b = %f"%scaleFactorTTj2b
-        print "scaleFacorVpj = %f"%scaleFactorVpj
-        print "scaleFacor = %f"%scaleFactor
+        print "scaleFactor = %f"%scaleFactor
         
-        histoToyTTj2b.Scale(scaleFactorTTj2b)
-        histoToyVpj.Scale(scaleFactorVpj)
-        histoToyTTj1b.Scale(scaleFactorTTj1b)
+        histoToyTTj2b.Scale(scaleFactor)
+        histoToyVpj.Scale(scaleFactor)
+        histoToyTTj1b.Scale(scaleFactor)
         SetErrors(histoToyTTj2b, nbins)
         SetErrors(histoToyVpj, nbins)
         SetErrors(histoToyTTj1b, nbins)
@@ -611,6 +632,7 @@ class RazorBox(Box.Box):
 
         if self.fitregion == "LowRsq,LowMR,HighMR": fitLabel = "FULL"
         elif self.fitregion == "LowRsq,LowMR": fitLabel = "Sideband"
+        elif self.fitregion == "HighMR": fitLabel = "HighMR"
             
         c.Print("razor_canvas_%s_%s_%s_%s.pdf"%(self.name,fitLabel,'_'.join(ranges), xvarname))
         
