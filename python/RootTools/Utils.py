@@ -99,3 +99,27 @@ def importToWS(workspace, *args):
         """Utility function to call the RooWorkspace::import methods"""
         return getattr(workspace,'import')(*args)
 
+#------------------------------------------------------------------------------
+# File: Color.py
+# Description: colors
+# Created: 22 Sep 2010 Harrison B. Prosper
+#------------------------------------------------------------------------------
+RED    ="\x1b[0;31;48m"
+GREEN  ="\x1b[0;32;48m"
+YELLOW ="\x1b[0;33;48m"
+BLUE   ="\x1b[0;34;48m"
+MAGENTA="\x1b[0;35;48m"
+CYAN   ="\x1b[0;36;48m"
+
+BOLDRED    ="\x1b[1;31;48m"
+BOLDGREEN  ="\x1b[1;32;48m"
+BOLDYELLOW ="\x1b[1;33;48m"
+BOLDBLUE   ="\x1b[1;34;48m"
+BOLDMAGENTA="\x1b[1;35;48m"
+BOLDCYAN   ="\x1b[1;36;48m"
+
+RESETCOLOR ="\x1b[0m"	 # reset to default foreground color		 
+#------------------------------------------------------------------------------
+def nameonly(s):
+	import os
+	return os.path.splitext(os.path.basename(s))[0]

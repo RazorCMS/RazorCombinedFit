@@ -3,7 +3,6 @@ import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
 import RootTools
 import math
-import sys
 
 class SingleBoxAnalysis(Analysis.Analysis):
 
@@ -24,22 +23,33 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorBox
         import RazorBjetBox
         import RazorMultiJetBox
+        import RazorBoostBox
         import RazorTauBox
         boxes = {}
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
+            print 'Analysis:', self.Analysis
             if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
+            elif self.Analysis == "BOOST": boxes[box] = RazorBoostBox.RazorBoostBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag,self.options.fitregion)
+
+            print 'box:', box
+            print 'vars:', self.config.getVariables(box, "variables")
+            print '>>> getVariablesRange:'
+            
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
-        
+            
+
+            print '>>> defineSet:'
+            
             if self.options.input is not None:
                 continue
             
-            if self.Analysis != "MULTIJET":
+            if self.Analysis != "MULTIJET" and self.Analysis != "BOOST":
                 # Vpj
                 boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"))
                 boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"))
@@ -50,30 +60,29 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 #    # Znn
                 #    boxes[box].defineSet("pdfpars_Znn", self.config.getVariables(box, "pdf_Znn"))
                 #    boxes[box].defineSet("otherpars_Znn", self.config.getVariables(box, "others_Znn"))
-            if self.Analysis == "MULTIJET":
+            # TTj
+            boxes[box].defineSet("pdfpars_TTj", self.config.getVariables(box, "pdf_TTj"))
+            boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
+            boxes[box].defineSet("pdfpars_UEC", self.config.getVariables(box, "pdf_UEC"))
+            boxes[box].defineSet("otherpars_UEC", self.config.getVariables(box, "others_UEC"))
+            if self.Analysis == "MULTIJET" or self.Analysis == "BOOST":
                 # QCD
                 boxes[box].defineSet("pdfpars_QCD", self.config.getVariables(box, "pdf_QCD"))
                 boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
             # the BTAG
-            if self.Analysis != "TAU" and self.Analysis != "MULTIJET":
-                boxes[box].defineSet("pdfpars_TTj2b", self.config.getVariables(box, "pdf_TTj2b"))
-                boxes[box].defineSet("otherpars_TTj2b", self.config.getVariables(box, "others_TTj2b"))
-                boxes[box].defineSet("pdfpars_TTj1b", self.config.getVariables(box, "pdf_TTj1b"))
-                boxes[box].defineSet("otherpars_TTj1b", self.config.getVariables(box, "others_TTj1b"))
-                boxes[box].defineSet("btagpars_TTj2b", self.config.getVariables(box, "btag_TTj2b"))
-                boxes[box].defineSet("btagpars_TTj1b", self.config.getVariables(box, "btag_TTj1b"))
+            if self.Analysis != "TAU" and self.Analysis != "MULTIJET" and self.Analysis != "BOOST":
+                boxes[box].defineSet("btagpars_TTj", self.config.getVariables(box, "btag_TTj"))
+                boxes[box].defineSet("btagpars_UEC", self.config.getVariables(box, "btag_UEC"))
                 boxes[box].defineSet("btagpars_Vpj", self.config.getVariables(box, "btag_Vpj"))
-                boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
-            else:
-                # TTj
-                boxes[box].defineSet("pdfpars_TTj", self.config.getVariables(box, "pdf_TTj"))
-                boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
-                boxes[box].defineSet("pdfpars_UEC", self.config.getVariables(box, "pdf_UEC"))
-                boxes[box].defineSet("otherpars_UEC", self.config.getVariables(box, "others_UEC"))
+                #boxes[box].defineSet("btagpars_Zll", self.config.getVariables(box, "btag_Zll"))
+                #boxes[box].defineSet("btagpars_Znn", self.config.getVariables(box, "btag_Znn"))
                 
-            
-            if not self.options.limit: boxes[box].addDataSet(fileName)
+            print '>>> addDataset:'
+            if not self.options.limit:
+                boxes[box].addDataSet(fileName)
+            print '>>> define:'
             boxes[box].define(fileName)
+            print '>>> getBoxes done!'
 
         return boxes
 
@@ -216,9 +225,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
     def analysis(self, inputFiles):
         """Run independent and then simultanious fits"""
-        
+
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
+        #print 'fileindex:', fileindex
+        print 'boxes:', boxes
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
