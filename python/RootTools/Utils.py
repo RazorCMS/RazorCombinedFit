@@ -1,4 +1,4 @@
-
+#$Revision:$
 #the following is from http://stackoverflow.com/questions/1006289/how-to-find-out-the-number-of-cpus-in-python
 def  determineNumberOfCPUs():
     """ Number of virtual or physical CPUs on this system, i.e.
@@ -123,3 +123,16 @@ RESETCOLOR ="\x1b[0m"	 # reset to default foreground color
 def nameonly(s):
 	import os
 	return os.path.splitext(os.path.basename(s))[0]
+
+def scream(message):
+	from random import randint
+	i = randint(0,4)
+	random_phrases = {0: 'Twas brillig and the slithy tothes',
+					  1: 'Let all the evil that lurks in the mud hatch out',
+					  2: 'Alas poor CMS I new them well!',
+					  3: 'Lies, damned lies, and statistics',
+					  4: 'Speak severely to your little boy and beat him '\
+					  'when he sneezes'}
+	print "\n** %s\n** %s%s%s\n" % (random_phrases[i], BLUE, message,
+									RESETCOLOR)
+	sys.exit(0)
