@@ -117,7 +117,7 @@ class BranchDumper(object):
                     'jet1pt','jet2pt','jet3pt','jet4pt','jet5pt','jet6pt',\
                     'jet1mult','jet2mult','jet3mult','jet4mult','jet5mult','jet6mult',\
                     'jet1girth','jet2girth','jet3girth','jet4girth','jet5girth','jet6girth']
-
+    #@staticmethod
     def headers_for_MVA(self):
         return ['thetaH1','thetaH2','topMass1','topMass2','wMass1','wMass2',\
                     'jet1mult','jet2mult','jet3mult','jet4mult','jet5mult','jet6mult',\
@@ -208,7 +208,7 @@ class CalcBDT(object):
         self.reader.AddSpectator('MR',self.mr_var)
         self.reader.AddSpectator('RSQ',self.rsq_var)
         self.reader.AddSpectator('nVertex',self.nvertex_var)
-        self.reader.BookMVA('BDT','/afs/cern.ch/user/w/wreece/work/CMGTools/V5_6_0/CMGTools/CMSSW_5_3_3_patch3/src/CMGTools/Susy/prod/MultiJet/TMVAClassification_BDT.weights.xml')
+        self.reader.BookMVA('BDT','/afs/cern.ch/user/w/wreece/public/Razor2012/BDT/Had/TMVAClassification_BDT.weights.xml')
 
     def select(self):
         return self.sel.select()
