@@ -15,26 +15,97 @@ lumi = 1.0
 sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
 from CalcBDT import CalcBDT
 
-class BJetBox(object):
+class BJetBoxLS(object):
     """The BJet search box used in the analysis"""
     def __init__(self, dumper):
-        self.name = 'BJet'
+        self.name = 'BJetLS'
         self.dumper = dumper
     def __call__(self, tree):
-        return self.dumper.select()
+        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
 
-class CR6JSingleLeptonBVetoBox(object):
-    """A control region for the Had box: One lepton, no bjets - Should give handle on W+Jets"""
-    def __init__(self):
-        self.name = 'CR6JSingleLeptonBVeto'
-        self.dumper = None
+class BJetBoxHS(object):
+    """The BJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'BJetHS'
+        self.dumper = dumper
     def __call__(self, tree):
-        nTight = tree.nMuonTight + tree.nElectronTight
+        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
+
+class CR6JBVetoBoxLS(object):
+    """The CR6JBVeto search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JBVetoLS'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
+
+class CR6JBVetoBoxHS(object):
+    """The CR6JBVeto search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JBVetoHS'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
+
+class CR6JSingleLeptonBVetoLS(object):
+    """The CR6JSingleLeptonBJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JSingleLeptonBVetoLS'
+        self.dumper = dumper
+    def __call__(self, tree):
         nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.metFilter and\
-             tree.MR >= 450 and tree.RSQ >= 0.03 and tree.hadBoxFilter and tree.hadTriggerFilter\
-             and tree.nJet >= 6 and tree.nCSVL == 0 and nTight == 1 and nLoose == 1        
-    
+        return tree.nJet >= 6  and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() < -0.1 
+
+class CR6JSingleLeptonBVetoHS(object):
+    """The BJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JSingleLeptonBVetoHS'
+        self.dumper = dumper
+    def __call__(self, tree):
+        nLoose = tree.nMuonLoose + tree.nElectronLoose
+        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() >= -0.1 
+
+class MuBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'Mu'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0
+
+class CRMuBVetoBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CRMuBVeto'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0            
+
+class EleBox(object):
+    """The Ele search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'Ele'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1
+
+class CREleBVetoBox(object):
+    """The Ele search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CREleBVeto'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
@@ -85,6 +156,8 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     nLooseMuons = rt.TH2D('nLooseMuons','nLooseMuons',350,mRmin,mRmax,100,rsqMin,rsqMax)
     nLooseTaus = rt.TH2D('nLooseTaus','nLooseTaus',350,mRmin,mRmax,100,rsqMin,rsqMax)
     
+    events = {}
+    
     for entry in xrange(tree.GetEntries()):
         tree.GetEntry(entry)
         
@@ -122,6 +195,12 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         a.setRealValue('Run',tree.run)
         a.setRealValue('Lumi',tree.lumi)
         a.setRealValue('Event',tree.event)
+        e = (tree.run,tree.lumi,tree.event)
+        
+        #filter out duplicate events in case there are any
+        if e in events:
+            continue
+        events[e] = None
         
         a.setRealValue('MR',tree.MR, True)
         a.setRealValue('Rsq',tree.RSQ, True)
@@ -195,6 +274,15 @@ if __name__ == '__main__':
                 fName = name[:-5]
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(CalcBDT(chain)),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoBox(),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxLS(CalcBDT(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxHS(CalcBDT(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoLS(CalcBDT(chain)),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoHS(CalcBDT(chain)),options.run)        
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,CREleBVetoBox(None),options.run)
+
 
