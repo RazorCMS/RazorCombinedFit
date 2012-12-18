@@ -47,6 +47,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         sumName = ""
         varNames = []
         for j in range(0,nbiny-1):
+            if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
             if fit3D:
                 sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
                 varNames.extend(["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)])
@@ -117,6 +118,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         sumName = ""
         varNames = []
         for i in range(0,nbinx-1):
+            if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
             if fit3D:
                 sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
                 varNames.extend(["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)])
@@ -283,7 +285,8 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
     elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
     elif varname == "BTAG": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
-    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(5.0)
+    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(5.)
+    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=100.: hMRTOTcopy.SetMinimum(50.)
     hMRTOTcopy.Draw("e2")
 
     # TTj1b is shown only if it has some entry
@@ -297,14 +300,14 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     
     if showTTj2b:
         hMRTTj2b.SetFillStyle(0)
-        col1 = rt.gROOT.GetColor(rt.kOrange-4)
+        col1 = rt.gROOT.GetColor(rt.kRed-4)
         col1.SetAlpha(1.0)
-        hMRTTj2b.SetLineColor(rt.kOrange)
+        hMRTTj2b.SetLineColor(rt.kRed)
         hMRTTj2b.SetLineWidth(2)
         if varname == "BTAG":
-            col1.SetAlpha(0.4)
+            col1.SetAlpha(0.8)
             hMRTTj2b.SetFillStyle(1001)
-            hMRTTj2b.SetFillColor(rt.kOrange-4)
+            hMRTTj2b.SetFillColor(rt.kRed-4)
         hMRTTj2b.Draw("histsame")
     if showTTj1b:
         hMRTTj1b.SetFillStyle(0)
@@ -313,7 +316,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         hMRTTj1b.SetLineColor(rt.kViolet)
         hMRTTj1b.SetLineWidth(2)
         if varname == "BTAG":
-            col2.SetAlpha(0.4)
+            col2.SetAlpha(0.8)
             hMRTTj1b.SetFillStyle(1001)
             hMRTTj1b.SetFillColor(rt.kViolet-4)
         hMRTTj1b.Draw("histsame")
@@ -330,43 +333,35 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOT.SetFillStyle(0)
     hMRTOT.DrawCopy("histsame")
     if showTTj2b and showTTj1b:
-        leg = rt.TLegend(0.63,0.62,0.93,0.93)
+        leg = rt.TLegend(0.65,0.65,0.93,0.93)
     else:
-        leg = rt.TLegend(0.63,0.72,0.93,0.93)
+        leg = rt.TLegend(0.65,0.72,0.93,0.93)
     leg.SetFillColor(0)
     leg.SetTextFont(42)
     leg.SetLineColor(0)
 
-    btagLabel = "#geq 1 b-tag"
-        
-    if datasetName=="TTJets":
-        if noBtag: leg.AddEntry(hMRData,"t#bar{t}+jets %s no b-tag" %Box,"lep")
-        else: leg.AddEntry(hMRData,"t#bar{t}+jets %s %s" %(Box,btagLabel),"lep")
-    elif datasetName=="WJets":
-        if noBtag: leg.AddEntry(hMRData,"W+jets %s no b-tag" %Box,"lep")
-        else: leg.AddEntry(hMRData,"W+jets %s %s" %(Box,btagLabel),"lep")
-    elif datasetName=="DYJetsToLL":
-        if noBtag: leg.AddEntry(hMRData,"Z(ll)+jets %s no b-tag" %Box,"lep")
-        else: leg.AddEntry(hMRData,"Z(ll)+jets %s %s" %(Box,btagLabel),"lep")
-    elif datasetName=="ZJetsToNuNu":
-        if noBtag: leg.AddEntry(hMRData,"Z(#nu#nu)+jets %s no b-tag" %Box,"lep")
-        else: leg.AddEntry(hMRData,"Z(#nu#nu)+jets %s %s" %(Box,btagLabel),"lep")
-    elif datasetName=="SMCocktail":
-        if noBtag: leg.AddEntry(hMRData,"Total SM %s no Btag" %Box,"lep")
-        else: leg.AddEntry(hMRData,"Total SM %s %s" %(Box,btagLabel),"lep")
+    if noBtag:
+        btagLabel = "no b-tag"
     else:
-        if noBtag: leg.AddEntry(hMRData,"Data %s no Btag" %Box,"lep")
-        else: leg.AddEntry(hMRData,"Data %s %s" %(Box,btagLabel),"lep")
+        btagLabel = "#geq 1 b-tag"
+        
+    if datasetName=="TTJets" or datasetName=="WJets" or datasetName=="DYJetsToLL" or datasetName=="ZJetsToNuNu" or  datasetName=="SMCocktail":
+        leg.AddEntry(hMRData,"Simulated Data","lep")
+    else:
+        leg.AddEntry(hMRData,"Data","lep")
     leg.AddEntry(hMRTOTcopy,"Total Background")
-    if showTTj1b:
-        leg.AddEntry(hMRTTj1b,"t#bar{t}+jets 1 b-tag","l")
-    if showTTj2b:
-        leg.AddEntry(hMRTTj2b,"t#bar{t}+jets #geq 2 b-tag","l")
+    if showTTj1b and showTTj2b:
+        if varname=="BTAG":
+            leg.AddEntry(hMRTTj1b,"1 b-tag","f")
+            leg.AddEntry(hMRTTj2b,"#geq 2 b-tag","f")
+        else:
+            leg.AddEntry(hMRTTj1b,"1 b-tag","l")
+            leg.AddEntry(hMRTTj2b,"#geq 2 b-tag","l")
     leg.Draw("same")
 
     # plot labels
     #pt = rt.TPaveText(0.4,0.73,0.4,0.93,"ndc")
-    pt = rt.TPaveText(0.4,0.8,0.4,0.93,"ndc")
+    pt = rt.TPaveText(0.4,0.8,0.5,0.93,"ndc")
     pt.SetBorderSize(0)
     pt.SetTextSize(0.05)
     pt.SetFillColor(0)
@@ -376,8 +371,18 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     pt.SetTextFont(42)
     pt.SetTextSize(0.042)
     text = pt.AddText("CMS %s #sqrt{s} = %i TeV" %(Preliminary,int(Energy)))
-    if not (datasetName=="TTJets" or datasetName=="WJets" or datasetName=="SMCocktail" or datasetName=="ZJetsToNuNu"):
-        text = pt.AddText("Razor %s #int L = %3.2f fb^{-1}" %(Box,Lumi))
+    if datasetName=="TTJets":
+        text = pt.AddText("t#bar{t}+jets %s Box %s" %(Box,btagLabel))
+    elif datasetName=="WJets":
+        text = pt.AddText("W+jets %s Box %s" %(Box,btagLabel))
+    elif datasetName=="SMCocktail":
+        text = pt.AddText("Total SM %s Box %s" %(Box,btagLabel))
+    elif datasetName=="ZJetsToNuNu":
+        text = pt.AddText("Z(#nu#nu)+jets %s Box %s" %(Box,btagLabel))
+    elif datasetName=="DYJetsToLL":
+        text = pt.AddText("Z(ll)+jets")
+    else:
+        text = pt.AddText("Razor %s Box %s #int L = %3.2f fb^{-1}" %(Box,btagLabel,Lumi))
     pt.Draw()
     pad1.Draw()
     
@@ -422,6 +427,23 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         c1.Print("%s/%s_%s.C" %(outFolder,varname,Label))
     
 if __name__ == '__main__':
+    if len(sys.argv) < 5:
+        print "\nRun the script as follows:\n"
+        print "python scripts/make1DProj.py BoxName ExpectedYieldRootFile RazorFitOutputRootFile OutDir"
+        print "with:"
+        print "- BoxName = name of the Box (MuMu, MuEle, etc)"
+        print "- ExpectedYieldRootFile = file containing tree of expected yield distributions produced by expectedYield_sigbin.py "
+        print "- RazorFitOutputRootFile = output root file from running analysis SingleBoxFit, contains fit result and plots"
+        print "- OutDir = name of the output directory"
+        print ""
+        print "After the inputs you can specify the following options"
+        print " --plotOnly    Run the plot-making macro from already computed bkg predictions"
+        print " --noBtag      this is a 0btag box (i.e. R2 stops at 0.5)"
+        print " --forPaper    Don't print Preliminary"
+        print " --printPlots  dump plots of individual KDEs and 68% prob interval calculation"
+        print "--fit-region=NamedFitRegion in the output Fit Result file"
+        print " -MC=MCDataSetName  options include TTJets, WJets, ZJetsToNuNu, DYJetsToLL, and SMCocktail"
+        sys.exit()
     rt.gStyle.SetOptStat(0)
     rt.gStyle.SetOptTitle(0)
     rt.gROOT.ForceStyle()
@@ -437,11 +459,13 @@ if __name__ == '__main__':
     Energy = 8.
     Preliminary = "Preliminary"
     datasetName = ""
+    printPlots
     frLabels = []
     for i in range(4,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--3D": fit3D = True
         if sys.argv[i] == "--forPaper": Preliminary = ""
+        if sys.argv[i] == "--printPlots": printPlots = True
         if sys.argv[i].find("--fit-region=") != -1:
             frLabelString = sys.argv[i].replace("--fit-region=","")
             frLabels = [frLabelString]
@@ -501,7 +525,6 @@ if __name__ == '__main__':
     if fit3D:
         hBTAGDataList = [fitFile.Get("%s/histoData_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
 
-    printPlots = True
     btag = 0 # THIS MEANS WE ARE DOING THE FULL BTAG REGION
     btagToDo = [0]
     
