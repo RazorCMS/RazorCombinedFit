@@ -5,11 +5,11 @@ import os
 
 def Binning(Box, noBtag):
     if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
-        MRbins =              [400, 500, 700, 900, 1200, 1600, 2500]
+        MRbins =              [400, 450, 500, 700, 900, 1200, 1600, 2500]
         if noBtag: Rsqbins =  [0.25,0.30,0.40,0.50]
         else: Rsqbins =       [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        MRbins =              [300, 400, 550, 700, 900, 1200, 1600, 2500]
+        MRbins =              [300, 350, 400, 550, 700, 900, 1200, 1600, 2500]
         if noBtag: Rsqbins =  [0.15,0.20,0.30,0.40,0.50]
         else: Rsqbins =       [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if noBtag: nBtagbins =    [0.0,1.0]
@@ -18,7 +18,7 @@ def Binning(Box, noBtag):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         print "\nRun the script as follows:\n"
         print "python scripts/makeBluePlot.py BoxName ToyDir DataFile OutDir"
         print "with:"
@@ -30,7 +30,6 @@ if __name__ == '__main__':
         print "After the inputs you can specify the following options"
         print " --plotOnly  Run the plot-making macro from already computed bkg predictions"
         print " --noBtag    this is a 0btag box (i.e. R2 stops at 0.5)"
-        print " --newFR    this the new fit region"
         sys.exit()
     else:
         Box = sys.argv[1]
@@ -43,7 +42,6 @@ if __name__ == '__main__':
         for i in range(5,len(sys.argv)):
             if sys.argv[i] == "--noBtag": noBtag = "--noBtag"
             if sys.argv[i] == "--plotOnly": plotOnly = True
-            if sys.argv[i] == "--newFR": newFR = True
 
     if not plotOnly:
         os.system("python scripts/convertToyToROOT.py %s/frtoydata_%s" %(ToyDir, Box))

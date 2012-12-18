@@ -122,7 +122,10 @@ def decideToUseKDE(minX,maxX,htemp):
     if maxX<=10:
         return False
     if htemp.GetMaximumBin() <= htemp.FindBin(3):
-        return False
+        if htemp.GetMean()>5.:
+            return True
+        else:
+            return False
     return True
 
 def useThisRho(minX,maxX,htemp):
@@ -210,13 +213,16 @@ def getPValueFromKDE(nObs,maxX,func):
         rightSide = True
         otherRoot = func.GetX(funcObs,0,nObs-epsilon)
         if otherRoot >= nObs-epsilon:
-            otherRoot = func.GetX(funcObs-0.0005,0,nObs-epsilon)
-        if otherRoot < nObs-epsilon:
+            otherRoot = func.GetX(funcObs*(0.99),0,nObs-epsilon)
+        elif otherRoot < nObs-epsilon:
             pvalKDE = func.Integral(0,otherRoot)
         pvalKDE += func.Integral(nObs,maxX)
     else:
         otherRoot = func.GetX(funcObs,nObs+epsilon,maxX)
-        pvalKDE = func.Integral(0,nObs)
+        if otherRoot <= nObs+epsilon:
+            otherRoot = func.GetX(funcObs*(0.99),nObs+epsilon,maxX)
+        elif otherRoot > nObs+epsilon:
+            pvalKDE = func.Integral(0,nObs)
         pvalKDE += func.Integral(otherRoot,maxX)
     pvalKDE = pvalKDE/totalProb
     # DRAWING FUNCTION AND FILLS
@@ -305,7 +311,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             if fit3D:
                 sumName = "b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
                 varNames = ["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)]
-                varName = varNames[0]
+                varName  = "Plus".join(varNames)
             else:
                 varName = "b%i_%i" %(i,j)
                 sumName = "b%i_%i+" %(i,j)
@@ -331,7 +337,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             switchToKDE = decideToUseKDE(minX,maxX,htemp)
 
             del htemp
-            
+    
             rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"myhisto\");")
             myhisto = rt.TH1D("myhisto", histoName, maxX, 0., maxX)
             myTree.Project("myhisto", sumName[:-1])
@@ -345,13 +351,13 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             orighisto.SetLineColor(rt.kBlack)
             orighisto.Draw()
             if myhisto.GetEntries() != 0:
-                if switchToKDE:
-                    nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
+                if switchToKDE and fit3D:
+                    nExp = [rt.RooRealVar(iVar,iVar,0,maxX) for iVar in varNames]
                     nExpSet = rt.RooArgSet("nExpSet")
                     nExpList = rt.RooArgList("nExpList")
-                    for j in range(0,len(nExp)):
-                        nExpSet.add(nExp[j])
-                        nExpList.add(nExp[j])
+                    for intVar in range(0,len(nExp)):
+                        nExpSet.add(nExp[intVar])
+                        nExpList.add(nExp[intVar])
                     dataset = rt.RooDataSet("dataset","dataset",myTree,nExpSet)
                     sumExp = rt.RooFormulaVar("sumExp","sumExp",sumName[:-1],nExpList)
                     sumExpData = dataset.addColumn(sumExp)
@@ -412,7 +418,9 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 hEXP.SetBinContent(i+1, j+1, (rangeMax+rangeMin)/2)
                 hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
                 if (rangeMax+rangeMin)/2 == 50000.: continue
-                if pval<0.15: table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
+                print "(i,j) = (%i,%i)"%(i,j)
+                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
+                if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
                 if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
@@ -534,10 +542,10 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
             binCont = hNS.GetBinContent(iBinX,iBinY)
             if binCont == -999: continue
             if abs(binCont)< 0.1: continue
-            if binCont>=0:
+            if binCont>=0.:
                 xBin  = hNS.GetXaxis().GetBinLowEdge(iBinX) + .25*hNS.GetXaxis().GetBinWidth(iBinX)
                 yBin = hNS.GetYaxis().GetBinLowEdge(iBinY) + .3*hNS.GetYaxis().GetBinWidth(iBinY)
-            elif binCont<0:
+            elif binCont<0.:
                 xBin  = hNS.GetXaxis().GetBinLowEdge(iBinX) + .1*hNS.GetXaxis().GetBinWidth(iBinX) # left side of TLatex 10% across the binwidth in X
                 yBin = hNS.GetYaxis().GetBinLowEdge(iBinY) + .3*hNS.GetYaxis().GetBinWidth(iBinY) # bottom of TLatex 30% across the binwidth in X
             tlatex = rt.TLatex(xBin,yBin,"%2.1f"%binCont)
