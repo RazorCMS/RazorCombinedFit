@@ -104,7 +104,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         print xmin, xmax
         err.append((xmax-xmin)/2.)
     myhisto.Delete()
-    del d
+    if printPlots: del d
     del myhisto
     return err
             
@@ -174,7 +174,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         print xmin, xmax
         err.append((xmax-xmin)/2.)
     myhisto.Delete()
-    del d
+    if printPlots: del d
     del myhisto
     return err
 
@@ -240,7 +240,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
         print xmin, xmax
         err.append((xmax-xmin)/2.)
     myhisto.Delete()
-    del d
+    if printPlots: del d
     del myhisto
     return err
 
@@ -459,7 +459,7 @@ if __name__ == '__main__':
     Energy = 8.
     Preliminary = "Preliminary"
     datasetName = ""
-    printPlots
+    printPlots = False
     frLabels = []
     for i in range(4,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
