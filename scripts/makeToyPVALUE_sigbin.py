@@ -576,6 +576,21 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
 
   
 if __name__ == '__main__':
+    if len(sys.argv) < 5:
+        print "\nRun the script as follows:\n"
+        print "python scripts/makeToyPVALUE_sigbin.py BoxName ExpectedYieldRootFile DataRootFile OutDir"
+        print "with:"
+        print "- BoxName = name of the Box (MuMu, MuEle, etc)"
+        print "- ExpectedYieldRootFile = file containing tree of expected yield distributions produced by expectedYield_sigbin.py "
+        print "- DataRootFile = input root file containing data you fit"
+        print "- OutDir = name of the output directory"
+        print ""
+        print "After the inputs you can specify the following options"
+        print " --noBtag      this is a 0btag box (i.e. R2 stops at 0.5)"
+        print " --printPlots  dump plots of individual KDEs and 68% prob interval calculation"
+        print "--fit-region=NamedFitRegion in the output Fit Result file"
+        sys.exit()
+    
     Box = sys.argv[1]
     fileName = sys.argv[2]
     dataFileName = sys.argv[3]
@@ -583,7 +598,7 @@ if __name__ == '__main__':
     
     noBtag = False
     
-    printPlots = True
+    printPlots = False
 
     fit3D = False
     
@@ -594,7 +609,8 @@ if __name__ == '__main__':
         if sys.argv[i].find("--fit-region=") != -1:
             frLabelString = sys.argv[i].replace("--fit-region=","")
             frLabels = frLabelString.split("_")
-
+        if sys.argv[i] == "--printPlots": printPlots = True
+            
         
     MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
     

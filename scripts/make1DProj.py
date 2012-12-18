@@ -437,7 +437,6 @@ if __name__ == '__main__':
         print "- OutDir = name of the output directory"
         print ""
         print "After the inputs you can specify the following options"
-        print " --plotOnly    Run the plot-making macro from already computed bkg predictions"
         print " --noBtag      this is a 0btag box (i.e. R2 stops at 0.5)"
         print " --forPaper    Don't print Preliminary"
         print " --printPlots  dump plots of individual KDEs and 68% prob interval calculation"
