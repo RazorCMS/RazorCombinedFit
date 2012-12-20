@@ -115,7 +115,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     print "Number of Entries in Box %s = %d"%(box,rdata.numEntries())
     print "Sum of Weights in Box %s = %.1f"%(box,wdata.sumEntries())
     if write:
-        writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, label)
+        if useWeight:
+            writeTree2DataSet(wdata, outputFile, outputBox, rMin, mRmin, label)
+        else:  
+            writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, label)
     return rdata
 
 def printEfficiencies(tree, outputFile, config, flavour):

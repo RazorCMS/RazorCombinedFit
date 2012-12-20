@@ -18,6 +18,8 @@ def defineParser():
                   help="Name of the root file to store everything in")
     parser.add_option('-t','--toys',dest="toys",type="int", default=0,
                   help="The number of toys to run")
+    parser.add_option('--toy-offset',dest="nToyOffset",type="int", default=0,
+                  help="The index number to start from when generating toys")
     parser.add_option('--save-toys',dest="save_toys",action="store_true", default=False,
                   help="Save the toys as text files for future use.")
     parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",type="string", default="none",

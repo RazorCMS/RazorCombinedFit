@@ -23,7 +23,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorBox
         import RazorBjetBox
         import RazorMultiJetBox
-        import RazorBoostBox
+        #import RazorBoostBox
         import RazorTauBox
         boxes = {}
 
@@ -35,7 +35,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "BOOST": boxes[box] = RazorBoostBox.RazorBoostBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
-            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag,self.options.fitregion)
+            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),'3D',self.options.btag,self.options.fitregion)
 
             print 'box:', box
             print 'vars:', self.config.getVariables(box, "variables")
@@ -48,34 +48,36 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             if self.options.input is not None:
                 continue
-            
-            if self.Analysis != "MULTIJET" and self.Analysis != "BOOST":
-                # Vpj
+
+            if self.Analysis=="INCLUSIVE":
+                boxes[box].defineSet("pdfpars_TTj2b", self.config.getVariables(box, "pdf_TTj2b"))
+                boxes[box].defineSet("otherpars_TTj2b", self.config.getVariables(box, "others_TTj2b"))
+                boxes[box].defineSet("btagpars_TTj2b", self.config.getVariables(box, "btag_TTj2b"))
+                
+                boxes[box].defineSet("pdfpars_TTj1b", self.config.getVariables(box, "pdf_TTj1b"))
+                boxes[box].defineSet("otherpars_TTj1b", self.config.getVariables(box, "others_TTj1b"))
+                boxes[box].defineSet("btagpars_TTj1b", self.config.getVariables(box, "btag_TTj1b"))
+                
                 boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"))
                 boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"))
-                ## Zll
-                #boxes[box].defineSet("pdfpars_Zll", self.config.getVariables(box, "pdf_Zll"))
-                #boxes[box].defineSet("otherpars_Zll", self.config.getVariables(box, "others_Zll"))
-                #if self.Analysis != "TAU":
-                #    # Znn
-                #    boxes[box].defineSet("pdfpars_Znn", self.config.getVariables(box, "pdf_Znn"))
-                #    boxes[box].defineSet("otherpars_Znn", self.config.getVariables(box, "others_Znn"))
-            # TTj
-            boxes[box].defineSet("pdfpars_TTj", self.config.getVariables(box, "pdf_TTj"))
-            boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
-            boxes[box].defineSet("pdfpars_UEC", self.config.getVariables(box, "pdf_UEC"))
-            boxes[box].defineSet("otherpars_UEC", self.config.getVariables(box, "others_UEC"))
-            if self.Analysis == "MULTIJET" or self.Analysis == "BOOST":
-                # QCD
-                boxes[box].defineSet("pdfpars_QCD", self.config.getVariables(box, "pdf_QCD"))
-                boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
-            # the BTAG
-            if self.Analysis != "TAU" and self.Analysis != "MULTIJET" and self.Analysis != "BOOST":
-                boxes[box].defineSet("btagpars_TTj", self.config.getVariables(box, "btag_TTj"))
-                boxes[box].defineSet("btagpars_UEC", self.config.getVariables(box, "btag_UEC"))
                 boxes[box].defineSet("btagpars_Vpj", self.config.getVariables(box, "btag_Vpj"))
-                #boxes[box].defineSet("btagpars_Zll", self.config.getVariables(box, "btag_Zll"))
-                #boxes[box].defineSet("btagpars_Znn", self.config.getVariables(box, "btag_Znn"))
+                
+                boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
+                
+            else:
+                if self.Analysis != "MULTIJET" and self.Analysis != "BOOST":
+                    # Vpj
+                    boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"))
+                    boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"))
+                # TTj
+                boxes[box].defineSet("pdfpars_TTj", self.config.getVariables(box, "pdf_TTj"))
+                boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
+                boxes[box].defineSet("pdfpars_UEC", self.config.getVariables(box, "pdf_UEC"))
+                boxes[box].defineSet("otherpars_UEC", self.config.getVariables(box, "others_UEC"))
+                if self.Analysis == "MULTIJET" or self.Analysis == "BOOST":
+                    # QCD
+                    boxes[box].defineSet("pdfpars_QCD", self.config.getVariables(box, "pdf_QCD"))
+                    boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
                 
             print '>>> addDataset:'
             if not self.options.limit:
@@ -179,9 +181,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:
                     f = boxes[box].workspace.obj('simultaneousFR')
                 if self.options.save_toys_from_fit.find("/") != -1:
-                    boxes[box].writeBackgroundDataToys(f, data_yield*self.options.scale_lumi, box, nToys, self.options.save_toys_from_fit)
+                    boxes[box].writeBackgroundDataToys(f, data_yield*self.options.scale_lumi, box, nToys, self.options.nToyOffset, self.options.save_toys_from_fit)
                 else:
-                    boxes[box].writeBackgroundDataToys(f, data_yield*self.options.scale_lumi, box, nToys)
+                    boxes[box].writeBackgroundDataToys(f, data_yield*self.options.scale_lumi, box, nToys, self.options.nToyOffset)
                 continue
 
             #use an MCStudy to store everything

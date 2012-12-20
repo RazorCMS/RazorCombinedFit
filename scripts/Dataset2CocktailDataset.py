@@ -28,11 +28,15 @@ def writeCocktail(box, files, outdir):
     rsqMin = row['Rsq'].getMin()
     rMin = rt.TMath.Sqrt(rsqMin)
     
-    tData = rt.RooDataSet('RMRTree','Total Dataset',row)
-    for d in ds:
-        tData.append(d)
-    wData = rt.RooDataSet('RMRTree','Weighted Cocktail',tData,row,'MR>=0.','W')
-
+    #tData = rt.RooDataSet('RMRTree','Total Dataset',row)
+    #for d in ds:
+    #    tData.append(d)
+    #wData = rt.RooDataSet('RMRTree','Weighted Cocktail',tData,row,'MR>=0.','W')
+    
+    wData = ds[0].Clone('RMRTree')
+    for ids in range(1,len(ds)):
+        wData.append(ds[ids])
+    
     output = rt.TFile.Open(outdir+"/SMCocktail_MR"+str(mRmin)+"_R"+str(rMin)+"_"+box+'.root','RECREATE')
     print 'Writing',output.GetName()
     wData.Write()

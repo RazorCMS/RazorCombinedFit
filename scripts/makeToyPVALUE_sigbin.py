@@ -502,10 +502,10 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     Green = array('d',[0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
     Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
     Length =array('d',[0.00, 0.20, 0.35, 0.50, 0.65, 0.8, 1.00]) # colors get darker faster at 4sigma
-    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,9999)
+    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,999)
     hNS.SetMaximum(5.1)
     hNS.SetMinimum(-5.1) # so the binning is 0 2 4
-    hNS.SetContour(9999)
+    hNS.SetContour(999)
     # changes a few of the level colors by chaning the cut-offs
     # for external viewing:
     #hNS.SetContourLevel(6,1.5)

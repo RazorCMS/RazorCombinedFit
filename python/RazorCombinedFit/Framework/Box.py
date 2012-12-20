@@ -386,10 +386,11 @@ class Box(object):
         """Generate a toy dataset with the specified number of events"""
         
         pdf = self.workspace.pdf(genmodel)
-        vars = rt.RooArgSet(self.workspace.set('variables'))
-        print "expectedEvents = %f" % pdf.expectedEvents(vars)
+        allvars = rt.RooArgSet(self.workspace.set('variables'))
+        myvars = rt.RooArgSet(self.workspace.var('MR'),self.workspace.var('Rsq'),self.workspace.var('nBtag'))
+        print "expectedEvents = %f" % pdf.expectedEvents(allvars)
         if self.workspace.cat('Boxes'):
-            vars.add(self.workspace.cat('Boxes'))
+            myvars.add(self.workspace.cat('Boxes'))
         parSet = self.workspace.allVars()
         #set the parameter values
         parsAtLimit = True
@@ -398,7 +399,7 @@ class Box(object):
             # find the components that are on (Ntot on)
             componentsOn = [parName.split('_')[-1] for parName in pars.keys() if parName.find('Ntot')!=-1]
             # get a list of booleans answering whether the component goes negative
-            negComponents =  [self.isMinCoeffNegative(vars, pars, component) for component in componentsOn]
+            negComponents =  [self.isMinCoeffNegative(myvars, pars, component) for component in componentsOn]
             # take the OR of the booleans 
             anyNegComp = any(negComponents)
             parsAtLimit = parsAtLimit or anyNegComp
@@ -408,17 +409,17 @@ class Box(object):
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
         print "GENERATE: "
         Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
-        gdata = pdf.generate(vars,Pnumber,*options)
+        gdata = pdf.generate(myvars,Pnumber,*options)
         
         #now set the parameters back
-        pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
-            pars[p.GetName()] = p
-            print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
-        for name, value in pars.iteritems():
-            print "FIX PARAMETER: %s " %name
-            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
-
+        #pars = {}
+        #for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
+        #    pars[p.GetName()] = p
+        #    print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
+        #for name, value in pars.iteritems():
+        #    print "FIX PARAMETER: %s " %name
+        #    self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+        #
         gdata_cut = gdata.reduce(self.cut)
         return gdata_cut
     
@@ -462,12 +463,15 @@ class Box(object):
         return self.generateToyFRWithYield(genmodel, fr, data.numEntries(), *options)
 
 
-    def writeBackgroundDataToys(self, fr, total_yield, box, nToys, label="./"):
+    def writeBackgroundDataToys(self, fr, total_yield, box, nToys, nToyOffset, label="./"):
         """Write out toys which have been sampled from a fit result"""
         
         for i in xrange(nToys):
             ds = self.generateToyFRWithYield(self.fitmodel, fr, total_yield)
-            ds.write('%s/frtoydata_%s_%i.txt' % (label, box,i))
+            ds.write('%s/frtoydata_%s_%i.txt' % (label, box,i+nToyOffset))
+            ds.Print()
+            rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"%s\");"%ds.GetName())
+            del ds
 
     def predictBackgroundData(self, fr, data, nRepeats = 100, verbose = True):
         

@@ -167,12 +167,16 @@ if __name__ == '__main__':
 
     parFiles = {}
     for label, files in labels.iteritems():
+        print label
         parFiles[label] = readFitResult(label, files)
     
     parNameList = parFiles[label].keys()
     for parName in parNameList:
         parHisto = getHisto(parName,parFiles)
 
-        c = rt.TCanvas("c%s"%parName,"c%s"%parName,800,600)
+        c = rt.TCanvas("c%s"%parName,"c%s"%parName,600,400)
+        c.SetLogy(0)
+        #if parName.find("b_") !=-1 or parName.find("n_")!=-1 or parName.find("Ntot_") !=-1:
+        #    c.SetLogy(1)
         parHisto.Draw('E1')
         c.Print("%s/%s.pdf"%(options.outdir,parName))

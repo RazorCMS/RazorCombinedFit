@@ -7,18 +7,25 @@ from array import *
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
     if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
-        if varName == "MR" :        return [400, 500, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [400, 450, 500, 700, 900, 1200, 1600, 2500]
         elif varName == "Rsq" : 
             if btag == "NoBtag":    return [0.25,0.30,0.40,0.50]
             if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        if varName == "MR" :        return [300, 400, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [300, 350, 400, 550, 700, 900, 1200, 1600, 2500]
         elif varName == "Rsq" :
             if btag == "NoBtag":    return [0.15,0.20,0.30,0.40,0.50]
             elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if varName == "nBtag" :
         if btag == "NoBtag":        return [0,1]
         elif btag == "Btag":        return [1,2,3,4]
+
+            
+def FindLastBin(h):
+    for i in range(1,h.GetXaxis().GetNbins()):
+        thisbin = h.GetXaxis().GetNbins()-i
+        if h.GetBinContent(thisbin)>=0.1: return thisbin+1
+    return h.GetXaxis().GetNbins()    
                      
 class RazorBox(Box.Box):
     
@@ -31,13 +38,13 @@ class RazorBox(Box.Box):
         else:
             self.btag = "Btag"
             self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','Jet','MultiJet']}
-            
+                        
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
         elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
         else: self.fitregion = fitregion
         self.fitMode = fitMode
-        
-        self.cut = 'MR>0.'
+
+        self.cut = 'MR>=0'
         
         
     def addTailPdf(self, flavour, doSYS):
@@ -162,17 +169,23 @@ class RazorBox(Box.Box):
             self.workspace.factory("RooTwoBin::PlusPDF(CHARGE,plusOne[1.])")
             self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
-        # add the different components:
-        # - W+jets
-        # - ttbar+jets
-        # - TTj1b
-        self.addTailPdf("Vpj", True)
-        self.addTailPdf("TTj1b", True)
-        self.addTailPdf("TTj2b", True)
+        # add only relevant components (for generating toys)
+        myPDFlist = rt.RooArgList()
+        for z in self.zeros:
+            if self.name not in self.zeros[z]:
+                self.addTailPdf(z, True)
+                myPDFlist.add(self.workspace.pdf("ePDF_%s"%z))
 
+        # add ALL the different components (for combining boxes in limit setting later):
+        # - W+jets
+        # - ttbar+jets 1b
+        # - ttbar+jets j2b
+        #self.addTailPdf("Vpj",True)
+        #self.addTailPdf("TTj2b",True)
+        #self.addTailPdf("TTj1b",True)
         # build the total PDF
-        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj2b"), self.workspace.pdf("ePDF_TTj1b"))
-        
+        #myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj2b"), self.workspace.pdf("ePDF_TTj1b"))
+                
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
         # import the model in the workspace.
@@ -217,8 +230,7 @@ class RazorBox(Box.Box):
         #in the case that the input file is an MC input file
         if data is None or not data:
             return None
-        
-        Ndata = data.reduce(self.cut).sumEntries()
+        Ndata = data.reduce(self.getVarRangeCutNamed(ranges=self.fitregion.split(","))).sumEntries()
         self.workspace.var("Ntot_TTj2b").setVal(Ndata*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
         self.workspace.var("Ntot_TTj1b").setVal(Ndata*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
         self.workspace.var("Ntot_Vpj").setVal(Ndata*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
@@ -290,6 +302,14 @@ class RazorBox(Box.Box):
         #[store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
         #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 5, ranges=self.fitregion.split(","))]
 
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=["2b"])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=["2b"])]
+        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=["2b"])]
+            
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=["3b"])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=["3b"])]
+        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=["3b"])]
+            
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=self.fitregion.split(","))]
@@ -387,7 +407,9 @@ class RazorBox(Box.Box):
         return [frameMR]
 
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
-        
+        #Preliminary = "Preliminary"
+        Preliminary = "Simulation"
+        Energy = 8.0
         rangeNone = False
         if ranges is None:
             rangeNone = True
@@ -509,10 +531,11 @@ class RazorBox(Box.Box):
         if self.workspace.var("Ntot_TTj1b") != None and N_TTj1b>1 :histoToy.Add(histoToyTTj1b, +1)
             
         # We shouldn't scale to the data, we should scale to our prediction
-        #scaleFactor = histoData.Integral()/histoToy.Integral()
+        scaleFactor = histoData.Integral()/histoToy.Integral()
         print "DATA NORM %f"%histoData.Integral()
         print "FIT NORM  %f"%(N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)
-        scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
+        #scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
+        #scaleFactor = (N_TTj2b+N_Vpj+N_TTj1b)/histoToy.Integral()
         print "scaleFactor = %f"%scaleFactor
         
         histoToyTTj2b.Scale(scaleFactor)
@@ -526,9 +549,9 @@ class RazorBox(Box.Box):
         setName(histoToyTTj1b,xvarname)
         histoToyTTj1b.SetLineColor(rt.kViolet)
         histoToyTTj1b.SetLineWidth(2)
-        histoToyTTj2b.SetLineColor(rt.kOrange)
+        histoToyTTj2b.SetLineColor(rt.kRed)
         histoToyTTj2b.SetLineWidth(2)
-        histoToyVpj.SetLineColor(rt.kRed)
+        histoToyVpj.SetLineColor(rt.kGreen)
         histoToyVpj.SetLineWidth(2)
 
         histoToy.Scale(scaleFactor)
@@ -539,32 +562,111 @@ class RazorBox(Box.Box):
         histoToy.SetLineColor(rt.kBlue)
         histoToy.SetLineWidth(2)
 
+        rt.gStyle.SetOptStat(0000)
+        rt.gStyle.SetOptTitle(0)
 
-        rt.gStyle.SetOptStat(0)
-        c = rt.TCanvas("c","c",800,700)
-        pad1 = rt.TPad("pad1","pad1",0,0.14,1,1)
+
+
+        if N_TTj2b>0 and N_TTj1b>0:
+            leg = rt.TLegend(0.65,0.65,0.93,0.93)
+        else:
+            leg = rt.TLegend(0.65,0.72,0.93,0.93)
+        leg.SetFillColor(0)
+        leg.SetTextFont(42)
+        leg.SetLineColor(0)
+
+
+        btagLabel = "#geq 1 b-tag"
+        if ranges==["3b"]:
+            btagLabel = "#geq 3 b-tag"
+        if ranges==["2b","3b"]:
+            btagLabel = "#geq 2 b-tag"
+        if ranges==["2b"]:
+            btagLabel = "2 b-tag"
+        
+        leg.AddEntry(histoData,"Data","lep")
+        if xvarname=="nBtag":
+            if N_TTj1b>0 and N_TTj2b>0:
+                leg.AddEntry(histoToyTTj1b,"1 b-tag","f")
+                leg.AddEntry(histoToyTTj2b,"#geq 2 b-tag","f")
+        else:
+            if N_TTj1b>0 and N_TTj2b>0:
+                leg.AddEntry(histoToyTTj1b,"1 b-tag","l")
+                leg.AddEntry(histoToyTTj2b,"#geq 2 b-tag","l")
+
+        # plot labels
+        pt = rt.TPaveText(0.4,0.8,0.5,0.93,"ndc")
+        pt.SetBorderSize(0)
+        pt.SetTextSize(0.05)
+        pt.SetFillColor(0)
+        pt.SetFillStyle(0)
+        pt.SetLineColor(0)
+        pt.SetTextAlign(21)
+        pt.SetTextFont(42)
+        pt.SetTextSize(0.042)
+        text = pt.AddText("CMS %s #sqrt{s} = %i TeV" %(Preliminary,int(Energy)))
+        pt.AddText("t#bar{t}+jets Razor %s Box, %s"%(self.name,btagLabel))
+    
+        c = rt.TCanvas("c","c",900,700)
+        pad1 = rt.TPad("pad1","pad1",0,0.25,1,1)
+        pad2 = rt.TPad("pad2","pad2",0,0,1,0.25)
+        
+        pad1.SetLeftMargin(0.15)
+        pad2.SetLeftMargin(0.15)
+        pad1.SetRightMargin(0.05)
+        pad2.SetRightMargin(0.05)
+        pad1.SetTopMargin(0.05)
+        pad2.SetTopMargin(0.02)
+        pad1.SetBottomMargin(0.02)
+        pad2.SetBottomMargin(0.35)
+    
         #pad1.SetBottomMargin(0)
         pad1.Draw()
         pad1.cd()
         rt.gPad.SetLogy()
         c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
-        #histoData.SetMinimum(1.)
-        histoData.Draw("pe")
-
+        
+        histoToy.SetMinimum(0.5)
+        histoToy.GetYaxis().SetTitle("Events")
+        histoToy.GetXaxis().SetTitle("")
+        histoToy.GetXaxis().SetLabelOffset(0.16)
+        histoToy.GetXaxis().SetLabelSize(0.06)
+        histoToy.GetYaxis().SetLabelSize(0.06)
+        histoToy.GetXaxis().SetTitleSize(0.06)
+        histoToy.GetYaxis().SetTitleSize(0.06)
+        histoToy.GetXaxis().SetTitleOffset(1)
+        if xvarname == "MR": histoToy.SetMaximum(histoToy.GetMaximum()*2.)
+        elif xvarname == "Rsq": histoToy.SetMaximum(histoToy.GetMaximum()*2.)
+        elif xvarname == "nBtag": histoToy.SetMaximum(histoToy.GetMaximum()*5.)
+        histoToy.GetXaxis().SetRange(0,FindLastBin(histoToy))
+        #if histoToy.GetBinContent(histoToy.GetNbinsX())>=10.: histoToy.SetMinimum(5.)
+        #if histoToy.GetBinContent(histoToy.GetNbinsX())>=100.: histoToy.SetMinimum(50.)
+            
+            
+        
         histoToy.SetFillColor(rt.kBlue-10)
         histoToy.SetFillStyle(1001)
-        histoToy.DrawCopy('e2same')
+        histoData.Draw("pe")
+        histoToy.DrawCopy('e2')
+        histoData.Draw("pesame")
+        leg.Draw("same")
+        pt.Draw("same")
+        
+        leg.AddEntry(histoToy,"Total Background")
 
+        histoToy.SetLineColor(rt.kBlue)
+        histoToy.SetLineWidth(2)
+        
         histoToyStack = rt.THStack("histoToyStack","histoToyStack")
         if self.workspace.var("Ntot_Vpj").getVal():
             histoToyVpj.DrawCopy("histsame")
-            c1 = rt.gROOT.GetColor(rt.kRed-4)
+            c1 = rt.gROOT.GetColor(rt.kGreen-4)
             c1.SetAlpha(1.0)
             histoToyVpj.SetFillStyle(0)
             if xvarname=="nBtag":
                 histoToyVpj.SetFillStyle(1001)
-                c1.SetAlpha(0.4)
-                histoToyVpj.SetFillColor(rt.kRed-4)
+                c1.SetAlpha(0.8)
+                histoToyVpj.SetFillColor(rt.kGreen-4)
                 histoToyStack.Add(histoToyVpj)
             histoToyVpj.DrawCopy('histsame')
         if self.workspace.var("Ntot_TTj1b").getVal():
@@ -580,13 +682,13 @@ class RazorBox(Box.Box):
             histoToyTTj1b.DrawCopy('histsame')
         if self.workspace.var("Ntot_TTj2b").getVal():
             histoToyTTj2b.DrawCopy('histsame')
-            c3 = rt.gROOT.GetColor(rt.kOrange-4)
+            c3 = rt.gROOT.GetColor(rt.kRed-4)
             c3.SetAlpha(1.0)
             histoToyTTj2b.SetFillStyle(0)
             if xvarname=="nBtag":
                 histoToyTTj2b.SetFillStyle(1001)
-                c3.SetAlpha(0.4)
-                histoToyTTj2b.SetFillColor(rt.kOrange-4)
+                c3.SetAlpha(0.8)
+                histoToyTTj2b.SetFillColor(rt.kRed-4)
                 histoToyStack.Add(histoToyTTj2b)
             histoToyTTj2b.DrawCopy('histsame')
         # total
@@ -594,9 +696,9 @@ class RazorBox(Box.Box):
             histoToy.SetFillColor(rt.kBlue-10)
             histoToy.SetFillStyle(1001)
             histoToy.DrawCopy('e2same')
-        histoToy.SetFillColor(rt.kWhite)
-        histoToy.SetFillStyle(0)
-        histoToy.DrawCopy('histsame')
+        histoToyCOPY = histoToy.Clone("histoToyCOPY")
+        histoToyCOPY.SetFillStyle(0)
+        histoToyCOPY.Draw('histsame')
         histoData.Draw("pesame")
 
         histToReturn = [histoToy, histoData, c]
@@ -605,7 +707,6 @@ class RazorBox(Box.Box):
         histToReturn.append(histoToyTTj1b)
 
         c.cd()
-        pad2 = rt.TPad("pad2","pad2",0,0,1,0.14)
         #pad2.SetTopMargin(0)
         pad2.SetGrid(1,1)
         pad2.Draw()
@@ -615,24 +716,33 @@ class RazorBox(Box.Box):
         histoToy.Sumw2()
         histoDataCOPY = histoData.Clone(histoData.GetName()+"COPY")
         histoDataCOPY.Sumw2()
-        histoDataCOPY.GetYaxis().SetTitle("Data/Pred.")
-        histoDataCOPY.GetYaxis().SetTitleSize(0.17)
-        histoDataCOPY.GetYaxis().SetTitleOffset(0.3)
-        histoDataCOPY.GetYaxis().SetLabelSize(0.15)
-        histoDataCOPY.GetXaxis().SetLabelOffset(0.5)
-        histoDataCOPY.GetXaxis().SetTitle("")
+        histoDataCOPY.GetYaxis().SetTitle("")
+        histoDataCOPY.GetYaxis().SetLabelSize(0.12)
         histoDataCOPY.SetTitle("")
+        if xvarname=="nBtag": histoDataCOPY.GetXaxis().SetLabelSize(0.28)
+        else: histoDataCOPY.GetXaxis().SetLabelSize(0.18)
+        histoDataCOPY.GetXaxis().SetTitleSize(0.18)
+        histoDataCOPY.GetXaxis().SetTitleOffset(0.85)
         histoDataCOPY.Divide(histoToy)
         histoDataCOPY.SetLineWidth(2)
-        histoDataCOPY.SetLineColor(rt.kGreen-3)
-        histoDataCOPY.SetFillColor(rt.kGreen-7)
+        histoDataCOPY.SetLineColor(rt.kBlue+1)
+        histoDataCOPY.SetFillColor(rt.kBlue+1)
+        histoDataCOPY.SetMarkerColor(rt.kBlue+1)
+        histoDataCOPY.SetMarkerStyle(21)
+        histoDataCOPY.SetMarkerSize(1)
         histoDataCOPY.SetFillStyle(1001)
-        histoDataCOPY.GetYaxis().SetNdivisions(505)
+        histoDataCOPY.GetYaxis().SetNdivisions(504,rt.kTRUE)
         histoDataCOPY.Draw('pe')
 
+        leg.AddEntry(histoDataCOPY,"Ratio Data/Prediction","lep")
+        
+        fitLabel = '_'.join(self.fitregion.split(","))
         if self.fitregion == "LowRsq,LowMR,HighMR": fitLabel = "FULL"
         elif self.fitregion == "LowRsq,LowMR": fitLabel = "Sideband"
         elif self.fitregion == "HighMR": fitLabel = "HighMR"
+        elif self.fitregion == "LowRsq1b,LowMR1b,HighMR1b": fitLabel = "1b"
+        elif self.fitregion == "LowRsq2b,LowMR2b,HighMR2b": fitLabel = "2b"
+        elif self.fitregion == "LowRsq3b,LowMR3b,HighMR3b": fitLabel = "3b"
             
         c.Print("razor_canvas_%s_%s_%s_%s.pdf"%(self.name,fitLabel,'_'.join(ranges), xvarname))
         
