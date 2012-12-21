@@ -419,8 +419,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 hEXP.SetBinError(i+1, j+1, (rangeMax-rangeMin)/2)
                 if (rangeMax+rangeMin)/2 == 50000.: continue
                 print "(i,j) = (%i,%i)"%(i,j)
-                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
-                if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.2f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
+                print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
+                if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
                 if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
@@ -502,10 +502,16 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     Green = array('d',[0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
     Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
     Length =array('d',[0.00, 0.20, 0.35, 0.50, 0.65, 0.8, 1.00]) # colors get darker faster at 4sigma
-    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,999)
+    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,9999)
+    # French flag Palette
+    #Red = array('d',  [0.00, 1.00, 1.00])
+    #Green = array('d',[0.00, 1.00, 0.00])
+    #Blue = array('d', [1.00, 1.00, 0.00])
+    #Length =array('d',[0.00, 0.50, 1.00]) # standard color palette
+    #rt.TColor.CreateGradientColorTable(3,Length,Red,Green,Blue,9999)
     hNS.SetMaximum(5.1)
     hNS.SetMinimum(-5.1) # so the binning is 0 2 4
-    hNS.SetContour(999)
+    hNS.SetContour(9999)
     # changes a few of the level colors by chaning the cut-offs
     # for external viewing:
     #hNS.SetContourLevel(6,1.5)

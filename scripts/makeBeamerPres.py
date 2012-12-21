@@ -5,12 +5,12 @@ import sys
 import os
 
 if __name__ == '__main__':
-    #boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet","TauTauJet","MultiJet"]
-    boxNames = ["MuMu","Mu","Ele"]
+    boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet","TauTauJet","MultiJet"]
+    #boxNames = ["MuMu","Mu","Ele"]
     #datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012AB","ElectronHad-Run2012AB"]
-    datasetNames = ["TTJets","MuHad-Run2012AB", "ElectronHad-Run2012AB"]
+    datasetNames = ["SMCocktail"]
     #datasetNames = ["MuHad-Run2012AB","ElectronHad-Run2012AB","HT-HTMHT-Run2012AB"]
-    sidebandNames = ["FULL","Sideband"]
+    sidebandNames = ["Sideband","FULL"]
     #sidebandNames = ["FULL"]
     sidebandMap = {"FULL": "Full Fit","Sideband":"Sideband Fit"}
     #btagNames = ["","_1b","_2b","_3b","_4b"]
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     
     LaTeXMap = {"TTJets":"$t\\bar{t}$","WJets":"$W\\to\\ell\\nu$",
                 "DYJetsToLL":"$Z\\to\\ell\\ell$","ZJetsToNuNu":"$Z\\to\\nu\\nu$",
-                "SMCocktail":"SM Cocktail (5.0 fb$^{-1})$",
+                "SMCocktail":"Total SM (5/fb)",
                 "MuHad-Run2012AB":"Run2012AB",
                 "ElectronHad-Run2012AB":"Run2012AB",
                 "HT-HTMHT-Run2012AB":"Run2012AB"}
@@ -65,7 +65,6 @@ if __name__ == '__main__':
                         if not os.path.exists("%s/MR%s_%s_%s_%s.pdf"%(ffDir,btag,datasetName,sideband,box)): continue
                         if not os.path.exists("%s/RSQ%s_%s_%s_%s.pdf"%(ffDir,btag,datasetName,sideband,box)): continue
                         if not os.path.exists("%s/BTAG%s_%s_%s_%s.pdf"%(ffDir,btag,datasetName,sideband,box)): continue
-                        if not os.path.exists("%s/nSigma%s_%s.pdf"%(ffDir,btag,box)): continue
                         if not os.path.exists("%s/nSigmaLog%s_%s.pdf"%(ffDir,btag,box)): continue
                         beamerPres.write("\n")
                         rootFile = rt.TFile.Open("%s/expected_sigbin_%s.root"%(ffDir,box))
@@ -76,20 +75,12 @@ if __name__ == '__main__':
                         beamerPres.write("\\begin{frame}{%s %s %s %s $N_{\\text{toys}}=%i$}\n"%(box,LaTeXMap[datasetName],sidebandMap[sideband],btagMap[btag],nToys))
                         beamerPres.write("\\begin{changemargin}{-0.75in}{-0.75in}\n")
                         beamerPres.write("\\begin{center}\n")
-                        beamerPres.write("\\includegraphics[width=.53\\textwidth]{%s/MR%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
-                        beamerPres.write("\\includegraphics[width=.53\\textwidth]{%s/RSQ%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
-                        beamerPres.write("\\\\ \\includegraphics[width=.53\\textwidth]{%s/BTAG%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
-                        beamerPres.write("\\end{center}\n")
-                        beamerPres.write("\\end{changemargin}\n")
-                        beamerPres.write("\\end{frame}\n")
-                        beamerPres.write("\n")
-
-                        
-                        beamerPres.write("\\begin{frame}{%s %s %s %s $N_{\\text{toys}}=%i$}\n"%(box,LaTeXMap[datasetName],sidebandMap[sideband],btagMap[btag],nToys))
-                        beamerPres.write("\\begin{changemargin}{-0.75in}{-0.75in}\n")
-                        beamerPres.write("\\begin{center}\n")
-                        beamerPres.write("\\includegraphics[width=.6\\textwidth]{%s/nSigma%s_%s.pdf}\n"%(ffDir,btag,box))
-                        beamerPres.write("\\\\ \\includegraphics[width=.6\\textwidth]{%s/nSigmaLog%s_%s.pdf}\n"%(ffDir,btag,box))
+                        beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/MR%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
+                        beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/RSQ%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
+                        beamerPres.write("\\\\ ")
+                        if not (box=="MuEle" or box=="MuMu" or box=="EleEle" or box=="TauTauJet"):
+                            beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/BTAG%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
+                        beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/nSigmaLog%s_%s.pdf}\n"%(ffDir,btag,box))
                         beamerPres.write("\\end{center}\n")
                         beamerPres.write("\\end{changemargin}\n")
                         beamerPres.write("\\end{frame}\n")

@@ -531,10 +531,10 @@ class RazorBox(Box.Box):
         if self.workspace.var("Ntot_TTj1b") != None and N_TTj1b>1 :histoToy.Add(histoToyTTj1b, +1)
             
         # We shouldn't scale to the data, we should scale to our prediction
-        scaleFactor = histoData.Integral()/histoToy.Integral()
+        #scaleFactor = histoData.Integral()/histoToy.Integral()
         print "DATA NORM %f"%histoData.Integral()
         print "FIT NORM  %f"%(N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)
-        #scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
+        scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
         #scaleFactor = (N_TTj2b+N_Vpj+N_TTj1b)/histoToy.Integral()
         print "scaleFactor = %f"%scaleFactor
         

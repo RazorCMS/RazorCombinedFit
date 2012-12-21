@@ -253,15 +253,20 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     #c1.SetRightMargin(0.05)
     #c1.SetTopMargin(0.05)
     #c1.SetBottomMargin(0.05)
+    
+    pad1.Range(-213.4588,-0.3237935,4222.803,5.412602);
+    pad2.Range(-213.4588,-2.206896,4222.803,3.241379);
 
     pad1.SetLeftMargin(0.15)
     pad2.SetLeftMargin(0.15)
     pad1.SetRightMargin(0.05)
     pad2.SetRightMargin(0.05)
     pad1.SetTopMargin(0.05)
-    pad2.SetTopMargin(0.02)
-    pad1.SetBottomMargin(0.02)
-    pad2.SetBottomMargin(0.35)
+    pad2.SetTopMargin(0.)
+    pad1.SetBottomMargin(0.)
+    #pad2.SetTopMargin(0.04)
+    #pad1.SetBottomMargin(0.004)
+    pad2.SetBottomMargin(0.40)
     
     pad1.Draw()
     pad1.cd()
@@ -280,6 +285,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOTcopy.GetXaxis().SetTitleSize(0.06)
     hMRTOTcopy.GetYaxis().SetTitleSize(0.06)
     hMRTOTcopy.GetXaxis().SetTitleOffset(1)
+    hMRTOTcopy.GetXaxis().SetTicks("+-")
     hMRTOTcopy.GetXaxis().SetRange(0,FindLastBin(hMRTOTcopy))
     hMRTOTcopy.GetYaxis().SetTitle("Events")
     if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
@@ -305,7 +311,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         hMRTTj2b.SetLineColor(rt.kRed)
         hMRTTj2b.SetLineWidth(2)
         if varname == "BTAG":
-            col1.SetAlpha(0.8)
+            col1.SetAlpha(1.0)
             hMRTTj2b.SetFillStyle(1001)
             hMRTTj2b.SetFillColor(rt.kRed-4)
         hMRTTj2b.Draw("histsame")
@@ -316,7 +322,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         hMRTTj1b.SetLineColor(rt.kViolet)
         hMRTTj1b.SetLineWidth(2)
         if varname == "BTAG":
-            col2.SetAlpha(0.8)
+            col2.SetAlpha(1.0)
             hMRTTj1b.SetFillStyle(1001)
             hMRTTj1b.SetFillColor(rt.kViolet-4)
         hMRTTj1b.Draw("histsame")
@@ -389,8 +395,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     c1.Update()
     
     c1.cd()
-    
-    pad2.SetGrid(1,1)
+
     pad2.Draw()
     pad2.cd()
     rt.gPad.SetLogy(0)
@@ -398,25 +403,52 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOTcopy.Sumw2()
     hMRDataDivide = hMRData.Clone(hMRData.GetName()+"Divide")
     hMRDataDivide.Sumw2()
-    hMRDataDivide.GetYaxis().SetTitle("")
-    hMRDataDivide.GetYaxis().SetLabelSize(0.12)
-    hMRDataDivide.SetTitle("")
-    if varname=="BTAG": hMRDataDivide.GetXaxis().SetLabelSize(0.28)
-    else: hMRDataDivide.GetXaxis().SetLabelSize(0.18)
-    hMRDataDivide.GetXaxis().SetTitleSize(0.18)
-    hMRDataDivide.GetXaxis().SetTitleOffset(0.85)
-    hMRDataDivide.Divide(hMRTOTcopy)
-    hMRDataDivide.SetLineWidth(2)
-    hMRDataDivide.SetLineColor(rt.kBlue+1)
-    hMRDataDivide.SetFillColor(rt.kBlue+1)
-    hMRDataDivide.SetMarkerColor(rt.kBlue+1)
-    hMRDataDivide.SetMarkerStyle(21)
-    hMRDataDivide.SetMarkerSize(1)
-    hMRDataDivide.SetFillStyle(1001)
-    hMRDataDivide.GetYaxis().SetNdivisions(504,rt.kTRUE)
-    hMRDataDivide.Draw('pe')
 
-    leg.AddEntry(hMRDataDivide,"Ratio Data/Prediction","lep")
+    hMRTOTclone = hMRTOT.Clone(hMRTOTcopy.GetName()+"Divide") 
+    hMRTOTcopyclone = hMRTOTcopy.Clone(hMRTOTcopy.GetName()+"Divide") 
+    hMRTOTcopyclone.GetYaxis().SetLabelSize(0.12)
+    hMRTOTcopyclone.SetTitle("")
+    hMRTOTcopyclone.SetMaximum(3.5)
+    hMRTOTcopyclone.SetMinimum(0.)
+    if varname=="BTAG": hMRTOTcopyclone.GetXaxis().SetLabelSize(0.28)
+    else: hMRTOTcopyclone.GetXaxis().SetLabelSize(0.18)
+    hMRTOTcopyclone.GetXaxis().SetTitleSize(0.18)
+    hMRTOTcopyclone.GetXaxis().SetTitleOffset(0.85)
+ 
+    for i in range(1, hMRData.GetNbinsX()+1):
+        tmpVal = hMRTOTcopyclone.GetBinContent(i)
+        if tmpVal != -0.:
+            hMRDataDivide.SetBinContent(i, hMRDataDivide.GetBinContent(i)/tmpVal)
+            hMRDataDivide.SetBinError(i, hMRDataDivide.GetBinError(i)/tmpVal)
+            hMRTOTcopyclone.SetBinContent(i, hMRTOTcopyclone.GetBinContent(i)/tmpVal)
+            hMRTOTcopyclone.SetBinError(i, hMRTOTcopyclone.GetBinError(i)/tmpVal)
+            hMRTOTclone.SetBinContent(i, hMRTOTclone.GetBinContent(i)/tmpVal)
+            hMRTOTclone.SetBinError(i, hMRTOTclone.GetBinError(i)/tmpVal)
+
+    hMRTOTcopyclone.GetXaxis().SetTitleOffset(1.)
+    hMRTOTcopyclone.GetXaxis().SetLabelOffset(0.02)
+    if varname == "MR":
+        hMRTOTcopyclone.GetXaxis().SetTitle("M_{R} [GeV]")
+    if varname == "RSQ":
+        hMRTOTcopyclone.GetXaxis().SetTitle("R^{2}")
+    if varname == "BTAG":
+        hMRTOTcopyclone.GetXaxis().SetTitle("n_{b-tag}")
+
+    hMRTOTcopyclone.GetYaxis().SetNdivisions(504,rt.kTRUE)
+    hMRTOTcopyclone.GetYaxis().SetTitleOffset(0.3)
+    hMRTOTcopyclone.GetYaxis().SetTitleSize(0.16)
+    hMRTOTcopyclone.GetYaxis().SetTitle("Data/Bkgd")
+    hMRTOTcopyclone.GetXaxis().SetTicks("+")
+    hMRTOTcopyclone.GetXaxis().SetTickLength(0.07)
+    hMRTOTcopyclone.SetMarkerColor(rt.kBlue-10)
+    hMRTOTcopyclone.Draw("e2")
+    hMRDataDivide.Draw('pesame')
+    hMRTOTcopyclone.Draw("axissame")
+
+    pad2.Update()
+    pad1.cd()
+    pad1.Update()
+    pad1.Draw()
     c1.cd()
     
     if fit3D and btag>0:

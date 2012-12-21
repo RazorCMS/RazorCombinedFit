@@ -41,7 +41,10 @@ def getHisto(parName,parFiles):
         parHisto.SetMarkerColor(rt.kViolet)
         parHisto.SetLineColor(rt.kAzure)
         parHisto.SetMarkerSize(1.2)
-        setAxis.SetBinLabel(binNum,label.replace("_"," "))
+        box = label.split("_")[-1]
+        sideband = label.split("_")[-2]
+        setAxis.SetBinLabel(binNum,"%s %s"%(box,sideband))
+        #setAxis.SetBinLabel(binNum,label.replace("_"," "))
     return parHisto
 
 def setstyle():
@@ -169,12 +172,13 @@ if __name__ == '__main__':
     for label, files in labels.iteritems():
         print label
         parFiles[label] = readFitResult(label, files)
-    
+
+        #label = "SMCocktail_FULL_Mu"
     parNameList = parFiles[label].keys()
     for parName in parNameList:
         parHisto = getHisto(parName,parFiles)
 
-        c = rt.TCanvas("c%s"%parName,"c%s"%parName,600,400)
+        c = rt.TCanvas("c%s"%parName,"c%s"%parName,700,400)
         c.SetLogy(0)
         #if parName.find("b_") !=-1 or parName.find("n_")!=-1 or parName.find("Ntot_") !=-1:
         #    c.SetLogy(1)
