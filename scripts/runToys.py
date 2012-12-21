@@ -8,45 +8,12 @@ import os.path
 import sys
 from array import *
 
-if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print "\nRun the script as follows:\n"
-        print "python scripts/runToys DatasetName BoxName FitRegion FitMode"
-        print "with:"
-        print "   DatasetName = name of the sample (TTJets, WJets, SMCocktail, MuHad-Run2012AB, ElectronHad-Run2012AB, etc)"
-        print "   BoxName = name of the Box (MuMu, MuEle, etc)"
-        print "   FitRegion = name of the fit region (FULL, Sideband)"
-        print "   FitMode = 2D or 3D"
-        print ""
-        print "After the inputs you can specify the following options"
-        sys.exit()
-    
-    datasetName = sys.argv[1]
-    box = sys.argv[2]
-    sideband = sys.argv[3]
-    fitmode = sys.argv[4]
-    
-    tagFR = ""
-    fit3D = False
-    tag3D = ""
-    
-    if sideband == "Sideband":
-        #since we actually want the projection in the full region, use the same tag
-        #tagFR = "--fit-region=LowRsq_LowMR"
-        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
-    if sideband == "FULL":
-        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
-        
-    if fitmode == "3D":
-        fit3D = True
-        tag3D = "--3D"
-        
+def writeBashScript(box,sideband,fitmode):
+    pwd = os.environ['PWD']
+            
     fitResultsDir = "FitResults_%s"%fitmode
     config = "config_summer2012/RazorInclusive2012_%s_btag.config"%fitmode
 
-    queue = "1nd"
-    nToys = 20
-    pwd = os.environ['PWD']
     submitDir = "submit"
     fitResultMap = {'WJets':'%s/razor_output_WJets_%s_%s.root'%(fitResultsDir,sideband,box),
                     'TTJets':'%s/razor_output_TTJets_%s_%s.root'%(fitResultsDir,sideband,box),
@@ -74,7 +41,17 @@ if __name__ == '__main__':
     toyDir = resultDir+"/%s_%s"%(sideband,box)
     ffDir = toyDir+"_FF"
 
+    tagFR = ""
+    tag3D = ""
 
+    if sideband == "Sideband":
+        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
+    if sideband == "FULL":
+        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
+        
+    if fitmode == "3D":
+        tag3D = "--3D"
+        
     os.system("mkdir -p %s"%(submitDir)) 
     # prepare the script to run
     outputname = submitDir+"/submit_"+datasetName+"_"+fitmode+"_"+sideband+"_"+box+".src"
@@ -102,5 +79,44 @@ if __name__ == '__main__':
         outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D))
     
     outputfile.close
-    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+
+    return outputname, ffDir, pwd
+
+if __name__ == '__main__':
+    if len(sys.argv) < 4:
+        print "\nRun the script as follows:\n"
+        print "python scripts/runToys DatasetName BoxName FitRegion"
+        print "with:"
+        print "   DatasetName = name of the sample (TTJets, WJets, SMCocktail, MuHad-Run2012AB, ElectronHad-Run2012AB, etc)"
+        print "   BoxName = name of the Box (MuMu, MuEle, etc, or All)"
+        print "   FitRegion = name of the fit region (FULL, Sideband, or All)"
+        print ""
+        print "After the inputs you can specify the following options"
+        sys.exit()
+    
+    datasetName = sys.argv[1]
+    #box = sys.argv[2]
+    #sideband = sys.argv[3]
+    #fitmode = sys.argv[4]
+    fitmode = '3D'
+    queue = "1nd"
+    nToys = 2000
+
+    if sys.argv[2]=='All':
+        boxNames = ['MuEle','MuMu','EleEle','EleTau','Ele','MuTau','Mu','TauTauJet','Jet','MultiJet']
+    else:
+        boxNames = [sys.argv[2]]
+
+    if sys.argv[3]=='All':
+        sidebandNames = ['Sideband','FULL']
+    else:
+        sidebandNames = [sys.argv[3]]
+    
+    for box in boxNames:
+        for sideband in sidebandNames:
+            
+            outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode)
+            
+            
+            os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
