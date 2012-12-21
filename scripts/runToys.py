@@ -104,7 +104,14 @@ if __name__ == '__main__':
     nToys = 2000
 
     if sys.argv[2]=='All':
-        boxNames = ['MuEle','MuMu','EleEle','EleTau','Ele','MuTau','Mu','TauTauJet','Jet','MultiJet']
+        if datasetName=='MuHad-Run2012AB':
+            boxNames = ['MuEle','MuMu','MuTau','Mu']
+        elif datasetName=='ElectronHad-Run2012AB':
+            boxNames = ['EleEle','EleTau','Ele']
+        elif datasetName=='HT-HTMHT-Run2012AB':
+            boxNames = ['TauTauJet','Jet','MultiJet']
+        else:
+            boxNames = ['MuEle','MuMu','EleEle','EleTau','Ele','MuTau','Mu','TauTauJet','Jet','MultiJet']
     else:
         boxNames = [sys.argv[2]]
 
