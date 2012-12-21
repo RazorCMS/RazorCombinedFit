@@ -7,6 +7,7 @@ from RazorCombinedFit.Framework import Config
 import os.path
 import sys
 from array import *
+import time
 
 def writeBashScript(box,sideband,fitmode):
     pwd = os.environ['PWD']
@@ -117,6 +118,6 @@ if __name__ == '__main__':
             
             outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode)
             
-            
+            time.sleep(3)
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
             os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
