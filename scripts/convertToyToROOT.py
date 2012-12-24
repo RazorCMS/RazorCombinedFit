@@ -4,13 +4,13 @@ import sys
     
 if __name__ == '__main__':
     
-    MR = rt.RooRealVar("MR", "MR", 300., 7000.)
-    Rsq = rt.RooRealVar("Rsq", "Rsq", 0.09, 0.5)
+    MR = rt.RooRealVar("MR", "MR", 450., 4000.)
+    Rsq = rt.RooRealVar("Rsq", "Rsq", 0.03, 1.)
     dir = sys.argv[1] 
     # to add the category
     #argc = len(sys.argv)
     #argc = int(sys.argv[2]) 
-    for i in range(0,3501):
+    for i in range(0,2000):
         tree = rt.TTree()
         #tree.ReadFile(sys.argv[i],"MR/D:Rsq/D")
         filename = sys.argv[1]+"_"+str(i)+".txt"
