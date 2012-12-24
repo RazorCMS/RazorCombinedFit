@@ -83,7 +83,7 @@ if __name__ == '__main__':
         seed = today+clock+pid+137
         
     rt.RooRandom.randomGenerator().SetSeed(seed)
-    
+
     if options.config is None:
         import inspect, os
     

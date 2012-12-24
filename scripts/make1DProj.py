@@ -87,7 +87,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
             ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
             func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
             func.Draw("same")
-            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMedian(maxX,func)
+            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMode(maxX,func)
             tleg = rt.TLegend(0.6,.65,.9,.9)
             if switchToKDE:
                 tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
@@ -157,7 +157,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
             myhisto.Draw()
             func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
             func.Draw("same")
-            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMedian(maxX,func)
+            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMode(maxX,func)
             tleg = rt.TLegend(0.6,.65,.9,.9)
             if switchToKDE:
                 tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
@@ -189,6 +189,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
         varNames = []
         for i in range(0,nbinx-1):
             for j in range(0,nbiny-1):
+                if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
                 sumName = sumName+"b%i_%i_%i+" %(i,j,k)
                 varNames.extend(["b%i_%i_%i"%(i,j,k)])
         myTree.Draw(sumName[:-1])
@@ -223,7 +224,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
             myhisto.Draw()
             func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
             func.Draw("same")
-            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMedian(maxX,func)
+            mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMode(maxX,func)
             tleg = rt.TLegend(0.6,.65,.9,.9)
             if switchToKDE:
                 tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")

@@ -53,6 +53,8 @@ def writeBashScript(box,sideband,fitmode):
     if fitmode == "3D":
         tag3D = "--3D"
         
+    tagPrintPlots = "--printPlots"
+        
     os.system("mkdir -p %s"%(submitDir)) 
     # prepare the script to run
     outputname = submitDir+"/submit_"+datasetName+"_"+fitmode+"_"+sideband+"_"+box+".src"
@@ -60,7 +62,7 @@ def writeBashScript(box,sideband,fitmode):
     outputfile.write('#!/bin/bash\n')
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
-    outputfile.write('eval `scramv1 runtime -sh` \n')
+    #outputfile.write('eval `scramv1 runtime -sh` \n')
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
     if nToys<1000:
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,nToys,0))
@@ -73,11 +75,11 @@ def writeBashScript(box,sideband,fitmode):
     outputfile.write("rm %s.txt \n" %(toyDir))
     outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
     outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
-    outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s -b \n"%(box, ffDir, box, datasetMap[datasetName], ffDir,tagFR,tag3D))
+    outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, datasetMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
     if datasetName.find("Run") != -1:
-        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D))
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D,tagPrintPlots))
     else:
-        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D))
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots))
     
     outputfile.close
 
@@ -101,7 +103,7 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "1nd"
-    nToys = 2000
+    nToys = 20
 
     if sys.argv[2]=='All':
         if datasetName=='MuHad-Run2012AB':
@@ -125,6 +127,8 @@ if __name__ == '__main__':
             
             outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode)
             
-            time.sleep(3)
-            os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            #time.sleep(3)
+            #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+
+            os.system("source "+pwd+"/"+outputname)

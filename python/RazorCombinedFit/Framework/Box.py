@@ -408,8 +408,16 @@ class Box(object):
             print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
         print "GENERATE: "
-        Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
-        gdata = pdf.generate(myvars,Pnumber,*options)
+        # the old way with the data yield
+        #Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
+        #gdata = pdf.generate(myvars,Pnumber,*options)
+        
+        #by calculating expectedEvents() again, we get the fluctated events!
+        print "expectedEvents = %f" % pdf.expectedEvents(allvars)
+        expNumber = pdf.expectedEvents(allvars)
+        roundExpNumber = int(expNumber+0.5)
+        print "rounded expectedEvents = %f" % roundExpNumber
+        gdata = pdf.generate(myvars,roundExpNumber,*options)
         
         #now set the parameters back
         #pars = {}
@@ -419,7 +427,7 @@ class Box(object):
         #for name, value in pars.iteritems():
         #    print "FIX PARAMETER: %s " %name
         #    self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
-        #
+        
         gdata_cut = gdata.reduce(self.cut)
         return gdata_cut
     
@@ -441,7 +449,6 @@ class Box(object):
             print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
         print "GENERATE: "
-        number = pdf.expectedEvents(vars) 
         Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
         gdata = pdf.generate(vars,Pnumber,*options)
         

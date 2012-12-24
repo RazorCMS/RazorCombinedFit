@@ -150,5 +150,13 @@ if __name__ == '__main__':
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
 
+    
+    pid = os.getpid()
+    now = rt.TDatime()
+    today = now.GetDate()
+    clock = now.GetTime()
+    seed = today+clock+pid+137
+    #rt.RooRandom.randomGenerator().SetSeed(seed)
+    
     for box, files in boxes.iteritems():
         getUnweightedToy(box, files, options.outdir)

@@ -86,6 +86,14 @@ def findMedian(myHisto):
         prob = prob + myHisto.GetBinContent(i)
     return median
 
+def findMedianKDE(func):
+    nprobSum = int(1.0)
+    probSum = array("d",[0.5])
+    q = array("d",[0])
+    func.GetQuantiles(nprobSum,q,probSum)
+    medianVal = q[0]
+    return medianVal
+
 def find68ProbRange(hToy, probVal=0.6827):
     minVal = 0.
     maxVal = 100000.
@@ -135,7 +143,7 @@ def useThisRho(minX,maxX,htemp):
         return 1.5
     return 1.0
 
-def find68ProbRangeFromKDEMedian(maxX,func, probVal=0.6827):
+def find68ProbRangeFromKDEMode(maxX,func, probVal=0.6827):
     mean = func.Mean(0.,maxX)
     funcMax = func.GetMaximum()
     mode = func.GetX(funcMax,0.,maxX)
@@ -148,11 +156,11 @@ def find68ProbRangeFromKDEMedian(maxX,func, probVal=0.6827):
     # iterate first with a coarse epsilon
     # THEN iterate again with a smaller epsilon
     probRange = 0.
-    epsilon=median/10.0
+    epsilon=mode/10.0
     above68=False
     numIter = 0
-    sigmaMinus = median
-    sigmaPlus = median
+    sigmaMinus = mode
+    sigmaPlus = mode
     while abs(probRange - probVal)>0.001 and numIter < 100.:
         numIter += 1
         if probRange < probVal:
@@ -368,11 +376,14 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                     # GETTING THE P-VALUE
                     pvalKDE,funcFillRight,funcFillLeft = getPValueFromKDE(nObs,maxX,func)
                     
-                if switchToKDE: modeVal,rangeMin,rangeMax,probRange,funcFill68 = find68ProbRangeFromKDEMedian(maxX,func)
+                if switchToKDE: modeVal,rangeMin,rangeMax,probRange,funcFill68 = find68ProbRangeFromKDEMode(maxX,func)
 
                 else: modeVal,rangeMin,rangeMax = find68ProbRange(myhisto)
 
-                medianVal = findMedian(myhisto)
+                if switchToKDE:
+                    medianVal = findMedianKDE(func)
+                else:
+                    medianVal = findMedian(myhisto)
                 if switchToKDE: pval = pvalKDE
                 else: pval = getPValue(nObs, myhisto)
                     

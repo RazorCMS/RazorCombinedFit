@@ -7,12 +7,12 @@ from array import *
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
     if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
-        if varName == "MR" :        return [400, 450, 500, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [400, 450, 550, 700, 900, 1200, 1600, 2500]
         elif varName == "Rsq" : 
             if btag == "NoBtag":    return [0.25,0.30,0.40,0.50]
             if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        if varName == "MR" :        return [300, 350, 400, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [300, 350, 450, 550, 700, 900, 1200, 1600, 2500]
         elif varName == "Rsq" :
             if btag == "NoBtag":    return [0.15,0.20,0.30,0.40,0.50]
             elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
@@ -309,26 +309,28 @@ class RazorBox(Box.Box):
         #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=["3b"])]
         #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=["3b"])]
         #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=["3b"])]
-            
+
+        # just the fitregion:
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=self.fitregion.split(","))]
 
+        # the full region
         if self.fitregion!='LowRsq,LowMR,HighMR':
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq','LowMR','HighMR'])]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq','LowMR','HighMR'])]
             if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
 
-        # the 1b, 2b, 3b, 4b ranges still use the entire MR, Rsq range, so turn it off for the newFR fits
-        #if self.fitMode == "3D":
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['1b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['1b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['2b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['2b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['3b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['3b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['4b'])]
-        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['4b'])]
+        if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq3b','LowMR3b','HighMR3b'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq3b','LowMR3b','HighMR3b'])]
+            
 
 
     def plot1D(self, inputFile, varname, nbin=200, ranges=None, data = None):
