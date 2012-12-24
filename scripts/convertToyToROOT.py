@@ -9,7 +9,7 @@ if __name__ == '__main__':
     nBtag = rt.RooRealVar("nBtag", "nBtag", 1.0, 5.0)
     dir = sys.argv[1] 
     # to add the category
-    for i in range(0,2000):
+    for i in range(0,3000):
         rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"RMRTree\");")
         tree = rt.TTree("RMRTree","RMRTree")
         filename = sys.argv[1]+"_"+str(i)+".txt"
