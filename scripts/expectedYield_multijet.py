@@ -3,7 +3,7 @@ import ROOT as rt
 import sys
 import random
 from array import *
-import makeBluePlot_multijet
+import SingleBoxFit.RazorMultiJetBox
 import os
 
 def getTree2D(MRbins,Rsqbins,listfileName):
@@ -129,7 +129,9 @@ if __name__ == '__main__':
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--3D": fit3D = True
 
-    MRbins, Rsqbins, nBtagbins = makeBluePlot_multijet.Binning(Box, noBtag)
+    MRbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "MR")
+    Rsqbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
+    nBtagbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Btag")
 
     if fit3D:
         myTree = getTree3D(MRbins,Rsqbins,nBtagbins,listfileName)

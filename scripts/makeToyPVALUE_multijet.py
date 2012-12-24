@@ -2,8 +2,7 @@ from optparse import OptionParser
 import ROOT as rt
 from array import *
 import sys
-import makeBluePlot_multijet
-
+import SingleBoxFit.RazorMultiJetBox
 
 def set2DStyle(h) :
     h.GetXaxis().SetTitle("M_{R}[GeV]")
@@ -591,7 +590,9 @@ if __name__ == '__main__':
             frLabels = frLabelString.split("_")
 
         
-    MRbins, Rsqbins, nBtagbins = makeBluePlot_multijet.Binning(Box, noBtag)
+    MRbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "MR")
+    Rsbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
+    nBtagbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Btag")
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
     btagOpt = 0
     h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt)

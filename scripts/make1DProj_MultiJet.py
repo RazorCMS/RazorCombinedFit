@@ -2,7 +2,7 @@ from optparse import OptionParser
 import ROOT as rt
 from array import *
 import sys
-import makeBluePlot_multijet
+import SingleBoxFit.RazorMultiJetBox
 #import plotStyle
 import makeToyPVALUE_multijet
 import os
@@ -517,8 +517,10 @@ if __name__ == '__main__':
 
     Label = fitfileName.split("/")[-1].replace(".root","").replace("razor_output_","")
 
-    MRbins, Rsqbins, nBtagbins = makeBluePlot_multijet.Binning(Box, noBtag)
-        
+    MRbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "MR")
+    Rsbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
+    nBtagbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Btag")
+
     x = array("d",MRbins)
     y = array("d",Rsqbins)
     z = array("d",nBtagbins)
