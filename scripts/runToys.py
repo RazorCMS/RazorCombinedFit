@@ -62,7 +62,7 @@ def writeBashScript(box,sideband,fitmode):
     outputfile.write('#!/bin/bash\n')
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
-    #outputfile.write('eval `scramv1 runtime -sh` \n')
+    outputfile.write('eval `scramv1 runtime -sh` \n')
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
     if nToys<1000:
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,nToys,0))
@@ -112,6 +112,10 @@ if __name__ == '__main__':
             boxNames = ['EleEle','EleTau','Ele']
         elif datasetName=='HT-HTMHT-Run2012AB':
             boxNames = ['TauTauJet','Jet','MultiJet']
+        elif datasetName=='TTJets':
+            boxNames = ['MuEle','MuMu','EleEle','TauTauJet']
+        elif datasetName=='SMCocktail':
+            boxNames = ['MuTau','Mu','EleTau','Ele','MultiJet','Jet']
         else:
             boxNames = ['MuEle','MuMu','EleEle','EleTau','Ele','MuTau','Mu','TauTauJet','Jet','MultiJet']
     else:
@@ -127,8 +131,8 @@ if __name__ == '__main__':
             
             outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode)
             
-            #time.sleep(3)
-            #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-            #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            time.sleep(3)
+            os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
 
-            os.system("source "+pwd+"/"+outputname)
+            #os.system("source "+pwd+"/"+outputname)
