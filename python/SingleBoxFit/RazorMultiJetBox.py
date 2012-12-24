@@ -3,6 +3,7 @@ import math
 import RootTools
 import RazorBox
 import ROOT as rt
+from array import *
 
 class RazorMultiJetBox(RazorBox.RazorBox):
     
@@ -11,19 +12,23 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         
         # DATA DEFAULT
         self.zeros = {'TTj':[], 'QCD':[]}
-        # MC FIT: QCD
-        #self.zeros = {'TTj':['Had','QCD'], 'QCD':[]}
-        # MC FIT: TTj
-        #self.zeros = {'TTj':[], 'QCD':['Had','BJET']}
 
         self.cut = 'MR >= 0.0'
+
+    def getBinning(self, boxName, varName):
+        if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
+        if varName == "Rsq": return [0.03, 0.075, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+
+        #if varName == "MR" : return [450.0, 500.0, 550.0, 600.0, 650.0, 720.0, 800, 900, 1000, 1200, 1500, 1800, 2300, 3000, 4000.0]
+        #if varName == "Rsq": return [0.03, 0.075, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
 
     def define(self, inputFile):
         
         #define the ranges
         mR  = self.workspace.var("MR")
         Rsq = self.workspace.var("Rsq")
-        
+        BDT = self.workspace.var("BDT")
+
         # add the different components:
         self.addTailPdf("QCD",False)
         self.addTailPdf("TTj",True)
@@ -50,8 +55,8 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             self.floatFraction(z)
-            self.fixParsPenalty("n2nd_%s" % z)
-            #self.fixPars("n2nd_%s" % z)
+            self.fixParsExact("n2nd_%s" % z, False)
+
 
         fixed = []
         for z in self.zeros:
@@ -85,7 +90,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             data = data.reduce(rangeCut)
         toyData = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), factor*data.numEntries())
         toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
-        
+
         #also show the data with loose leptons
         dataLep = data.reduce('nLepton > 0')
 
@@ -93,11 +98,23 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
 
         # define 1D histograms
-        histoData = self.setPoissonErrors(rt.TH1D("histoData", "histoData",nbins, xmin, xmax))
-        histoDataLep = self.setPoissonErrors(rt.TH1D("histoDataLep", "histoDataLep",nbins, xmin, xmax))
-        histoToy = self.setPoissonErrors(rt.TH1D("histoToy", "histoToy",nbins, xmin, xmax))
-        histoToyTTj = self.setPoissonErrors(rt.TH1D("histoToyTTj", "histoToyTTj",nbins, xmin, xmax))
-        histoToyQCD = self.setPoissonErrors(rt.TH1D("histoToyQCD", "histoToyQCD",nbins, xmin, xmax))
+        histoData2011 = self.setPoissonErrors(rt.TH1D("histoData2011", "histoData2011",nbins, xmin, xmax))
+        histoDataLep2011 = self.setPoissonErrors(rt.TH1D("histoDataLep2011", "histoDataLep2011",nbins, xmin, xmax))
+        histoToy2011 = self.setPoissonErrors(rt.TH1D("histoToy2011", "histoToy2011",nbins, xmin, xmax))
+        histoToyTTj2011 = self.setPoissonErrors(rt.TH1D("histoToyTTj2011", "histoToyTTj2011",nbins, xmin, xmax))
+        histoToyQCD2011 = self.setPoissonErrors(rt.TH1D("histoToyQCD2011", "histoToyQCD2011",nbins, xmin, xmax))
+
+        # variable binning for plots
+        newbins = self.getBinning(self.name, xvarname)
+        newNbins =len(newbins)-1
+        xedge = array("d",newbins)
+        print "Binning in variable %s is "%xvarname
+        print newbins
+        histoData = self.setPoissonErrors(rt.TH1D("histoData", "histoData",newNbins, xedge))
+        histoDataLep = self.setPoissonErrors(rt.TH1D("histoDataLep", "histoDataLep",newNbins, xedge))
+        histoToy = self.setPoissonErrors(rt.TH1D("histoToy", "histoToy",newNbins, xedge))
+        histoToyTTj = self.setPoissonErrors(rt.TH1D("histoToyTTj", "histoToyTTj",newNbins, xedge))
+        histoToyQCD = self.setPoissonErrors(rt.TH1D("histoToyQCD", "histoToyQCD",newNbins, xedge))
 
         def setName(h, name):
             h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(),name,'_'.join(ranges)) )
@@ -108,10 +125,12 @@ class RazorMultiJetBox(RazorBox.RazorBox):
                 histo.SetBinError(i,rt.TMath.Sqrt(histo.GetBinContent(i)))
 
         # project the data on the histograms
-        #data.tree().Project("histoData",xvarname)
         data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(xvarname)))
         dataLep.fillHistogram(histoDataLep,rt.RooArgList(self.workspace.var(xvarname)))
         toyData.fillHistogram(histoToy,rt.RooArgList(self.workspace.var(xvarname)))
+        data.fillHistogram(histoData2011,rt.RooArgList(self.workspace.var(xvarname)))
+        dataLep.fillHistogram(histoDataLep2011,rt.RooArgList(self.workspace.var(xvarname)))
+        toyData.fillHistogram(histoToy2011,rt.RooArgList(self.workspace.var(xvarname)))
         
         #Cache the numbers
         Ntt = self.workspace.var("Ntot_TTj").getVal()
@@ -121,18 +140,24 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.workspace.var("Ntot_QCD").setVal(0.)
         toyDataTTj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(factor*(data.numEntries()-Nqcd)))
         toyDataTTj.fillHistogram(histoToyTTj,rt.RooArgList(self.workspace.var(xvarname)))
+        toyDataTTj.fillHistogram(histoToyTTj2011,rt.RooArgList(self.workspace.var(xvarname)))
         histoToyTTj.SetLineColor(rt.kRed)
         histoToyTTj.SetLineWidth(2)
+        histoToyTTj2011.SetLineColor(rt.kRed)
+        histoToyTTj2011.SetLineWidth(2)
         self.workspace.var("Ntot_QCD").setVal(Nqcd)
-        
+
         #Generate the QCD component
         self.workspace.var("Ntot_TTj").setVal(0.)
         toyDataQCD = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(factor*(data.numEntries()-Ntt)))
         toyDataQCD.fillHistogram(histoToyQCD,rt.RooArgList(self.workspace.var(xvarname)))
+        toyDataQCD.fillHistogram(histoToyQCD2011,rt.RooArgList(self.workspace.var(xvarname)))
         histoToyQCD.SetLineColor(rt.kGreen)
         histoToyQCD.SetLineWidth(2)
+        histoToyQCD2011.SetLineColor(rt.kGreen)
+        histoToyQCD2011.SetLineWidth(2)
         self.workspace.var("Ntot_TTj").setVal(Ntt)        
-        
+
         #put some protection in for divide by zero
         scaleFactor = 1.0
         if abs(histoToy.Integral()-0.0) > 1e-8:
@@ -141,9 +166,9 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         histoToy.Scale(scaleFactor)
         histoToyTTj.Scale(scaleFactor)
         histoToyQCD.Scale(scaleFactor)
-        SetErrors(histoToy, nbins)
-        SetErrors(histoToyTTj, nbins)
-        SetErrors(histoToyQCD, nbins)
+        SetErrors(histoToy, newNbins)
+        SetErrors(histoToyTTj, newNbins)
+        SetErrors(histoToyQCD, newNbins)
         setName(histoData,xvarname)
         setName(histoDataLep,xvarname)
         setName(histoToy,xvarname)
@@ -155,28 +180,60 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         histoToy.SetLineColor(rt.kBlue)
         histoToy.SetLineWidth(2)
 
+        histoToy2011.Scale(scaleFactor)
+        histoToyTTj2011.Scale(scaleFactor)
+        histoToyQCD2011.Scale(scaleFactor)
+        SetErrors(histoToy2011, nbins)
+        SetErrors(histoToyTTj2011, nbins)
+        SetErrors(histoToyQCD2011, nbins)
+        setName(histoData2011,xvarname)
+        setName(histoDataLep2011,xvarname)
+        setName(histoToy2011,xvarname)
+        setName(histoToyTTj2011,xvarname)
+        setName(histoToyQCD2011,xvarname)
+        histoData2011.SetMarkerStyle(20)
+        histoDataLep2011.SetLineWidth(2)
+        histoDataLep2011.SetLineStyle(rt.kDashed)
+        histoToy2011.SetLineColor(rt.kBlue)
+        histoToy2011.SetLineWidth(2)
+
         c = rt.TCanvas()
         c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
         histoData.Draw("pe")
-        
         histoDataLep.Draw("histsame")
-
         histoToyTTj.DrawCopy('histsame')
         histoToyTTj.SetFillColor(rt.kRed)
         histoToyTTj.SetFillStyle(3018)
         histoToyTTj.Draw('e2same')  
-
         histoToyQCD.DrawCopy('histsame')
         histoToyQCD.SetFillColor(rt.kGreen)
         histoToyQCD.SetFillStyle(3018)
         histoToyQCD.Draw('e2same')  
-
         histoToy.DrawCopy('histsame')
         histoToy.SetFillColor(rt.kBlue)
         histoToy.SetFillStyle(3018)
         histoToy.Draw('e2same')
 
-        histToReturn = [histoToy, histoToyQCD, histoToyTTj, histoData, histoDataLep, c]
+
+        c2011 = rt.TCanvas()
+        c2011.SetName('DataMC_%s_%s_ALLCOMPONENTS2011' % (xvarname,'_'.join(ranges)) )
+        histoData2011.Draw("pe")        
+        histoDataLep2011.Draw("histsame")
+        histoToyTTj2011.DrawCopy('histsame')
+        histoToyTTj2011.SetFillColor(rt.kRed)
+        histoToyTTj2011.SetFillStyle(3018)
+        histoToyTTj2011.Draw('e2same')  
+        histoToyQCD2011.DrawCopy('histsame')
+        histoToyQCD2011.SetFillColor(rt.kGreen)
+        histoToyQCD2011.SetFillStyle(3018)
+        histoToyQCD2011.Draw('e2same')  
+        histoToy2011.DrawCopy('histsame')
+        histoToy2011.SetFillColor(rt.kBlue)
+        histoToy2011.SetFillStyle(3018)
+        histoToy2011.Draw('e2same')
+
+        #histToReturn = [histoToy, histoToyQCD, histoToyTTj, histoData, histoDataLep, c]
+        histToReturn = [histoToy, histoToyQCD, histoToyTTj, histoData, histoDataLep, c, histoToy2011, histoToyQCD2011, histoToyTTj2011, histoData2011, histoDataLep2011, c2011]
 
         return histToReturn
 
