@@ -37,7 +37,7 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':[],'Vpj':[]}
         else:
             self.btag = "Btag"
-            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','Jet','MultiJet']}
+            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet']}
                         
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
         elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
@@ -321,15 +321,15 @@ class RazorBox(Box.Box):
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq','LowMR','HighMR'])]
             if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
 
-        if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq3b','LowMR3b','HighMR3b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq3b','LowMR3b','HighMR3b'])]
+        #if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq3b','LowMR3b','HighMR3b'])]
+        #    [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq3b','LowMR3b','HighMR3b'])]
             
 
 
@@ -437,6 +437,19 @@ class RazorBox(Box.Box):
                 toyDataVpj = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(50*(N_Vpj)))
                 beforeCutVpj = float(toyDataVpj.sumEntries())
                 print "beforeCutVpj = %f"%beforeCutVpj
+                
+                #print "\n"
+                #print "\n"
+                #toyDataVpj.Print("v")
+                #print "\n"
+                #print "\n"
+                #histoToyVpjBEFORE = rt.TH1D("histoToyVpjBEFORE", "histoToyVpjBEFORE",100,0,1000)
+                #toyDataVpj.fillHistogram(histoToyVpjBEFORE,rt.RooArgList(self.workspace.var(xvarname)))
+                #d = rt.TCanvas()
+                #d.SetLogy()
+                #histoToyVpjBEFORE.Draw("hist")
+                #d.Print("VpjBefore.pdf")
+                
                 toyDataVpj = toyDataVpj.reduce(rangeCut)
                 afterCutVpj = float(toyDataVpj.sumEntries())
                 print rangeCut
@@ -659,18 +672,18 @@ class RazorBox(Box.Box):
         histoToy.SetLineColor(rt.kBlue)
         histoToy.SetLineWidth(2)
         
-        histoToyStack = rt.THStack("histoToyStack","histoToyStack")
         if self.workspace.var("Ntot_Vpj").getVal():
-            histoToyVpj.DrawCopy("histsame")
+            histoToyVpjAdd = histoToyVpj.Clone("histoToyVpjAdd")
+            histoToyVpjAdd.DrawCopy("histsame")
             c1 = rt.gROOT.GetColor(rt.kGreen-4)
             c1.SetAlpha(1.0)
-            histoToyVpj.SetFillStyle(0)
+            histoToyVpjAdd.SetFillStyle(0)
             if xvarname=="nBtag":
-                histoToyVpj.SetFillStyle(1001)
-                c1.SetAlpha(0.8)
-                histoToyVpj.SetFillColor(rt.kGreen-4)
-                histoToyStack.Add(histoToyVpj)
-            histoToyVpj.DrawCopy('histsame')
+                histoToyVpjAdd.Add(histoToyTTj1b)
+                histoToyVpjAdd.SetFillStyle(1001)
+                c1.SetAlpha(1.0)
+                histoToyVpjAdd.SetFillColor(rt.kGreen-4)
+            histoToyVpjAdd.DrawCopy('histsame')
         if self.workspace.var("Ntot_TTj1b").getVal():
             histoToyTTj1b.DrawCopy("histsame")
             c2 = rt.gROOT.GetColor(rt.kViolet-4)
@@ -678,9 +691,8 @@ class RazorBox(Box.Box):
             histoToyTTj1b.SetFillStyle(0)
             if xvarname=="nBtag":
                 histoToyTTj1b.SetFillStyle(1001)
-                c2.SetAlpha(0.4)
+                c2.SetAlpha(1.0)
                 histoToyTTj1b.SetFillColor(rt.kViolet-4)
-                histoToyStack.Add(histoToyTTj1b)
             histoToyTTj1b.DrawCopy('histsame')
         if self.workspace.var("Ntot_TTj2b").getVal():
             histoToyTTj2b.DrawCopy('histsame')
@@ -689,9 +701,8 @@ class RazorBox(Box.Box):
             histoToyTTj2b.SetFillStyle(0)
             if xvarname=="nBtag":
                 histoToyTTj2b.SetFillStyle(1001)
-                c3.SetAlpha(0.8)
+                c3.SetAlpha(1.0)
                 histoToyTTj2b.SetFillColor(rt.kRed-4)
-                histoToyStack.Add(histoToyTTj2b)
             histoToyTTj2b.DrawCopy('histsame')
         # total
         if xvarname=="nBtag":
