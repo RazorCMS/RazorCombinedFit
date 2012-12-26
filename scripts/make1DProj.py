@@ -246,7 +246,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
     return err
 
 
-def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, c1, pad1, pad2, fit3D, btag):
+def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btag):
     rt.gStyle.SetOptStat(0000)
     rt.gStyle.SetOptTitle(0)
     
@@ -304,7 +304,23 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     showTTj2b = hMRTTj2b != None
     if showTTj2b:
         if  hMRTTj2b.Integral()<=1: showTTj2b = False
+    # Vpj is shown only if it has some entry
+    showVpj = hMRVpj != None
+    if showVpj:
+        if  hMRVpj.Integral()<=1: showVpj = False
     
+    if showVpj:
+        hMRVpj.SetFillStyle(0)
+        col1 = rt.gROOT.GetColor(rt.kGreen-7)
+        col1.SetAlpha(1.0)
+        hMRVpj.SetLineColor(rt.kGreen-3)
+        hMRVpj.SetLineWidth(2)
+        if varname == "BTAG":
+            hMRVpj.Add(hMRTTj1b)
+            col1.SetAlpha(1.0)
+            hMRVpj.SetFillStyle(1001)
+            hMRVpj.SetFillColor(rt.kGreen-7)
+        hMRVpj.Draw("histsame")
     if showTTj2b:
         hMRTTj2b.SetFillStyle(0)
         col1 = rt.gROOT.GetColor(rt.kRed-4)
@@ -339,7 +355,9 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOT.SetLineWidth(2)
     hMRTOT.SetFillStyle(0)
     hMRTOT.DrawCopy("histsame")
-    if showTTj2b and showTTj1b:
+    if showTTj2b and showTTj1b and showVpj:
+        leg = rt.TLegend(0.65,0.55,0.93,0.93)
+    elif showTTj2b and showTTj1b:
         leg = rt.TLegend(0.65,0.65,0.93,0.93)
     else:
         leg = rt.TLegend(0.65,0.72,0.93,0.93)
@@ -359,10 +377,18 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     leg.AddEntry(hMRTOTcopy,"Total Background")
     if showTTj1b and showTTj2b:
         if varname=="BTAG":
-            leg.AddEntry(hMRTTj1b,"1 b-tag","f")
+            if showVpj:
+                leg.AddEntry(hMRTTj1b,"1 b-tag, t#bar{t}+jets","f")
+                leg.AddEntry(hMRVpj,"1 b-tag, V+jets","f")
+            else:
+                leg.AddEntry(hMRTTj1b,"1 b-tag","f")
             leg.AddEntry(hMRTTj2b,"#geq 2 b-tag","f")
         else:
-            leg.AddEntry(hMRTTj1b,"1 b-tag","l")
+            if showVpj:
+                leg.AddEntry(hMRTTj1b,"1 b-tag, t#bar{t}+jets","l")
+                leg.AddEntry(hMRVpj,"1 b-tag, V+jets","l")
+            else:
+                leg.AddEntry(hMRTTj1b,"1 b-tag","l")
             leg.AddEntry(hMRTTj2b,"#geq 2 b-tag","l")
     leg.Draw("same")
 
@@ -560,7 +586,7 @@ if __name__ == '__main__':
     btag = 0 # THIS MEANS WE ARE DOING THE FULL BTAG REGION
     btagToDo = [0]
     
-    for hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQData, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGData,  btag in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRDataList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQDataList, hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGDataList,btagToDo):
+    for hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData, btag in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRVpjList, hMRDataList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQVpjList, hRSQDataList, hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGVpjList, hBTAGDataList,btagToDo):
 
         errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btag)
         errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btag)
@@ -586,7 +612,7 @@ if __name__ == '__main__':
         pad1 = rt.TPad("pad1","pad1",0,0.25,1,1)
         pad2 = rt.TPad("pad2","pad2",0,0,1,0.25)
 
-        goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRData, c1, pad1, pad2, fit3D, btag)
-        goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQData,  c1, pad1, pad2, fit3D, btag)
-        if fit3D: goodPlot("BTAG", outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGData,  c1, pad1, pad2, fit3D, btag)
+        goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btag)
+        goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData,  c1, pad1, pad2, fit3D, btag)
+        if fit3D: goodPlot("BTAG", outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData,  c1, pad1, pad2, fit3D, btag)
     
