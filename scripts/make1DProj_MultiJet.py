@@ -518,7 +518,7 @@ if __name__ == '__main__':
     Label = fitfileName.split("/")[-1].replace(".root","").replace("razor_output_","")
 
     MRbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "MR")
-    Rsbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
+    Rsqbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
     nBtagbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Btag")
 
     x = array("d",MRbins)

@@ -590,7 +590,6 @@ if __name__ == '__main__':
             frLabelString = sys.argv[i].replace("--fit-region=","")
             frLabels = frLabelString.split("_")
 
-        
     MRbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "MR")
     Rsqbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
     nBtagbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Btag")
