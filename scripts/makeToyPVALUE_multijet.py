@@ -506,7 +506,8 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     #hNS.SetContourLevel(5,-1.5)
     #hNS.SetContourLevel(7,2.5)
     #hNS.SetContourLevel(4,-2.5)
-    hNS.SetBinContent(1, 1, -999)
+    # First gray bin
+    #hNS.SetBinContent(1, 1, -999)
     hNS.GetXaxis().SetMoreLogLabels()
     #hNS.GetYaxis().SetMoreLogLabels()
     hNS.GetXaxis().SetNoExponent()
@@ -591,7 +592,7 @@ if __name__ == '__main__':
 
         
     MRbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "MR")
-    Rsbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
+    Rsqbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Rsq")
     nBtagbins = SingleBoxFit.RazorMultiJetBox.Binning(Box, "Btag")
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
     btagOpt = 0
