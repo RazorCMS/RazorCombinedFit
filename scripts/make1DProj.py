@@ -167,8 +167,8 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
             tleg.Draw("same")
             rt.gStyle.SetOptStat(0)
             if printPlots:
-                if fit3D: d.Print("%s/functest_Y_%i.pdf"%(outFolder,i))
-                else: d.Print("%s/functest_Y_%i.pdf"%(outFolder,i))
+                if fit3D: d.Print("%s/functest_Y_%i.pdf"%(outFolder,j))
+                else: d.Print("%s/functest_Y_%i.pdf"%(outFolder,j))
         else:
             xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax

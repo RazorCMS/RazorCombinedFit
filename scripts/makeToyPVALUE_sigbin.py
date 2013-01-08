@@ -137,6 +137,7 @@ def decideToUseKDE(minX,maxX,htemp):
     return True
 
 def useThisRho(minX,maxX,htemp):
+    return 2.0
     if max>10. and maxX<=20:
         return 2.0
     if max>10. and maxX<=40:
@@ -357,6 +358,11 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"canvas\");")
             c = rt.TCanvas("canvas","canvas",800,600)
             orighisto.SetLineColor(rt.kBlack)
+            orighisto.GetXaxis().SetTitle("Event Yield in Bin (%i < M_{R} < %i, %.2f < R^{2} < %.2f)"%(MRbins[i],MRbins[i+1],Rsqbins[j],Rsqbins[j+1]))
+            orighisto.GetYaxis().SetTitle("Probability")
+            orighisto.GetYaxis().SetTitleOffset(1.7)
+            orighisto.GetXaxis().SetTitleOffset(1.2)
+            c.SetLeftMargin(0.15)
             orighisto.Draw()
             if myhisto.GetEntries() != 0:
                 if switchToKDE and fit3D:

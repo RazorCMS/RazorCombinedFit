@@ -176,9 +176,8 @@ class RazorBox(Box.Box):
         myPDFlist = rt.RooArgList()
         for z in self.zeros:
             if self.name not in self.zeros[z]:
-                print z
-                print not (z=="Vpj")
-                self.addTailPdf(z, not (z=="Vpj"))
+                #self.addTailPdf(z, not (z=="Vpj"))
+                self.addTailPdf(z, True)
                 myPDFlist.add(self.workspace.pdf("ePDF_%s"%z))
 
         # add ALL the different components (for combining boxes in limit setting later):
