@@ -5,6 +5,12 @@ import RazorBox
 import ROOT as rt
 from array import *
 
+# This is global, to be used also in the scripts for plots
+def Binning(boxName, varName):
+    if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
+    if varName == "Rsq": return [0.03, 0.075, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+    if varName == "Btag": return [1.,5.]
+
 class RazorMultiJetBox(RazorBox.RazorBox):
     
     def __init__(self, name, variables):
@@ -15,19 +21,11 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
         self.cut = 'MR >= 0.0'
 
-    def getBinning(self, boxName, varName):
-        if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
-        if varName == "Rsq": return [0.03, 0.075, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
-
-        #if varName == "MR" : return [450.0, 500.0, 550.0, 600.0, 650.0, 720.0, 800, 900, 1000, 1200, 1500, 1800, 2300, 3000, 4000.0]
-        #if varName == "Rsq": return [0.03, 0.075, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
-
     def define(self, inputFile):
         
         #define the ranges
         mR  = self.workspace.var("MR")
         Rsq = self.workspace.var("Rsq")
-        BDT = self.workspace.var("BDT")
 
         # add the different components:
         self.addTailPdf("QCD",False)
@@ -73,8 +71,6 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.workspace.var("f2_QCD").setVal(0.)
         self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
 
-        #self.fix2ndComponent("TTj")
-                    
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
         
         rangeNone = False
@@ -105,7 +101,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         histoToyQCD2011 = self.setPoissonErrors(rt.TH1D("histoToyQCD2011", "histoToyQCD2011",nbins, xmin, xmax))
 
         # variable binning for plots
-        newbins = self.getBinning(self.name, xvarname)
+        newbins = Binning(self.name, xvarname)
         newNbins =len(newbins)-1
         xedge = array("d",newbins)
         print "Binning in variable %s is "%xvarname
@@ -232,20 +228,9 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         histoToy2011.SetFillStyle(3018)
         histoToy2011.Draw('e2same')
 
-        #histToReturn = [histoToy, histoToyQCD, histoToyTTj, histoData, histoDataLep, c]
         histToReturn = [histoToy, histoToyQCD, histoToyTTj, histoData, histoDataLep, c, histoToy2011, histoToyQCD2011, histoToyTTj2011, histoData2011, histoDataLep2011, c2011]
 
         return histToReturn
-
-#    # to be removed eventually
-#    def plot(self, inputFile, store, box):
-#        store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=['fR1,fR2,fR3,fR4,fR5']), dir=box)
-#        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['fR1,fR2,fR3,fR4,fR5'])]
-#        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=['fR1,fR2,fR3,fR4,fR5'])]
-#        for r in ['FULL','fR1','fR2','fR3','fR4','fR5']:
-#            store.store(self.plot2D(inputFile, "MR", "Rsq", ranges=[r]), dir=box)
-#            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=[r])]
-#            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 80, ranges=[r])]
 
     # to be removed eventually
     def plot(self, inputFile, store, box):
