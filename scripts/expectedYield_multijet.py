@@ -35,11 +35,11 @@ def getTree2D(MRbins,Rsqbins,listfileName):
         gdata = myfile.Get(treeName)
         if gdata == None: continue
         #if gdata.InheritsFrom("TTree") != True: continue
-        #h =  rt.TH2D("h","h", len(MRbins)-1, x, len(Rsqbins)-1, y)
         #gdata.Project("h", "Rsq:MR")
+        h =  rt.TH2D("h","", len(MRbins)-1, x, len(Rsqbins)-1, y)
         MR = rt.RooRealVar("MR","MR",450.,4000.)
         Rsq = rt.RooRealVar("Rsq","Rsq",0.03,1.)
-        h = gdata.createHistogram(MR, Rsq, len(MRbins)-1, len(Rsqbins)-1)
+        gdata.fillHistogram(h,rt.RooArgList(MR,Rsq))
         iBinX = 0
         iBinY = 0
         # fill the tree
