@@ -22,8 +22,8 @@ def getTree2D(MRbins,Rsqbins,listfileName):
     s1 = MyStruct1()
     for ix in range(0, len(MRbins)-1):
         for iy in range(0, len(Rsqbins)-1):
-            varName = "b%i_%i" %(ix, iy) 
-            branchName = "b%i_%i" %(ix, iy) 
+            varName = "b%i_%i" %(ix, iy)
+            branchName = "b%i_%i" %(ix, iy)
             myTree.Branch(branchName, rt.AddressOf(s1,varName),'%s/F' %varName)
     
     treeName = "RMRTree"
@@ -34,9 +34,12 @@ def getTree2D(MRbins,Rsqbins,listfileName):
         myfile = rt.TFile(filename)
         gdata = myfile.Get(treeName)
         if gdata == None: continue
-        if gdata.InheritsFrom("TTree") != True: continue
-        h =  rt.TH2D("h","h", len(MRbins)-1, x, len(Rsqbins)-1, y)
-        gdata.Project("h", "Rsq:MR")
+        #if gdata.InheritsFrom("TTree") != True: continue
+        #h =  rt.TH2D("h","h", len(MRbins)-1, x, len(Rsqbins)-1, y)
+        #gdata.Project("h", "Rsq:MR")
+        MR = rt.RooRealVar("MR","MR",450.,4000.)
+        Rsq = rt.RooRealVar("Rsq","Rsq",0.03,1.)
+        h = gdata.createHistogram(MR, Rsq, len(MRbins)-1, len(Rsqbins)-1)
         iBinX = 0
         iBinY = 0
         # fill the tree
@@ -140,5 +143,4 @@ if __name__ == '__main__':
         
     fileOut = rt.TFile.Open("%s" %label, "recreate")
     myTree.Write()
-    fileOut.Close()
-    
+    fileOut.Close()    
