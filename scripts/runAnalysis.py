@@ -10,7 +10,7 @@ def defineParser():
     parser = OptionParser()
     parser.add_option('-b','--batch',dest="batch",action="store_true", default=True,
                   help="Run in batch mode for plotting")    
-    parser.add_option('-a','--analysis',dest="analysis",type="string",
+    parser.add_option('-a','--analysis',dest="analysis",type="string",default="SingleBoxFit",
                   help="Name of the analysis to run")
     parser.add_option('-c','--config',dest="config",type="string",default=None,
                   help="Name of the config file to use")
