@@ -7,8 +7,10 @@ from array import *
 
 # This is global, to be used also in the scripts for plots
 def Binning(boxName, varName):
-    if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
-    if varName == "Rsq": return [0.03, 0.075, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+    if varName == "MR" : return [500.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
+    if varName == "Rsq": return [0.04, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+    #if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
+    #if varName == "Rsq": return [0.03, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
     if varName == "Btag": return [1.,5.]
 
 class RazorMultiJetBox(RazorBox.RazorBox):
@@ -19,7 +21,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         # DATA DEFAULT
         self.zeros = {'TTj':[], 'QCD':[]}
 
-        self.cut = 'MR >= 0.0'
+        self.cut = 'MR >= 500.0 && Rsq >= 0.04'
 
     def define(self, inputFile):
         
@@ -29,7 +31,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
         # add the different components:
         self.addTailPdf("QCD",False)
-        self.addTailPdf("TTj",True)
+        self.addTailPdf("TTj",False)
 
         # build the total PDF
         myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"),
@@ -53,7 +55,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             self.floatFraction(z)
-            self.fixParsExact("n2nd_%s" % z, False)
+            #self.fixParsExact("n2nd_%s" % z, False)
 
 
         fixed = []
