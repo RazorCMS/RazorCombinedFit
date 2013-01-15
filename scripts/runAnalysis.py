@@ -18,6 +18,8 @@ def defineParser():
                   help="Name of the root file to store everything in")
     parser.add_option('-t','--toys',dest="toys",type="int", default=0,
                   help="The number of toys to run")
+    parser.add_option('--toy-offset',dest="nToyOffset",type="int", default=0,
+                  help="The index number to start from when generating toys")
     parser.add_option('--save-toys',dest="save_toys",action="store_true", default=False,
                   help="Save the toys as text files for future use.")
     parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",type="string", default="none",
@@ -50,6 +52,8 @@ def defineParser():
                   help="Perform the fit in the FULL region")
     parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
                   help="Do not save the RooWorkspaces to save disk space for limit setting")
+    parser.add_option('--run-cls',dest="runCLS",action="store_true",default=False,
+                  help="Run the 2012 profile style CLS code")        
 
     return parser
 
@@ -107,8 +111,11 @@ if __name__ == '__main__':
                         aa.runtoys(args, options.toys)
                 else:
                     aa.analysis(args)
-                    if options.limit:    
-                        aa.limit(args,options.toys)
+                    if options.limit:
+                        if not options.runCLS:
+                            aa.limit(args,options.toys)
+                        else:
+                            aa.limit_profile(args,options.toys)
                 aa.final()
         
     else:
