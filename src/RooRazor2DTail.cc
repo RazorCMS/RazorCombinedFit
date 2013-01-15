@@ -34,44 +34,27 @@ RooRazor2DTail::RooRazor2DTail(const RooRazor2DTail& other, const char* name) :
 //---------------------------------------------------------------------------
 Double_t RooRazor2DTail::evaluate() const
 {
-  double myexp = B*(X-X0)*(Y-Y0);
-  if(myexp> 700 ) return  1.7e-308;// very bad
-  return fabs(myexp-1)*exp(-myexp);
+ double myexp = B*fabs(X-X0)*fabs(Y-Y0);
+ double mycoeff = B*fabs(X-X0)*fabs(Y-Y0) - 1.;
+  if(myexp < -700) {
+    std::cout << "MYEXP = "<< myexp << ", < -700 -- BAD" << std::endl;
+    return  1.7e-308;}
+  if(mycoeff < 0) {
+    std::cout << "MYCOEFF = " << mycoeff <<", IS NEGATIVE -- BAD" << std::endl;
+    return  1.7e-308;}
+  return mycoeff*exp(-myexp);
 }
 
 // //---------------------------------------------------------------------------
 Int_t RooRazor2DTail::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
-
-
-   // const Double_t xmin = X.min(rangeName)-X0; const Double_t xmax = X.max(rangeName)-X0;
-   // const Double_t ymin = Y.min(rangeName)-Y0; const Double_t ymax = Y.max(rangeName)-Y0;
-
-   // std::cout << "RooRazor2DTail::getAnalyticalIntegral" << std::endl;
-   // std::cout << "X: " << X << std::endl;
-   // std::cout << "Y: " << Y << std::endl;
-   // std::cout << "X0: " << X0 << std::endl;
-   // std::cout << "Y0: " << Y0 << std::endl;
-   // std::cout << "B: " << B << std::endl;
-
-   // std::cout << "xmin: " << xmin << "\t xmax: " << xmax << std::endl;
-   // std::cout << "ymin: " << ymin << "\t ymax: " << ymax << std::endl;
-
-   // std::cout << "Full 1: " << analyticalIntegral(1,rangeName) << std::endl;
-   // std::cout << "Proj 2: " << analyticalIntegral(2,rangeName) << std::endl;
-   // std::cout << "Proj 3: " << analyticalIntegral(3,rangeName) << std::endl;
-
-   const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
-   const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
-
-   // integral on both X and Y
-   if (matchArgs(allVars, analVars, X, Y)) return 1;
-   // // // integral over X
-   //else if (matchArgs(allVars, analVars, X) && Y0<(1+B*X0-B*xmin*Y)/(B*X0-B*xmin)) return 2;
-   //   else if (matchArgs(allVars, analVars, X) && Y0>=(1+B*X0-B*xmin*Y)/(B*X0-B*xmin)) return 3;
-   // // // integral over Y
-   //   else if (matchArgs(allVars, analVars, Y) && X0<(1+B*Y0-B*ymin*X)/(B*Y0-B*ymin)) return 4;
-   //   else if (matchArgs(allVars, analVars, Y) && X0>=(1+B*Y0-B*ymin*X)/(B*Y0-B*ymin)) return 5;
-   return 0;
+  // integral on both X and Y
+  if (matchArgs(allVars, analVars, X, Y)) return 1;
+  // integral over X
+  else if (matchArgs(allVars, analVars, X)) return 2;
+  // integral over Y
+  else if (matchArgs(allVars, analVars, Y)) return 3;
+  // integrating nothing
+  return 0;
 }
 
 // //---------------------------------------------------------------------------
@@ -80,28 +63,20 @@ Double_t RooRazor2DTail::analyticalIntegral(Int_t code, const char* rangeName) c
    const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
    const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
 
-   if(B == 0) return 0.;
+   if(B == 0) return 1.;
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y
-     integral = fabs(1/B*exp(-B*X0*Y0)*(exp(B*(xmax*(Y0-ymax)+X0*ymax))-
-					exp(B*(xmin*(Y0-ymax)+X0*ymax))-
-					exp(B*(xmax*(Y0-ymin)+X0*ymin))+
-					exp(B*(xmin*(Y0-ymin)+X0*ymin))));
+     integral = (1/B)*(exp(-B*(xmax-X0)*(ymax-Y0))-exp(-B*(xmin-X0)*(ymax-Y0))-exp(-B*(xmax-X0)*(ymin-Y0))+exp(-B*(xmin-X0)*(ymin-Y0)));
    } else if(code == 2) { // integral on X
-     integral = exp(B*(X0-xmax-xmin)*(Y-Y0))*(exp(B*xmin*(Y-Y0))*(X0-xmax)-exp(B*xmax*(Y-Y0))*(X0-xmin));
-   } else if(code == 3) { // integral on X
-     integral = exp(-1-B*(xmax*Y+X0*Y0))*(exp(B*xmax*Y+B*X0*Y0)+B*exp(1+B*X0*Y+B*xmax*Y0)*(X0-xmax)*(Y-Y0))/(B*(Y-Y0));
-   } else if(code == 4) { // integral on Y
-     integral = exp(B*(Y0-ymax-ymin)*(X-X0))*(exp(B*ymin*(X-X0))*(Y0-ymax)-exp(B*ymax*(X-X0))*(Y0-ymin));
-   } else if(code == 5) {
-     integral = exp(-1-B*(ymax*X+Y0*X0))*(exp(B*ymax*X+B*Y0*X0)+B*exp(1+B*Y0*X+B*ymax*X0)*(Y0-ymax)*(X-X0))/(B*(X-X0));
+     integral = -(xmax-X0)*exp(-B*(xmax-X0)*(Y-Y0)) + (xmin-X0)*exp(-B*(xmin-X0)*(Y-Y0));
+   } else if(code == 3) { // integral on Y
+     integral = -(ymax-Y0)*exp(-B*(ymax-Y0)*(X-X0)) + (ymin-Y0)*exp(-B*(ymin-Y0)*(X-X0));
    } else {
      cout << "WARNING IN RooRazor2DTail: integration code is not correct" << endl;
      cout << "                           what are you integrating on?" << endl;
-     return 0;
+     return 1.;
    }
-   //   if(!(evaluate()/integral>1.7E-308)) integral = evaluate()/(1.7E-308);
 
    return integral;
 }
