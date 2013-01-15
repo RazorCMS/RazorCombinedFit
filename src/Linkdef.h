@@ -13,6 +13,7 @@
 #pragma link C++ defined_in "RooSameAs.h";
 #pragma link C++ defined_in "RooTwoSideGaussianWithAnExponentialTail.h";
 #pragma link C++ defined_in "RooTwoSideGaussianWithTwoExponentialTails.h";
+#pragma link C++ defined_in "RooRazor2DSignal.h";
 #pragma link C++ defined_in "RooRazor2DTail.h";
 #pragma link C++ defined_in "RooRazor2DTail_SYS.h";
 #pragma link C++ defined_in "RooRazorLShape.h";
