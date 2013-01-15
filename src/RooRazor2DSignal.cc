@@ -72,6 +72,8 @@ Bool_t RooRazor2DSignal::importWorkspaceHook(RooWorkspace& ws){
 	Hjes = dynamic_cast<TH2D*>(ws.obj(Hjes->GetName()));
 	Hpdf = dynamic_cast<TH2D*>(ws.obj(Hpdf->GetName()));
 	Hbtag = dynamic_cast<TH2D*>(ws.obj(Hbtag->GetName()));
+
+	return true;
 }
 
 
