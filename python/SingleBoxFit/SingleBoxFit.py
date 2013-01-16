@@ -30,7 +30,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
             if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
-            elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
+            elif self.Analysis == "MULTIJET":
+                try :
+                    self.config.getVariables(box, "others_QCD")
+                    boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
+                except TypeError :
+                    boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"), True)
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
@@ -52,15 +57,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("pdf1pars_TTj", self.config.getVariables(box, "pdf1_TTj"))
             boxes[box].defineSet("pdf2pars_TTj", self.config.getVariables(box, "pdf2_TTj"))
             boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
-            if self.Analysis != "TAU":
-                # QCD
-                boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
-                boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
-                boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
-
+            if self.Analysis != "TAU" :
+                try :
+                    # QCD
+                    boxes[box].defineSet("pdf1pars_QCD", self.config.getVariables(box, "pdf1_QCD"))
+                    boxes[box].defineSet("pdf2pars_QCD", self.config.getVariables(box, "pdf2_QCD"))
+                    boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"))
+                    boxes[box].define(fileName)
+                except TypeError:
+                    print 'no 2nd component found, ignoring'
+                    boxes[box].define(fileName, True)
             if not self.options.limit: boxes[box].addDataSet(fileName)
-            boxes[box].define(fileName)
-
+           
         return boxes
 
     def toystudy(self, inputFiles, nToys):
