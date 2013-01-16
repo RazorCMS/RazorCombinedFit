@@ -836,9 +836,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                                          workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
             RootTools.Utils.importToWS(workspace,signal)
             
-            #set the eff value
-            workspace.var('eff_value').setVal(wHisto.Integral())
-            print 'eff_value for box %s is %f' % (box,workspace.var('eff_value').getVal())
+            #set the per box eff value
+            workspace.factory('eff_value_%s[%f]' % (box,wHisto.Integral()) )
+            print 'eff_value for box %s is %f' % (box,workspace.var('eff_value_%s'%box).getVal())
             return signal
         
         def SetConstants(pWs, pMc):
@@ -887,11 +887,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #add nuisance parameters and variables if not already defined
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
+            boxes[box].defineSet("nuisance_and_shape", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
             boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = workspace)            
             boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = workspace)            
             boxes[box].defineSet("variables", self.config.getVariables(box, "variables"), workspace = workspace)
             
             #add the log-normals for the lumi and efficiency (these are not in the signal PDF)
+            #these are treated as global scaling parameters. There is a box by box scaling coefficent
             workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
         
@@ -917,9 +919,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #build the signal PDF for this box
             signal_pdf = getSignalPdf(workspace, fileName, box)
-            
+             
             #now extend the signal PDF
-            workspace.factory("expr::S_%s('@0*@1*@2', lumi, sigma, eff)" % box )
+            #note that we scale the global effcienty and lumi by a fixed coefficient - so there is only one nuisance parameter
+            workspace.factory("expr::S_%s('@0*@1*@2*@3*@4', lumi_fraction_%s, lumi, sigma, eff_value_%s, eff)" % (box,box,box) )
             signal_pdf_extended = workspace.factory("RooExtendPdf::%s_extended(%s,S_%s)" % (signal_pdf.GetName(),signal_pdf.GetName(),box) )
             
             #finally add the signal + background PDFs together to get the final PDF
@@ -933,8 +936,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #store the dataset from this box
             datasets[box] = boxes[box].workspace.data('RMRTree')
             
+            #add shape parameters
+            [workspace.extendSet('nuisance_and_shape',p.GetName()) for p in RootTools.RootIterator.RootIterator( background_pdf.getParameters(datasets[box]) ) if not p.isConstant()]
             #set the parameters constant
-            #[p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
+            [p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
+            
+            
 
 
         #make a RooDataset with *all* of the data
@@ -964,6 +971,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         simultaneous_product = workspace.factory('PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products)))
         #store the name in case we need it later
         RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
+        simultaneous_product.graphVizTree('fullSplusBPDF.dot')
         
         #set the global observables to float from their nominal values - is this needed
         #for p in RootTools.RootIterator.RootIterator(workspace.set('global')): p.setConstant(False)
@@ -973,11 +981,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pSbModel.SetWorkspace(workspace)
         pSbModel.SetPdf(simultaneous_product)
         pSbModel.SetParametersOfInterest(workspace.set('poi'))
-        pSbModel.SetNuisanceParameters(workspace.set('nuisance'))
+        pSbModel.SetNuisanceParameters(workspace.set('nuisance_and_shape'))
         pSbModel.SetGlobalObservables(workspace.set('global'))
         pSbModel.SetObservables(workspace.set('variables'))
         
-        #SetConstants(workspace, pSbModel)
+        SetConstants(workspace, pSbModel)
         RootTools.Utils.importToWS(workspace,pSbModel)
         
         print 'This is the final PDF'
