@@ -18,13 +18,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
     def __init__(self, name, variables, twoComponents = False):
         super(RazorMultiJetBox,self).__init__(name, variables)
         
-        # DATA DEFAULT
-        if twoComponents :
-            self.zeros = {'TTj':[] }
-        else :
-            self.zeros = {'TTj':[] , 'QCD':[]}
-            
-        #self.cut = 'MR >= 500.0 && Rsq >= 0.04'
+        self.zeros = {'TTj':[] , 'QCD':['Mu','Ele','CRMuBVeto','CREleBVeto']}
         self.cut = 'MR >= 0.0'
         
     def define(self, inputFile, twoComponentOnly = False):
@@ -34,16 +28,12 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         Rsq = self.workspace.var("Rsq")
 
         # add the different components:
-        if not( twoComponentOnly ):
-            self.addTailPdf("QCD",False)
-        self.addTailPdf("TTj",False)
+        self.addTailPdf("QCD",False)
+        self.addTailPdf("TTj",True)
 
         # build the total PDF
-        if not( twoComponentOnly ):
-            myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"),
-                                      self.workspace.pdf("ePDF1st_QCD"),self.workspace.pdf("ePDF2nd_QCD"))
-        else :
-            myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"))
+        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"),
+                                  self.workspace.pdf("ePDF1st_QCD"),self.workspace.pdf("ePDF2nd_QCD"))
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
         # import the model in the workspace.
@@ -51,10 +41,8 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         #print the workspace
         self.workspace.Print()
 
-        ##### THIS IS A SIMPLIFIED FIT
         #fix all pdf parameters to the initial value
-        if not( twoComponentOnly ):
-            self.fixPars("QCD")
+        self.fixPars("QCD")
         self.fixPars("TTj")
 
         def floatSomething(z):
@@ -64,7 +52,9 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             self.float2ndComponentWithPenalty(z, True)
             self.floatYield(z)
             self.floatFraction(z)
-            #self.fixParsExact("n2nd_%s" % z, False)
+            
+            #we put the n parameter but fix it
+            self.fixParsExact("n2nd_%s" % z, True)
 
 
         fixed = []
@@ -78,10 +68,9 @@ class RazorMultiJetBox(RazorBox.RazorBox):
                     fixed.append(z)
         
         #remove redundant second components
-        if not( twoComponentOnly ) :
-            self.fix2ndComponent("QCD")
-            self.workspace.var("f2_QCD").setVal(0.)
-            self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
+        self.fix2ndComponent("QCD")
+        self.workspace.var("f2_QCD").setVal(0.)
+        self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
 
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
         
@@ -255,7 +244,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
         histToReturn = [histoToy, histoToyTTj, histoData, histoDataLep, c, histoToy2011, histoToyTTj2011, histoData2011, histoDataLep2011, c2011]
         if Nqcd > 0:
-            histToReturn.append([histoToyQCD, histoToyQCD2011])
+            histToReturn.extend([histoToyQCD, histoToyQCD2011])
         return histToReturn
 
     # to be removed eventually

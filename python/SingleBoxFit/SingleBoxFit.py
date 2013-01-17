@@ -865,6 +865,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             pFloated = rt.RooArgSet(pMc.GetObservables())
             pFloated.add(pMc.GetParametersOfInterest())
             pFloated.add(pMc.GetNuisanceParameters())
+            pFloated.add(pWs.set('shape'))
             
             for var in RootTools.RootIterator.RootIterator(pVars):
                 pFloatedObj = pFloated.find(var.GetName())
@@ -895,7 +896,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #add nuisance parameters and variables if not already defined
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
-            boxes[box].defineSet("nuisance_and_shape", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
+            boxes[box].defineSet("shape", "", workspace = workspace)
             boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = workspace)            
             boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = workspace)            
             boxes[box].defineSet("variables", self.config.getVariables(box, "variables"), workspace = workspace)
@@ -909,15 +910,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         pdf_names = {}
         datasets = {}
-        
+
         #start by restoring all the workspaces etc
         for box, fileName in fileIndex.iteritems():
 
             #this is the background only PDF used in the fit - we take the version with *penalty terms* 
             background_pdf = boxes[box].getFitPDF(graphViz=None,name=boxes[box].workspace.obj('independentFRPDF').GetName())
             
+            #replace the n parameter by a log normal
+            workspace.factory("expr::n2nd_TTj_%s('@0 * pow( (1+@1), @2)', n2nd_TTj_%s_value, n2nd_TTj_%s_uncert, n2nd_TTj_%s_prime)" % (box,box,box,box) )
+            
             #we import this into the workspace, but we rename things so that they don't clash
             var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
+            var_names.append('n2nd_TTj_%s' % box)
             RootTools.Utils.importToWS(workspace,background_pdf,\
                                         rt.RooFit.RenameAllNodes(box),\
                                         rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
@@ -943,9 +948,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             #store the dataset from this box
             datasets[box] = boxes[box].workspace.data('RMRTree')
-            
+                        
             #add shape parameters
-            [workspace.extendSet('nuisance_and_shape',p.GetName()) for p in RootTools.RootIterator.RootIterator( background_pdf.getParameters(datasets[box]) ) if not p.isConstant()]
+            [workspace.extendSet('shape',p.GetName()) for p in RootTools.RootIterator.RootIterator( background_pdf.getParameters(datasets[box]) ) if not p.isConstant()]
+            
             #set the parameters constant
             [p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
             
@@ -989,7 +995,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pSbModel.SetWorkspace(workspace)
         pSbModel.SetPdf(simultaneous_product)
         pSbModel.SetParametersOfInterest(workspace.set('poi'))
-        pSbModel.SetNuisanceParameters(workspace.set('nuisance_and_shape'))
+        pSbModel.SetNuisanceParameters(workspace.set('nuisance'))
         pSbModel.SetGlobalObservables(workspace.set('global'))
         pSbModel.SetObservables(workspace.set('variables'))
         
@@ -1006,11 +1012,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
         #fr.Print("V")
-
-        #the background only model
-        pBModel = rt.RooStats.ModelConfig(pSbModel)
-        pBModel.SetName("BModel")
-        pBModel.SetWorkspace(workspace)
         
         #print out the workspace contents and store to a ROOT file
         print 'Starting the limit setting procedure'
@@ -1036,6 +1037,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pSbModel.SetSnapshot(pPoiAndNuisance)
         
         del pNll, pProfile, pPoiAndNuisance
+        
+        #the background only model
+        pBModel = rt.RooStats.ModelConfig(pSbModel)
+        pBModel.SetName("BModel")
+        pBModel.SetWorkspace(workspace)
         
         #Find a parameter point for generating pseudo-data
         #with the background-only data.
