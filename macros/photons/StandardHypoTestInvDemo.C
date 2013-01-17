@@ -27,7 +27,7 @@
 // testStatType = 0 LEP
 //              = 1 Tevatron 
 //              = 2 Profile Likelihood two sided
-//              = 3 Profile Likelihood one sided (i.e. = 0 if mu < mu_hat)
+//              = 3 Profile Likelihood one sided (i.e. = 0 if mu < mu_hat) - (WR: We should use this one)
 //              = 4 Profile Likelihood signed ( pll = -pll if mu < mu_hat) 
 //              = 5 Max Likelihood Estimate as test statistic
 //              = 6 Number of observed event as test statistic
