@@ -102,7 +102,7 @@ Double_t RooRazor2DSignal::evaluate() const
     rhoBtag = pow(1.0 + btagVal,xBtag);
   }
   double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
-  return (result == 0.0) ? 1e-12 : result;
+  return (result == 0.0) ? 1e-30 : result;
 }
 
 // //---------------------------------------------------------------------------
