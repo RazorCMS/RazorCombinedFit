@@ -830,9 +830,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             pdf =  RootTools.getObject(inputFile,'PDFerr')
             
             def renameAndImport(histo):
-                histo.SetName('%s_%s' % (histo.GetName(),box))
-                RootTools.Utils.importToWS(workspace,histo)
-                return histo
+                newHisto = histo.Clone('%s_%s' % (histo.GetName(),box))
+                #histo.SetName('%s_%s' % (histo.GetName(),box))
+                RootTools.Utils.importToWS(workspace,newHisto)
+                return newHisto
             wHisto = renameAndImport(wHisto)
             btag = renameAndImport(btag)
             jes = renameAndImport(jes)
@@ -963,11 +964,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         RootTools.Utils.importToWS(workspace,pData)
         
         #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
-        simultaneous = rt.RooSimultaneous('CombinedLikelihood','CombinedLikelihood',workspace.cat('Boxes'))
-        for box, pdf_name in pdf_names.iteritems():
-            simultaneous.addPdf(workspace.pdf(pdf_name),box)
-        RootTools.Utils.importToWS(workspace,simultaneous)
-        
+        #SIMUL::name(cat,a=pdf1,b=pdf2]   -- Create simultaneous p.d.f index category cat. Make pdf1 to state a, pdf2 to state b
+        sim_map = ['%s=%s' % (box,pdf_name) for box, pdf_name in pdf_names.iteritems()]
+        print 'SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map)
+        workspace.factory('SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map))
+        simultaneous = workspace.pdf('CombinedLikelihood')
+
         #multiply the likelihood by some gaussians
         pdf_products = [simultaneous.GetName()]
         
