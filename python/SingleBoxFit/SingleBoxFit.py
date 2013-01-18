@@ -913,6 +913,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         datasets = {}
 
         #start by restoring all the workspaces etc
+        box_primes = []
         for box, fileName in fileIndex.iteritems():
 
             #this is the background only PDF used in the fit - we take the version with *penalty terms* 
@@ -920,6 +921,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #replace the n parameter by a log normal
             workspace.factory("expr::n2nd_TTj_%s('@0 * pow( (1+@1), @2)', n2nd_TTj_%s_value, n2nd_TTj_%s_uncert, n2nd_TTj_%s_prime)" % (box,box,box,box) )
+            box_primes.append('n2nd_TTj_%s_prime' % box)
             
             #we import this into the workspace, but we rename things so that they don't clash
             var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
@@ -964,11 +966,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         RootTools.Utils.importToWS(workspace,pData)
         
         #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
-        #SIMUL::name(cat,a=pdf1,b=pdf2]   -- Create simultaneous p.d.f index category cat. Make pdf1 to state a, pdf2 to state b
+        #Syntax: SIMUL::name(cat,a=pdf1,b=pdf2]   -- Create simultaneous p.d.f index category cat. Make pdf1 to state a, pdf2 to state b
         sim_map = ['%s=%s' % (box,pdf_name) for box, pdf_name in pdf_names.iteritems()]
-        print 'SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map)
-        workspace.factory('SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map))
-        simultaneous = workspace.pdf('CombinedLikelihood')
+        simultaneous = workspace.factory('SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map))
 
         #multiply the likelihood by some gaussians
         pdf_products = [simultaneous.GetName()]
@@ -976,12 +976,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #used for the global observables
         workspace.defineSet('global','')
         for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+            #check that the number of box related nuisance parameters defined is the same as the number of boxes
+            if var.GetName() in box_primes:
+                box_primes.remove(var.GetName())
+            
             #make a Gaussian for each nuisance parameter
             workspace.factory('RooGaussian::%s_pdf(nom_%s[0,-5,5],%s,%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
             pdf_products.append('%s_pdf' % var.GetName())
             
             #keep track of the Gaussian means, as these are global observables
             workspace.extendSet('global','nom_%s' % var.GetName())
+            
+        if box_primes:
+            raise Exception('There are nuisance parameters defined for boxes that we are not running on: %s' % str(box_primes))
+        del box_primes
 
         #multiply the various PDFs together        
         simultaneous_product = workspace.factory('PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products)))
@@ -1028,6 +1036,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #    will anticipate it
         pNll = pSbModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(rt.RooArgSet())
+        pSbModel.Print('V')
         minSplusB = pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
         print '\nS+B: %f' % minSplusB 
         
@@ -1051,6 +1060,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pNll = pBModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(workspace.set('poi'))
         workspace.var('sigma').setVal(poiValueForBModel)
+        pBModel.Print('V')
         minBonly = pProfile.getVal() #this will do fit and set nuisance parameters to profiled values
         print '\nB only: %f' % minBonly
         
