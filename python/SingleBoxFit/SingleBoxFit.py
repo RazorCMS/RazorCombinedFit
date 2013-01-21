@@ -821,33 +821,41 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
             return merged
         
+        open_files = []
         def getSignalPdf(workspace, inputFile, box):
             """Makes a signal PDF from the input histograms"""
             
-            wHisto = RootTools.getObject(inputFile,'wHisto')
-            btag =  RootTools.getObject(inputFile,'BTAGerr')
-            jes =  RootTools.getObject(inputFile,'JESerr')
-            pdf =  RootTools.getObject(inputFile,'PDFerr')
+            rootFile = rt.TFile.Open(inputFile)
+            open_files.append(rootFile)
+            wHisto = rootFile.Get('wHisto')
+            btag =  rootFile.Get('BTAGerr')
+            jes =  rootFile.Get('JESerr')
+            pdf =  rootFile.Get('PDFerr')
             
             def renameAndImport(histo):
+                #make a memory resident copy
                 newHisto = histo.Clone('%s_%s' % (histo.GetName(),box))
-                #histo.SetName('%s_%s' % (histo.GetName(),box))
+                newHisto.SetDirectory(0)
                 RootTools.Utils.importToWS(workspace,newHisto)
                 return newHisto
+            
             wHisto = renameAndImport(wHisto)
             btag = renameAndImport(btag)
             jes = renameAndImport(jes)
             pdf = renameAndImport(pdf)
             
-            signal = rt.RooRazor2DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
-                                         workspace.var('MR'),workspace.var('Rsq'),
-                                         wHisto,jes,pdf,btag,
-                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
-            RootTools.Utils.importToWS(workspace,signal)
-            
+            #rootFile.Close()
+
             #set the per box eff value
             workspace.factory('eff_value_%s[%f]' % (box,wHisto.Integral()) )
             print 'eff_value for box %s is %f' % (box,workspace.var('eff_value_%s'%box).getVal())
+            
+            signal = rt.RooRazor2DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
+                                         workspace.var('MR'),workspace.var('Rsq'),
+                                         workspace,
+                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
+                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
+            RootTools.Utils.importToWS(workspace,signal)
             return signal
         
         def SetConstants(pWs, pMc):
@@ -909,6 +917,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         workspace.extendSet('variables','Boxes')
         
+        for box in fileIndex:
+            workspace.extendSet("nuisance", workspace.factory('n2nd_TTj_%s_prime[0,-5.,5.]' % box).GetName())
+            workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_value[1.0]' % box).GetName())
+            if not workspace.var('n2nd_TTj_%s_uncert' % box):
+                workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_uncert[0.05]' % box).GetName())
+            if not workspace.var("lumi_fraction_%s" % box):
+                workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
+        
         pdf_names = {}
         datasets = {}
 
@@ -961,14 +977,27 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
 
 
+        print 'Starting to build the combined PDF'
+
         #make a RooDataset with *all* of the data
         pData = mergeDatasets(datasets, workspace.cat('Boxes'))
         RootTools.Utils.importToWS(workspace,pData)
         
         #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
+        workspace.Print('V')
         #Syntax: SIMUL::name(cat,a=pdf1,b=pdf2]   -- Create simultaneous p.d.f index category cat. Make pdf1 to state a, pdf2 to state b
         sim_map = ['%s=%s' % (box,pdf_name) for box, pdf_name in pdf_names.iteritems()]
+        print 'SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map)
         simultaneous = workspace.factory('SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map))
+        assert simultaneous and simultaneous is not None
+        
+#        #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
+#        simultaneous = rt.RooSimultaneous('CombinedLikelihood','CombinedLikelihood',workspace.cat('Boxes'))
+#        for box, pdf_name in pdf_names.iteritems():
+#            simultaneous.addPdf(workspace.pdf(pdf_name),box)
+#        RootTools.Utils.importToWS(workspace,simultaneous)
+        
+        print 'Now adding the Gaussian penalties'
 
         #multiply the likelihood by some gaussians
         pdf_products = [simultaneous.GetName()]
@@ -990,11 +1019,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if box_primes:
             raise Exception('There are nuisance parameters defined for boxes that we are not running on: %s' % str(box_primes))
         del box_primes
+        
+        print 'Now multiplying the likelihood by the penalties'
 
-        #multiply the various PDFs together        
+        #multiply the various PDFs together
+        print 'PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products))        
         simultaneous_product = workspace.factory('PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products)))
         #store the name in case we need it later
-        RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
+        #RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
         simultaneous_product.graphVizTree('fullSplusBPDF.dot')
         
         #set the global observables to float from their nominal values - is this needed

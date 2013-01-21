@@ -11,71 +11,39 @@
 ClassImp(RooRazor2DSignal)
 //---------------------------------------------------------------------------
 RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
-				   RooAbsReal &_x, 	RooAbsReal &_y, 
-				   TH2D* _nominal, TH2D* _jes, TH2D* _pdf, TH2D* _btag,
-				   RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag) : RooAbsPdf(name, title), 
-  X("X", "X Observable", this, _x),
-  Y("Y", "Y Observable", this, _y),
-  xJes("xJes", "xJes", this, _xJes),
-  xPdf("xPdf", "xPdf", this, _xPdf),
-  xBtag("xBtag", "xBtag", this, _xBtag),
-  Hnonimal(_nominal),
-  Hjes(_jes),
-  Hpdf(_pdf),
-  Hbtag(_btag),
-  iBinX(_nominal->GetXaxis()->GetNbins()),
-  iBinY(_nominal->GetYaxis()->GetNbins()){
-}
-
-//this is used in the case where there is only one error histogram
-RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
-				   RooAbsReal &_x, 	RooAbsReal &_y,
-				   TH2D* _nominal, TH2D* _error,
-				   RooAbsReal &_xError) : RooAbsPdf(name, title),
-  X("X", "X Observable", this, _x),
-  Y("Y", "Y Observable", this, _y),
-  xJes("xError", "xError", this, _xError),
-  xPdf("xDummy1", "Dummy 1", this, _xError),
-  xBtag("xDummy2", "Dummy 2", this, _xError),
-  Hnonimal(_nominal),
-  Hjes(_error),
-  Hpdf(dynamic_cast<TH2D*>(_error->Clone())),
-  Hbtag(dynamic_cast<TH2D*>(_error->Clone())),
-  iBinX(_nominal->GetXaxis()->GetNbins()),
-  iBinY(_nominal->GetYaxis()->GetNbins()){
-	Hpdf->Reset();//set to zero
-	Hbtag->Reset();//set to zero
-}
-
-
-//Reads the histograms from the workspace and/or imports them
-Bool_t RooRazor2DSignal::importWorkspaceHook(RooWorkspace& ws){
-
-	std::cout << "RooRazor2DSignal::importWorkspaceHook" << std::endl;
+		RooAbsReal &_x, RooAbsReal &_y,
+		const RooWorkspace& ws,
+		const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
+		RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag):
+		RooAbsPdf(name, title),
+		X("X","X Observable", this, _x),
+		Y("Y", "Y Observable", this, _y),
+		xJes("xJes", "xJes", this, _xJes),
+		xPdf("xPdf", "xPdf", this, _xPdf),
+		xBtag("xBtag", "xBtag", this, _xBtag),
+		Hnonimal(0),
+		Hjes(0),
+		Hpdf(0),
+		Hbtag(0),
+		iBinX(0),
+		iBinY(0){
 
 	//check if the histograms are in the workspace or not
-	if(ws.obj(Hnonimal->GetName()) == 0){
-		ws.import(*Hnonimal);
+	if(ws.obj(_nominal)){
+		Hnonimal = dynamic_cast<TH2*>(ws.obj(_nominal));
+		iBinX = Hnonimal->GetXaxis()->GetNbins();
+		iBinY = Hnonimal->GetYaxis()->GetNbins();
 	}
-	if(ws.obj(Hjes->GetName()) == 0){
-		ws.import(*Hjes);
+	if(ws.obj(_jes)){
+		Hjes = dynamic_cast<TH2*>(ws.obj(_jes));
 	}
-	if(ws.obj(Hpdf->GetName()) == 0){
-		ws.import(*Hpdf);
+	if(ws.obj(_pdf)){
+		Hpdf = dynamic_cast<TH2*>(ws.obj(_pdf));
 	}
-	if(ws.obj(Hbtag->GetName()) == 0){
-		ws.import(*Hbtag);
+	if(ws.obj(_btag)){
+		Hbtag = dynamic_cast<TH2*>(ws.obj(_btag));
 	}
-
-	//update the pointers to the workspace versions
-	Hnonimal = dynamic_cast<TH2D*>(ws.obj(Hnonimal->GetName()));
-	Hjes = dynamic_cast<TH2D*>(ws.obj(Hjes->GetName()));
-	Hpdf = dynamic_cast<TH2D*>(ws.obj(Hpdf->GetName()));
-	Hbtag = dynamic_cast<TH2D*>(ws.obj(Hbtag->GetName()));
-
-	return false;
 }
-
 
 Double_t RooRazor2DSignal::evaluate() const
 {

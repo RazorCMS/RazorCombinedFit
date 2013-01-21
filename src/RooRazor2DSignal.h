@@ -10,7 +10,7 @@ class RooRealVar;
 class RooAbsReal;
 
 #include "TMath.h"
-#include <TH2D.h>
+#include <TH2.h>
 #include "Math/SpecFuncMathCore.h"
 #include "Math/SpecFuncMathMore.h"
 
@@ -20,19 +20,18 @@ class RooRazor2DSignal : public RooAbsPdf
 public:
    RooRazor2DSignal(){};
    RooRazor2DSignal(const char *name, const char *title,
-		  RooAbsReal &_x, RooAbsReal &_y, 
-		  TH2D* _nominal, TH2D* _jes, TH2D* _pdf, TH2D* _btag,
-		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
-   RooRazor2DSignal(const char *name, const char *title,
 		  RooAbsReal &_x, RooAbsReal &_y,
-		  TH2D* _nominal, TH2D* _error,
-		  RooAbsReal &_xError);
+		  const RooWorkspace& ws,
+		  const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
+		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+
    TObject* clone(const char* newname) const {
 	   TNamed* result = new RooRazor2DSignal(*this);
 	   result->SetName(newname);
 	   return result;
    }
-   ~RooRazor2DSignal() { }
+   virtual ~RooRazor2DSignal(){
+   }
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;
@@ -45,16 +44,15 @@ protected:
    RooRealProxy xPdf;   // xPdf
    RooRealProxy xBtag;   // xBtag
 
-   TH2D* Hnonimal;
-   TH2D* Hjes;
-   TH2D* Hpdf;
-   TH2D* Hbtag;
+   TH2* Hnonimal;
+   TH2* Hjes;
+   TH2* Hpdf;
+   TH2* Hbtag;
 
    int iBinX;
    int iBinY;
 
    Double_t evaluate() const;
-   Bool_t importWorkspaceHook(RooWorkspace& ws);
 
 private:
   ClassDef(RooRazor2DSignal,1) // Razor2DSignal function
