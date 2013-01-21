@@ -18,7 +18,7 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 		RooAbsPdf(name, title),
 		X("X","X Observable", this, _x),
 		Y("Y", "Y Observable", this, _y),
-		xJes("xJes", "xJes", this, _xJes),
+		xJes("xJes", "xJes", this, _xJes	),
 		xPdf("xPdf", "xPdf", this, _xPdf),
 		xBtag("xBtag", "xBtag", this, _xBtag),
 		Hnonimal(0),
@@ -44,6 +44,22 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 		Hbtag = dynamic_cast<TH2*>(ws.obj(_btag));
 	}
 }
+
+RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* name) :
+   RooAbsPdf(other,name),
+   X("X",this,other.Y),
+   Y("Y",this,other.Y),
+   xJes("xJes",this,other.xJes),
+   xPdf("xPdf",this,other.xPdf),
+   xBtag("xBtag",this,other.xBtag),
+   Hnonimal(other.Hnonimal),
+   Hjes(other.Hjes),
+   Hpdf(other.Hpdf),
+   Hbtag(other.Hbtag),
+   iBinX(other.iBinX),
+   iBinY(other.iBinY){
+ }
+
 
 Double_t RooRazor2DSignal::evaluate() const
 {

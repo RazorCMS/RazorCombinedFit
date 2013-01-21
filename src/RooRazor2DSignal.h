@@ -25,9 +25,9 @@ public:
 		  const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
 		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
 
+   RooRazor2DSignal(const RooRazor2DSignal& other, const char* name);
    TObject* clone(const char* newname) const {
-	   TNamed* result = new RooRazor2DSignal(*this);
-	   result->SetName(newname);
+	   TNamed* result = new RooRazor2DSignal(*this, newname);
 	   return result;
    }
    virtual ~RooRazor2DSignal(){
