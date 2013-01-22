@@ -921,7 +921,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.extendSet("nuisance", workspace.factory('n2nd_TTj_%s_prime[0,-5.,5.]' % box).GetName())
             workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_value[1.0]' % box).GetName())
             if not workspace.var('n2nd_TTj_%s_uncert' % box):
-                workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_uncert[0.05]' % box).GetName())
+                workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_uncert[0.1]' % box).GetName())
             if not workspace.var("lumi_fraction_%s" % box):
                 workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
         
