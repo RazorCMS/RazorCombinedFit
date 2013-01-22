@@ -991,12 +991,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
         simultaneous = workspace.factory('SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map))
         assert simultaneous and simultaneous is not None
         
-#        #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
-#        simultaneous = rt.RooSimultaneous('CombinedLikelihood','CombinedLikelihood',workspace.cat('Boxes'))
-#        for box, pdf_name in pdf_names.iteritems():
-#            simultaneous.addPdf(workspace.pdf(pdf_name),box)
-#        RootTools.Utils.importToWS(workspace,simultaneous)
-        
         print 'Now adding the Gaussian penalties'
 
         #multiply the likelihood by some gaussians
@@ -1050,14 +1044,27 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for var in RootTools.RootIterator.RootIterator(pdf_params):
             print '\tisConstant=%r\t\t' % var.isConstant(),
             var.Print()
-        #pdf_params.Print("V")
-
         #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
         #fr.Print("V")
         
         #print out the workspace contents and store to a ROOT file
         print 'Starting the limit setting procedure'
         workspace.Print("V")
+        
+        #find a reasonable range for the POI    
+        stop_xs = 0.0
+        yield_at_xs = [(stop_xs,0.0)]
+        #with 30 signal events, we *should* be able to set a limit
+        while yield_at_xs[-1][0] < 30:
+            stop_xs += 1e-3
+            workspace.var('sigma').setVal(stop_xs)
+            signal_yield = 0
+            for box in fileIndex:
+                signal_yield += workspace.function('S_%s' % box).getVal()
+            yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
+        poi_max = yield_at_xs[-1][1]
+        workspace.var('sigma').setVal(0.0)
+        print 'Estimated POI Max:',poi_max
 
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
         
@@ -1109,8 +1116,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #for some reason, it does not like it when we write everything to the same file
         workspace_name = '%s_CombinedLikelihood_workspace.root' % self.options.output.lower().replace('.root','')
         workspace.writeToFile(workspace_name,True)
-        
+                
+        from ROOT import StandardHypoTestInvDemo
         #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
         #                                number of points, xmin, xmax, number of toys, use number counting)
-        print 'StandardHypoTestInvDemo("%s","%s","%s","%s","%s")'\
-                                            % (workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName())
+        calculator_type = 2 #asymtotic
+        if self.options.toys:
+            calculator_type = 0
+        result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
+                                        2,3,True,15,0.0,poi_max,self.options.toys)
+        #set to the median expected limit
+        workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
+        signal_yield = 0.
+        for box in fileIndex:
+            signal_yield += workspace.function('S_%s' % box).getVal()
+        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
+        self.store(result, dir='CombinedLikelihood')

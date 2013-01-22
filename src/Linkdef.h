@@ -19,6 +19,7 @@
 #pragma link C++ defined_in "RooRazorLShape.h";
 #pragma link C++ defined_in "RooDalglish.h";
 #pragma link C++ defined_in "MLMixedSample.h";
+#pragma link C++ defined_in "StandardHypoTestInvDemo.h";
 
 #endif
 
