@@ -1,82 +1,128 @@
 from optparse import OptionParser
-import os
+import os, array, sys
 
 import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':6}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
 lumi = 1.0
 
-class HadBox(object):
-    """The Had search box used in the analysis"""
-    def __init__(self):
-        self.name = 'Had'
-    def __call__(self, tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        return tree.nJet >= 6 and tree.maxTCHE < 3.3 and nLepton == 0
-    
-class BJetBox(object):
+sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
+from CalcBDT import CalcBDT
+
+MR_CUT = 450
+RSQ_CUT = 0.03
+
+class BJetBoxLS(object):
     """The BJet search box used in the analysis"""
-    def __init__(self):
-        self.name = 'BJet'
+    def __init__(self, dumper):
+        self.name = 'BJetLS'
+        self.dumper = dumper
     def __call__(self, tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        return tree.nJet >= 6 and tree.maxTCHE >= 3.3 and nLepton == 0
+        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
 
-class BJet5JBox(object):
-    """The BJet search box used in the analysis, but with >= 5 jets rather than 6"""
-    def __init__(self):
-        self.name = 'BJet5J'
+class BJetBoxHS(object):
+    """The BJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'BJetHS'
+        self.dumper = dumper
     def __call__(self, tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        return tree.nJet >= 5 and tree.maxTCHE >= 3.3 and nLepton == 0
-    
-class CR5JBVetoBox(object):
-    """A control region for the hadronic shape without signal: No leptons, no bjets"""
-    def __init__(self):
-        self.name = 'CR5JBVeto'
-    def __call__(self,tree):
-        nLepton = tree.nMuonTight + tree.nElectronTight + tree.nTauTight
-        #this is a tight veto on the btagging
-        return tree.nJet == 5 and tree.maxTCHE < 1.7 and nLepton == 0
+        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
 
-class CR5JSingleLeptonBVetoBox(object):
-    """A control region for the hadronic shape without signal: Signal lepton, no bjets"""
-    def __init__(self):
-        self.name = 'CR5JSingleLeptonBVeto'
-    def __call__(self,tree):
-        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        #this is a tight veto on the btagging
-        return tree.nJet == 5 and tree.maxTCHE < 1.7 and nLepton == 1
-    
-class CR6JSingleLeptonBVetoBox(object):
-    """A control region for the Had box: One lepton, no bjets - Should give handle on W+Jets"""
-    def __init__(self):
-        self.name = 'CR6JSingleLeptonBVeto'
+class CR6JBVetoBoxLS(object):
+    """The CR6JBVeto search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JBVetoLS'
+        self.dumper = dumper
     def __call__(self, tree):
-        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        return tree.nJet >= 6 and tree.maxTCHE < 3.3 and nLepton == 1
-    
-class CR6JSingleLeptonBJetBox(object):
-    """A control region for the BJet box: One lepton, at least one bjet - Should give handle on TTbar"""
-    def __init__(self):
-        self.name = 'CR6JSingleLeptonBJet'
+        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
+
+class CR6JBVetoBoxHS(object):
+    """The CR6JBVeto search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JBVetoHS'
+        self.dumper = dumper
     def __call__(self, tree):
-        nLepton = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        return tree.nJet >= 6 and tree.maxTCHE >= 3.3 and nLepton == 1
+        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
+
+class CR6JSingleLeptonBVetoLS(object):
+    """The CR6JSingleLeptonBJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JSingleLeptonBVetoLS'
+        self.dumper = dumper
+    def __call__(self, tree):
+        nLoose = tree.nMuonLoose + tree.nElectronLoose
+        return tree.nJet >= 6  and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() < -0.1 
+
+class CR6JSingleLeptonBVetoHS(object):
+    """The BJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CR6JSingleLeptonBVetoHS'
+        self.dumper = dumper
+    def __call__(self, tree):
+        nLoose = tree.nMuonLoose + tree.nElectronLoose
+        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() >= -0.1 
+
+class MuBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'Mu'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter
+
+class CRMuBVetoBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CRMuBVeto'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter    
+
+class EleBox(object):
+    """The Ele search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'Ele'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
+
+class CREleBVetoBox(object):
+    """The Ele search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CREleBVeto'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
-    
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
     print output.GetName()
     for d in data:
         d.Write()
     output.Close()
+
+def deltaMet(tree):
+    """Javier's noise suppression cut"""
+    pf = rt.TMath.ATan(tree.met_y/tree.met_x)
+    calo = rt.TMath.ATan(tree.caloMET_y/tree.caloMET_x)
+    pi = rt.TMath.Pi() 
+    return abs( min( (pf - calo), ( (2*pi) - pf + calo) ) - pi)
 
 def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write = True):
     """This defines the format of the RooDataSet"""
@@ -89,7 +135,6 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     workspace.factory('Lumi[0,0,+INF]')
     workspace.factory('Event[0,0,+INF]')
     #
-    workspace.factory('nBtag[0,0,2.0]')
     workspace.factory('nLepton[0,0,15.0]')
     workspace.factory('nElectron[0,0,15.0]')
     workspace.factory('nMuon[0,0,15.0]')
@@ -97,7 +142,14 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     workspace.factory('nVertex[1,0.,50.]')
     workspace.factory('nJet[0,0,15.0]')
     workspace.factory('W[0,0,+INF]')
-
+    workspace.factory('BDT[0,-INF,+INF]')
+    workspace.factory('deltaPhiMET[0,-INF,+INF]')
+    workspace.factory('genInfo[0,-INF,+INF]')
+    
+    if filter.dumper is not None:
+        for h in filter.dumper.sel.headers_for_MVA():
+            workspace.factory('%s[0,-INF,+INF]' % h)
+    
     args = workspace.allVars()
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
     
@@ -115,35 +167,50 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     nLooseMuons = rt.TH2D('nLooseMuons','nLooseMuons',350,mRmin,mRmax,100,rsqMin,rsqMax)
     nLooseTaus = rt.TH2D('nLooseTaus','nLooseTaus',350,mRmin,mRmax,100,rsqMin,rsqMax)
     
-    for entry in xrange(tree.GetEntries()):
+    events = set()
+    
+    selectionFilter = 0
+    noiseFilter = 0
+    metFilter = 0
+    
+    #entries = 10000
+    entries = tree.GetEntries()
+    print entries
+    for entry in xrange(entries):
         tree.GetEntry(entry)
-        
+                
         ####First, apply a common selection
-        
         #take only events in the MR and R2 region
-        if tree.mR > mRmax or tree.mR < mRmin or tree.Rsq < rsqMin or tree.Rsq > rsqMax:
+        if tree.MR > mRmax or tree.MR < mRmin or tree.RSQ < rsqMin or tree.RSQ > rsqMax:
             continue
-        #events must have passed one of our triggers
-        if not tree.triggerFilter: continue
         
-        #veto events with suspect btagging
-        if tree.maxTCHE < 0 or tree.nextTCHE < 0: continue
-        
-        #apply all those MET tail filters
-        if tree.HBHENoiseFilterResultProducer2011NonIsoRecommended == 0 or tree.goodPrimaryVertexFilter == 0 or \
-            tree.ecalDeadCellTPfilter == 0 or tree.eeNoiseFilter == 0 or tree.recovRecHitFilter == 0:
+        e = (tree.run,tree.lumi,tree.event)
+        #filter out duplicate events in case there are any
+        if e in events:
             continue
-
+        events.add(e)        
+        
+        if not tree.metFilter:
+            metFilter += 1
+            continue
+        
+        dphi = deltaMet(tree)
+        if dphi < 1.0:
+            noiseFilter += 1
+            continue
+        
         #apply the box based filter class
-        if not filter(tree): continue
+        if not filter(tree):
+            selectionFilter += 1
+            continue        
         
-        #veto events with multiple loose leptons
-        nLeptonLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        if nLeptonLoose > 1: continue
+        bdt = -9999.
+        if filter.dumper is not None:
+            bdt = filter.dumper.bdt_val
         
-        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.mR,tree.Rsq)
-        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.mR,tree.Rsq)
-        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.mR,tree.Rsq)
+        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.MR,tree.RSQ)
+        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.MR,tree.RSQ)
+        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.MR,tree.RSQ)
         
         try:
             if tree.run <= run:
@@ -151,7 +218,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         except AttributeError:
             pass
         
-        nBtag = len([t for t in (tree.maxTCHE,tree.nextTCHE) if t >= 3.3])
+        nBtag = tree.nCSVM
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
@@ -160,8 +227,8 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         a.setRealValue('Lumi',tree.lumi)
         a.setRealValue('Event',tree.event)
         
-        a.setRealValue('MR',tree.mR, True)
-        a.setRealValue('Rsq',tree.Rsq, True)
+        a.setRealValue('MR',tree.MR, True)
+        a.setRealValue('Rsq',tree.RSQ, True)
         a.setRealValue('nBtag',nBtag)
         a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
         a.setRealValue('nElectron',tree.nElectronLoose)
@@ -170,11 +237,24 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         a.setRealValue('nJet',tree.nJet)
         a.setRealValue('nVertex',tree.nVertex)        
         a.setRealValue('W',1.0)
+        a.setRealValue('BDT',bdt)
+        a.setRealValue('deltaPhiMET',dphi)
+        
+        a.setRealValue('genInfo',tree.genInfo)
+        
+        if filter.dumper is not None:
+            for h in filter.dumper.sel.headers_for_MVA():
+                a.setRealValue(h,getattr(filter.dumper.sel,h)())
         
         data.add(a)
+        
     numEntries = data.numEntries()
     if min < 0: min = 0
     if max < 0: max = numEntries
+    
+    print 'Selection filter removed %f of events' % (selectionFilter/(1.0*entries))
+    print 'Noise filter removed %f of events' % (noiseFilter/(1.0*entries))
+    print 'MET filter removed %f of events' % (metFilter/(1.0*entries))
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:
@@ -202,6 +282,8 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
+    parser.add_option('--name',dest="name",default='RMRTree',type="string",
+                  help="The name of the TTree to use")
       
     (options,args) = parser.parse_args()
     
@@ -213,7 +295,7 @@ if __name__ == '__main__':
     
     print 'Input files are %s' % ', '.join(args)
     
-    chain = rt.TChain('RMRTree')
+    chain = rt.TChain(options.name)
     fName = None
     for f in args:
         if f.lower().endswith('.root'):
