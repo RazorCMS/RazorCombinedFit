@@ -393,8 +393,13 @@ class Box(object):
             myvars.add(self.workspace.cat('Boxes'))
         parSet = self.workspace.allVars()
         #set the parameter values
+        badToy = True
         parsAtLimit = True
-        while parsAtLimit :
+        
+        #rt.RooMsgService.instance().Print()
+        #rt.RooMsgService.instance().addStream(rt.RooFit.ERROR,rt.RooFit.Topic(rt.RooFit.Eval),rt.RooFit.ClassName("RooAbsReal"))
+        #rt.RooMsgService.instance().Print()
+        while badToy:
             pars, parsAtLimit = self.smearParsWithCovariance(fr)
             # find the components that are on (Ntot on)
             componentsOn = [parName.split('_')[-1] for parName in pars.keys() if parName.find('Ntot')!=-1]
@@ -402,7 +407,26 @@ class Box(object):
             negComponents =  [self.isMinCoeffNegative(myvars, pars, component) for component in componentsOn]
             # take the OR of the booleans 
             anyNegComp = any(negComponents)
-            parsAtLimit = parsAtLimit or anyNegComp
+
+            for name, value in pars.iteritems():
+                print "FIX PARAMETER: %s " %name
+                self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+                
+            errorCountBefore = rt.RooMsgService.instance().errorCount()
+            print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+
+            for component in componentsOn:
+                pdfComp = self.workspace.pdf("RazPDF_%s"%component)
+                pdfValV = pdfComp.getValV(myvars)
+                print "pdfValV  = %f"%pdfValV
+            
+            errorCountAfter = rt.RooMsgService.instance().errorCount()
+            print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+            
+            zeroIntegral = False
+            if errorCountAfter>errorCountBefore:
+                zeroIntegral = True
+            badToy = parsAtLimit or anyNegComp or zeroIntegral
             
         for name, value in pars.iteritems():
             print "FIX PARAMETER: %s " %name
