@@ -63,6 +63,7 @@ class CR6JSingleLeptonBVetoLS(object):
 
 class CR6JSingleLeptonBVetoHS(object):
     """The BJet search box used in the analysis"""
+<<<<<<< Will2Dataset.py
     def __init__(self, dumper):
         self.name = 'CR6JSingleLeptonBVetoHS'
         self.dumper = dumper
@@ -78,7 +79,30 @@ class MuBox(object):
         self.dumper = dumper
     def __call__(self, tree):
         return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter
+
+class CRMuBVetoBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CRMuBVeto'
+        self.dumper = dumper
+=======
+    def __init__(self, dumper):
+        self.name = 'CR6JSingleLeptonBVetoHS'
+        self.dumper = dumper
+    def __call__(self, tree):
+        nLoose = tree.nMuonLoose + tree.nElectronLoose
+        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() >= -0.1 
+
+class MuBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'Mu'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter
 
 class CRMuBVetoBox(object):
     """The Mu search box used in the analysis"""
@@ -87,7 +111,7 @@ class CRMuBVetoBox(object):
         self.dumper = dumper
     def __call__(self, tree):
         return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0            
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter           
 
 class EleBox(object):
     """The Ele search box used in the analysis"""
@@ -96,7 +120,7 @@ class EleBox(object):
         self.dumper = dumper
     def __call__(self, tree):
         return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
 
 class CREleBVetoBox(object):
     """The Ele search box used in the analysis"""
@@ -105,7 +129,7 @@ class CREleBVetoBox(object):
         self.dumper = dumper
     def __call__(self, tree):
         return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVL == 0 and tree.MR >= 450 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
