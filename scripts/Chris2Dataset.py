@@ -49,13 +49,26 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     if useWeight: label += "WEIGHT_"
 
     btagcutoff = 3
-    if box == "MuEle" or box =="MuMu" or box == "EleEle" or box=="TauTauJet":
+    if box == "MuEle" or box == "MuMu" or box == "EleEle" or box=="TauTauJet":
         btagcutoff = 1
 
-
+    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box=="EleEle" or box=="EleTau" or box=="Ele":
+        noiseCut = "abs(TMath::Min( abs(atan2(MET_y,MET_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_y,MET_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
+    elif box == "MuEle" or box == "MuMu" or box == "MuTau" or box == "Mu":
+        noiseCut = "abs(TMath::Min( abs(atan2(MET_NOMU_y,MET_NOMU_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_NOMU_y,MET_NOMU_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
+    
+    if box == "Jet" or box == "MultiJet" or box == "TauTauJet":
+        triggerReq = "HLT_RsqMR55_Rsq0p09_MR150 || HLT_RsqMR60_Rsq0p09_MR150 || HLT_RsqMR65_Rsq0p09_MR150"
+    elif box == "MuMu" or box == "MuTau" or box == "Mu":
+        triggerReq = "HLT_Mu12_RsqMR30_Rsq0p04_MR200 || HLT_Mu12_RsqMR40_Rsq0p04_MR200 ||  HLT_Mu12_RsqMR45_Rsq0p04_MR200"
+    elif  box == "MuEle" or box == "EleEle" or box == "Ele" or box == "EleTau":
+        triggerReq = "HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR30_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR40_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR45_Rsq0p04_MR200"
+            
     #iterate over selected entries in the input tree
-    if not calo: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
-    else: tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box]),'entrylist')
+    if not calo:
+        tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
+    else:
+        tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;
