@@ -267,13 +267,14 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     pad1.SetBottomMargin(0.)
     #pad2.SetTopMargin(0.04)
     #pad1.SetBottomMargin(0.004)
-    pad2.SetBottomMargin(0.40)
+    pad2.SetBottomMargin(0.47)
     
     pad1.Draw()
     pad1.cd()
     rt.gPad.SetLogy()
 
     # MR PLOT
+    hMRData.SetLineWidth(2)
     hMRTOTcopy.SetMinimum(0.5)
     hMRTOTcopy.SetFillStyle(1001)
     hMRTOTcopy.SetFillColor(rt.kBlue-10)
@@ -284,8 +285,9 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOTcopy.GetXaxis().SetLabelSize(0.06)
     hMRTOTcopy.GetYaxis().SetLabelSize(0.06)
     hMRTOTcopy.GetXaxis().SetTitleSize(0.06)
-    hMRTOTcopy.GetYaxis().SetTitleSize(0.06)
-    hMRTOTcopy.GetXaxis().SetTitleOffset(1)
+    hMRTOTcopy.GetYaxis().SetTitleSize(0.08)
+    hMRTOTcopy.GetXaxis().SetTitleOffset(0.8)
+    hMRTOTcopy.GetYaxis().SetTitleOffset(0.7)
     hMRTOTcopy.GetXaxis().SetTicks("+-")
     hMRTOTcopy.GetXaxis().SetRange(0,FindLastBin(hMRTOTcopy))
     hMRTOTcopy.GetYaxis().SetTitle("Events")
@@ -356,11 +358,11 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOT.SetFillStyle(0)
     hMRTOT.DrawCopy("histsame")
     if showTTj2b and showTTj1b and showVpj:
-        leg = rt.TLegend(0.65,0.55,0.93,0.93)
+        leg = rt.TLegend(0.7,0.55,0.93,0.93)
     elif showTTj2b and showTTj1b:
-        leg = rt.TLegend(0.65,0.65,0.93,0.93)
+        leg = rt.TLegend(0.7,0.65,0.93,0.93)
     else:
-        leg = rt.TLegend(0.65,0.72,0.93,0.93)
+        leg = rt.TLegend(0.7,0.72,0.93,0.93)
     leg.SetFillColor(0)
     leg.SetTextFont(42)
     leg.SetLineColor(0)
@@ -374,7 +376,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         leg.AddEntry(hMRData,"Simulated Data","lep")
     else:
         leg.AddEntry(hMRData,"Data","lep")
-    leg.AddEntry(hMRTOTcopy,"Total Background")
+    leg.AddEntry(hMRTOTcopy,"Total Bkgd")
     if showTTj1b and showTTj2b:
         if varname=="BTAG":
             if showVpj:
@@ -393,8 +395,8 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     leg.Draw("same")
 
     # plot labels
-    #pt = rt.TPaveText(0.4,0.73,0.4,0.93,"ndc")
-    pt = rt.TPaveText(0.4,0.8,0.5,0.93,"ndc")
+    pt = rt.TPaveText(0.25,0.67,0.7,0.93,"ndc")
+    #pt = rt.TPaveText(0.4,0.8,0.5,0.93,"ndc")
     pt.SetBorderSize(0)
     pt.SetTextSize(0.05)
     pt.SetFillColor(0)
@@ -402,7 +404,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     pt.SetLineColor(0)
     pt.SetTextAlign(21)
     pt.SetTextFont(42)
-    pt.SetTextSize(0.042)
+    pt.SetTextSize(0.062)
     text = pt.AddText("CMS %s #sqrt{s} = %i TeV" %(Preliminary,int(Energy)))
     if datasetName=="TTJets":
         text = pt.AddText("t#bar{t}+jets %s Box %s" %(Box,btagLabel))
@@ -415,7 +417,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     elif datasetName=="DYJetsToLL":
         text = pt.AddText("Z(ll)+jets")
     else:
-        text = pt.AddText("Razor %s Box %s #int L = %3.2f fb^{-1}" %(Box,btagLabel,Lumi))
+        text = pt.AddText("Razor %s Box #int L = %3.1f fb^{-1}" %(Box,Lumi))
     pt.Draw()
     pad1.Draw()
     
@@ -433,14 +435,13 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
 
     hMRTOTclone = hMRTOT.Clone(hMRTOTcopy.GetName()+"Divide") 
     hMRTOTcopyclone = hMRTOTcopy.Clone(hMRTOTcopy.GetName()+"Divide") 
-    hMRTOTcopyclone.GetYaxis().SetLabelSize(0.12)
+    hMRTOTcopyclone.GetYaxis().SetLabelSize(0.18)
     hMRTOTcopyclone.SetTitle("")
     hMRTOTcopyclone.SetMaximum(3.5)
     hMRTOTcopyclone.SetMinimum(0.)
-    if varname=="BTAG": hMRTOTcopyclone.GetXaxis().SetLabelSize(0.28)
-    else: hMRTOTcopyclone.GetXaxis().SetLabelSize(0.18)
-    hMRTOTcopyclone.GetXaxis().SetTitleSize(0.18)
-    hMRTOTcopyclone.GetXaxis().SetTitleOffset(0.85)
+    if varname=="BTAG": hMRTOTcopyclone.GetXaxis().SetLabelSize(0.32)
+    else: hMRTOTcopyclone.GetXaxis().SetLabelSize(0.22)
+    hMRTOTcopyclone.GetXaxis().SetTitleSize(0.22)
  
     for i in range(1, hMRData.GetNbinsX()+1):
         tmpVal = hMRTOTcopyclone.GetBinContent(i)
@@ -452,7 +453,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
             hMRTOTclone.SetBinContent(i, hMRTOTclone.GetBinContent(i)/tmpVal)
             hMRTOTclone.SetBinError(i, hMRTOTclone.GetBinError(i)/tmpVal)
 
-    hMRTOTcopyclone.GetXaxis().SetTitleOffset(1.)
+    hMRTOTcopyclone.GetXaxis().SetTitleOffset(0.97)
     hMRTOTcopyclone.GetXaxis().SetLabelOffset(0.02)
     if varname == "MR":
         hMRTOTcopyclone.GetXaxis().SetTitle("M_{R} [GeV]")
@@ -462,8 +463,8 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
         hMRTOTcopyclone.GetXaxis().SetTitle("n_{b-tag}")
 
     hMRTOTcopyclone.GetYaxis().SetNdivisions(504,rt.kTRUE)
-    hMRTOTcopyclone.GetYaxis().SetTitleOffset(0.3)
-    hMRTOTcopyclone.GetYaxis().SetTitleSize(0.16)
+    hMRTOTcopyclone.GetYaxis().SetTitleOffset(0.2)
+    hMRTOTcopyclone.GetYaxis().SetTitleSize(0.22)
     hMRTOTcopyclone.GetYaxis().SetTitle("Data/Bkgd")
     hMRTOTcopyclone.GetXaxis().SetTicks("+")
     hMRTOTcopyclone.GetXaxis().SetTickLength(0.07)
@@ -513,7 +514,7 @@ if __name__ == '__main__':
     if outFolder[-1] == "/": outFolder = outFolder[:-1]
     noBtag = False
     fit3D = False
-    Lumi = 5.
+    Lumi = 19.3
     Energy = 8.
     Preliminary = "Preliminary"
     datasetName = ""
@@ -608,7 +609,7 @@ if __name__ == '__main__':
             hBTAGTOTcopy.SetBinError(i,max(errBTAG[i-1],hBTAGTOT.GetBinError(i)))
             hBTAGTOT.SetBinError(i,0.)
 
-        c1 = rt.TCanvas("c1","c1", 900, 700)
+        c1 = rt.TCanvas("c1","c1", 500, 400)
         pad1 = rt.TPad("pad1","pad1",0,0.25,1,1)
         pad2 = rt.TPad("pad2","pad2",0,0,1,0.25)
 

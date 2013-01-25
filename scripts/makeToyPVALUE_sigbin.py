@@ -8,14 +8,14 @@ import makeBluePlot
 def set2DStyle(h) :
     h.GetXaxis().SetTitle("M_{R}[GeV]")
     h.GetYaxis().SetTitle("R^{2}")
-    h.GetXaxis().SetTitleSize(0.055)
-    h.GetXaxis().SetLabelSize(0.055)
-    h.GetYaxis().SetTitleSize(0.055)
-    h.GetYaxis().SetLabelSize(0.055)
+    h.GetXaxis().SetTitleSize(0.065)
+    h.GetXaxis().SetLabelSize(0.065)
+    h.GetYaxis().SetTitleSize(0.065)
+    h.GetYaxis().SetLabelSize(0.065)
 
 def setCanvasStyle(c):
-    c.SetLeftMargin(0.1127232)
-    c.SetBottomMargin(0.1311189)
+    c.SetLeftMargin(0.15)
+    c.SetBottomMargin(0.15)
 
 def HadFR(MR, Rsq):
     FR = False
@@ -497,7 +497,7 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
 
                       
     rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c1\");")
-    c1 = rt.TCanvas("c1","c1", 900, 600)
+    c1 = rt.TCanvas("c1","c1", 500, 400)
     c1.SetLogz()
     setCanvasStyle(c1)
     rt.gStyle.SetOptStat(0)

@@ -8,12 +8,12 @@ import sys
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
     if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
-        if varName == "MR" :        return [400, 450, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [400, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" : 
             if btag == "NoBtag":    return [0.25,0.30,0.40,0.50]
             if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        if varName == "MR" :        return [300, 350, 450, 550, 700, 900, 1200, 1600, 2500]
+        if varName == "MR" :        return [300, 350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" :
             if btag == "NoBtag":    return [0.15,0.20,0.30,0.40,0.50]
             elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
