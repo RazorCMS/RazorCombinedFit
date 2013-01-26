@@ -8,7 +8,7 @@ class BranchDumper(object):
         self.tree = tree
         self.norm = norm
 
-        self.lumi = 5000.
+        self.lumi = 19300.
         self.filter = 1.0
 
         self.weightVal = 1.0
@@ -37,7 +37,7 @@ class BranchDumper(object):
         return self.weightVal
         #return 1.0
     def weightPU(self):
-        return self.tree.pileUpWeight
+        return self.tree.pileUpWeightABCD
 
     def thetaH1(self):
         if self.tree.bestHemi == 1:
