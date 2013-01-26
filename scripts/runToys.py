@@ -9,7 +9,7 @@ import sys
 from array import *
 import time
 
-def writeBashScript(box,sideband,fitmode):
+def writeBashScript(box,sideband,fitmode,nToys,t):
     pwd = os.environ['PWD']
             
     fitResultsDir = "FitResults_%s"%fitmode
@@ -45,10 +45,11 @@ def writeBashScript(box,sideband,fitmode):
     tagFR = ""
     tag3D = ""
 
-    if sideband == "Sideband":
+    if box=="MuEle" or box=="MuMu" or box=="EleEle" or box=="TauTauJet":
         tagFR = "--fit-region=LowRsq_LowMR_HighMR"
-    if sideband == "FULL":
-        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
+    else:
+        tagFR = "--fit-region=LowRsq_LowMR_HighMR,LowRsq1b_LowMR1b_HighMR1b,LowRsq2b_LowMR2b_HighMR2b_LowRsq3b_LowMR3b_HighMR3b"
+
         
     if fitmode == "3D":
         tag3D = "--3D"
@@ -57,30 +58,31 @@ def writeBashScript(box,sideband,fitmode):
         
     os.system("mkdir -p %s"%(submitDir)) 
     # prepare the script to run
-    outputname = submitDir+"/submit_"+datasetName+"_"+fitmode+"_"+sideband+"_"+box+".src"
+    outputname = submitDir+"/submit_"+datasetName+"_"+fitmode+"_"+sideband+"_"+box+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
     outputfile.write('#!/bin/bash\n')
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
-    #outputfile.write('eval `scramv1 runtime -sh` \n')
-    #outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
-    #if nToys<1000:
-    #    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,nToys,0))
-    #else:
-    #    for t in xrange(0,int(nToys/1000)):
-    #        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(1000), int(t*1000)))
-    #    if nToys%1000:
-    #        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys%1000), int(t*1000)))
-    #outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s -b \n" %(toyDir, box))
-    #outputfile.write("rm %s.txt \n" %(toyDir))
-    #outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
-    #outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
+    outputfile.write('eval `scramv1 runtime -sh` \n')
+    outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
+    if nToys < 1000:
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys),0))
+    else:
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(1000),int(t*1000)))
+    outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*1000),int(t*1000)+1000))
+    outputfile.write("files=$(ls %s/frtoydata_*.root 2> /dev/null | wc -l) \n"%toyDir)
+    outputfile.write("if [ $files == \"%i\" ] \n"%nToys)
+    outputfile.write("then \n")
+    outputfile.write("rm %s.txt \n" %(toyDir))
+    outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
+    outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
     outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, datasetMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
     if datasetName.find("Run") != -1:
         outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D,tagPrintPlots))
     else:
         outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots))
-    
+   
+    outputfile.write("fi \n") 
     outputfile.close
 
     return outputname, ffDir, pwd
@@ -95,6 +97,8 @@ if __name__ == '__main__':
         print "   FitRegion = name of the fit region (FULL, Sideband, or All)"
         print ""
         print "After the inputs you can specify the following options"
+        print "--q=queue"
+        print "--t=number of toys"
         sys.exit()
     
     datasetName = sys.argv[1]
@@ -103,7 +107,13 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "1nd"
-    nToys = 100
+    nToys = 3000
+    
+    for i in range(4,len(sys.argv)):
+        if sys.argv[i].find("--q=") != -1:
+            queue = sys.argv[i].replace("--q=","")
+        if sys.argv[i].find("--t=") != -1:
+            nToys = int(sys.argv[i].replace("--t=",""))
 
     if sys.argv[2]=='All':
         if datasetName=='MuHad-Run2012ABCD':
@@ -128,11 +138,16 @@ if __name__ == '__main__':
     
     for box in boxNames:
         for sideband in sidebandNames:
-            
-            outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode)
-            
-            #time.sleep(3)
-            #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-            #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-
-            os.system("source "+pwd+"/"+outputname)
+            if nToys < 1000:
+                outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,0)
+                time.sleep(1)
+                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
+                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
+                #os.system("source "+pwd+"/"+outputname)
+                
+            for t in xrange(0,int(nToys/1000)):
+                outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,t)
+                time.sleep(1)
+                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                #os.system("source "+pwd+"/"+outputname)

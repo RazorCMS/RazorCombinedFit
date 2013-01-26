@@ -157,20 +157,23 @@ def find68ProbRangeFromKDEMode(maxX,func, probVal=0.6827):
     # iterate first with a coarse epsilon
     # THEN iterate again with a smaller epsilon
     probRange = 0.
-    epsilon=mode/10.0
-    above68=False
+
+    epsilon=mode/3.0
+    #epsilon = max(mode/2, (maxX - mode)/2)
+    above68 = False
     numIter = 0
     sigmaMinus = mode
     sigmaPlus = mode
-    while abs(probRange - probVal)>0.001 and numIter < 100.:
+    while abs(probRange - probVal)>0.01 and numIter < 100.:
         numIter += 1
         if probRange < probVal:
-            above68 = True
+            if above68:  epsilon = epsilon/2.0
+            above68 = False
             sigmaMinus = sigmaMinus - epsilon
             sigmaPlus = sigmaPlus + epsilon
         else:
-            if above68: epsilon = epsilon/10.0
-            above68 = False
+            if not above68: epsilon = epsilon/2.0
+            above68 = True
             sigmaMinus = sigmaMinus + epsilon
             sigmaPlus = sigmaPlus - epsilon
             
@@ -275,19 +278,24 @@ def getPValue(n, hToy):
     Prob = Prob/hToy.Integral()
     return Prob
 
-def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, Box, outFolder, printPlots = True, fit3D = True, btag = 0):
+def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt):
     
     x = array("d",MRbins)
     y = array("d",Rsqbins)
-    
-    h =  rt.TH2D("h","", len(MRbins)-1, x, len(Rsqbins)-1, y)
-    hOBS =  rt.TH2D("hOBS","hOBS", len(MRbins)-1, x, len(Rsqbins)-1, y)
-    hEXP =  rt.TH2D("hEXP","hEXP", len(MRbins)-1, x, len(Rsqbins)-1, y)    
+    if btagOpt>0:
+        h =  rt.TH2D("h_%ib"%btagOpt,"", len(MRbins)-1, x, len(Rsqbins)-1, y)
+        hOBS =  rt.TH2D("hOBS_%ib"%btagOpt,"hOBS_%ib"%btagOpt, len(MRbins)-1, x, len(Rsqbins)-1, y)
+        hEXP =  rt.TH2D("hEXP_%ib"%btagOpt,"hEXP_%ib"%btagOpt, len(MRbins)-1, x, len(Rsqbins)-1, y)
+        hNS =   rt.TH2D("hNS_%ib"%btagOpt,"", len(MRbins)-1, x, len(Rsqbins)-1, y)
+    else:
+        h =  rt.TH2D("h","", len(MRbins)-1, x, len(Rsqbins)-1, y)
+        hOBS =  rt.TH2D("hOBS","hOBS", len(MRbins)-1, x, len(Rsqbins)-1, y)
+        hEXP =  rt.TH2D("hEXP","hEXP", len(MRbins)-1, x, len(Rsqbins)-1, y)    
+        hNS =  rt.TH2D("hNS","", len(MRbins)-1, x, len(Rsqbins)-1, y)
     set2DStyle(h)
     h.SetMaximum(1.)
     h.SetMinimum(0.)
 
-    hNS =  rt.TH2D("hNS","", len(MRbins)-1, x, len(Rsqbins)-1, y)
     set2DStyle(hNS)
     
     fileIn = rt.TFile.Open(fileName)
@@ -297,11 +305,13 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     alldata = dataFile.Get("RMRTree")
     
     # p-values 1D plot
-    pValHist = rt.TH1D("pVal%s" %Box, "pVal%s" %Box, 20, 0., 1.)
+    pValHist = rt.TH1D("pVal_%ib_%s" %(btagOpt,Box), "pVal%s" %Box, 20, 0., 1.)
 
     #prepare the latex table
-    if fit3D: tableFileName = "%s/table_%s.tex" %(outFolder,Box)
-    else: tableFileName = "%s/table_%s.tex" %(outFolder,Box)
+    if btagOpt>0:
+        tableFileName = "%s/table_%ib_%s.tex" %(outFolder,btagOpt,Box)
+    else:
+        tableFileName = "%s/table_%s.tex" %(outFolder,Box)
     table = open(tableFileName,"w")
     table.write("\\errorcontextlines=9\n")
     table.write("\\documentclass[12pt]{article}\n")
@@ -318,8 +328,16 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     for i in range(0,len(MRbins)-1):
         for j in range(0,len(Rsqbins)-1):
             if fit3D:
-                sumName = "b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
-                varNames = ["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)]
+                if btagOpt==0:
+                    sumName = "b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
+                    varNames = ["b%i_%i_1"%(i,j),"b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)]
+                elif btagOpt==1:
+                    sumName = "b%i_%i_1+" %(i,j)
+                    varNames = ["b%i_%i_1"%(i,j)]
+                elif btagOpt==23:
+                    sumName =  "b%i_%i_2+b%i_%i_3+" %(i,j,i,j)
+                    varNames = ["b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)]
+
                 varName  = "Plus".join(varNames)
             else:
                 varName = "b%i_%i" %(i,j)
@@ -338,7 +356,12 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             
             # GET THE OBSERVED NUMBER OF EVENTS
             if fit3D:
-                data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nBtagbins[0]))
+                if btagOpt==0:
+                    data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1))
+                elif btagOpt==1:
+                    data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i. && nBtag < %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1, 2))
+                elif btagOpt==23:
+                    data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 2))
             else:
                 data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nBtagbins[0]))
             nObs = data.numEntries()
@@ -437,7 +460,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 if (rangeMax+rangeMin)/2 == 50000.: continue
                 print "(i,j) = (%i,%i)"%(i,j)
                 print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
-                if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
+                #if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
+                if not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
                 if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
@@ -465,13 +489,19 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     return h, hOBS, hEXP, hNS, pValHist
 
 def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btagOpt):
-    fileOUT = rt.TFile.Open("%s/pvalue_%s.root" %(outFolder,Box), "recreate")
+    if btagOpt>0:
+        fileOUT = rt.TFile.Open("%s/pvalue_%ib_%s.root" %(outFolder,btagOpt,Box), "recreate")
+    else:
+        fileOUT = rt.TFile.Open("%s/pvalue_%s.root" %(outFolder,Box), "recreate")
     h.Write()
     hNS.Write()
     pValHist.Write()
     fileOUT.Close()
     
-    fileOUTint = rt.TFile.Open("%s/ExpectedObserved_RazorHad_Winter2012.root"%outFolder, "recreate")
+    if btagOpt>0:
+        fileOUTint = rt.TFile.Open("%s/ExpectedObserved_%ib_%s.root"%(outFolder,btagOpt,Box), "recreate")
+    else:
+        fileOUTint = rt.TFile.Open("%s/ExpectedObserved_%s.root"%(outFolder,Box), "recreate")
     hOBS.Write()
     hEXP.Write()
     fileOUTint.Close()
@@ -497,29 +527,32 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
 
                       
     rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c1\");")
-    c1 = rt.TCanvas("c1","c1", 500, 400)
+    c1 = rt.TCanvas("c1","c1", 600, 400)
     c1.SetLogz()
     setCanvasStyle(c1)
     rt.gStyle.SetOptStat(0)
     rt.gStyle.SetOptTitle(0)
-    rt.gStyle.SetPalette(900)
     h.Draw("colz")
 
     for i in range(0,len(xLines)): xLines[i].Draw()
     for i in range(0,len(yLines)): yLines[i].Draw()
 
-    c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
-    c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
+    if btagOpt>0:
+        c1.SaveAs("%s/pvalue_sigbin_%ib_%s.C" %(outFolder,btagOpt,Box))
+        c1.SaveAs("%s/pvalue_sigbin_%ib_%s.pdf" %(outFolder,btagOpt,Box))
+    else:
+        c1.SaveAs("%s/pvalue_sigbin_%s.C" %(outFolder,Box))
+        c1.SaveAs("%s/pvalue_sigbin_%s.pdf" %(outFolder,Box))
 
     rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c2\");")
-    c2 = rt.TCanvas("c2","c2", 900, 600)
+    c2 = rt.TCanvas("c2","c2", 600, 400)
     setCanvasStyle(c2)
     # French flag Palette
     Red = array('d',  [0.00, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00])
     Green = array('d',[0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
     Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
     Length =array('d',[0.00, 0.20, 0.35, 0.50, 0.65, 0.8, 1.00]) # colors get darker faster at 4sigma
-    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,9999)
+    rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,999)
     # French flag Palette
     #Red = array('d',  [0.00, 1.00, 1.00])
     #Green = array('d',[0.00, 1.00, 0.00])
@@ -528,7 +561,7 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     #rt.TColor.CreateGradientColorTable(3,Length,Red,Green,Blue,9999)
     hNS.SetMaximum(5.1)
     hNS.SetMinimum(-5.1) # so the binning is 0 2 4
-    hNS.SetContour(9999)
+    hNS.SetContour(999)
     # changes a few of the level colors by chaning the cut-offs
     # for external viewing:
     #hNS.SetContourLevel(6,1.5)
@@ -578,8 +611,13 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     for fGray in fGrayGraphs: fGray.Draw("F")
     for i in range(0,len(xLines)): xLines[i].Draw()
     for i in range(0,len(yLines)): yLines[i].Draw()
-    c2.SaveAs("%s/nSigma_%s.C" %(outFolder,Box))
-    c2.SaveAs("%s/nSigma_%s.pdf" %(outFolder,Box))
+
+    if btagOpt>0:
+        c2.SaveAs("%s/nSigma_%ib_%s.C" %(outFolder,btagOpt,Box))
+        c2.SaveAs("%s/nSigma_%ib_%s.pdf" %(outFolder,btagOpt,Box))
+    else:
+        c2.SaveAs("%s/nSigma_%s.C" %(outFolder,Box))
+        c2.SaveAs("%s/nSigma_%s.pdf" %(outFolder,Box))
 
     for tlatex in tlatexList: tlatex.Draw()
         
@@ -587,15 +625,20 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     c2.SetLogx()
     c2.SetLogy()
     tlabels = []
-    tlabels.append(rt.TLatex(262,0.75, "0.8"))
-    tlabels.append(rt.TLatex(262,0.375, "0.4"))
-    tlabels.append(rt.TLatex(262,0.19, "0.2"))
+    tlabels.append(rt.TLatex(260,0.75, "0.8"))
+    tlabels.append(rt.TLatex(260,0.375, "0.4"))
+    tlabels.append(rt.TLatex(260,0.19, "0.2"))
     for tlabel in tlabels:
         tlabel.SetTextSize(0.055)
         tlabel.SetTextFont(42)
         tlabel.Draw()
-    c2.SaveAs("%s/nSigmaLog_%s.C" %(outFolder,Box))
-    c2.SaveAs("%s/nSigmaLog_%s.pdf" %(outFolder,Box))
+        
+    if btagOpt>0:
+        c2.SaveAs("%s/nSigmaLog_%ib_%s.C" %(outFolder,btagOpt,Box))
+        c2.SaveAs("%s/nSigmaLog_%ib_%s.pdf" %(outFolder,btagOpt,Box))
+    else:
+        c2.SaveAs("%s/nSigmaLog_%s.C" %(outFolder,Box))
+        c2.SaveAs("%s/nSigmaLog_%s.pdf" %(outFolder,Box))
 
   
 if __name__ == '__main__':
@@ -631,34 +674,26 @@ if __name__ == '__main__':
         if sys.argv[i] == "--3D": fit3D = True
         if sys.argv[i].find("--fit-region=") != -1:
             frLabelString = sys.argv[i].replace("--fit-region=","")
-            frLabels = frLabelString.split("_")
+            frLabels = frLabelString.split(",")
         if sys.argv[i] == "--printPlots": printPlots = True
             
         
     MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
     
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
-    btagOpt = 0
-    h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt)
-    hList.append(h)
-    hOBSList.append(hOBS)
-    hEXPList.append(hEXP)
-    hNSList.append(hNS)
-    pValHistList.append(pValHist)
-
     
-    for h, hOBS, hEXP, hNS, pValHist in zip(hList,hOBSList,hEXPList,hNSList,pValHistList):
-        writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btagOpt)
+    if len(frLabels)==1:
+        btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
+    if len(frLabels)==3:
+        btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
 
-
-    #ignore the individual b-tags for now:
-    #for btag in nBtagbins[:-1]:
-    #    h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btag)
-    #    hList.append(h)
-    #    hOBSList.append(hOBS)
-    #    hEXPList.append(hEXP)
-    #    hNSList.append(hNS)
-    #    pValHistList.append(pValHist)
+    for btagOpt in btagToDo:
+        h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt)
+        hList.append(h)
+        hOBSList.append(hOBS)
+        hEXPList.append(hEXP)
+        hNSList.append(hNS)
+        pValHistList.append(pValHist)
     
-    #for h, hOBS, hEXP, hNS, pValHist, btag in zip(hList,hOBSList,hEXPList,hNSList,pValHistList,nBtagbins[:-1]):
-    #    writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btag)
+        for h, hOBS, hEXP, hNS, pValHist in zip(hList,hOBSList,hEXPList,hNSList,pValHistList):
+            writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btagOpt)

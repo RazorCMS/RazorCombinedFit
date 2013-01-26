@@ -213,6 +213,9 @@ class RazorBox(Box.Box):
             if(self.btag == "Btag") and z=="TTj2b": self.floatBTagf3(z)
             self.floatComponent(z)
             self.floatYield(z)
+            #self.fixPars("R0_")
+            #self.fixPars("MR0_",False)
+            #self.fixPars("n_")
 
         # switch off not-needed components (box by box)
         fixed = []
@@ -314,6 +317,13 @@ class RazorBox(Box.Box):
         #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=["3b"])]
         #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=["3b"])]
 
+
+        # for testing:
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b'])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b'])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+        
         # just the fitregion:
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
