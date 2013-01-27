@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     nToysStart = 0
     nToysEnd = 3000
-    for i in range(2,len(sys.argv)):=
+    for i in range(2,len(sys.argv)):
         if sys.argv[i].find("--start=") != -1:
             nToysStart = int(sys.argv[i].replace("--start=",""))
         if sys.argv[i].find("--end=") != -1:

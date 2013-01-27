@@ -142,16 +142,16 @@ if __name__ == '__main__':
     nToysPerJob = int(nToys/nJobs)
     for box in boxNames:
         for sideband in sidebandNames:
-            if nToys < nToysPerJob:
+            if nToys <= nToysPerJob:
                 outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,0)
-                time.sleep(1)
+                time.sleep(3)
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
-                #os.system("source "+pwd+"/"+outputname)
-                
-            for t in xrange(0,nJobs):
-                outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t)
-                time.sleep(1)
-                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #os.system("source "+pwd+"/"+outputname)
+                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
+                os.system("source "+pwd+"/"+outputname)
+            else:
+                for t in xrange(0,nJobs):
+                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t)
+                    time.sleep(3)
+                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("source "+pwd+"/"+outputname)
