@@ -121,7 +121,11 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
 def deltaMet(tree):
     """Javier's noise suppression cut"""
     pf = rt.TMath.ATan(tree.met_y/tree.met_x)
-    calo = rt.TMath.ATan(tree.caloMET_y/tree.caloMET_x)
+    #skip for MC that does not have the calo met present
+    try:
+        calo = rt.TMath.ATan(tree.caloMET_y/tree.caloMET_x)
+    except ZeroDivisionError:
+        calo = pf
     pi = rt.TMath.Pi() 
     return abs( min( (pf - calo), ( (2*pi) - pf + calo) ) - pi)
 
