@@ -353,15 +353,23 @@ class Box(object):
                 elif floatIfNoPenalty:
                     self.fixParsExact(par.GetName(),False)
 
-    def smearParsWithCovariance(self, fr, *options):
+    def smearParsWithCovariance(self, fr, vars, *options):
         """Smear parameters using covariance matrix of fitresult"""
         pars = {}
         parsAtLimit = False
         print "call fr.randomizePars()"
-        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()): 
+        for p in RootTools.RootIterator.RootIterator(fr.randomizePars()):
+            xmin = vars['MR'].getMin()
+            ymin = vars['Rsq'].getMin()
             pars[p.GetName()] = p
             print "RANDOMIZE PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())
             if p.getVal() == p.getMin() or p.getVal() == p.getMax(): parsAtLimit = True
+            if p.GetName().find("n_")!=-1 or p.GetName().find("b_")!=-1:
+                if p.getVal()<=0.: parsAtLimit = True
+            elif p.GetName().find("MR0_")!=-1:
+                if p.getVal()>=xmin: parsAtLimit = True
+            elif p.GetName().find("R0_")!=-1:
+                if p.getVal()>=ymin: parsAtLimit = True
         return pars, parsAtLimit
 
     def isMinCoeffNegative(self, vars, pars, component = 'TTj1b'):
@@ -397,40 +405,42 @@ class Box(object):
         badToy = True
         
         while badToy:
-            pars, parsAtLimit = self.smearParsWithCovariance(fr)
+            pars, parsAtLimit = self.smearParsWithCovariance(fr,myvars)
             # find the components that are on (Ntot on)
             componentsOn = [parName.split('_')[-1] for parName in pars.keys() if parName.find('Ntot')!=-1]
-            
-            # get a list of booleans answering whether the component goes negative
-            negComponents =  [self.isMinCoeffNegative(myvars, pars, component) for component in componentsOn]
-            
-            # take the OR of the booleans 
-            anyNegComp = any(negComponents)
 
-            # set parameters to their values from the covariance sampling
-            for name, value in pars.iteritems():
-                self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
-
-            # check how many error messages we have before evaluating pdfs
-            errorCountBefore = rt.RooMsgService.instance().errorCount()
-            print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
-            
-            # evaluate each pdf, assumed to be called "RazPDF_{component}"
-            for component in componentsOn:
-                pdfComp = self.workspace.pdf("RazPDF_%s"%component)
-                pdfValV = pdfComp.getValV(myvars)
-
-            # check how many error messages we have after evaluating pdfs
-            errorCountAfter = rt.RooMsgService.instance().errorCount()
-            print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
-
-            # set zero integral boolean to false
+            # set  booleans to false
             zeroIntegral = False
+            anyNegComp = False
             
-            # check if we have more error messages after evaluating each pdf, relative to before
-            # if so, set the zero integral boolean to true
-            if errorCountAfter>errorCountBefore:
-                zeroIntegral = True
+            if not parsAtLimit:
+                # get a list of booleans answering whether the component goes negative
+                negComponents =  [self.isMinCoeffNegative(myvars, pars, component) for component in componentsOn]
+            
+                # take the OR of the booleans 
+                anyNegComp = any(negComponents)
+
+                if not anyNegComp:
+                    # set parameters to their values from the covariance sampling
+                    for name, value in pars.iteritems():
+                        self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+
+                    # check how many error messages we have before evaluating pdfs
+                    errorCountBefore = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+            
+                    # evaluate each pdf, assumed to be called "RazPDF_{component}"
+                    for component in componentsOn:
+                        pdfComp = self.workspace.pdf("RazPDF_%s"%component)
+                        pdfValV = pdfComp.getValV(myvars)
+
+                    # check how many error messages we have after evaluating pdfs
+                    errorCountAfter = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+
+                    # check if we have more error messages after evaluating each pdf, relative to before
+                    # if so, set the zero integral boolean to true
+                    if errorCountAfter>errorCountBefore: zeroIntegral = True
 
             # if there were any problems, the toy is bad
             badToy = parsAtLimit or anyNegComp or zeroIntegral

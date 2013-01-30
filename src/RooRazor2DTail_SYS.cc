@@ -38,11 +38,14 @@ Double_t RooRazor2DTail_SYS::evaluate() const
 {
   double myexp = B*N*pow(fabs(X-X0)*fabs(Y-Y0),1./N);
   double mycoeff = B*pow(fabs(X-X0)*fabs(Y-Y0),1./N) - 1.;
-  if(myexp < -700) {
+  if(myexp < -700.) {
     std::cout << "MYEXP = "<< myexp << ", < -700 -- BAD" << std::endl;
     return  1.7e-308;}
-  if(mycoeff < 0) {
+  if(mycoeff <= 0.) {
     std::cout << "MYCOEFF = " << mycoeff <<", IS NEGATIVE -- BAD" << std::endl;
+    return  1.7e-308;}
+  if(X0 >= X.min() || Y0 >= Y.min() || B <= 0. || N <= 0.) {
+    std::cout << "PARAMETERS OUT OF PHYSICAL, INTEGRABLE RANGES -- BAD" << std::endl;
     return  1.7e-308;}
   return mycoeff*exp(-myexp);
 }
@@ -65,7 +68,7 @@ Double_t RooRazor2DTail_SYS::analyticalIntegral(Int_t code, const char* rangeNam
    const Double_t xmin = X.min(rangeName); const Double_t xmax = X.max(rangeName);
    const Double_t ymin = Y.min(rangeName); const Double_t ymax = Y.max(rangeName);
 
-   if(B == 0 || N == 0) return 1.;
+   if(B <= 0. || N <= 0. || X0 >= X.min() || Y0 >= Y.min()) return 1.;
 
    double integral = 0.;
    if(code ==1) { // integral on both X and Y

@@ -23,6 +23,7 @@
 #pragma link C++ defined_in "MLMixedSample.h";
 #pragma link C++ defined_in "RooBTagMult.h";
 #pragma link C++ defined_in "VecbosBtagPdf.h";
+#pragma link C++ defined_in "StandardHypoTestInvDemo.h";
 
 #endif
 

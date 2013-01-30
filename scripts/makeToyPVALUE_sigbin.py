@@ -460,8 +460,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 if (rangeMax+rangeMin)/2 == 50000.: continue
                 print "(i,j) = (%i,%i)"%(i,j)
                 print "$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma)
-                #if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
-                if not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
+                if pval<0.15 and not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
+                #if not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
 
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
                 if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
@@ -625,11 +625,17 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     c2.SetLogx()
     c2.SetLogy()
     tlabels = []
-    tlabels.append(rt.TLatex(260,0.75, "0.8"))
-    tlabels.append(rt.TLatex(260,0.375, "0.4"))
-    tlabels.append(rt.TLatex(260,0.19, "0.2"))
+    if Box=="MultiJet" or Box=="TauTauJet" or Box=="Jet":
+        tlabels.append(rt.TLatex(330,0.76, "0.8"))
+        tlabels.append(rt.TLatex(330,0.47, "0.5"))
+        tlabels.append(rt.TLatex(330,0.285, "0.3"))
+    else:
+        tlabels.append(rt.TLatex(240,0.75, "0.8"))
+        tlabels.append(rt.TLatex(240,0.375, "0.4"))
+        tlabels.append(rt.TLatex(240,0.19, "0.2"))
+        
     for tlabel in tlabels:
-        tlabel.SetTextSize(0.055)
+        tlabel.SetTextSize(0.065)
         tlabel.SetTextFont(42)
         tlabel.Draw()
         

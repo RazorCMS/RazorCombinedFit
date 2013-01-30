@@ -45,7 +45,7 @@ class RazorBox(Box.Box):
         else: self.fitregion = fitregion
         self.fitMode = fitMode
 
-        self.cut = 'MR>=0'
+        self.cut = 'MR>0.'
         
         
     def addTailPdf(self, flavour, doSYS):
@@ -86,6 +86,11 @@ class RazorBox(Box.Box):
             self.workspace.factory("PROD::PDF%s(RazPDF%s,BtagPDF%s)"%(label,label,label))
             ##associate the yields to the pdfs through extended PDFs
             self.workspace.factory("RooExtendPdf::ePDF%s(PDF%s, Ntot%s)"%(label,label,label))
+            # to force numerical integration and use default precision 1e-7
+            #self.workspace.pdf("RazPDF%s"%label).forceNumInt(rt.kTRUE)
+            #rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-7)
+            #rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-7)
+
 
         # 4D fit
         elif self.fitMode == "4D":
@@ -191,6 +196,7 @@ class RazorBox(Box.Box):
         #myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
                 
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
+        
         model.Print("v")
         # import the model in the workspace.
         self.importToWS(model)
@@ -304,32 +310,19 @@ class RazorBox(Box.Box):
         return extended.GetName()
         
     def plot(self, inputFile, store, box):
-        
+        print "not plotting"
         #[store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
         #[store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
         #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 5, ranges=self.fitregion.split(","))]
 
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=["2b"])]
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=["2b"])]
-        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=["2b"])]
-            
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=["3b"])]
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=["3b"])]
-        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=["3b"])]
-
-
-        # for testing:
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b'])]
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b'])]
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+        # # the real plot 1d Histos:
         
-        # just the fitregion:
+        # # just the fitregion:
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=self.fitregion.split(","))]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=self.fitregion.split(","))]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=self.fitregion.split(","))]
             
-        # the full region
+        # # the full region
         if self.fitregion!='LowRsq,LowMR,HighMR':
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq','LowMR','HighMR'])]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq','LowMR','HighMR'])]
