@@ -64,14 +64,15 @@ def main():
 	if len(sys.argv) < 2:
 		print '''
 Usage:
-	 ./Sezen2DatasetWithUnweighting.py %s<options>%s %s<root-file-name>%s
+	 ./Sezen2DatasetWithUnweighting.py <options> <root-file-name>
 
 	 options:
 	 -c config-file
 	 -x box-name
 	 -d output-directory
 	 [-u unweight events]
-		''' % (BOLDRED, RESETCOLOR, BOLDBLUE, RESETCOLOR)
+		'''
+		
 		sys.exit(0)
 
 	# ---------------------------------------
@@ -230,21 +231,23 @@ Usage:
 
 		# sum weights
 
+                weight = event.WXSEC
+
 		count += 1
-		sumw1 += event.WXSEC
-		sumw2 += event.WXSEC * event.WXSEC
+		sumw1 += weight
+		sumw2 += weight * weight
 
 		# compute cumulative distribution function of weights
 
 		if count == 1:
-			wcdf.append(event.WXSEC)
+			wcdf.append(weight)
 		else:
-			wcdf.append(wcdf[-1] + event.WXSEC)
+			wcdf.append(wcdf[-1] + weight)
 
 		# plot some stuff
 		
-		hMR.Fill(event.MR,  event.WXSEC)
-		hRSQ.Fill(event.RSQ, event.WXSEC)
+		hMR.Fill(event.MR,  weight)
+		hRSQ.Fill(event.RSQ, weight)
 		
 		if count % 100 == 0:
 			cMR.cd()
