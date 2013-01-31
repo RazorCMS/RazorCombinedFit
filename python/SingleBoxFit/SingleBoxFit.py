@@ -1154,7 +1154,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             macro = os.path.join(os.environ['RAZORFIT_BASE'],'macros/photons/StandardHypoTestInvDemo.C')
             return 'root -l "%s%s"' % (macro,rootarg)
         
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),2,3,True,60,0.0,poi_max,self.options.toys])
+        calculator_type = 2 #asymtotic
+        if self.options.toys:
+            calculator_type = 0
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,60,0.0,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
                 
