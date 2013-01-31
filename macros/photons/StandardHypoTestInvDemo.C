@@ -33,10 +33,8 @@
 //              = 6 Number of observed event as test statistic
 //
  
-
-
-/*
 #include "TFile.h"
+#include "RooFit.h"
 #include "RooWorkspace.h"
 #include "RooAbsPdf.h"
 #include "RooRealVar.h"
@@ -68,7 +66,7 @@
 #include "RooStats/HypoTestInverter.h"
 #include "RooStats/HypoTestInverterResult.h"
 #include "RooStats/HypoTestInverterPlot.h"
-*/
+
 using namespace RooFit;
 using namespace RooStats;
 
@@ -415,6 +413,7 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    }		
   
    calc.AnalyzeResult( r, calculatorType, testStatType, useCLs, npoints, infile );
+   gROOT->ProcessLine(".q");
   
    return;
 }
