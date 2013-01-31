@@ -14,7 +14,7 @@ outfile = open(sys.argv[2], "w")
 
 config = ConfigParser.ConfigParser()
 
-BoxName = ["MuMu", "MuEle", "Mu", "EleEle", "Ele", "Had"]
+BoxName = ["MuEle", "MuMu", "EleEle", "MuTau", "Mu", "EleTau", "Ele", "Jet", "TauTauJet", "MultiJet"]
 for Box in BoxName:
     
     boxDir = rootfile.Get(Box)
@@ -25,14 +25,17 @@ for Box in BoxName:
     
     #read the variables from the workspace
     myws = rootfile.Get(Box+"/Box"+Box+"_workspace")
-    fitresult = rootfile.Get(Box+"/fitresult_fitmodel_RMRTree")
+    fitresult = rootfile.Get(Box+"/independentFR")
 
-    keys = [('variables','variables'),('pdf1','pdf1pars'),('pdf2','pdf2pars'),('others','otherpars')]
+    keys = [('pdf_TTj1b','pdfpars_TTj1b'), ('others_TTj1b','otherpars_TTj1b'), ('btag_TTj1b','btagpars_TTj1b'),
+            ('pdf_TTj2b','pdfpars_TTj2b'), ('others_TTj2b','otherpars_TTj2b'), ('btag_TTj2b','btagpars_TTj2b'),
+            ('pdf_Vpj','pdfpars_Vpj'), ('others_Vpj','otherpars_Vpj'), ('btag_Vpj','btagpars_Vpj'),]
     myws.Print()
     #get the final values from the fit
-    parlist = fitresult.floatParsFinal()
+    parlist = fitresult.floatParsInit()
     fitPars = {}
-    for p in RootTools.RootIterator.RootIterator(parlist): fitPars[p.GetName()] = p 
+    for p in RootTools.RootIterator.RootIterator(parlist):
+        fitPars[p.GetName()] = p 
     
     #set the values in the config
     for key, namedset in keys:
@@ -41,47 +44,12 @@ for Box in BoxName:
         vars = []
         for v in RootTools.RootIterator.RootIterator(named):
             name = v.GetName()
-            print Box 
-            print name
-            if fitPars.has_key(name): v = fitPars[v.GetName()]
-            # for now hardcode the ranges of MR, R, Rsq to the loose range
-            if name == 'MR':
-                vars.append('%s[%.0f,%.0f]' % (v.GetName(),v.getMin(),3500))
-            elif name == 'R':
-                vars.append('%s[%.2f,%.0f]' % (v.GetName(),0.2,2))
-            elif name == 'Rsq':
-                vars.append('%s[%.4f,%.0f]' % (v.GetName(),0.04,4))
-            # also adjust the ranges of the parameters MR01st, MR02nd, R01st, R02nd 
-            elif name == 'MR01st':
-                maxi = 200
-                mini = -900
-                lastVal = v.getVal()
-                if lastVal>maxi: lastVal = 190
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,mini,maxi))
-            elif name == 'MR02nd':
-                maxi = 200
-                mini = -900
-                lastVal = v.getVal()
-                if lastVal>maxi: lastVal = 190
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,mini,maxi))
-            elif name == 'R01st':
-                maxi = .04
-                lastVal = v.getVal()
-                if lastVal>maxi: lastVal = .03
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,v.getMin(),maxi))
-            elif name == 'R02nd':
-                maxi = .04
-                lastVal = v.getVal()
-                if lastVal>maxi: lastVal = .03
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),lastVal,v.getMin(),maxi))
-            elif name == 'N_tt':
-                vars.append('%s[%.5f,%.3f,%.3f]' % ('Ntot',v.getVal(),v.getMin(),10000000))            
-            elif name == 'Ntot':
-                vars.append('%s[%.5f,%.3f,%.3f]' % ('Ntot',v.getVal(),v.getMin(),10000000))        
-            elif name == 'f2':
-                vars.append('%s[%.5f,%.3f,%.3f]' % ('f2',v.getVal(),v.getMin(),1.00))
-            else:
-                vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),v.getVal(),v.getMin(),v.getMax()))
+            if fitPars.has_key(name):
+                v = fitPars[v.GetName()]
+                if name.find('R0_')!=-1 or name.find('n_')!=-1 or name.find('b_')!=-1:
+                    vars.append('%s[%.5f]' % (v.GetName(),v.getVal()))
+                elif name.find('Ntot_')!=-1 or name.find('f')!=-1:
+                    vars.append('%s[%.5f,%.3f,%.3f]' % (v.GetName(),v.getVal(),v.getMin(),v.getMax()))
         config.set(Box,key,str(vars))
     
 config.write(outfile)

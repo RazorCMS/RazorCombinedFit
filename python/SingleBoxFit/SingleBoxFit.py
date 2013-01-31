@@ -301,15 +301,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("b_", False)
                 # boxes[box].fixPars("f3_TTj2b",False)
                 # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
-                
-                # # Procedure for Ele FULL
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowRsq,LowMR,HighMR"))
+
+                # # Procedure for Ele Full:
+                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowRsq,LowMR"))
+                # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range)) # float all
+
+                # # Procedure for Ele Sideband: 
                 # boxes[box].fixPars("R0", True)
                 # boxes[box].fixPars("Ntot", True)
                 # boxes[box].fixPars("f3", True)
                 # boxes[box].fixPars("Vpj", True)
                 # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("LowRsq,LowMR,HighMR")) # float only n_TTj2b, b_TTj2b
+                # boxes[box].fixPars("n_", False)
+                # boxes[box].fixPars("b_", False)
+                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("LowRsq,LowMR")) # float only n_TTj2b, b_TTj2b
                 # boxes[box].fixPars("R0_", False)
                 # boxes[box].fixPars("Ntot_", False)
                 # boxes[box].fixPars("n_", False)

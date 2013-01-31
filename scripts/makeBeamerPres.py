@@ -6,10 +6,11 @@ import os
 
 if __name__ == '__main__':
     boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet","TauTauJet","MultiJet"]
-    #boxNames = ["MuMu","Mu","Ele"]
-    #datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012AB","ElectronHad-Run2012AB"]
-    datasetNames = ["SMCocktail"]
-    #datasetNames = ["MuHad-Run2012AB","ElectronHad-Run2012AB","HT-HTMHT-Run2012AB"]
+    #boxNames = ["Jet"]
+    #datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012ABCD","ElectronHad-Run2012ABCD"]
+    #datasetNames = ["TTJets","SMCocktail"]
+    datasetNames = ["MuHad-Run2012ABCD","ElectronHad-Run2012ABCD","HT-HTMHT-Run2012ABCD"]
+    #datasetNames = ["ElectronHad-Run2012ABCD"]
     sidebandNames = ["Sideband","FULL"]
     #sidebandNames = ["FULL"]
     sidebandMap = {"FULL": "Full Fit","Sideband":"Sideband Fit"}
@@ -23,9 +24,9 @@ if __name__ == '__main__':
     LaTeXMap = {"TTJets":"$t\\bar{t}$","WJets":"$W\\to\\ell\\nu$",
                 "DYJetsToLL":"$Z\\to\\ell\\ell$","ZJetsToNuNu":"$Z\\to\\nu\\nu$",
                 "SMCocktail":"Total SM (5/fb)",
-                "MuHad-Run2012AB":"Run2012AB",
-                "ElectronHad-Run2012AB":"Run2012AB",
-                "HT-HTMHT-Run2012AB":"Run2012AB"}
+                "MuHad-Run2012ABCD":"Run2012ABCD",
+                "ElectronHad-Run2012ABCD":"Run2012ABCD",
+                "HT-HTMHT-Run2012ABCD":"Run2012ABCD"}
     
     btagMap = {"":"", "_1b":"1 $b$-tag", "_2b":"2 $b$-tag", "_3b":"3 $b$-tag", "_4b": "$\geq$ 4 $b$-tag"}
     
@@ -48,7 +49,8 @@ if __name__ == '__main__':
     beamerPres.write("\\setlength{\\itemindent}{\\parindent}\n")
     beamerPres.write("\\setlength{\\parsep}{\\parskip}}\n")
     beamerPres.write("\\item[]}{\\end{list}}\n")
-    beamerPres.write("\\title{Razor-b MC Fits}\n")
+    beamerPres.write("\\title{Razor-b Fits}\n")
+    beamerPres.write("\\subtitle{}\n")
     beamerPres.write("\\author{Javier Duarte}\n")
     beamerPres.write("\\date{\\today}\n")
     beamerPres.write("\\begin{document}\n")

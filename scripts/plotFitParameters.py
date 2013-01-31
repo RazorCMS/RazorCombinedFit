@@ -7,6 +7,21 @@ from RazorCombinedFit.Framework import Config
 import os.path
 from array import *
 
+def box_sort_key(parFile):
+    label = parFile[0]
+    if label.find("MuEle")!=-1: boxNum=0
+    elif label.find("MuMu")!=-1: boxNum=1
+    elif label.find("EleEle")!=-1: boxNum=2
+    elif label.find("MuTau")!=-1: boxNum=3
+    elif label.find("EleTau")!=-1: boxNum=5
+    elif label.find("TauTauJet")!=-1: boxNum=8
+    elif label.find("MultiJet")!=-1: boxNum=9
+    elif label.find("Mu")!=-1: boxNum=4
+    elif label.find("Ele")!=-1: boxNum=6
+    elif label.find("Jet")!=-1: boxNum=7
+    boxNum*=2
+    if label.find("FULL")!=-1: boxNum+=1
+    return boxNum
 
 def readFitResult(label, fileName):
     box = label.split("_")[-1]
@@ -19,33 +34,45 @@ def readFitResult(label, fileName):
     parList = fitResult.floatParsFinal()
     fitPars = {}
     for p in RootTools.RootIterator.RootIterator(parList):
-        fitPars[p.GetName()] = [p.getVal(),p.getError()]
+        fitPars[p.GetName()] = [p.getVal(),p.getError(),p.getMin(),p.getMax()]
     return fitPars
 
 def getHisto(parName,parFiles):
     print parName
     parHisto = rt.TH1D(parName,parName,len(parFiles),0,len(parFiles))
+    minMaxHisto = rt.TH1D(parName+"MinMax",parName+"MinMax",len(parFiles),0,len(parFiles))
     binNum = 0
     setAxis = parHisto.GetXaxis()
     setAxis.SetTitle("")
-    for label, parValErr in reversed(sorted(parFiles.iteritems())):
+    for label, parValErr in sorted(parFiles.iteritems(),key=box_sort_key):
         binNum +=1
         try:
             parVal = parValErr[parName][0]
             parErr = parValErr[parName][1]
+            parMin = parValErr[parName][2]
+            parMax = parValErr[parName][3]
             parHisto.SetBinContent(binNum,parVal)
             parHisto.SetBinError(binNum,parErr)
+            minMaxHisto.SetBinContent(binNum,(parMin+parMax)/2)
+            minMaxHisto.SetBinError(binNum,(parMax-parMin)/2)
         except KeyError:
             print "oh no"
         parHisto.SetMarkerStyle(8)
         parHisto.SetMarkerColor(rt.kViolet)
         parHisto.SetLineColor(rt.kAzure)
         parHisto.SetMarkerSize(1.2)
+        minMaxHisto.SetFillColor(rt.kGray)
+        minMaxHisto.SetFillStyle(1001)
+        minMaxHisto.SetLineColor(rt.kGray)
+        #minMaxHisto.SetLineWidth(2)
+        minMaxHisto.SetMarkerColor(rt.kGray)
+        #minMaxHisto.SetMarkerStyle(0)
+        #minMaxHisto.SetMarkerSize(1)
         box = label.split("_")[-1]
         sideband = label.split("_")[-2]
         setAxis.SetBinLabel(binNum,"%s %s"%(box,sideband))
         #setAxis.SetBinLabel(binNum,label.replace("_"," "))
-    return parHisto
+    return parHisto, minMaxHisto
 
 def setstyle():
     rt.gStyle.SetCanvasBorderMode(0)
@@ -90,7 +117,7 @@ def setstyle():
     rt.gStyle.SetMarkerStyle(8)
     #rt.gStyle.SetHistLineWidth((rt.Width_t) 1.85)
     rt.gStyle.SetLineStyleString(2,"[12 12]")
-    rt.gStyle.SetErrorX(0.001)
+    #rt.gStyle.SetErrorX(0.001)
     rt.gStyle.SetOptTitle(1)
     rt.gStyle.SetOptStat(0)
     rt.gStyle.SetOptFit(11111111)
@@ -150,7 +177,7 @@ if __name__ == '__main__':
     if options.config is None:
         import inspect, os
         topDir = os.path.abspath(os.path.dirname(inspect.getsourcefile(writeCocktail)))
-        options.config = os.path.join(topDir,'boxConfig.cfg')    
+        options.config = os.path.join(topDir,'boxConfig.cfg') 
     cfg = Config.Config(options.config)
     print 'Input files are %s' % ', '.join(args)
 
@@ -173,14 +200,17 @@ if __name__ == '__main__':
         print label
         parFiles[label] = readFitResult(label, files)
 
-        #label = "SMCocktail_FULL_Mu"
+    label = "HT-HTMHT-Run2012ABCD_FULL_Jet"
     parNameList = parFiles[label].keys()
     for parName in parNameList:
-        parHisto = getHisto(parName,parFiles)
+        parHisto,minMaxHisto = getHisto(parName,parFiles)
 
         c = rt.TCanvas("c%s"%parName,"c%s"%parName,700,400)
         c.SetLogy(0)
         #if parName.find("b_") !=-1 or parName.find("n_")!=-1 or parName.find("Ntot_") !=-1:
         #    c.SetLogy(1)
         parHisto.Draw('E1')
+        #minMaxHisto.SetMaximum(2.5*parHisto.GetMaximum())
+        #minMaxHisto.Draw("e2same")
+        #parHisto.Draw('E1same')
         c.Print("%s/%s.pdf"%(options.outdir,parName))
