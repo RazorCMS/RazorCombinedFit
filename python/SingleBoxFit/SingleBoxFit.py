@@ -1140,7 +1140,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if self.options.toys:
             calculator_type = 0
         result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
-                                        2,3,True,30,0.0,poi_max,self.options.toys)
+                                        2,3,True,15,0.0,poi_max,self.options.toys)
         #set to the median expected limit
         workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
         signal_yield = 0.
