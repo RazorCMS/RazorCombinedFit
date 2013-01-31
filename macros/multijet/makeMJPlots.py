@@ -6,7 +6,7 @@ class PlotMR(object):
         self.var = 'MR'
         self.xaxis = 'M_{R} [GeV]'
     def setBinning(self, name, title):       
-        h = rt.TH1D(name,title,22,500,2700)
+        h = rt.TH1D(name,title,25,500,3000)
         h.GetXaxis().SetTitle(self.xaxis)
         return h
 
@@ -15,10 +15,64 @@ class PlotRsq(object):
         self.var = 'Rsq'
         self.xaxis = 'R^{2}'
     def setBinning(self, name, title):       
-        h = rt.TH1D(name,title,10,0.03,0.5)
+        h = rt.TH1D(name,title,9,0.05,0.5)
         h.GetXaxis().SetTitle(self.xaxis)
         return h  
 
+class PlotBDT(object):
+    def __init__(self):
+        self.var = 'BDT'
+        self.xaxis = 'BDT'
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,20,-1.,+1.)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h 
+    
+class PlotCHMultN(object):
+    def __init__(self, N):
+        self.var = 'CHMult%d' % N
+        self.xaxis = 'CHMult%d' % N
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,20,0,200)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h     
+
+class PlotGirthN(object):
+    def __init__(self, N):
+        self.var = 'Girth%d' % N
+        self.xaxis = 'Girth%d' % N
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,10,0,0.5)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h 
+    
+class PlotTopMassN(object):
+    def __init__(self, N):
+        self.var = 'TopMass%d' % N
+        self.xaxis = 'TopMass%d' % N
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,60,0,600)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h 
+
+class PlotWMassN(object):
+    def __init__(self, N):
+        self.var = 'WMass%d' % N
+        self.xaxis = 'WMass%d' % N
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,20,0,200)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h     
+
+class PlotThetaHN(object):
+    def __init__(self, N):
+        self.var = 'ThetaH%d' % N
+        self.xaxis = 'ThetaH%d' % N
+    def setBinning(self, name, title):       
+        h = rt.TH1D(name,title,20,-1,1)
+        h.GetXaxis().SetTitle(self.xaxis)
+        return h 
+    
 class PlotCount(object):
     
     def setBinning(self, name, title):
@@ -124,10 +178,15 @@ class PlotCount(object):
             histo = self.histograms[range]        
             if histo is inc: continue
             ratio = histo.Clone('ratio%s' % histo.GetName())
+            ratio.GetYaxis().SetRangeUser(-0.5,0.5)
             ratio.Sumw2()
             ratio.Divide(inc)
-            ratio.DrawNormalized(option)
-            #ratio.Draw(option)
+            div = ratio.Integral()
+            if div == 0.:
+                div = 1.0
+            ratio.Scale(1./div)
+            ratio.GetYaxis().SetRangeUser(-0.5,0.5)
+            ratio.Draw(option)
             
             ratio.GetXaxis().SetTitleFont(132)
             ratio.GetYaxis().SetTitleFont(132)
@@ -143,10 +202,12 @@ class PlotCount(object):
             ratio.GetYaxis().CenterTitle();
             ratio.GetYaxis().SetTitleOffset(0.25)
             ratio.GetXaxis().SetTitleOffset(0.3)
+            ratio.GetYaxis().SetRangeUser(-0.5,+0.5)
             
             ratio.SetFillColor(rt.kWhite);
             ratio.SetLineWidth(2);
             ratio.SetMarkerSize(1.0);
+            ratio.GetYaxis().SetRangeUser(-0.5,0.5)            
             
             self.store.add(ratio, dir = dir)
             
@@ -162,7 +223,7 @@ class PlotCount(object):
 
 class PlotNPV(PlotCount):
     def __init__(self, store, var):
-        PlotCount.__init__(self, store, var, 'nVertex', [(1,40),(1,5),(6,10),(11,15),(16,20),(21,39)])
+        PlotCount.__init__(self, store, var, 'nVertex', [(1,46),(1,5),(6,10),(11,15),(16,20),(21,46)])
         self.yaxis = "R(N_{PV}^{i} / N_{PV}^{INCL})"
             
 class PlotNPVMR(PlotMR,PlotNPV):
@@ -174,13 +235,43 @@ class PlotNPVRsq(PlotRsq,PlotNPV):
     def __init__(self, store):
         PlotRsq.__init__(self)   
         PlotNPV.__init__(self, store, 'Rsq')
+        
+class PlotNPVBDT(PlotBDT,PlotNPV):
+    def __init__(self, store):
+        PlotBDT.__init__(self)   
+        PlotNPV.__init__(self, store, 'BDT')
+        
+class PlotNPVCHMultN(PlotCHMultN,PlotNPV):
+    def __init__(self, store, N):
+        PlotCHMultN.__init__(self, N)   
+        PlotNPV.__init__(self, store, 'jet%dmult' % N)
+
+class PlotNPVGirthN(PlotGirthN,PlotNPV):
+    def __init__(self, store, N):
+        PlotGirthN.__init__(self, N)   
+        PlotNPV.__init__(self, store, 'jet%dgirth' % N)
+
+class PlotNPVTopMassN(PlotTopMassN,PlotNPV):
+    def __init__(self, store, N):
+        PlotTopMassN.__init__(self, N)   
+        PlotNPV.__init__(self, store, 'topMass%d' % N)
+
+class PlotNPVWMassN(PlotWMassN,PlotNPV):
+    def __init__(self, store, N):
+        PlotWMassN.__init__(self, N)   
+        PlotNPV.__init__(self, store, 'wMass%d' % N)
+
+class PlotNPVThetaHN(PlotThetaHN,PlotNPV):
+    def __init__(self, store, N):
+        PlotThetaHN.__init__(self, N)   
+        PlotNPV.__init__(self, store, 'thetaH%d' % N)
 
 class PlotBTag(PlotCount):
     def __init__(self, store, var):
         PlotCount.__init__(self, store, var, 'nBtag', [(1,2),(0,0),(1,1),(2,2)])
-        self.yaxis = "R(N_{TCHEM}^{i} / N_{TCHEM}^{INCL})"
+        self.yaxis = "R(N_{CSV}^{i} / N_{CSV}^{INCL})"
     def rangeLabel(self, range):
-        return '[%i TCHEM]' % range[0]
+        return '[%i CSV]' % range[0]
     
 class PlotBTagMR(PlotMR,PlotBTag):
     def __init__(self, store):
@@ -212,113 +303,27 @@ class PlotJetRsq(PlotRsq,PlotJetCount):
         PlotRsq.__init__(self)        
         PlotJetCount.__init__(self, store, 'Rsq')         
 
-class PlotLeptonCount(PlotCount):
-    def __init__(self, store, var):
-        PlotCount.__init__(self, store, var, 'nLepton', [(0,4),(1,1),(2,2),(3,4)])
-        self.yaxis = "R(N_{Lepton}^{i} / N_{Lepton}^{INCL})"
-    def rangeLabel(self, range):
-        if range[0] == range[1]:
-            if range[0] == 1:
-                return '[%i Loose Lepton]' % range[0]
-            else:
-                return '[%i Loose Leptons]' % range[0]
-        else:
-            return '[%d-%d Loose Leptons]' % (range[0],range[1])
-
-class PlotLeptonMR(PlotMR,PlotLeptonCount):
-    def __init__(self, store):
-        PlotMR.__init__(self)        
-        PlotLeptonCount.__init__(self, store, 'MR')
-        
-class PlotLeptonRsq(PlotRsq,PlotLeptonCount):
-    def __init__(self, store):
-        PlotRsq.__init__(self)        
-        PlotLeptonCount.__init__(self, store, 'Rsq') 
-
-#Electrons
-class PlotElectronCount(PlotCount):
-    def __init__(self, store, var):
-        PlotCount.__init__(self, store, var, 'nElectron', [(0,4),(1,1),(2,4)])
-        self.yaxis = "R(N_{Electron}^{i} / N_{Electron}^{INCL})"
-    def rangeLabel(self, range):
-        if range[0] == range[1]:
-            if range[0] == 1:
-                return '[%i Loose Electron]' % range[0]
-            else:
-                return '[%i Loose Electrons]' % range[0]
-        else:
-            return '[%d-%d Loose Electrons]' % (range[0],range[1])
-
-class PlotElectronMR(PlotMR,PlotElectronCount):
-    def __init__(self, store):
-        PlotMR.__init__(self)        
-        PlotElectronCount.__init__(self, store, 'MR')
-        
-class PlotElectronRsq(PlotRsq,PlotElectronCount):
-    def __init__(self, store):
-        PlotRsq.__init__(self)        
-        PlotElectronCount.__init__(self, store, 'Rsq')
-        
-#Muons
-class PlotMuonCount(PlotCount):
-    def __init__(self, store, var):
-        PlotCount.__init__(self, store, var, 'nMuon', [(0,4),(1,1),(2,4)])
-        self.yaxis = "R(N_{Muon}^{i} / N_{Muon}^{INCL})"
-    def rangeLabel(self, range):
-        if range[0] == range[1]:
-            if range[0] == 1:
-                return '[%i Loose Muon]' % range[0]
-            else:
-                return '[%i Loose Muons]' % range[0]
-        else:
-            return '[%d-%d Loose Muons]' % (range[0],range[1])
-
-class PlotMuonMR(PlotMR,PlotMuonCount):
-    def __init__(self, store):
-        PlotMR.__init__(self)        
-        PlotMuonCount.__init__(self, store, 'MR')
-        
-class PlotMuonRsq(PlotRsq,PlotMuonCount):
-    def __init__(self, store):
-        PlotRsq.__init__(self)        
-        PlotMuonCount.__init__(self, store, 'Rsq') 
-        
-#Taus
-class PlotTauCount(PlotCount):
-    def __init__(self, store, var):
-        PlotCount.__init__(self, store, var, 'nTau', [(0,4),(1,1),(2,4)])
-        self.yaxis = "R(N_{Tau}^{i} / N_{Tau}^{INCL})"
-    def rangeLabel(self, range):
-        if range[0] == range[1]:
-            if range[0] == 1:
-                return '[%i Loose Tau]' % range[0]
-            else:
-                return '[%i Loose Taus]' % range[0]
-        else:
-            return '[%d-%d Loose Taus]' % (range[0],range[1])
-
-class PlotTauMR(PlotMR,PlotTauCount):
-    def __init__(self, store):
-        PlotMR.__init__(self)        
-        PlotTauCount.__init__(self, store, 'MR')
-        
-class PlotTauRsq(PlotRsq,PlotTauCount):
-    def __init__(self, store):
-        PlotRsq.__init__(self)        
-        PlotTauCount.__init__(self, store, 'Rsq') 
-
 
 if __name__ ==  '__main__':
     
+    import sys
+
     RootTools.RazorStyle.setStyle()
     rt.gStyle.SetOptTitle(0)
 
-    store = RootTools.RootFile.RootFile('razorMJControlPlots.root')
-    plotters = [PlotNPVMR(store),PlotNPVRsq(store),PlotBTagMR(store),PlotBTagRsq(store),\
-                PlotJetMR(store),PlotJetRsq(store),PlotLeptonMR(store),PlotLeptonRsq(store),\
-                PlotElectronMR(store),PlotElectronRsq(store),PlotMuonMR(store),PlotMuonRsq(store),\
-                PlotTauMR(store),PlotTauRsq(store)]
-    #plotters = [PlotJetMR(store),PlotJetRsq(store)]
+    store = RootTools.RootFile.RootFile('razorMJControlPlots-8TeV.root')
+#   plotters = [PlotNPVMR(store),PlotNPVRsq(store),PlotBTagMR(store),PlotBTagRsq(store),\
+#        PlotJetMR(store),PlotJetRsq(store),PlotNPVBDT(store)]
+#    plotters = [PlotNPVMR(store),PlotNPVRsq(store),PlotJetMR(store),PlotJetRsq(store),PlotNPVBDT(store)]
+    plotters = []
+#    for i in xrange(1,7):
+#        plotters.append(PlotNPVCHMultN(store,i))
+#        plotters.append(PlotNPVGirthN(store,i))
+    for i in xrange(1,3):
+        plotters.append(PlotNPVTopMassN(store,i))
+        plotters.append(PlotNPVWMassN(store,i))
+        plotters.append(PlotNPVThetaHN(store,i))
+#    plotters = [PlotJetMR(store),PlotJetRsq(store)]
 
     def loop(fileName):
         input = rt.TFile.Open(fileName)
@@ -330,9 +335,10 @@ if __name__ ==  '__main__':
             del row
 
         input.Close()
+    
+    for arg in sys.argv[1:]:
+        loop(arg)
         
-    loop('MultiJet-Run2011A-05Aug2011-v1-wreece_130112_MR500.0_R0.173205080757_Had.root')
-    loop('MultiJet-Run2011A-05Aug2011-v1-wreece_130112_MR500.0_R0.173205080757_nBtag_1_BJet.root')
         
     [p.final() for p in plotters]    
     store.write()

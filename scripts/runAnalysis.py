@@ -53,7 +53,9 @@ def defineParser():
     parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
                   help="Do not save the RooWorkspaces to save disk space for limit setting")
     parser.add_option('--run-cls',dest="runCLS",action="store_true",default=False,
-                  help="Run the 2012 profile style CLS code")        
+                  help="Run the 2012 profile style CLS code")
+    parser.add_option('--binned',dest="binned", default=False, action='store_true',
+                  help="Run the binned fit too")        
 
     return parser
 

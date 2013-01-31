@@ -163,6 +163,12 @@ class Box(object):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""
         data = self.workspace.data("RMRTree")
         return self.fitData(self.getFitPDF(), data, *options)
+    
+    def fit_binned(self, inputFile, reduce = None, *options):
+        """Take the dataset and fit it with the top level pdf. Return the fitresult"""
+        data = self.workspace.data('RMRTreeBinned')
+        return self.fitData(self.getFitPDF(), data, *options)
+
 
     def fitDataSilent(self, pdf, data, *options):
         """Take the dataset and fit it with the top level pdf. Return the fitresult"""

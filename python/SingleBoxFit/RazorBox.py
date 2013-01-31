@@ -114,6 +114,10 @@ class RazorBox(Box.Box):
         data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
         #import the dataset to the workspace
         self.importToWS(data)
+        
+        binned = RootTools.getDataSet(inputFile,'RMRTreeBinned', self.cut)
+        if binned is not None and binned:
+            self.importToWS(binned)
 
     def define(self, inputFile):
         

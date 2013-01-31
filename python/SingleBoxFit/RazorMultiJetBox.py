@@ -8,7 +8,7 @@ from array import *
 # This is global, to be used also in the scripts for plots
 def Binning(boxName, varName):
     if varName == "MR" : return [500.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
-    if varName == "Rsq": return [0.04, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+    if varName == "Rsq": return [0.05, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
    ##  if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
 ##     if varName == "Rsq": return [0.03, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
     if varName == "Btag": return [1.,5.]
@@ -89,7 +89,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         toyData = toyData.reduce(self.getVarRangeCutNamed(ranges=ranges))
 
         #also show the data with loose leptons
-        dataLep = data.reduce('nLepton > 0')
+        dataLep = data.reduce('MR > 1e6')
 
         xmin = min([self.workspace.var(xvarname).getMin(r) for r in ranges])
         xmax = max([self.workspace.var(xvarname).getMax(r) for r in ranges])
@@ -152,7 +152,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             self.workspace.var("Ntot_QCD").setVal(Nqcd)
 
         #Generate the QCD component
-        if Nqcd > 0 :
+        if Nqcd > 1. :
             self.workspace.var("Ntot_TTj").setVal(0.)
             toyDataQCD = self.workspace.pdf(self.fitmodel).generate(self.workspace.set('variables'), int(factor*(data.numEntries()-Ntt)))
             toyDataQCD.fillHistogram(histoToyQCD,rt.RooArgList(self.workspace.var(xvarname)))

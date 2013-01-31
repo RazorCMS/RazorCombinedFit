@@ -238,6 +238,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(fr,'independentFR')
                 #store the name of the PDF used
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
+                
+                if self.options.binned:
+                    fr_binned = boxes[box].fit_binned(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
+                    self.store(fr_binned, name = 'independentFRBinned', dir=box)
             
                 #make any plots required
                 boxes[box].plot(fileName, self, box)
@@ -804,21 +808,26 @@ class SingleBoxAnalysis(Analysis.Analysis):
     def limit_profile(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
         
-        def mergeDatasets(datasets, cat):
+        def mergeDatasets(datasets, cat, makeBinned = False):
             """Take all of the RooDatasets and merge them into a new one with a RooCategory column"""
-            
+
             keys = datasets.keys()
             data = datasets[keys[0]]
-            args = data.get(0)
-            args.add(cat)
-        
-            args_tuple = ['RMRTree','RMRTree',args,rt.RooFit.Index(cat),rt.RooFit.Import(keys[0],data)]
+            args = data.get(0)         
+            
+            argset = rt.RooArgSet()
+            for a in RootTools.RootIterator.RootIterator(args):
+                if a.GetName() in ['MR','Rsq']:
+                    argset.add(a)
+                
+            args_tuple = ['RMRTree','RMRTree',argset,rt.RooFit.Index(cat),rt.RooFit.Import(keys[0],data)]
             for k in keys[1:]:
                 args_tuple.append(rt.RooFit.Import(k,datasets[k]))
         
             a = tuple(args_tuple)
             merged = rt.RooDataSet(*a)
-        
+            if makeBinned:
+                return merged.binnedClone('RMRTree')
             return merged
         
         open_files = []
@@ -828,9 +837,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             rootFile = rt.TFile.Open(inputFile)
             open_files.append(rootFile)
             wHisto = rootFile.Get('wHisto')
-            btag =  rootFile.Get('BTAGerr')
-            jes =  rootFile.Get('JESerr')
-            pdf =  rootFile.Get('PDFerr')
+            btag =  rootFile.Get('wHisto_btagerr_pe')
+            jes =  rootFile.Get('wHisto_JESerr_pe')
+            pdf =  rootFile.Get('wHisto_pdferr_pe')
             
             def renameAndImport(histo):
                 #make a memory resident copy
@@ -979,8 +988,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         print 'Starting to build the combined PDF'
 
+        #set the binning
+        workspace.var('MR').setBins(rt.TMath.Nint(abs(workspace.var('MR').getMax() - workspace.var('MR').getMin() )/50.) )
+        workspace.var('Rsq').setBins(30)
+        workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
+
         #make a RooDataset with *all* of the data
-        pData = mergeDatasets(datasets, workspace.cat('Boxes'))
+        pData = mergeDatasets(datasets, workspace.cat('Boxes'), makeBinned = False)
+        print 'Merged dataset'
+        pData.Print('V')
         RootTools.Utils.importToWS(workspace,pData)
         
         #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
@@ -1124,7 +1140,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if self.options.toys:
             calculator_type = 0
         result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
-                                        2,3,True,15,0.0,poi_max,self.options.toys)
+                                        2,3,True,30,0.0,poi_max,self.options.toys)
         #set to the median expected limit
         workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
         signal_yield = 0.

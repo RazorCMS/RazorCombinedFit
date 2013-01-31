@@ -5,7 +5,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':6}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':6,'BJetLS':7,'BJetHS':8}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -110,6 +110,18 @@ class CREleBVetoBox(object):
     def __call__(self, tree):
         return tree.nJetNoLeptons >= 4 and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
+            
+class SelectBox(object):
+    """Tells you which box this was"""
+    def __init__(self,tree):
+        self.selectors = {boxMap['BJetLS']:BJetBoxLS(CalcBDT(tree)),boxMap['BJetHS']:BJetBoxHS(CalcBDT(tree)),boxMap['Ele']:EleBox(None),boxMap['Mu']:MuBox(None)}
+        self.tree = tree
+    def box(self):
+        for i in [3,4,8,7]:
+            if self.selectors[i](self.tree):
+                return i
+        return -1
+        
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
@@ -257,9 +269,12 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     if min < 0: min = 0
     if max < 0: max = numEntries
     
-    print 'Selection filter removed %f of events' % (selectionFilter/(1.0*entries))
-    print 'Noise filter removed %f of events' % (noiseFilter/(1.0*entries))
-    print 'MET filter removed %f of events' % (metFilter/(1.0*entries))
+    try:
+        print 'Selection filter removed %f of events' % (selectionFilter/(1.0*entries))
+        print 'Noise filter removed %f of events' % (noiseFilter/(1.0*entries))
+        print 'MET filter removed %f of events' % (metFilter/(1.0*entries))
+    except ZeroDivisionError:
+        pass
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:

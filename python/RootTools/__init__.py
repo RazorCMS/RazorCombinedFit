@@ -35,8 +35,7 @@ def getDataSet(fileName, dsName, cut = None):
     try:
         input = rt.TFile.Open(fileName)
         result = input.Get(dsName)
-        result.Print('V')
-        if result is not None and cut is not None:
+        if result is not None and result and cut is not None:
             before = result.numEntries()
             result = result.reduce(rt.RooFit.Cut(cut))
             after = result.numEntries()

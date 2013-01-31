@@ -39,10 +39,10 @@ Double_t RooRazor2DTail_SYS::evaluate() const
   double myexp = B*N*pow(fabs(X-X0)*fabs(Y-Y0),1./N);
   double mycoeff = B*pow(fabs(X-X0)*fabs(Y-Y0),1./N) - 1.;
   if(myexp < -700) {
-    std::cout << "MYEXP = "<< myexp << ", < -700 -- BAD" << std::endl;
+    //std::cout << "MYEXP = "<< myexp << ", < -700 -- BAD" << std::endl;
     return  1.7e-308;}
   if(mycoeff < 0) {
-    std::cout << "MYCOEFF = " << mycoeff <<", IS NEGATIVE -- BAD" << std::endl;
+    //std::cout << "MYCOEFF = " << mycoeff <<", IS NEGATIVE -- BAD" << std::endl;
     return  1.7e-308;}
   return mycoeff*exp(-myexp);
 }
