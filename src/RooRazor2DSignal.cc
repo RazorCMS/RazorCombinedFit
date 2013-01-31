@@ -63,17 +63,17 @@ RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* na
 
 Double_t RooRazor2DSignal::evaluate() const
 {
-  int iBin = Hnonimal->FindBin(X,Y);
-  double nomVal = Hnonimal->GetBinContent(iBin);
-  double jesVal = Hjes->GetBinContent(iBin);
-  double pdfVal = Hpdf->GetBinContent(iBin);
-  double btagVal = Hbtag->GetBinContent(iBin);
+  int xbin = Hnonimal->GetXaxis()->FindBin(X);
+  int ybin = Hnonimal->GetYaxis()->FindBin(Y);
+
+  double nomVal = Hnonimal->GetBinContent(xbin, ybin);
+  double jesVal = Hjes->GetBinContent(xbin, ybin);
+  double pdfVal = Hpdf->GetBinContent(xbin, ybin);
+  double btagVal = Hbtag->GetBinContent(xbin, ybin);
   double rhoJes = 1.;
   double rhoPdf = 1.;
   double rhoBtag = 1.;
  
-  int xbin = Hnonimal->GetXaxis()->FindBin(X);
-  int ybin = Hnonimal->GetYaxis()->FindBin(Y);
   double dx = Hnonimal->GetXaxis()->GetBinWidth(xbin);
   double dy = Hnonimal->GetYaxis()->GetBinWidth(ybin);
 
@@ -86,37 +86,73 @@ Double_t RooRazor2DSignal::evaluate() const
     rhoBtag = pow(1.0 + btagVal,xBtag);
   }
   double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
-  return (result == 0.0) ? 1e-120 : result;
+  return (result == 0.0) ? 1.7e-308 : result;
 }
 
 // //---------------------------------------------------------------------------
-Int_t RooRazor2DSignal::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{
-   return 1;
+Int_t RooRazor2DSignal::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName) const{  
+  // integral on both X and Y
+  if (matchArgs(allVars, analVars, X, Y)) return 1;
+  // integral over X
+  else if (matchArgs(allVars, analVars, X)) return 2;
+  // integral over Y
+  else if (matchArgs(allVars, analVars, Y)) return 3;
+  // integrating nothing
+  return 0;
 }
 
 
 // //---------------------------------------------------------------------------
-	Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName) const {
+Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName) const {
+  const Double_t xmin = X.min(rangeName);
+  const Double_t xmax = X.max(rangeName);
+  const Double_t ymin = Y.min(rangeName);
+  const Double_t ymax = Y.max(rangeName);
 
-		assert(code == 1);
+  int xBinMin = Hnonimal->GetXaxis()->FindBin(xmin);
+  int xBinMax = Hnonimal->GetXaxis()->FindBin(xmax);
+  int yBinMin = Hnonimal->GetYaxis()->FindBin(ymin);
+  int yBinMax = Hnonimal->GetYaxis()->FindBin(ymax);
 
-		Double_t intPdf = 0.;
-		const Double_t xmin = X.min(rangeName);
-		const Double_t xmax = X.max(rangeName);
-		const Double_t ymin = Y.min(rangeName);
-		const Double_t ymax = Y.max(rangeName);
+  if (code==1){
+    // integral on both X and Y
+    Double_t intPdf = 0.;
+    
+    for (int ix = xBinMin; ix <= xBinMax; ix++) {
+      for (int iy = yBinMin; iy <= yBinMax; iy++) {
+	  intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy,code);
+      }
+    }
+    return  (intPdf == 0.0) ? 1 : intPdf;
+  }
+  else if (code==2){
+    // integral over X
+    Double_t intPdf = 0.;
 
-		for (int ix = 1; ix <= iBinX; ix++) {
-			for (int iy = 1; iy <= iBinY; iy++) {
-				double nom = Hnonimal->GetBinContent(ix, iy);
-				double jes = pow(1.0 + Hjes->GetBinContent(ix, iy), xJes);
-				double pdf = pow(1.0 + Hpdf->GetBinContent(ix, iy), xPdf);
-				double btag = pow(1.0 + Hbtag->GetBinContent(ix, iy), xBtag);
-				intPdf += nom * jes * pdf * btag;
-			}
-		}
+    int iy = Hnonimal->GetYaxis()->FindBin(Y);
+    
+    for (int ix = xBinMin; ix <= xBinMax; ix++) {
+      intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
+    }
+    return  (intPdf == 0.0) ? 1 : intPdf;
+  }
+  else if (code==3){
+    // integral over Y
+    Double_t intPdf = 0.;
+    
+    int ix = Hnonimal->GetXaxis()->FindBin(X);
 
-		return intPdf / ((xmax - xmin) * (ymax - ymin));
-	}
+    for (int iy = yBinMin; iy <= yBinMax; iy++) {
+      intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
+    }
+    return  (intPdf == 0.0) ? 1 : intPdf;
+  }
+  else {
+    cout << "WARNING IN RooRazor2DTaiSignal: integration code is not correct" << endl;
+    cout << "                           what are you integrating on?" << endl;
+    return 1.;
+  }
+
+}
 // //---------------------------------------------------------------------------
 

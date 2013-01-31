@@ -54,6 +54,68 @@ protected:
 
    Double_t evaluate() const;
 
+   Double_t getBinIntegral2D(const double xmin, const double xmax, 
+			     const double ymin, const double ymax,
+			     int xBin, int yBin, int code) const{
+     
+     double nom, jes, pdf, btag;
+     double dx, dy, area;
+     Double_t binInt;
+    
+     int xBinMin, xBinMax;
+     int yBinMin, yBinMax;
+
+     if (code==1 || code==2 ){ // integrate x
+       xBinMin = Hnonimal->GetXaxis()->FindBin(xmin);
+       xBinMax = Hnonimal->GetXaxis()->FindBin(xmax);
+     
+       if (xBinMin > xBin || xBinMax < xBin) return 0;
+
+       if (xBin==xBinMin && xBinMin==xBinMax) dx = xmax - xmin;
+       else if (xBin==xBinMin) dx = Hnonimal->GetXaxis()->GetBinUpEdge(xBin) - xmin;
+       else if (xBin==xBinMax) dx = xmax - Hnonimal->GetXaxis()->GetBinLowEdge(xBin);
+       else {
+	 dx = Hnonimal->GetXaxis()->GetBinWidth(xBin);
+       }
+       
+     } else{ // don't integrate x
+       dx = 1.;
+     }
+     
+     if (code==1 || code==3){ // integrate y
+       yBinMin = Hnonimal->GetYaxis()->FindBin(ymin);
+       yBinMax = Hnonimal->GetYaxis()->FindBin(ymax);
+     
+       if (yBinMin > yBin || yBinMax < yBin) return 0;
+
+       if (yBin==yBinMin && yBinMin==yBinMax) dy = ymax - ymin;
+       else if (yBin==yBinMin) dy = Hnonimal->GetYaxis()->GetBinUpEdge(yBin) - ymin;
+       else if (yBin==yBinMax) dy = ymax - Hnonimal->GetYaxis()->GetBinLowEdge(yBin);
+       else {
+	 dy = Hnonimal->GetYaxis()->GetBinWidth(yBin);
+       }
+
+     } else{ // don't integrate y
+       dy = 1.; 
+     }
+     
+     area = dx*dy;
+     
+     double DX = Hnonimal->GetXaxis()->GetBinWidth(xBin);
+     double DY = Hnonimal->GetYaxis()->GetBinWidth(yBin);
+
+     double totalarea  =  DX*DY;
+
+     nom = Hnonimal->GetBinContent(xBin, yBin);
+     jes = pow(1.0 + Hjes->GetBinContent(xBin, yBin), xJes);
+     pdf = pow(1.0 + Hpdf->GetBinContent(xBin, yBin), xPdf);
+     btag = pow(1.0 + Hbtag->GetBinContent(xBin, yBin), xBtag);
+
+     binInt =  nom * jes * pdf * btag * area / totalarea;
+     return binInt;
+   }
+   
+
 private:
   ClassDef(RooRazor2DSignal,1) // Razor2DSignal function
 };
