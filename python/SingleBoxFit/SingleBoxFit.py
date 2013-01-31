@@ -2,7 +2,7 @@ import ROOT as rt
 import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
 import RootTools
-import math
+import math, os
 
 class SingleBoxAnalysis(Analysis.Analysis):
 
@@ -1070,9 +1070,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #find a reasonable range for the POI    
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
-        #with 30 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 30:
-            stop_xs += 1e-3
+        #with 15 signal events, we *should* be able to set a limit
+        while yield_at_xs[-1][0] < 15:
+            stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
             for box in fileIndex:
@@ -1132,19 +1132,46 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #for some reason, it does not like it when we write everything to the same file
         workspace_name = '%s_CombinedLikelihood_workspace.root' % self.options.output.lower().replace('.root','')
         workspace.writeToFile(workspace_name,True)
+
+        def runLimitSettingMacro(args):
+    
+            def quoteCintArgString(cintArg):
+                return '\\"%s\\"' % cintArg
+    
+            import string, sys, os
+    
+            # Arguments to the ROOT script needs to be a comma separated list
+            # enclosed in (). Strings should be enclosed in escaped double quotes.
+            arglist = []
+            for arg in args:
+                if type(arg)==type('str'):
+                    arglist.append(quoteCintArgString(arg))
+                elif type(arg)==type(True):
+                    arglist.append(int(arg))
+                else:
+                    arglist.append(arg)
+            rootarg='('+string.join([str(s) for s in arglist],',')+')'
+            macro = os.path.join(os.environ['RAZORFIT_BASE'],'macros/photons/StandardHypoTestInvDemo.C')
+            return 'root -l "%s%s"' % (macro,rootarg)
+        
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),2,3,True,60,0.0,poi_max,self.options.toys])
+        logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
+        os.system('%s | tee %s' % (cmd,logfile_name))
                 
-        from ROOT import StandardHypoTestInvDemo
-        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
-        #                                number of points, xmin, xmax, number of toys, use number counting)
-        calculator_type = 2 #asymtotic
-        if self.options.toys:
-            calculator_type = 0
-        result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
-                                        2,3,True,15,0.0,poi_max,self.options.toys)
-        #set to the median expected limit
-        workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
-        signal_yield = 0.
-        for box in fileIndex:
-            signal_yield += workspace.function('S_%s' % box).getVal()
-        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
-        self.store(result, dir='CombinedLikelihood')
+#        from ROOT import StandardHypoTestInvDemo
+#        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
+#        #                                number of points, xmin, xmax, number of toys, use number counting)
+#        calculator_type = 2 #asymtotic
+#        if self.options.toys:
+#            calculator_type = 0
+#        print 'StandardHypoTestInvDemo("%s","%s","%s","%s","%s",2,3,0.0,%f)'\
+#                                            % (workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),poi_max)
+#        result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
+#                                        2,3,True,15,0.0,poi_max,self.options.toys)
+#        #set to the median expected limit
+#        workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
+#        signal_yield = 0.
+#        for box in fileIndex:
+#            signal_yield += workspace.function('S_%s' % box).getVal()
+#        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
+#        self.store(result, dir='CombinedLikelihood')
