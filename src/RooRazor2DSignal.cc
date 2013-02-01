@@ -123,7 +123,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	  intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy,code);
       }
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return intPdf;
   }
   else if (code==2){
     // integral over X
@@ -134,7 +134,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int ix = xBinMin; ix <= xBinMax; ix++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return intPdf;
   }
   else if (code==3){
     // integral over Y
@@ -145,7 +145,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int iy = yBinMin; iy <= yBinMax; iy++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else {
     cout << "WARNING IN RooRazor2DTaiSignal: integration code is not correct" << endl;
