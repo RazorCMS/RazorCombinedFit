@@ -10,7 +10,7 @@ class RooRealVar;
 class RooAbsReal;
 
 #include "TMath.h"
-#include <TH3D.h>
+#include <TH3.h>
 #include "Math/SpecFuncMathCore.h"
 #include "Math/SpecFuncMathMore.h"
 
@@ -25,13 +25,13 @@ public:
 		    const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
 		    RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
 
-   RooRazor3DSignal(const RooRazor3DSignal& other, const char* name=0) ;
+   RooRazor3DSignal(const RooRazor3DSignal& other, const char* name) ;
    TObject* clone(const char* newname) const {
-	   TNamed* result = new RooRazor3DSignal(*this);
-	   result->SetName(newname);
+	   TNamed* result = new RooRazor3DSignal(*this, newname);
 	   return result;
    }
-   ~RooRazor3DSignal() { }
+   virtual ~RooRazor3DSignal() { 
+   }
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;

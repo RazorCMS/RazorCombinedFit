@@ -1005,10 +1005,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #         workspace.extendSet("other", workspace.factory('n_Vpj_%s_uncert[0.1]' % box).GetName())
             if not workspace.var("lumi_fraction_%s" % box):
                 workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
-                # alread set constant, if not in nuisance parameters, by default:
-                #workspace.var("xBtag_prime").setConstant(rt.kTRUE)
-                #workspace.var("xJes_prime").setConstant(rt.kTRUE)
-                #workspace.var("xPdf_prime").setConstant(rt.kTRUE)
                 
         pdf_names = {}
         datasets = {}
@@ -1088,9 +1084,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.var("R0_TTj2b_%s" % box).setMax(0.25)
             workspace.var("R0_Vpj_%s" % box).setMax(0.25)
             
+            workspace.var("R0_TTj1b_%s" % box).setMin(-3.)
+            workspace.var("R0_TTj2b_%s" % box).setMin(-3.)
+            workspace.var("R0_Vpj_%s" % box).setMin(-3.)
+            
             workspace.var("MR0_TTj1b_%s" % box).setMax(450)
             workspace.var("MR0_TTj2b_%s" % box).setMax(450)
             workspace.var("MR0_Vpj_%s" % box).setMax(450)
+            
+            workspace.var("MR0_TTj1b_%s" % box).setMin(-3000.)
+            workspace.var("MR0_TTj2b_%s" % box).setMin(-3000.)
+            workspace.var("MR0_Vpj_%s" % box).setMin(-3000)
         
         print 'Starting to build the combined PDF'
 
@@ -1265,8 +1269,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             calculator_type = 0
         cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,0.0,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
-        os.system('%s | tee %s' % (cmd,logfile_name))
-        #print '%s | tee %s' % (cmd,logfile_name)
+        #os.system('%s | tee %s' % (cmd,logfile_name))
+        print '%s | tee %s' % (cmd,logfile_name)
 #        from ROOT import StandardHypoTestInvDemo
 #        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
 #        #                                number of points, xmin, xmax, number of toys, use number counting)
