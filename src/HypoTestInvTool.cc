@@ -234,29 +234,20 @@ RooStats::HypoTestInvTool::RunInverter(RooWorkspace * w,
 
    w->Print();
 
-   RooAbsData * data = w->data(dataName);
-   data->Print("V");
 
-   std::cout << "data grabbed, may not exit" << std::endl;
+   RooAbsData * data = w->data(dataName);
    if (!data) {
       Error("StandardHypoTestDemo","Not existing data %s",dataName);
       return 0;
    }
+   else
+      std::cout << "Using data set " << dataName << std::endl;
 
-   
-   std::cout << "Using data set " << dataName << std::endl;
-   
    if (mUseVectorStore) {
-
-     std::cout << "data exists" << std::endl;
-     // Store dataset as a tree - problem with VectorStore and StoreError (bug #94908)
-     //RooAbsData::StorageType defStore= RooAbsData::getDefaultStorageType();
-     //RooAbsData::setDefaultStorageType(RooAbsData::Tree);
-     //RooAbsData::setDefaultStorageType(RooAbsData::Vector);
-     data->setDefaultStorageType(RooAbsData::Vector);
-     data->convertToVectorStore() ;
+     //RooAbsData::defaultStorageType = RooAbsData::Vector;
+      RooAbsData::setDefaultStorageType(RooAbsData::Vector);
+      data->convertToVectorStore() ;
    }
-
 
    // get models from WS
    // get the modelConfig out of the file

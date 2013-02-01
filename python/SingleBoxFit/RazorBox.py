@@ -30,7 +30,7 @@ def FindLastBin(h):
                      
 class RazorBox(Box.Box):
     
-    def __init__(self, name, variables, fitMode = '3D', btag = True, fitregion = 'FULL'):
+    def __init__(self, name, variables, fitMode = '3D', btag = True, fitregion = ""):
         super(RazorBox,self).__init__(name, variables)
         #data
         if not btag:
@@ -41,7 +41,8 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet']}
                         
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
-        elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
+            # for limit setting :
+        #elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
         else: self.fitregion = fitregion
         self.fitMode = fitMode
 

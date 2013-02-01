@@ -31,19 +31,19 @@ RooRazor3DSignal::RooRazor3DSignal(const char *name, const char *title,
 {
   //check if the histograms are in the workspace or not
   if(ws.obj(_nominal)){
-    Hnominal = dynamic_cast<TH3D*>(ws.obj(_nominal));
+    Hnominal = dynamic_cast<TH3*>(ws.obj(_nominal));
     iBinX = Hnominal->GetXaxis()->GetNbins();
     iBinY = Hnominal->GetYaxis()->GetNbins();
     iBinZ = Hnominal->GetZaxis()->GetNbins();
   }
   if(ws.obj(_jes)){
-    Hjes = dynamic_cast<TH3D*>(ws.obj(_jes));
+    Hjes = dynamic_cast<TH3*>(ws.obj(_jes));
   }
   if(ws.obj(_pdf)){
-    Hpdf = dynamic_cast<TH3D*>(ws.obj(_pdf));
+    Hpdf = dynamic_cast<TH3*>(ws.obj(_pdf));
   }
   if(ws.obj(_btag)){
-    Hbtag = dynamic_cast<TH3D*>(ws.obj(_btag));
+    Hbtag = dynamic_cast<TH3*>(ws.obj(_btag));
   }
 }
 RooRazor3DSignal::RooRazor3DSignal(const RooRazor3DSignal& other, const char* name) :
@@ -145,7 +145,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	}
       }
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else if (code==2){
     // integral on both X and Y
@@ -158,7 +158,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	intPdf += getBinIntegral3D(xmin,xmax,ymin,ymax,zmin,zmax,ix,iy,iz, code);
       }
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else if (code==3){
     // integral on both Y and Z
@@ -171,7 +171,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	intPdf += getBinIntegral3D(xmin,xmax,ymin,ymax,zmin,zmax,ix,iy,iz, code);
       }
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else if (code==4){
     // integral on all both X and Z
@@ -184,7 +184,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	intPdf += getBinIntegral3D(xmin,xmax,ymin,ymax,zmin,zmax,ix,iy,iz, code);
       }
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else if (code==5){
     // integral over X
@@ -196,7 +196,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int ix = xBinMin; ix <= xBinMax; ix++) {
       intPdf += getBinIntegral3D(xmin,xmax,ymin,ymax,zmin,zmax,ix,iy,iz, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else if (code==6){
     // integral over Y
@@ -208,7 +208,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int iy = yBinMin; iy <= yBinMax; iy++) {
       intPdf += getBinIntegral3D(xmin,xmax,ymin,ymax,zmin,zmax,ix,iy,iz, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else if (code==7){
     // integral over Z
@@ -220,7 +220,7 @@ Double_t RooRazor3DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int iz = zBinMin; iz <= zBinMax; iz++) {
       intPdf += getBinIntegral3D(xmin,xmax,ymin,ymax,zmin,zmax,ix,iy,iz, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return  intPdf;
   }
   else {
     cout << "WARNING IN RooRazor3DTaiSignal: integration code is not correct" << endl;

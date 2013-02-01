@@ -569,15 +569,17 @@ RooStats::HypoTestInvTool::RunInverter(RooWorkspace * w,
   
   
    RooAbsData * data = w->data(dataName); 
+   data->Print("V");
    if (!data) { 
       Error("StandardHypoTestDemo","Not existing data %s",dataName);
       return 0;
    }
    else 
       std::cout << "Using data set " << dataName << std::endl;
-  
+   
    if (mUseVectorStore) { 
-      RooAbsData::defaultStorageType = RooAbsData::Vector;
+     //RooAbsData::defaultStorageType = RooAbsData::Vector;;
+      RooAbsData::setDefaultStorageType(RooAbsData::Vector);
       data->convertToVectorStore() ;
    }
   

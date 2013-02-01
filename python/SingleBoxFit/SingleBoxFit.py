@@ -250,8 +250,25 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
 
-
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
+                #remove fit region
+                if (fit_range==""):
+                    if box=="Jet":
+                        #boxes[box].fixPars("R0", True)
+                        #boxes[box].fixPars("Ntot", True)
+                        #boxes[box].fixPars("f3", True)
+                        #boxes[box].fixPars("Vpj", True)
+                        #boxes[box].fixPars("TTj1b", True)
+                        #boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True)) # float only n_TTj2b, b_TTj2b
+                        boxes[box].fixPars("R0_", False)
+                        boxes[box].fixPars("Ntot_", False)
+                        boxes[box].fixPars("n_", False)
+                        boxes[box].fixPars("b_", False)
+                        boxes[box].fixPars("f3_TTj2b",False)
+                        fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True)) # float all
+                    else:
+                        fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True)) # float all
+                else:
+                    fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
                 
                 # # Procedure for EleTau Sideband / TauTauJet Sideband / Mu Sideband
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("LowRsq,LowMR,HighMR")) # float all
@@ -904,7 +921,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.factory('eff_value_%s[%f]' % (box,wHisto.Integral()) )
             print 'eff_value for box %s is %f' % (box,workspace.var('eff_value_%s'%box).getVal())
             
-            signal = rt.RooRazor3DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
+            signal = rt.RooRazor3DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,
                                          workspace.var('MR'),workspace.var('Rsq'),workspace.var('nBtag'),
                                          workspace,
                                          wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
@@ -978,8 +995,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #     workspace.extendSet("other", workspace.factory('n_TTj1b_%s_value[1.0]' % box).GetName())
         #     workspace.extendSet("nuisance", workspace.factory('n_TTj2b_%s_prime[0,-5.,5.]' % box).GetName())
         #     workspace.extendSet("other", workspace.factory('n_TTj2b_%s_value[1.0]' % box).GetName())
-        #     workspace.extendSet("nuisance", workspace.factory('n_Vpj2b_%s_prime[0,-5.,5.]' % box).GetName())
-        #     workspace.extendSet("other", workspace.factory('n_Vpj2b_%s_value[1.0]' % box).GetName())
+        #     workspace.extendSet("nuisance", workspace.factory('n_Vpj_%s_prime[0,-5.,5.]' % box).GetName())
+        #     workspace.extendSet("other", workspace.factory('n_Vpj_%s_value[1.0]' % box).GetName())
         #     if not workspace.var('n_TTj1b_%s_uncert' % box):
         #         workspace.extendSet("other", workspace.factory('n_TTj1b_%s_uncert[0.1]' % box).GetName())
         #     if not workspace.var('n_TTj2b_%s_uncert' % box):
@@ -992,7 +1009,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 #workspace.var("xBtag_prime").setConstant(rt.kTRUE)
                 #workspace.var("xJes_prime").setConstant(rt.kTRUE)
                 #workspace.var("xPdf_prime").setConstant(rt.kTRUE)
-        
+                
         pdf_names = {}
         datasets = {}
         
@@ -1050,17 +1067,40 @@ class SingleBoxAnalysis(Analysis.Analysis):
             [p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
 
 
-
-
+        for box in fileIndex:
+            workspace.var("n_TTj1b_%s" % box).setMin(0.)
+            workspace.var("n_TTj2b_%s" % box).setMin(0.)
+            workspace.var("n_Vpj_%s" % box).setMin(0.)
+            
+            workspace.var("n_TTj1b_%s" % box).setMax(30.)
+            workspace.var("n_TTj2b_%s" % box).setMax(30.)
+            workspace.var("n_Vpj_%s" % box).setMax(30.)
+            
+            workspace.var("b_TTj1b_%s" % box).setMin(0.)
+            workspace.var("b_TTj2b_%s" % box).setMin(0.)
+            workspace.var("b_Vpj_%s" % box).setMin(0.)
+            
+            workspace.var("b_TTj1b_%s" % box).setMax(30.)
+            workspace.var("b_TTj2b_%s" % box).setMax(30.)
+            workspace.var("b_Vpj_%s" % box).setMax(30.)
+            
+            workspace.var("R0_TTj1b_%s" % box).setMax(0.25)
+            workspace.var("R0_TTj2b_%s" % box).setMax(0.25)
+            workspace.var("R0_Vpj_%s" % box).setMax(0.25)
+            
+            workspace.var("MR0_TTj1b_%s" % box).setMax(450)
+            workspace.var("MR0_TTj2b_%s" % box).setMax(450)
+            workspace.var("MR0_Vpj_%s" % box).setMax(450)
+        
         print 'Starting to build the combined PDF'
 
 
-
+        workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
 
 
 
         #make a RooDataset with *all* of the data
-        pData = mergeDatasets(datasets, workspace.cat('Boxes'))
+        pData = mergeDatasets(datasets, workspace.cat('Boxes'), makeBinned = False)
         print 'Merged dataset'
         pData.Print('V')
         RootTools.Utils.importToWS(workspace,pData)
@@ -1126,8 +1166,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for var in RootTools.RootIterator.RootIterator(pdf_params):
             print '\tisConstant=%r\t\t' % var.isConstant(),
             var.Print()
-        fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
-        fr.Print("V")
+        #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
+        #fr.Print("V")
         
         #print out the workspace contents and store to a ROOT file
         print 'Starting the limit setting procedure'
@@ -1136,8 +1176,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #find a reasonable range for the POI    
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
-        #with 15 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 15:
+        #with 30 signal events, we *should* be able to set a limit
+        while yield_at_xs[-1][0] < 30:
             stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
@@ -1223,10 +1263,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,60,0.0,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,0.0,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
-        #os.system('%s | tee %s' % (cmd,logfile_name))
-        print '%s | tee %s' % (cmd,logfile_name)
+        os.system('%s | tee %s' % (cmd,logfile_name))
+        #print '%s | tee %s' % (cmd,logfile_name)
 #        from ROOT import StandardHypoTestInvDemo
 #        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
 #        #                                number of points, xmin, xmax, number of toys, use number counting)

@@ -50,7 +50,7 @@ def defineParser():
                   help="Run the Razor Boost analysis")
     parser.add_option('--tau',dest="doTau", default=False, action='store_true',
                   help="Run the Razor Tau analysis")
-    parser.add_option('--fit-region',dest="fitregion", type="string", default='FULL',
+    parser.add_option('--fit-region',dest="fitregion", type="string", default='',
                   help="Perform the fit in the selected region: FULL, SidebandL, SidebandMR, SidebandRsq")
     parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
                   help="Do not save the RooWorkspaces to save disk space for limit setting")

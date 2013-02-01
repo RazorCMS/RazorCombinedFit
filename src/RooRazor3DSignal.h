@@ -5,7 +5,6 @@
 #include "RooAbsPdf.h"
 #include "RooRealProxy.h"
 #include "RooWorkspace.h"
-#include "RooAbsReal.h"
 //---------------------------------------------------------------------------
 class RooRealVar;
 class RooAbsReal;
@@ -25,6 +24,7 @@ public:
 		    const RooWorkspace& ws,
 		    const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
 		    RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+
    RooRazor3DSignal(const RooRazor3DSignal& other, const char* name=0) ;
    TObject* clone(const char* newname) const {
 	   TNamed* result = new RooRazor3DSignal(*this);
@@ -45,10 +45,10 @@ protected:
    RooRealProxy xPdf;   // xPdf
    RooRealProxy xBtag;   // xBtag
 
-   TH3D* Hnominal;
-   TH3D* Hjes;
-   TH3D* Hpdf;
-   TH3D* Hbtag;
+   TH3* Hnominal;
+   TH3* Hjes;
+   TH3* Hpdf;
+   TH3* Hbtag;
 
    int iBinX;
    int iBinY;
