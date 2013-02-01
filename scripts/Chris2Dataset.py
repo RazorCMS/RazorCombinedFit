@@ -100,7 +100,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
                 a.setRealValue('nBtag',btagcutoff)
             else:
                 a.setRealValue('nBtag',tree.BTAG_NUM)
-            a.setRealValue('CHARGE',tree.CHARGE)
+            #a.setRealValue('CHARGE',tree.CHARGE)
         else:
             a.setRealValue('MR',tree.MR_CALO_NOMU)
             a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_CALO_NOMU))
@@ -109,7 +109,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
                 a.setRealValue('nBtag',btagcutoff)
             else:
                 a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
-            a.setRealValue('CHARGE',tree.CHARGE)
+            #a.setRealValue('CHARGE',tree.CHARGE)
         if useWeight:
             try:
                 a.setRealValue('W',tree.WXSEC*lumi/5.0)

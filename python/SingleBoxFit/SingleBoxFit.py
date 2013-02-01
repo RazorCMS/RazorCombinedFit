@@ -2,7 +2,8 @@ import ROOT as rt
 import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
 import RootTools
-import math
+import math, os
+import sys
 
 class SingleBoxAnalysis(Analysis.Analysis):
 
@@ -345,7 +346,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
             
                 #make any plots required
-                boxes[box].plot(fileName, self, box)
+                #boxes[box].plot(fileName, self, box)
                 
             else:
                 
@@ -852,21 +853,26 @@ class SingleBoxAnalysis(Analysis.Analysis):
     def limit_profile(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
         
-        def mergeDatasets(datasets, cat):
+        def mergeDatasets(datasets, cat, makeBinned = False):
             """Take all of the RooDatasets and merge them into a new one with a RooCategory column"""
             
             keys = datasets.keys()
             data = datasets[keys[0]]
             args = data.get(0)
-            args.add(cat)
+            
+            argset = rt.RooArgSet()
+            for a in RootTools.RootIterator.RootIterator(args):
+                if a.GetName() in ['MR','Rsq','nBtag']:
+                    argset.add(a)
         
-            args_tuple = ['RMRTree','RMRTree',args,rt.RooFit.Index(cat),rt.RooFit.Import(keys[0],data)]
+            args_tuple = ['RMRTree','RMRTree',argset,rt.RooFit.Index(cat),rt.RooFit.Import(keys[0],data)]
             for k in keys[1:]:
                 args_tuple.append(rt.RooFit.Import(k,datasets[k]))
         
             a = tuple(args_tuple)
             merged = rt.RooDataSet(*a)
-        
+            if makeBinned:
+                return merged.binnedClone('RMRTree')
             return merged
         
         open_files = []
@@ -876,9 +882,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             rootFile = rt.TFile.Open(inputFile)
             open_files.append(rootFile)
             wHisto = rootFile.Get('wHisto')
-            btag =  rootFile.Get('BTAGerr')
-            jes =  rootFile.Get('JESerr')
-            pdf =  rootFile.Get('PDFerr')
+            btag =  rootFile.Get('wHisto_btagerr_pe')
+            jes =  rootFile.Get('wHisto_JESerr_pe')
+            pdf =  rootFile.Get('wHisto_pdferr_pe')
             
             def renameAndImport(histo):
                 #make a memory resident copy
@@ -898,8 +904,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.factory('eff_value_%s[%f]' % (box,wHisto.Integral()) )
             print 'eff_value for box %s is %f' % (box,workspace.var('eff_value_%s'%box).getVal())
             
-            signal = rt.RooRazor2DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
-                                         workspace.var('MR'),workspace.var('Rsq'),
+            signal = rt.RooRazor3DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
+                                         workspace.var('MR'),workspace.var('Rsq'),workspace.var('nBtag'),
                                          workspace,
                                          wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
                                          workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
@@ -965,8 +971,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         workspace.extendSet('variables','Boxes')
 
+        
         # # treating the n parameters as nuisances
-        # for box in fileIndex:
+        for box in fileIndex:
         #     workspace.extendSet("nuisance", workspace.factory('n_TTj1b_%s_prime[0,-5.,5.]' % box).GetName())
         #     workspace.extendSet("other", workspace.factory('n_TTj1b_%s_value[1.0]' % box).GetName())
         #     workspace.extendSet("nuisance", workspace.factory('n_TTj2b_%s_prime[0,-5.,5.]' % box).GetName())
@@ -979,8 +986,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #         workspace.extendSet("other", workspace.factory('n_TTj2b_%s_uncert[0.1]' % box).GetName())
         #     if not workspace.var('n_Vpj_%s_uncert' % box):
         #         workspace.extendSet("other", workspace.factory('n_Vpj_%s_uncert[0.1]' % box).GetName())
-        #     if not workspace.var("lumi_fraction_%s" % box):
-        #         workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
+            if not workspace.var("lumi_fraction_%s" % box):
+                workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
+                # alread set constant, if not in nuisance parameters, by default:
+                #workspace.var("xBtag_prime").setConstant(rt.kTRUE)
+                #workspace.var("xJes_prime").setConstant(rt.kTRUE)
+                #workspace.var("xPdf_prime").setConstant(rt.kTRUE)
         
         pdf_names = {}
         datasets = {}
@@ -1043,8 +1054,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         print 'Starting to build the combined PDF'
 
+
+
+
+
+
         #make a RooDataset with *all* of the data
         pData = mergeDatasets(datasets, workspace.cat('Boxes'))
+        print 'Merged dataset'
+        pData.Print('V')
         RootTools.Utils.importToWS(workspace,pData)
         
         #we now combine the boxes into a RooSimultaneous. Only a few of the parameters are shared
@@ -1108,19 +1126,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for var in RootTools.RootIterator.RootIterator(pdf_params):
             print '\tisConstant=%r\t\t' % var.isConstant(),
             var.Print()
-        #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
-        #fr.Print("V")
-
+        fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
+        fr.Print("V")
+        
         #print out the workspace contents and store to a ROOT file
         print 'Starting the limit setting procedure'
         workspace.Print("V")
-
+        #sys.exit(0)
         #find a reasonable range for the POI    
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
-        #with 30 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 30:
-            stop_xs += 1e-3
+        #with 15 signal events, we *should* be able to set a limit
+        while yield_at_xs[-1][0] < 15:
+            stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
             for box in fileIndex:
@@ -1174,25 +1192,55 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         #this should be right at the bottom
         RootTools.Utils.importToWS(workspace,pBModel)
-                                           
+
         #self.store(workspace, dir='CombinedLikelihood')
         
         #for some reason, it does not like it when we write everything to the same file
         workspace_name = '%s_CombinedLikelihood_workspace.root' % self.options.output.lower().replace('.root','')
         workspace.writeToFile(workspace_name,True)
-        
-        from ROOT import StandardHypoTestInvDemo
-        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
-        #                                number of points, xmin, xmax, number of toys, use number counting)
+
+        def runLimitSettingMacro(args):
+            
+            def quoteCintArgString(cintArg):
+                return '\\"%s\\"' % cintArg
+            
+            import string, sys, os
+    
+            # Arguments to the ROOT script needs to be a comma separated list
+            # enclosed in (). Strings should be enclosed in escaped double quotes.
+            arglist = []
+            for arg in args:
+                if type(arg)==type('str'):
+                    arglist.append(quoteCintArgString(arg))
+                elif type(arg)==type(True):
+                    arglist.append(int(arg))
+                else:
+                    arglist.append(arg)
+            rootarg='('+string.join([str(s) for s in arglist],',')+')'
+            macro = os.path.join(os.environ['RAZORFIT_BASE'],'macros/photons/StandardHypoTestInvDemo.C')
+            return 'root -l -b -q "%s%s"' % (macro,rootarg)
+      
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
-                                        2,3,True,15,0.0,poi_max,self.options.toys)
-        #set to the median expected limit
-        workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
-        signal_yield = 0.
-        for box in fileIndex:
-            signal_yield += workspace.function('S_%s' % box).getVal()
-        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
-        self.store(result, dir='CombinedLikelihood')
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,60,0.0,poi_max,self.options.toys])
+        logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
+        #os.system('%s | tee %s' % (cmd,logfile_name))
+        print '%s | tee %s' % (cmd,logfile_name)
+#        from ROOT import StandardHypoTestInvDemo
+#        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
+#        #                                number of points, xmin, xmax, number of toys, use number counting)
+#        calculator_type = 2 #asymtotic
+#        if self.options.toys:
+#            calculator_type = 0
+#        print 'StandardHypoTestInvDemo("%s","%s","%s","%s","%s",2,3,0.0,%f)'\
+#                                            % (workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),poi_max)
+#        result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
+#                                        2,3,True,15,0.0,poi_max,self.options.toys)
+#        #set to the median expected limit
+#        workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
+#        signal_yield = 0.
+#        for box in fileIndex:
+#            signal_yield += workspace.function('S_%s' % box).getVal()
+#        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
+#        self.store(result, dir='CombinedLikelihood')

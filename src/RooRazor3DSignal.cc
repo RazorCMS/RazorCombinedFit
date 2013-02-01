@@ -12,7 +12,8 @@ ClassImp(RooRazor3DSignal)
 //---------------------------------------------------------------------------
 RooRazor3DSignal::RooRazor3DSignal(const char *name, const char *title,
 				   RooAbsReal &_x, 	RooAbsReal &_y,     RooAbsReal &_z,
-				   TH3D* _nominal, TH3D* _jes, TH3D* _pdf, TH3D* _btag,
+				   const RooWorkspace& ws,
+				   const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
 				   RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag) : RooAbsPdf(name, title), 
   X("X", "X Observable", this, _x),
   Y("Y", "Y Observable", this, _y),
@@ -20,14 +21,30 @@ RooRazor3DSignal::RooRazor3DSignal(const char *name, const char *title,
   xJes("xJes", "xJes", this, _xJes),
   xPdf("xPdf", "xPdf", this, _xPdf),
   xBtag("xBtag", "xBtag", this, _xBtag),
-  Hnominal(_nominal),
-  Hjes(_jes),
-  Hpdf(_pdf),
-  Hbtag(_btag),
-  iBinX(_nominal->GetXaxis()->GetNbins()),
-  iBinY(_nominal->GetYaxis()->GetNbins()),
-  iBinZ(_nominal->GetZaxis()->GetNbins())
+  Hnominal(0),
+  Hjes(0),
+  Hpdf(0),
+  Hbtag(0),
+  iBinX(0),
+  iBinY(0),
+  iBinZ(0)
 {
+  //check if the histograms are in the workspace or not
+  if(ws.obj(_nominal)){
+    Hnominal = dynamic_cast<TH3D*>(ws.obj(_nominal));
+    iBinX = Hnominal->GetXaxis()->GetNbins();
+    iBinY = Hnominal->GetYaxis()->GetNbins();
+    iBinZ = Hnominal->GetZaxis()->GetNbins();
+  }
+  if(ws.obj(_jes)){
+    Hjes = dynamic_cast<TH3D*>(ws.obj(_jes));
+  }
+  if(ws.obj(_pdf)){
+    Hpdf = dynamic_cast<TH3D*>(ws.obj(_pdf));
+  }
+  if(ws.obj(_btag)){
+    Hbtag = dynamic_cast<TH3D*>(ws.obj(_btag));
+  }
 }
 RooRazor3DSignal::RooRazor3DSignal(const RooRazor3DSignal& other, const char* name) :
    RooAbsPdf(other, name), 
@@ -46,57 +63,6 @@ RooRazor3DSignal::RooRazor3DSignal(const RooRazor3DSignal& other, const char* na
    iBinZ(other.iBinZ)
 {
 }
-//this is used in the case where there is only one error histogram
-RooRazor3DSignal::RooRazor3DSignal(const char *name, const char *title,
-				   RooAbsReal &_x, 	RooAbsReal &_y,     RooAbsReal &_z,
-				   TH3D* _nominal, TH3D* _error,
-				   RooAbsReal &_xError) : RooAbsPdf(name, title),
-  X("X", "X Observable", this, _x),
-  Y("Y", "Y Observable", this, _y),
-  Z("Z", "Z Observable", this, _z),
-  xJes("xError", "xError", this, _xError),
-  xPdf("xDummy1", "Dummy 1", this, _xError),
-  xBtag("xDummy2", "Dummy 2", this, _xError),
-  Hnominal(_nominal),
-  Hjes(_error),
-  Hpdf(dynamic_cast<TH3D*>(_error->Clone())),
-  Hbtag(dynamic_cast<TH3D*>(_error->Clone())),
-  iBinX(_nominal->GetXaxis()->GetNbins()),
-  iBinY(_nominal->GetYaxis()->GetNbins()){
-	Hpdf->Reset();//set to zero
-	Hbtag->Reset();//set to zero
-}
-
-
-//Reads the histograms from the workspace and/or imports them
-Bool_t RooRazor3DSignal::importWorkspaceHook(RooWorkspace& ws){
-
-	std::cout << "RooRazor3DSignal::importWorkspaceHook" << std::endl;
-
-	//check if the histograms are in the workspace or not
-	if(ws.obj(Hnominal->GetName()) == 0){
-		ws.import(*Hnominal);
-	}
-	if(ws.obj(Hjes->GetName()) == 0){
-		ws.import(*Hjes);
-	}
-	if(ws.obj(Hpdf->GetName()) == 0){
-		ws.import(*Hpdf);
-	}
-	if(ws.obj(Hbtag->GetName()) == 0){
-		ws.import(*Hbtag);
-	}
-
-	//update the pointers to the workspace versions
-	Hnominal = dynamic_cast<TH3D*>(ws.obj(Hnominal->GetName()));
-	Hjes = dynamic_cast<TH3D*>(ws.obj(Hjes->GetName()));
-	Hpdf = dynamic_cast<TH3D*>(ws.obj(Hpdf->GetName()));
-	Hbtag = dynamic_cast<TH3D*>(ws.obj(Hbtag->GetName()));
-
-	return false;
-}
-
-
 Double_t RooRazor3DSignal::evaluate() const
 {
   int xbin = Hnominal->GetXaxis()->FindBin(X);

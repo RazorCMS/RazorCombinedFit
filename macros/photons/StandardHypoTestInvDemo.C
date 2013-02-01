@@ -27,16 +27,14 @@
 // testStatType = 0 LEP
 //              = 1 Tevatron 
 //              = 2 Profile Likelihood two sided
-//              = 3 Profile Likelihood one sided (i.e. = 0 if mu < mu_hat)
+//              = 3 Profile Likelihood one sided (i.e. = 0 if mu < mu_hat) - (WR: We should use this one)
 //              = 4 Profile Likelihood signed ( pll = -pll if mu < mu_hat) 
 //              = 5 Max Likelihood Estimate as test statistic
 //              = 6 Number of observed event as test statistic
 //
  
-
-
-/*
 #include "TFile.h"
+#include "RooFit.h"
 #include "RooWorkspace.h"
 #include "RooAbsPdf.h"
 #include "RooRealVar.h"
@@ -68,7 +66,7 @@
 #include "RooStats/HypoTestInverter.h"
 #include "RooStats/HypoTestInverterResult.h"
 #include "RooStats/HypoTestInverterPlot.h"
-*/
+
 using namespace RooFit;
 using namespace RooStats;
 
@@ -276,6 +274,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
 
   gSystem->Load("libRazor");
 
+  std::cout << "loaded libRazor" << std::endl;
+
   output_name_cls = cls_name;
   output_name_bells = bells_name;
 
@@ -338,6 +338,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    // open file and check if input file exists
    TFile * file = TFile::Open(fileName); 
   
+   std::cout << "opened file" << std::endl;
+
    // if input file was specified but not found, quit
    if(!file && !TString(infile).IsNull()){
       cout <<"file " << fileName << " not found" << endl;
@@ -357,6 +359,7 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
       // now try to access the file again
       file = TFile::Open(fileName);
     
+      std::cout << "file is open" << std::endl;
    }
   
    if(!file){
@@ -368,6 +371,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
 
 
    HypoTestInvTool calc;
+
+  std::cout << "declare calc" << std::endl;
 
    // set parameters
    calc.SetParameter("PlotHypoTestResult", plotHypoTestResult);
@@ -393,10 +398,14 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    HypoTestInverterResult * r = 0;  
    std::cout << w << "\t" << fileName << std::endl;
    if (w != NULL) {
+
+     std::cout << "about to Run inverter" << std::endl;
       r = calc.RunInverter(w, modelSBName, modelBName,
                            dataName, calculatorType, testStatType, useCLs,
                            npoints, poimin, poimax,  
-                           ntoys, useNumberCounting, nuisPriorName );    
+                           ntoys, useNumberCounting, nuisPriorName );  
+
+      std::cout << "Inverter ran!" << std::endl; 
       if (!r) { 
          std::cerr << "Error running the HypoTestInverter - Exit " << std::endl;
          return;          
@@ -415,6 +424,9 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    }		
   
    calc.AnalyzeResult( r, calculatorType, testStatType, useCLs, npoints, infile );
+
+   std::cout << "quitting ROOT" << std::endl;
+   gROOT->ProcessLine(".q");
   
    return;
 }

@@ -21,14 +21,11 @@ class RooRazor3DSignal : public RooAbsPdf
 public:
    RooRazor3DSignal(){};
    RooRazor3DSignal(const char *name, const char *title,
-		  RooAbsReal &_x, RooAbsReal &_y, RooAbsReal &_z, 
-		  TH3D* _nominal, TH3D* _jes, TH3D* _pdf, TH3D* _btag,
-		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+		    RooAbsReal &_x, RooAbsReal &_y, RooAbsReal &_z, 
+		    const RooWorkspace& ws,
+		    const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
+		    RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
    RooRazor3DSignal(const RooRazor3DSignal& other, const char* name=0) ;
-   RooRazor3DSignal(const char *name, const char *title,
-		  RooAbsReal &_x, RooAbsReal &_y, RooAbsReal &_z,
-		  TH3D* _nominal, TH3D* _error,
-		  RooAbsReal &_xError);
    TObject* clone(const char* newname) const {
 	   TNamed* result = new RooRazor3DSignal(*this);
 	   result->SetName(newname);
@@ -58,8 +55,6 @@ protected:
    int iBinZ;
 
    Double_t evaluate() const;
-   Bool_t importWorkspaceHook(RooWorkspace& ws);
-
    Double_t getBinIntegral3D(const double xmin, const double xmax, 
 			     const double ymin, const double ymax,
 			     const double zmin, const double zmax,

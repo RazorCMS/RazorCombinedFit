@@ -178,22 +178,22 @@ class RazorBox(Box.Box):
             self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
         # add only relevant components (for generating toys)
-        myPDFlist = rt.RooArgList()
-        for z in self.zeros:
-            if self.name not in self.zeros[z]:
-                #self.addTailPdf(z, not (z=="Vpj"))
-                self.addTailPdf(z, True)
-                myPDFlist.add(self.workspace.pdf("ePDF_%s"%z))
+        #myPDFlist = rt.RooArgList()
+        #for z in self.zeros:
+        #    if self.name not in self.zeros[z]:
+        #        #self.addTailPdf(z, not (z=="Vpj"))
+        #        self.addTailPdf(z, True)
+        #        myPDFlist.add(self.workspace.pdf("ePDF_%s"%z))
 
         # add ALL the different components (for combining boxes in limit setting later):
         # - W+jets
         # - ttbar+jets 1b
         # - ttbar+jets j2b
-        #self.addTailPdf("Vpj",False)
-        #self.addTailPdf("TTj1b",True)
-        #self.addTailPdf("TTj2b",True)
+        self.addTailPdf("Vpj",True)
+        self.addTailPdf("TTj1b",True)
+        self.addTailPdf("TTj2b",True)
         # build the total PDF
-        #myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
+        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
                 
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
