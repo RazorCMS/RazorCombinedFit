@@ -1,0 +1,42 @@
+#! /usr/bin/env python
+from optparse import OptionParser
+
+import ROOT as rt
+import RootTools
+from RazorCombinedFit.Framework import Config
+import os.path
+import sys
+from array import *
+import pickle
+
+if __name__ == '__main__':
+    
+    gluinopoints = range(225,2025,100)
+    neutralinopoints = [0, 100]
+    box = "Had"
+    queue = "1nd"
+    pwd = os.environ['PWD']
+    submitDir = "submit"
+    outputDir = "output"+box
+    
+    os.system("mkdir -p %s"%(submitDir))
+    os.system("mkdir -p %s"%(outputDir))
+    
+    for neutralinopoint in neutralinopoints:
+        for gluinopoint in gluinopoints:
+            massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+            # prepare the script to run
+            outputname = submitDir+"/submit_"+massPoint+"_"+box+".src"
+            outputfile = open(outputname,'w')
+            outputfile.write('#!/bin/bash\n')
+            outputfile.write('cd %s \n'%pwd)
+            outputfile.write('echo $PWD \n')
+            outputfile.write('eval `scramv1 runtime -sh` \n')
+            ffDir = outputDir+"/logs_"+massPoint
+            outputfile.write("mkdir -p %s \n"%(ffDir));
+            outputfile.write('sh macros/multijet/runPoint.sh "%s" '%(massPoint))
+            
+            outputfile.close
+            os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            #        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+
