@@ -18,7 +18,7 @@ if __name__ == '__main__':
     pwd = os.environ['PWD']
     
     submitDir = "submit"
-    outputDir = "output_"+box
+    outputDir = "output"+box
     
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))

@@ -2,7 +2,7 @@
 
 export POINT=$1
 export BOX=$2
-export WD="/tmp/$USER/Razor2012_${POINT}_${BOX}"
+export WD=/tmp/$USER/Razor2012_${POINT}_${BOX}
 
 mkdir -p $WD
 cd $WD
@@ -19,11 +19,11 @@ mkdir lib
 source setup.sh
 make
 
-export NAME="T1bbbb_${POINT}"
+export NAME="T1bbbb"
 export LABEL="MR450.0_R0.5"
 
 cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/HadFits.root $PWD
-cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}*.root $PWD
+cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_${POINT}*.root $PWD
 
 
 if [ "$BOX" == "TauTauJet" ]
