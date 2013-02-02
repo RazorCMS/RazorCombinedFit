@@ -36,7 +36,7 @@ if __name__ == '__main__':
             outputfile.write('eval `scramv1 runtime -sh`\n')
             ffDir = outputDir+"/logs_"+massPoint
             outputfile.write("mkdir -p %s\n"%(ffDir))
-            outputfile.write('sh macros/multijet/runPoint.sh "%s %s \n" '%(massPoint,box))
+            outputfile.write('sh macros/multijet/runPoint.sh "%s" %s'%(massPoint,box))
             
             outputfile.close
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)

@@ -36,11 +36,13 @@ then
 elif [ "$BOX" == "Jet" ]
 then   
     python scripts/runAnalysis.py -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root -o Razor2012Limit_${NAME}_${POINT}_Jet.root
-
-if [ "$BOX" == "All" ]
+elif [ "$BOX" == "All" ]
 then
     python scripts/runAnalysis.py -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_TauTauJet.root ${NAME}_${POINT}_${LABEL}_Jet.root ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_All.root
+else    
+    python scripts/runAnalysis.py -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_TauTauJet.root ${NAME}_${POINT}_${LABEL}_Jet.root ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_All.root
 
+fi
 
 #TODO: Copy the results somewhere
 cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/Razor2012Limit*.root $HOME/work/RAZORLIMTS/Scan/
