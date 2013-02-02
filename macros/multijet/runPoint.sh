@@ -23,7 +23,7 @@ export NAME="T1bbbb_${POINT}"
 export LABEL="MR450.0_R0.5"
 
 cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/HadFits.root $PWD
-cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}*${LABEL}*.root $PWD
+cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}*.root $PWD
 
 
 if [ "$BOX" == "TauTauJet" ]

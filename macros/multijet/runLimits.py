@@ -14,7 +14,9 @@ if __name__ == '__main__':
     gluinopoints = range(225,2025,100)
     neutralinopoints = [0, 100]
     queue = "1nd"
+    
     pwd = os.environ['PWD']
+    
     submitDir = "submit"
     outputDir = "output_"+box
     
