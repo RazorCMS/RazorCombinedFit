@@ -10,10 +10,10 @@ from array import *
 import pickle
 
 if __name__ == '__main__':
+    box = sys.argv[1]
     
     gluinopoints = range(225,2025,100)
     neutralinopoints = [0, 100]
-    box = "Had"
     queue = "1nd"
     pwd = os.environ['PWD']
     submitDir = "submit"
@@ -34,9 +34,9 @@ if __name__ == '__main__':
             outputfile.write('eval `scramv1 runtime -sh` \n')
             ffDir = outputDir+"/logs_"+massPoint
             outputfile.write("mkdir -p %s \n"%(ffDir));
-            outputfile.write('sh macros/multijet/runPoint.sh "%s" '%(massPoint))
+            outputfile.write('sh macros/multijet/runPoint.sh "%s %s" '%(massPoint,box))
             
             outputfile.close
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-            #        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
 
