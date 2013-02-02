@@ -15,7 +15,6 @@ source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.32.02/x86_64-slc5-gcc43-opt/root/
 export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW
 cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit
 cd RazorCombinedFit
-mkdir lib
 source setup.sh
 make
 
@@ -23,7 +22,7 @@ export NAME="T1bbbb"
 export LABEL="MR450.0_R0.5"
 
 cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/HadFits.root $PWD
-cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_${POINT}_${LABEL}*.root $PWD
+cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_${POINT}_${LABEL}_${BOX}.root $PWD
 
 
 if [ "$BOX" == "TauTauJet" ]
