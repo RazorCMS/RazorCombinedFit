@@ -33,7 +33,7 @@ if __name__ == '__main__':
             outputfile.write('echo $PWD \n')
             outputfile.write('eval `scramv1 runtime -sh` \n')
             ffDir = outputDir+"/logs_"+massPoint
-            outputfile.write("mkdir -p %s \n"%(ffDir));
+            outputfile.write("mkdir -p %s \n"%(ffDir))
             outputfile.write('sh macros/multijet/runPoint.sh "%s %s" '%(massPoint,box))
             
             outputfile.close

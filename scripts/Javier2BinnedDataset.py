@@ -11,8 +11,8 @@ lumi = 19.3
 
 
 def getBinning():
-    MRbins =  [450, 700, 1200, 1600, 2500, 4000]
-    Rsqbins = [0.25,0.41,0.64,0.80,1.5]
+    MRbins =  [450, 550, 700, 900, 1200, 1600, 2500, 4000]
+    Rsqbins = [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     nBtagbins = [1.,2.,3.,4.]
     return MRbins, Rsqbins, nBtagbins
 
