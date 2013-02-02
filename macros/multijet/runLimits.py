@@ -31,12 +31,12 @@ if __name__ == '__main__':
             outputname = submitDir+"/submit_"+massPoint+"_"+box+".src"
             outputfile = open(outputname,'w')
             outputfile.write('#!/bin/bash\n')
-            outputfile.write('cd %s \n'%pwd)
-            outputfile.write('echo $PWD \n')
-            outputfile.write('eval `scramv1 runtime -sh` \n')
+            outputfile.write('cd %s\n'%pwd)
+            outputfile.write('echo $PWD\n')
+            outputfile.write('eval `scramv1 runtime -sh`\n')
             ffDir = outputDir+"/logs_"+massPoint
-            outputfile.write("mkdir -p %s \n"%(ffDir))
-            outputfile.write('sh macros/multijet/runPoint.sh "%s %s" '%(massPoint,box))
+            outputfile.write("mkdir -p %s\n"%(ffDir))
+            outputfile.write('sh macros/multijet/runPoint.sh "%s %s \n" '%(massPoint,box))
             
             outputfile.close
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
