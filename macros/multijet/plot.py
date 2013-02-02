@@ -268,7 +268,7 @@ if __name__ == '__main__':
     h_limit.Add(xsec_gr)
     h_limit.Add(xsec_gr_nom)
     h_limit.Draw("a3")
-    h_limit.GetXaxis().SetLimits(225,1925)
+    h_limit.GetXaxis().SetLimits(425,1925)
     gr_expectedLimit.Draw("c same")
     xsec_gr_nom.Draw("c same")
     gr_observedLimit.Draw("c SAME")
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     l.SetTextFont(132)
     l.SetNDC()
     l.DrawLatex(0.32,0.85,"CMS Preliminary");
-    l.DrawLatex(0.55,0.85,"#sqrt{s} = 8 TeV    #int L dt = 19.3 fb^{-1}");
+    l.DrawLatex(0.55,0.85,"#sqrt{s} = 8 TeV    #int L dt = 19.3 fb^{-1}")
     
     l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowbb#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
     
@@ -300,4 +300,4 @@ if __name__ == '__main__':
     leg.AddEntry(gr_expectedLimit2sigma, "expected limit #pm 2 #sigma","f")
     leg.Draw("SAME")
 
-    c.SaveAs("limits_LSPMass_"+re.sub('\.','_',LSPmassStrip)+"_"+box+".pdf")
+    c.SaveAs(directory+"/limits_LSPMass_"+re.sub('\.','_',LSPmassStrip)+"_"+box+".pdf")
