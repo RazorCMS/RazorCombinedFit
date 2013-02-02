@@ -1180,8 +1180,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #find a reasonable range for the POI    
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
-        #with 30 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 30:
+        #with 60 signal events, we *should* be able to set a limit
+        while yield_at_xs[-1][0] < 60:
             stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
@@ -1267,7 +1267,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,0.0,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,60,0.0,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
         #print '%s | tee %s' % (cmd,logfile_name)

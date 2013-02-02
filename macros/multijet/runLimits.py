@@ -13,13 +13,9 @@ if __name__ == '__main__':
     box = sys.argv[1]
     print box
     
-    gluinopoints = range(1225,1625,200)
+    gluinopoints = range(425,2025,100)
     neutralinopoints = [0, 100]
     queue = "1nd"
-
-    #gluinopoints = range(225,2025,100)
-    #neutralinopoints = [0, 100]
-    #queue = "1nd"
     
     pwd = os.environ['PWD']
     
