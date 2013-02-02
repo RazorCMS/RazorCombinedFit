@@ -10,9 +10,7 @@ cd $WD
 scramv1 project CMSSW CMSSW_5_3_7_patch4
 cd CMSSW_5_3_7_patch4/src
 eval `scramv1 run -sh`
-cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.32.02/x86_64-slc5-gcc43-opt/root/
-source bin/thisroot.sh
-cd $WD/CMSSW_5_3_7_patch4/src
+source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.32.02/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh
 
 export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW
 cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit

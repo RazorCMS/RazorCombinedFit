@@ -16,7 +16,7 @@ if __name__ == '__main__':
     queue = "1nd"
     pwd = os.environ['PWD']
     submitDir = "submit"
-    outputDir = "output"+box
+    outputDir = "output_"+box
     
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))
