@@ -10,6 +10,7 @@ from array import *
 
 if __name__ == '__main__':
     box = sys.argv[1]
+    print box
     
     gluinopoints = range(225,2025,100)
     neutralinopoints = [0, 100]
