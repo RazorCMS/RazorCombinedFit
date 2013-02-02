@@ -2,7 +2,7 @@
 
 export POINT=$1
 export BOX=$2
-export WD=/tmp/$USER/Razor2012_${POINT}_${BOX}
+export WD="/tmp/$USER/Razor2012_${POINT}_${BOX}"
 
 mkdir -p $WD
 cd $WD
