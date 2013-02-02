@@ -17,8 +17,8 @@ cd $WD/CMSSW_5_3_7_patch4/src
 export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW
 cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit
 cd RazorCombinedFit
-source setup.sh
 mkdir lib
+source setup.sh
 make
 
 export NAME="T1bbbb_${POINT}"
