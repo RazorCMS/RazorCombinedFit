@@ -6,6 +6,7 @@ import RootTools
 from RazorCombinedFit.Framework import Config
 import os.path
 import sys
+import time
 from array import *
 
 if __name__ == '__main__':
@@ -40,5 +41,6 @@ if __name__ == '__main__':
             
             outputfile.close
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
-            #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
+            time.sleep(2)
+            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log.log source "+pwd+"/"+outputname)
 
