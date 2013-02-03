@@ -103,6 +103,8 @@ if __name__ == '__main__':
         Box = "MultiJet"
     elif box.lower() == "jet":
         Box = "Jet"
+    elif box.lower() == "all" and directory.lower().find("notau"):
+        Box = "Jet+MultiJet"
     elif box.lower() == "all":
         Box = "Jet+TauTauJet+MultiJet"
         
@@ -213,30 +215,32 @@ if __name__ == '__main__':
         i+=1
 
      
-    nPoints = len(gluinoMassArray)  
     rt.gStyle.SetOptStat(0)
 
-    gluinoMassArrayClean = array('d')
-    observedLimitClean = array('d')
-    for i in xrange(0,nPoints):
-        if observedLimit[i]<10:
-            if  (i>=1 and i<=nPoints-2):
-                if (observedLimit[i]<2*observedLimit[i+1]) and (observedLimit[i]<2*observedLimit[i-1]):
-                    gluinoMassArrayClean.append(gluinoMassArray[i])
-                    observedLimitClean.append(observedLimit[i])
-            else:
-                gluinoMassArrayClean.append(gluinoMassArray[i])
-                observedLimitClean.append(observedLimit[i])
-            
-            
-    nPointsClean = len(observedLimitClean)
-    gr_observedLimit = rt.TGraph(nPointsClean, gluinoMassArrayClean, observedLimitClean)
+
+    j = 0
+    while j < len(observedLimit):
+        if (j>1 and j<len(observedLimit)-1 and observedLimit[j]>2*observedLimit[j+1] and observedLimit[j]>2*observedLimit[j-1]):
+            gluinoMassArray.pop(j)
+            gluinoMassArray_er.pop(j)
+            observedLimit.pop(j)
+            expectedLimit.pop(j)
+            expectedLimit_minus2sigma.pop(j)
+            expectedLimit_plus2sigma.pop(j)
+            expectedLimit_minus1sigma.pop(j)
+            expectedLimit_plus1sigma.pop(j)
+            print gluinoMassArray
+        j+=1
+        
+    nPoints = len(observedLimit)
+    gr_observedLimit = rt.TGraph(nPoints, gluinoMassArray, observedLimit)
     gr_observedLimit.SetMarkerColor(1)
     gr_observedLimit.SetMarkerStyle(22)
     gr_observedLimit.SetMarkerSize(1)
     gr_observedLimit.SetLineWidth(3)
     gr_observedLimit.SetLineColor(rt.kBlack)
-  
+
+
     gr_expectedLimit = rt.TGraph(nPoints, gluinoMassArray, expectedLimit)
     gr_expectedLimit.SetLineWidth(3)
     gr_expectedLimit.SetLineStyle(2)
@@ -247,6 +251,7 @@ if __name__ == '__main__':
     gr_expectedLimit2sigma.SetFillStyle(1001)
    
     gr_expectedLimit1sigma = rt.TGraphAsymmErrors(nPoints, gluinoMassArray, expectedLimit, gluinoMassArray_er, gluinoMassArray_er, expectedLimit_minus1sigma, expectedLimit_plus1sigma)
+    
     #col1 = rt.gROOT.GetColor(rt.kGreen-7)
     #col1.SetAlpha(0.5)
     gr_expectedLimit1sigma.SetLineColor(rt.kGreen-7)
@@ -254,9 +259,9 @@ if __name__ == '__main__':
     gr_expectedLimit1sigma.SetFillStyle(3001)
 
     if box.lower() == "all" or box.lower() == "multijet":
-        h_limit.SetMaximum(100)
+        h_limit.SetMaximum(10)
     else:
-        h_limit.SetMaximum(100)
+        h_limit.SetMaximum(10)
         
     if box.lower() == "all" or box.lower() == "multijet":
         h_limit.SetMinimum(1e-4)
@@ -268,7 +273,10 @@ if __name__ == '__main__':
     h_limit.Add(xsec_gr)
     h_limit.Add(xsec_gr_nom)
     h_limit.Draw("a3")
-    h_limit.GetXaxis().SetLimits(425,1925)
+    if float(LSPmassStrip)==100.:
+        h_limit.GetXaxis().SetLimits(625,1925)
+    elif float(LSPmassStrip)==0.:
+        h_limit.GetXaxis().SetLimits(525,1925)
     gr_expectedLimit.Draw("c same")
     xsec_gr_nom.Draw("c same")
     gr_observedLimit.Draw("c SAME")

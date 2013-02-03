@@ -1102,7 +1102,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
         workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
 
 
-
         #make a RooDataset with *all* of the data
         pData = mergeDatasets(datasets, workspace.cat('Boxes'), makeBinned = False)
         print 'Merged dataset'
@@ -1148,6 +1147,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #store the name in case we need it later
         #RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
         simultaneous_product.graphVizTree('fullSplusBPDF.dot')
+
+        
+        # print 'This is the final PDF'
+        # pdf_params = simultaneous_product.getParameters(pData)
+        # print 'Parameters'
+        # for var in RootTools.RootIterator.RootIterator(pdf_params):
+        #     print '\tisConstant=%r\t\t' % var.isConstant(),
+        #     var.Print()
+        # #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
+        # #fr.Print("V")
+
         
         #set the global observables to float from their nominal values - is this needed
         #for p in RootTools.RootIterator.RootIterator(workspace.set('global')): p.setConstant(False)
@@ -1163,36 +1173,38 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         SetConstants(workspace, pSbModel)
         RootTools.Utils.importToWS(workspace,pSbModel)
+
+
+        #the background only model
+        poiValueForBModel = 0.0
+        pBModel = rt.RooStats.ModelConfig(pSbModel)
+        pBModel.SetName("BModel")
+        pBModel.SetWorkspace(workspace)
+        RootTools.Utils.importToWS(workspace,pBModel)
         
-        print 'This is the final PDF'
-        pdf_params = simultaneous_product.getParameters(pData)
-        print 'Parameters'
-        for var in RootTools.RootIterator.RootIterator(pdf_params):
-            print '\tisConstant=%r\t\t' % var.isConstant(),
-            var.Print()
-        #fr = simultaneous_product.fitTo(pData,rt.RooFit.Save(True))
-        #fr.Print("V")
         
-        #print out the workspace contents and store to a ROOT file
-        print 'Starting the limit setting procedure'
-        workspace.Print("V")
-        #sys.exit(0)
-        #find a reasonable range for the POI    
-        stop_xs = 0.0
-        yield_at_xs = [(stop_xs,0.0)]
-        #with 30 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 30:
-            stop_xs += 1e-4
-            workspace.var('sigma').setVal(stop_xs)
-            signal_yield = 0
-            for box in fileIndex:
-                signal_yield += workspace.function('S_%s' % box).getVal()
-            yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
-        poi_max = yield_at_xs[-1][1]
-        workspace.var('sigma').setVal(0.0)
-        print 'Estimated POI Max:',poi_max
-        #poi_max = 0.5
-        #print 'For now use :',poi_max
+        # print 'Starting the limit setting procedure'
+        #
+        # #find a reasonable range for the POI    
+        # stop_xs = 0.0
+        # yield_at_xs = [(stop_xs,0.0)]
+        # #with 30 signal events, we *should* be able to set a limit
+        # print "sigma  getval = %f"%workspace.var('sigma').getVal()
+        # while yield_at_xs[-1][0] < 30:
+        #     stop_xs += 1e-4
+        #     workspace.var('sigma').setVal(stop_xs)
+        #     signal_yield = 0
+        #     for box in fileIndex:
+        #         signal_yield += workspace.function('S_%s' % box).getVal()
+        #     yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
+        # poi_max = yield_at_xs[-1][1]
+        # #workspace.var('sigma').setVal(0.0)
+        # print 'Estimated POI Max:',poi_max
+        # #sys.exit()
+
+        poi_min = 0.00
+        poi_max = 0.1
+        print 'For now use :[%f, %f]'%(poi_min,poi_max)
         
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
         
@@ -1203,41 +1215,47 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #    will anticipate it
         pNll = pSbModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(rt.RooArgSet())
-        pSbModel.Print('V')
         minSplusB = pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
         print '\nS+B: %f' % minSplusB 
         
-        #save a snap-shot
-        poiValueForBModel = 0.0
+        #save a snap-shot for signal+background
         pPoiAndNuisance = rt.RooArgSet()
-        pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
         pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
+        pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
         pSbModel.SetSnapshot(pPoiAndNuisance)
         
         del pNll, pProfile, pPoiAndNuisance
         
-        #the background only model
-        pBModel = rt.RooStats.ModelConfig(pSbModel)
-        pBModel.SetName("BModel")
-        pBModel.SetWorkspace(workspace)
-        
-        #Find a parameter point for generating pseudo-data
+        #find a parameter point for generating pseudo-data
         #with the background-only data.
-        #Save the parameter point snapshot in the Workspace
+        #save the parameter point snapshot in the Workspace
         pNll = pBModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(workspace.set('poi'))
         workspace.var('sigma').setVal(poiValueForBModel)
-        pBModel.Print('V')
         minBonly = pProfile.getVal() #this will do fit and set nuisance parameters to profiled values
         print '\nB only: %f' % minBonly
+        print 'pBModel.GetNuisanceParameters() ='
+        pBModel.GetNuisanceParameters().Print("v")
         
+        #save a snap-shot for background only
         pPoiAndNuisance = rt.RooArgSet()
-        pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
         pPoiAndNuisance.add(pBModel.GetParametersOfInterest())
-        pBModel.SetSnapshot(pPoiAndNuisance)        
+        pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
+        pBModel.SetSnapshot(pPoiAndNuisance)  
 
-        #this should be right at the bottom
-        RootTools.Utils.importToWS(workspace,pBModel)
+        del pNll, pProfile, pPoiAndNuisance
+
+        workspace.Print("v")
+
+        # pBModel.GetSnapshot().Print("v")
+        # pSbModel.GetSnapshot().Print("v")
+
+        # workspace.obj("BModel").Print("v")
+        # print workspace.obj("BModel").GetSnapshot()
+        # workspace.obj("SbModel").Print("v")
+    
+
+        #sys.exit()
 
         #self.store(workspace, dir='CombinedLikelihood')
         
@@ -1269,10 +1287,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,0.0,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
-        os.system('%s | tee %s' % (cmd,logfile_name))
-        #print '%s | tee %s' % (cmd,logfile_name)
+        #os.system('%s | tee %s' % (cmd,logfile_name))
+        print "sigma error = %f"%workspace.var('sigma').getError()
+        print '%s | tee %s' % (cmd,logfile_name)
+        
 #        from ROOT import StandardHypoTestInvDemo
 #        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
 #        #                                number of points, xmin, xmax, number of toys, use number counting)

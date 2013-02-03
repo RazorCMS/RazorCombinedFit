@@ -27,20 +27,20 @@ cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_${POINT}_${LABEL}
 
 if [ "$BOX" == "TauTauJet" ]
 then   
-    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_TauTauJet.root -o Razor2012Limit_${NAME}_${POINT}_TauTauJet.root
+    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_TauTauJet.root -o Razor2012Limit_${NAME}_${POINT}_TauTauJet.root -t 1000
 
 elif [ "$BOX" == "MultiJet" ]
 then   
-    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_MultiJet.root
+    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_MultiJet.root -t 1000
 
 elif [ "$BOX" == "Jet" ]
 then   
-    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root -o Razor2012Limit_${NAME}_${POINT}_Jet.root
+    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root -o Razor2012Limit_${NAME}_${POINT}_Jet.root -t 1000
 elif [ "$BOX" == "All" ]
 then
-    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_All.root
+    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_All.root -t 1000
 else    
-    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_All.root
+    python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_limit.config -i HadFits.root --run-cls -l --nosave-workspace ${NAME}_${POINT}_${LABEL}_Jet.root ${NAME}_${POINT}_${LABEL}_MultiJet.root -o Razor2012Limit_${NAME}_${POINT}_All.root -t 1000
 
 fi
 

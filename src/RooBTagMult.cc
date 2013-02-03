@@ -95,10 +95,6 @@ Double_t RooBTagMult::analyticalIntegral(Int_t code, const char* rangeName) cons
 
     integral = thisf1*binVol1 + thisf2*binVol2 + thisf3*binVol3;
 
-    if (integral<=0) {
-      cout << "WARNING IN RooBTagMult: integral is zero or negative" << endl;
-      return 1.;
-    }
 
     return integral;
   }
