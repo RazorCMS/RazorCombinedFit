@@ -1180,8 +1180,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #find a reasonable range for the POI    
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
-        #with 60 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 60:
+        #with 30 signal events, we *should* be able to set a limit
+        while yield_at_xs[-1][0] < 30:
             stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
@@ -1191,8 +1191,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         poi_max = yield_at_xs[-1][1]
         workspace.var('sigma').setVal(0.0)
         print 'Estimated POI Max:',poi_max
-        poi_max = 0.5
-        print 'For now use :',poi_max
+        #poi_max = 0.5
+        #print 'For now use :',poi_max
         
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
         
