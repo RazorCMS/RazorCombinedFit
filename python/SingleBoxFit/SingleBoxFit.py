@@ -1289,9 +1289,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             calculator_type = 0
         cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
-        #os.system('%s | tee %s' % (cmd,logfile_name))
-        print "sigma error = %f"%workspace.var('sigma').getError()
-        print '%s | tee %s' % (cmd,logfile_name)
+        os.system('%s | tee %s' % (cmd,logfile_name))
+        #print "sigma error = %f"%workspace.var('sigma').getError()
+        #print '%s | tee %s' % (cmd,logfile_name)
         
 #        from ROOT import StandardHypoTestInvDemo
 #        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
