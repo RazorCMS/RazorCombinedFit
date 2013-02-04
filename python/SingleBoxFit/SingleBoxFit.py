@@ -1189,7 +1189,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
         print "signal mrMean = %f"%mrMean
         if mrMean < 800:
-            eventsToExclude = 200
+            eventsToExclude = 150
         elif mrMean < 1000:
             eventsToExclude = 100
         elif mrMean < 1600:
@@ -1292,7 +1292,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,50,poi_min,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,60,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
         #print "sigma error = %f"%workspace.var('sigma').getError()
