@@ -1170,9 +1170,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pSbModel.SetNuisanceParameters(workspace.set('nuisance'))
         pSbModel.SetGlobalObservables(workspace.set('global'))
         pSbModel.SetObservables(workspace.set('variables'))
-        
         SetConstants(workspace, pSbModel)
-        RootTools.Utils.importToWS(workspace,pSbModel)
 
 
         #the background only model
@@ -1180,30 +1178,36 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pBModel = rt.RooStats.ModelConfig(pSbModel)
         pBModel.SetName("BModel")
         pBModel.SetWorkspace(workspace)
-        RootTools.Utils.importToWS(workspace,pBModel)
         
         
-        # print 'Starting the limit setting procedure'
-        #
-        # #find a reasonable range for the POI    
-        # stop_xs = 0.0
-        # yield_at_xs = [(stop_xs,0.0)]
-        # #with 30 signal events, we *should* be able to set a limit
-        # print "sigma  getval = %f"%workspace.var('sigma').getVal()
-        # while yield_at_xs[-1][0] < 30:
-        #     stop_xs += 1e-4
-        #     workspace.var('sigma').setVal(stop_xs)
-        #     signal_yield = 0
-        #     for box in fileIndex:
-        #         signal_yield += workspace.function('S_%s' % box).getVal()
-        #     yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
-        # poi_max = yield_at_xs[-1][1]
-        # #workspace.var('sigma').setVal(0.0)
-        # print 'Estimated POI Max:',poi_max
-        # #sys.exit()
+        print 'Starting the limit setting procedure'
+        
+        #find a reasonable range for the POI    
+        stop_xs = 0.0
+        yield_at_xs = [(stop_xs,0.0)]
+        #with 15 signal events, we *should* be able to set a limit
+        mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
+        if mrMean < 600:
+            eventsToExclude = 100
+        elif mrMean < 1000:
+            eventsToExclude = 30
+        else:
+            eventsToExclude = 15
+            
+        
+        while yield_at_xs[-1][0] < eventsToExclude:
+            stop_xs += 1e-4
+            workspace.var('sigma').setVal(stop_xs)
+            signal_yield = 0
+            background_yield = 0
+            for box in fileIndex:
+                signal_yield += workspace.function('S_%s' % box).getVal()
+            yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
+        poi_max = yield_at_xs[-1][1]
+        print 'Estimated POI Max:',poi_max
+        #sys.exit()
 
         poi_min = 0.00
-        poi_max = 0.1
         print 'For now use :[%f, %f]'%(poi_min,poi_max)
         
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
@@ -1250,12 +1254,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
         # pBModel.GetSnapshot().Print("v")
         # pSbModel.GetSnapshot().Print("v")
 
-        # workspace.obj("BModel").Print("v")
-        # print workspace.obj("BModel").GetSnapshot()
-        # workspace.obj("SbModel").Print("v")
-    
-
-        #sys.exit()
+        # import final stuff to workspace
+        RootTools.Utils.importToWS(workspace,pSbModel)
+        RootTools.Utils.importToWS(workspace,pBModel)
+            
 
         #self.store(workspace, dir='CombinedLikelihood')
         
@@ -1287,7 +1289,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,30,poi_min,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,5,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
         #print "sigma error = %f"%workspace.var('sigma').getError()

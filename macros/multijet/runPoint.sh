@@ -45,8 +45,7 @@ else
 fi
 
 #TODO: Copy the results somewhere
-cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/Razor2012Limit*.root $HOME/work/RAZORLIMTS/Scan/
-cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/Asym_CL*.root $HOME/work/RAZORLIMITS/Scan/
+cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Scan/
 cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/cls.png $HOME/work/RAZORLIMITS/Scan/cls_${NAME}_${POINT}_${BOX}.png
 
 rm -rf $WD
