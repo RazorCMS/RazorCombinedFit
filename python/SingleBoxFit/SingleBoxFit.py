@@ -1063,38 +1063,38 @@ class SingleBoxAnalysis(Analysis.Analysis):
             [p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
 
 
-        for box in fileIndex:
-            workspace.var("n_TTj1b_%s" % box).setMin(0.)
-            workspace.var("n_TTj2b_%s" % box).setMin(0.)
-            workspace.var("n_Vpj_%s" % box).setMin(0.)
+        # for box in fileIndex:
+        #     workspace.var("n_TTj1b_%s" % box).setMin(0.)
+        #     workspace.var("n_TTj2b_%s" % box).setMin(0.)
+        #     workspace.var("n_Vpj_%s" % box).setMin(0.)
             
-            workspace.var("n_TTj1b_%s" % box).setMax(30.)
-            workspace.var("n_TTj2b_%s" % box).setMax(30.)
-            workspace.var("n_Vpj_%s" % box).setMax(30.)
+        #     workspace.var("n_TTj1b_%s" % box).setMax(30.)
+        #     workspace.var("n_TTj2b_%s" % box).setMax(30.)
+        #     workspace.var("n_Vpj_%s" % box).setMax(30.)
             
-            workspace.var("b_TTj1b_%s" % box).setMin(0.)
-            workspace.var("b_TTj2b_%s" % box).setMin(0.)
-            workspace.var("b_Vpj_%s" % box).setMin(0.)
+        #     workspace.var("b_TTj1b_%s" % box).setMin(0.)
+        #     workspace.var("b_TTj2b_%s" % box).setMin(0.)
+        #     workspace.var("b_Vpj_%s" % box).setMin(0.)
             
-            workspace.var("b_TTj1b_%s" % box).setMax(30.)
-            workspace.var("b_TTj2b_%s" % box).setMax(30.)
-            workspace.var("b_Vpj_%s" % box).setMax(30.)
+        #     workspace.var("b_TTj1b_%s" % box).setMax(30.)
+        #     workspace.var("b_TTj2b_%s" % box).setMax(30.)
+        #     workspace.var("b_Vpj_%s" % box).setMax(30.)
             
-            workspace.var("R0_TTj1b_%s" % box).setMax(0.25)
-            workspace.var("R0_TTj2b_%s" % box).setMax(0.25)
-            workspace.var("R0_Vpj_%s" % box).setMax(0.25)
+        #     workspace.var("R0_TTj1b_%s" % box).setMax(0.25)
+        #     workspace.var("R0_TTj2b_%s" % box).setMax(0.25)
+        #     workspace.var("R0_Vpj_%s" % box).setMax(0.25)
             
-            workspace.var("R0_TTj1b_%s" % box).setMin(-3.)
-            workspace.var("R0_TTj2b_%s" % box).setMin(-3.)
-            workspace.var("R0_Vpj_%s" % box).setMin(-3.)
+        #     workspace.var("R0_TTj1b_%s" % box).setMin(-3.)
+        #     workspace.var("R0_TTj2b_%s" % box).setMin(-3.)
+        #     workspace.var("R0_Vpj_%s" % box).setMin(-3.)
             
-            workspace.var("MR0_TTj1b_%s" % box).setMax(450)
-            workspace.var("MR0_TTj2b_%s" % box).setMax(450)
-            workspace.var("MR0_Vpj_%s" % box).setMax(450)
+        #     workspace.var("MR0_TTj1b_%s" % box).setMax(450)
+        #     workspace.var("MR0_TTj2b_%s" % box).setMax(450)
+        #     workspace.var("MR0_Vpj_%s" % box).setMax(450)
             
-            workspace.var("MR0_TTj1b_%s" % box).setMin(-3000.)
-            workspace.var("MR0_TTj2b_%s" % box).setMin(-3000.)
-            workspace.var("MR0_Vpj_%s" % box).setMin(-3000)
+        #     workspace.var("MR0_TTj1b_%s" % box).setMin(-3000.)
+        #     workspace.var("MR0_TTj2b_%s" % box).setMin(-3000.)
+        #     workspace.var("MR0_Vpj_%s" % box).setMin(-3000)
         
         print 'Starting to build the combined PDF'
 
@@ -1187,13 +1187,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
         yield_at_xs = [(stop_xs,0.0)]
         #with 15 signal events, we *should* be able to set a limit
         mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
-        if mrMean < 600:
-            eventsToExclude = 100
+        print "signal mrMean = %f"%mrMean
+        if mrMean < 800:
+            eventsToExclude = 200
         elif mrMean < 1000:
-            eventsToExclude = 30
+            eventsToExclude = 100
+        elif mrMean < 1600:
+            eventsToExclude = 50
         else:
-            eventsToExclude = 15
-            
+            eventsToExclude = 25
+            #sys.exit()
         
         while yield_at_xs[-1][0] < eventsToExclude:
             stop_xs += 1e-4
@@ -1289,7 +1292,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,5,poi_min,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,50,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
         #print "sigma error = %f"%workspace.var('sigma').getError()
