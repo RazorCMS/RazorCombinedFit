@@ -24,7 +24,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorBox
         import RazorBjetBox
         import RazorMultiJetBox
-        #import RazorBoostBox
+        import RazorBoostBox
         import RazorTauBox
         boxes = {}
 
@@ -363,7 +363,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
             
                 #make any plots required
-                #boxes[box].plot(fileName, self, box)
+                boxes[box].plot(fileName, self, box)
                 
             else:
                 
