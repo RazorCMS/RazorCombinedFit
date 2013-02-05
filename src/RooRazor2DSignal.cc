@@ -26,7 +26,7 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 		Hpdf(0),
 		Hbtag(0),
 		iBinX(0),
-		iBinY(0){
+		iBinY(0) {
 
 	//check if the histograms are in the workspace or not
 	if(ws.obj(_nominal)){
@@ -47,7 +47,7 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 
 RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* name) :
    RooAbsPdf(other,name),
-   X("X",this,other.Y),
+   X("X",this,other.X),
    Y("Y",this,other.Y),
    xJes("xJes",this,other.xJes),
    xPdf("xPdf",this,other.xPdf),
@@ -57,7 +57,7 @@ RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* na
    Hpdf(other.Hpdf),
    Hbtag(other.Hbtag),
    iBinX(other.iBinX),
-   iBinY(other.iBinY){
+   iBinY(other.iBinY) {
  }
 
 
@@ -145,7 +145,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int iy = yBinMin; iy <= yBinMax; iy++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return  intPdf;
+    return intPdf;
   }
   else {
     cout << "WARNING IN RooRazor2DTaiSignal: integration code is not correct" << endl;
