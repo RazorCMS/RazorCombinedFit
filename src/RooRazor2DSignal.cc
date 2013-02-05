@@ -11,85 +11,54 @@
 ClassImp(RooRazor2DSignal)
 //---------------------------------------------------------------------------
 RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
-				   RooAbsReal &_x, 	RooAbsReal &_y, 
-				   TH2D* _nominal, TH2D* _jes, TH2D* _pdf, TH2D* _btag,
-				   RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag) : RooAbsPdf(name, title), 
-  X("X", "X Observable", this, _x),
-  Y("Y", "Y Observable", this, _y),
-  xJes("xJes", "xJes", this, _xJes),
-  xPdf("xPdf", "xPdf", this, _xPdf),
-  xBtag("xBtag", "xBtag", this, _xBtag),
-  Hnominal(_nominal),
-  Hjes(_jes),
-  Hpdf(_pdf),
-  Hbtag(_btag),
-  iBinX(_nominal->GetXaxis()->GetNbins()),
-  iBinY(_nominal->GetYaxis()->GetNbins()){
+		RooAbsReal &_x, RooAbsReal &_y,
+		const RooWorkspace& ws,
+		const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
+		RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag):
+		RooAbsPdf(name, title),
+		X("X","X Observable", this, _x),
+		Y("Y", "Y Observable", this, _y),
+		xJes("xJes", "xJes", this, _xJes),
+		xPdf("xPdf", "xPdf", this, _xPdf),
+		xBtag("xBtag", "xBtag", this, _xBtag),
+		Hnominal(0),
+		Hjes(0),
+		Hpdf(0),
+		Hbtag(0),
+		iBinX(0),
+		iBinY(0){
+
+	//check if the histograms are in the workspace or not
+	if(ws.obj(_nominal)){
+		Hnominal = dynamic_cast<TH2*>(ws.obj(_nominal));
+		iBinX = Hnominal->GetXaxis()->GetNbins();
+		iBinY = Hnominal->GetYaxis()->GetNbins();
+	}
+	if(ws.obj(_jes)){
+		Hjes = dynamic_cast<TH2*>(ws.obj(_jes));
+	}
+	if(ws.obj(_pdf)){
+		Hpdf = dynamic_cast<TH2*>(ws.obj(_pdf));
+	}
+	if(ws.obj(_btag)){
+		Hbtag = dynamic_cast<TH2*>(ws.obj(_btag));
+	}
 }
 
 RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* name) :
-   RooAbsPdf(other, name), 
-   X("X", this, other.X), 
-   Y("Y", this, other.Y), 
-   xJes("xJes", this, other.xJes),
-   xPdf("xPdf", this, other.xPdf),
-   xBtag("xBtag", this, other.xBtag),
+   RooAbsPdf(other,name),
+   X("X",this,other.X),
+   Y("Y",this,other.Y),
+   xJes("xJes",this,other.xJes),
+   xPdf("xPdf",this,other.xPdf),
+   xBtag("xBtag",this,other.xBtag),
    Hnominal(other.Hnominal),
    Hjes(other.Hjes),
    Hpdf(other.Hpdf),
    Hbtag(other.Hbtag),
    iBinX(other.iBinX),
-   iBinY(other.iBinY)
-{
-}
-//this is used in the case where there is only one error histogram
-RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
-				   RooAbsReal &_x, 	RooAbsReal &_y,
-				   TH2D* _nominal, TH2D* _error,
-				   RooAbsReal &_xError) : RooAbsPdf(name, title),
-  X("X", "X Observable", this, _x),
-  Y("Y", "Y Observable", this, _y),
-  xJes("xError", "xError", this, _xError),
-  xPdf("xDummy1", "Dummy 1", this, _xError),
-  xBtag("xDummy2", "Dummy 2", this, _xError),
-  Hnominal(_nominal),
-  Hjes(_error),
-  Hpdf(dynamic_cast<TH2D*>(_error->Clone())),
-  Hbtag(dynamic_cast<TH2D*>(_error->Clone())),
-  iBinX(_nominal->GetXaxis()->GetNbins()),
-  iBinY(_nominal->GetYaxis()->GetNbins()){
-	Hpdf->Reset();//set to zero
-	Hbtag->Reset();//set to zero
-}
-
-
-//Reads the histograms from the workspace and/or imports them
-Bool_t RooRazor2DSignal::importWorkspaceHook(RooWorkspace& ws){
-
-	std::cout << "RooRazor2DSignal::importWorkspaceHook" << std::endl;
-
-	//check if the histograms are in the workspace or not
-	if(ws.obj(Hnominal->GetName()) == 0){
-		ws.import(*Hnominal);
-	}
-	if(ws.obj(Hjes->GetName()) == 0){
-		ws.import(*Hjes);
-	}
-	if(ws.obj(Hpdf->GetName()) == 0){
-		ws.import(*Hpdf);
-	}
-	if(ws.obj(Hbtag->GetName()) == 0){
-		ws.import(*Hbtag);
-	}
-
-	//update the pointers to the workspace versions
-	Hnominal = dynamic_cast<TH2D*>(ws.obj(Hnominal->GetName()));
-	Hjes = dynamic_cast<TH2D*>(ws.obj(Hjes->GetName()));
-	Hpdf = dynamic_cast<TH2D*>(ws.obj(Hpdf->GetName()));
-	Hbtag = dynamic_cast<TH2D*>(ws.obj(Hbtag->GetName()));
-
-	return false;
-}
+   iBinY(other.iBinY){
+ }
 
 
 Double_t RooRazor2DSignal::evaluate() const
@@ -117,7 +86,7 @@ Double_t RooRazor2DSignal::evaluate() const
     rhoBtag = pow(1.0 + btagVal,xBtag);
   }
   double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
-  return (result == 0.0) ? 1.7e-308 : result;
+  return result;
 }
 
 // //---------------------------------------------------------------------------
@@ -154,7 +123,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	  intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy,code);
       }
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return intPdf ;
   }
   else if (code==2){
     // integral over X
@@ -165,7 +134,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int ix = xBinMin; ix <= xBinMax; ix++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return intPdf ;
   }
   else if (code==3){
     // integral over Y
@@ -176,7 +145,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int iy = yBinMin; iy <= yBinMax; iy++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return  (intPdf == 0.0) ? 1 : intPdf;
+    return intPdf ;
   }
   else {
     cout << "WARNING IN RooRazor2DTaiSignal: integration code is not correct" << endl;

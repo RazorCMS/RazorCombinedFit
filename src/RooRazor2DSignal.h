@@ -10,7 +10,7 @@ class RooRealVar;
 class RooAbsReal;
 
 #include "TMath.h"
-#include <TH2D.h>
+#include <TH2.h>
 #include "Math/SpecFuncMathCore.h"
 #include "Math/SpecFuncMathMore.h"
 
@@ -20,20 +20,16 @@ class RooRazor2DSignal : public RooAbsPdf
 public:
    RooRazor2DSignal(){};
    RooRazor2DSignal(const char *name, const char *title,
-		  RooAbsReal &_x, RooAbsReal &_y, 
-		  TH2D* _nominal, TH2D* _jes, TH2D* _pdf, TH2D* _btag,
-		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
-   RooRazor2DSignal(const RooRazor2DSignal& other, const char* name=0) ;
-   RooRazor2DSignal(const char *name, const char *title,
 		  RooAbsReal &_x, RooAbsReal &_y,
-		  TH2D* _nominal, TH2D* _error,
-		  RooAbsReal &_xError);
-   TObject* clone(const char* newname) const {
-	   TNamed* result = new RooRazor2DSignal(*this);
-	   result->SetName(newname);
-	   return result;
+		  const RooWorkspace& ws,
+		  const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
+		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+
+   RooRazor2DSignal(const RooRazor2DSignal& other, const char* name = 0);
+   virtual TObject* clone(const char* newname) const { return new RooRazor2DSignal(*this, newname);
    }
-   ~RooRazor2DSignal() { }
+   inline virtual ~RooRazor2DSignal(){
+   }
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
    Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const;
@@ -46,16 +42,15 @@ protected:
    RooRealProxy xPdf;   // xPdf
    RooRealProxy xBtag;   // xBtag
 
-   TH2D* Hnominal;
-   TH2D* Hjes;
-   TH2D* Hpdf;
-   TH2D* Hbtag;
+   TH2* Hnominal;
+   TH2* Hjes;
+   TH2* Hpdf;
+   TH2* Hbtag;
 
    int iBinX;
    int iBinY;
 
    Double_t evaluate() const;
-   Bool_t importWorkspaceHook(RooWorkspace& ws);
 
    Double_t getBinIntegral2D(const double xmin, const double xmax, 
 			     const double ymin, const double ymax,
@@ -68,11 +63,10 @@ protected:
      int xBinMin, xBinMax;
      int yBinMin, yBinMax;
 
-     if (code==1 || code==2 ){ // integrate x
+     if (code==1 || code==2){ // integrate x
        xBinMin = Hnominal->GetXaxis()->FindBin(xmin);
        xBinMax = Hnominal->GetXaxis()->FindBin(xmax);
      
-       if (xBinMin > xBin || xBinMax < xBin) return 0;
 
        if (xBin==xBinMin && xBinMin==xBinMax) dx = xmax - xmin;
        else if (xBin==xBinMin) dx = Hnominal->GetXaxis()->GetBinUpEdge(xBin) - xmin;
@@ -89,8 +83,6 @@ protected:
        yBinMin = Hnominal->GetYaxis()->FindBin(ymin);
        yBinMax = Hnominal->GetYaxis()->FindBin(ymax);
      
-       if (yBinMin > yBin || yBinMax < yBin) return 0;
-
        if (yBin==yBinMin && yBinMin==yBinMax) dy = ymax - ymin;
        else if (yBin==yBinMin) dy = Hnominal->GetYaxis()->GetBinUpEdge(yBin) - ymin;
        else if (yBin==yBinMax) dy = ymax - Hnominal->GetYaxis()->GetBinLowEdge(yBin);

@@ -10,13 +10,16 @@ boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet
 lumi = 19.3
 
 
-def getBinning():
-    MRbins =  [450, 500, 550, 600, 650, 700, 800, 900, 1000,1200, 1600, 2000, 2500, 4000]
-    Rsqbins = [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
-    nBtagbins = [1.,2.,3.,4.]
+def getBinning(box):
+    #MRbins =  [450, 500, 550, 600, 650, 700, 800, 900, 1000,1200, 1600, 2000, 2500, 4000]
+    #Rsqbins = [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
+    #nBtagbins = [1.,2.,3.,4.]
+    MRbins = cfg.getBinning(box)[0]
+    Rsqbins = cfg.getBinning(box)[1]
+    nBtagbins = cfg.getBinning(box)[2]
     return MRbins, Rsqbins, nBtagbins
 
-def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label, args, smscount):
+def writeTree2DataSet(data, outputFile, outputBox, box, rMin, mRmin, label, args, smscount):
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+label+outputBox,'RECREATE')
     MGstringstart = outputFile.find("MG")+3
     MGstringend = outputFile.find("MCHI")-1
@@ -31,7 +34,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label, args, sms
     args.Print()
     varList3D = rt.RooArgList(args['MR'],args['Rsq'],args['nBtag'])
 
-    MRbins, Rsqbins, nBtagbins = getBinning()
+    MRbins, Rsqbins, nBtagbins = getBinning(box)
 
     x = array("d",MRbins)
     y = array("d",Rsqbins)
@@ -138,9 +141,9 @@ def convertTree2Dataset(tree, smscount, outputFile, outputBox, config, box, min,
     print "Sum of Weights in Box %s = %.1f"%(box,wdata.sumEntries())
     if write:
         if useWeight:
-            writeTree2DataSet(wdata, outputFile, outputBox, rMin, mRmin, label, args, smscount)
+            writeTree2DataSet(wdata, outputFile, outputBox, box, rMin, mRmin, label, args, smscount)
         else:  
-            writeTree2DataSet(rdata, outputFile, outputBox, rMin, mRmin, label, args, smscount)
+            writeTree2DataSet(rdata, outputFile, outputBox, box, rMin, mRmin, label, args, smscount)
     return rdata
 
 if __name__ == '__main__':

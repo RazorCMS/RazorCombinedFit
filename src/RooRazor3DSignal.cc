@@ -94,7 +94,7 @@ Double_t RooRazor3DSignal::evaluate() const
   double result = nomVal*rhoJes*rhoPdf*rhoBtag/volume;
   //double result = nomVal/volume;
   //std::cout << "result = " << result << std::endl;
-  return (result == 0.0) ? 1.7e-308 : result;
+  return result;
 }
 
 // //---------------------------------------------------------------------------

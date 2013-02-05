@@ -55,9 +55,9 @@ Int_t RooRazor2DTail_SYS::getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& a
   // integral on both X and Y
   if (matchArgs(allVars, analVars, X, Y)) return 1;
   // integral over X
-  else if (matchArgs(allVars, analVars, X)) return 2;
+  if (matchArgs(allVars, analVars, X)) return 2;
   // integral over Y
-  else if (matchArgs(allVars, analVars, Y)) return 3;
+  if (matchArgs(allVars, analVars, Y)) return 3;
   // integrating nothing
   return 0;
 }

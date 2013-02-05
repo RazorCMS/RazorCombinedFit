@@ -155,6 +155,43 @@ class Box(object):
         hpdf = rt.RooHistPdf('%sPdf' % modelName,'%sPdf' % modelName,vars,hdata)
         self.importToWS(hpdf)
         return (hpdf.GetName(),sigNorm)
+
+    def makeRooRazor3DSignal(self, inputFile, modelName):
+        """Makes a signal PDF from the input histograms"""
+        
+        rootFile = rt.TFile.Open(inputFile)
+        wHisto = rootFile.Get('wHisto')
+        btag =  rootFile.Get('wHisto_btagerr_pe')
+        jes =  rootFile.Get('wHisto_JESerr_pe')
+        pdf =  rootFile.Get('wHisto_pdferr_pe')
+        
+        def renameAndImport(histo):
+            #make a memory resident copy
+            newHisto = histo.Clone('%s_%s' % (histo.GetName(),self.name))
+            newHisto.SetDirectory(0)
+            self.importToWS(newHisto)
+            return newHisto
+        
+        wHisto = renameAndImport(wHisto)
+        btag = renameAndImport(btag)
+        jes = renameAndImport(jes)
+        pdf = renameAndImport(pdf)
+            
+        rootFile.Close()
+        
+        #set the per box eff value
+        sigNorm = wHisto.Integral()
+        self.workspace.factory('eff_value_%s[%f]' % (self.name,sigNorm))
+        print 'eff_value for box %s is %f' % (self.name,self.workspace.var('eff_value_%s'%self.name).getVal())
+        
+        signal = rt.RooRazor3DSignal('SignalPDF_%s' % self.name,'Signal PDF for box %s' % self.name,
+                                     self.workspace.var('MR'),self.workspace.var('Rsq'),self.workspace.var('nBtag'),
+                                     self.workspace,
+                                     wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
+                                     self.workspace.var('xJes_prime'),self.workspace.var('xPdf_prime'),self.workspace.var('xBtag_prime'))
+        self.importToWS(signal)
+        
+        return (signal.GetName(),sigNorm)
     
     def importToWS(self, *args):
         """Utility function to call the RooWorkspace::import methods"""

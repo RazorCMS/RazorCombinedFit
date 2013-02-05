@@ -41,8 +41,8 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet']}
                         
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
-            # for limit setting :
-        #elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
+        # for CLs limit setting  remove the following line
+        elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
         else: self.fitregion = fitregion
         self.fitMode = fitMode
 
@@ -179,8 +179,8 @@ class RazorBox(Box.Box):
             self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
         # add only relevant components (for generating toys)
-        #myPDFlist = rt.RooArgList()
-        #for z in self.zeros:
+        # myPDFlist = rt.RooArgList()
+        # for z in self.zeros:
         #    if self.name not in self.zeros[z]:
         #        #self.addTailPdf(z, not (z=="Vpj"))
         #        self.addTailPdf(z, True)
@@ -193,6 +193,7 @@ class RazorBox(Box.Box):
         self.addTailPdf("Vpj",True)
         self.addTailPdf("TTj1b",True)
         self.addTailPdf("TTj2b",True)
+        
         # build the total PDF
         myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
                 
@@ -220,10 +221,7 @@ class RazorBox(Box.Box):
             if(self.btag == "Btag") and z=="TTj2b": self.floatBTagf3(z)
             self.floatComponent(z)
             self.floatYield(z)
-            #self.fixPars("R0_")
-            #self.fixPars("MR0_",False)
-            #self.fixPars("n_")
-
+            
         # switch off not-needed components (box by box)
         fixed = []
         for z in self.zeros:
@@ -244,10 +242,12 @@ class RazorBox(Box.Box):
         #in the case that the input file is an MC input file
         if data is None or not data:
             return None
-        Ndata = data.reduce(self.getVarRangeCutNamed(ranges=self.fitregion.split(","))).sumEntries()
-        self.workspace.var("Ntot_TTj2b").setVal(Ndata*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
-        self.workspace.var("Ntot_TTj1b").setVal(Ndata*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
-        self.workspace.var("Ntot_Vpj").setVal(Ndata*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
+        # Ndata = data.reduce(self.getVarRangeCutNamed(ranges=self.fitregion.split(","))).sumEntries()
+        # self.workspace.var("Ntot_TTj2b").setVal(Ndata*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
+        # self.workspace.var("Ntot_TTj1b").setVal(Ndata*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
+        # self.workspace.var("Ntot_Vpj").setVal(Ndata*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
+
+        
         # switch off btag fractions if no events
         if self.fitMode == "3D" or self.fitMode == "4D":
             data1b = data.reduce("nBtag>=1&&nBtag<2")
@@ -279,7 +279,9 @@ class RazorBox(Box.Box):
         
         # signalModel is the 2D pdf [normalized to one]
         # nSig is the integral of the histogram given as input
-        signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
+        #signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
+        signalModel, nSig = self.makeRooRazor3DSignal(inputFile,modelName)
+        
         # compute the expected yield/(pb-1)
         if signalXsec > 0.:
             # for SMS: the integral is the efficiency.
@@ -296,17 +298,22 @@ class RazorBox(Box.Box):
         self.workspace.factory("rSig[1.]")
         self.workspace.var("rSig").setConstant(rt.kTRUE)
         # compute the signal yield multiplying by the efficiency
-        self.workspace.factory("expr::Ntot_%s('%f*@0*@1', Lumi, rSig)" %(modelName,nSig))
+        self.workspace.factory("expr::Ntot_%s('%f*@0*@1',lumi_value, rSig)" %(modelName,nSig))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
         #                   rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
         #                   )
         theRealFitModel = "fitmodel"
+        
+        SpBPdfList = rt.RooArgList(self.workspace.pdf("ePDF_TTj1b"))
+        # prevent nan when there is no signal expected
+        if not math.isnan(self.workspace.function("Ntot_%s"%modelName).getVal()): SpBPdfList.add(self.workspace.pdf("eBinPDF_Signal"))
+        if self.workspace.var("Ntot_TTj2b").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF_TTj2b"))
+        if self.workspace.var("Ntot_Vpj").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF_Vpj"))
+                
         add = rt.RooAddPdf('%s_%sCombined' % (theRealFitModel,modelName),'Signal+BG PDF',
-                           rt.RooArgList(self.workspace.pdf(theRealFitModel),extended)
-                           )
-        self.importsToWS(add)
-        self.workspace.Print()
+                           SpBPdfList)
+        self.importToWS(add)
         self.signalmodel = add.GetName()
         return extended.GetName()
         
