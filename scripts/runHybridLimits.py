@@ -76,7 +76,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%i.root %s --xsec %f -t 1000\n"%(massPoint,box,massPoint,box,hypo,t,tagHypo,xsecpoint))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i.root %s --xsec %f -t 1000\n"%(massPoint,box,massPoint,box,xsecstring,hypo,t,tagHypo,xsecpoint))
 
     outputfile.write("cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
     outputfile.write("rm -rf $WD\n")
@@ -90,10 +90,10 @@ if __name__ == '__main__':
     
     print box
     
-    gluinopoints = range(425,2025,100)
-    neutralinopoints = [0, 100]
+    gluinopoints = range(425,2025,200)
+    #dsneutralinopoints = [0, 100]
     #gluinopoints = [1325]
-    #neutralinopoints = [0]
+    neutralinopoints = [0]
     queue = "1nd"
     
     pwd = os.environ['PWD']
