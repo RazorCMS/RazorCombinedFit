@@ -76,7 +76,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i.root %s --xsec %f -t 1000\n"%(massPoint,box,massPoint,box,xsecstring,hypo,t,tagHypo,xsecpoint))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i.root %s --xsec %f -t 500\n"%(massPoint,box,massPoint,box,xsecstring,hypo,t,tagHypo,xsecpoint))
 
     outputfile.write("cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
     outputfile.write("rm -rf $WD\n")
@@ -86,7 +86,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 3 # do 1000 toys each job
+    nJobs = 6 # do 500 toys each job
     
     print box
     
