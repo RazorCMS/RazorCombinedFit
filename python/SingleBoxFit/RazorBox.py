@@ -178,7 +178,7 @@ class RazorBox(Box.Box):
             self.workspace.factory("RooTwoBin::PlusPDF(CHARGE,plusOne[1.])")
             self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
-        # add only relevant components (for generating toys)
+        # # add only relevant components (for generating toys)
         # myPDFlist = rt.RooArgList()
         # for z in self.zeros:
         #    if self.name not in self.zeros[z]:

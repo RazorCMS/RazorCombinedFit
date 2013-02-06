@@ -299,7 +299,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
                 
                 # # Procedure for MultiJet boxes / Jet Sideband
-                # # for sideband do this:
+                # for sideband do this:
                 # boxes[box].fixPars("Vpj", False)
                 # boxes[box].fixPars("Ntot", True)
                 # boxes[box].fixPars("f", True)
@@ -313,7 +313,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("f3_TTj2b", False)
                 # boxes[box].fixPars("Vpj", True)
                 # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range))
+                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
                 # # float n_TTj2b, b_TTj2b, MR0_TTj2b, R0_TTj2b, f3_TTj2b
                 # boxes[box].fixPars("TTj1b", False)
                 # boxes[box].fixPars("Ntot", True)
@@ -322,15 +322,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("f2", True)
                 # boxes[box].fixPars("Vpj", True)
                 # boxes[box].fixPars("TTj2b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range))
+                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
                 # # float n_TTj1b, b_TTj1b, MR0_TTj1b, R0_TT12b
                 # boxes[box].fixPars("R0_", False)
                 # boxes[box].fixPars("Ntot_", False)
                 # boxes[box].fixPars("n_", False)
                 # boxes[box].fixPars("b_", False)
                 # boxes[box].fixPars("f3_TTj2b",False)
-                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
-
+                #boxes[box].fixPars("Vpj", True)
+                fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
+                
                 # # Procedure for Ele Full:
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowRsq,LowMR"))
                 # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range)) # float all
@@ -570,11 +571,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             ePDF_SR_TTj2b = rt.RooExtendPdf("ePDF_SR_TTj2b","ePDF_SR_TTj2b", boxes[box].workspace.pdf("PDF_TTj2b"), N_SR_TTj2b, norm_region)
             ePDF_SR_Vpj = rt.RooExtendPdf("ePDF_SR_Vpj","ePDF_SR_Vpj", boxes[box].workspace.pdf("PDF_Vpj"), N_SR_Vpj, norm_region)
             
-            #eBinPDF_SR_Signal = rt.RooExtendPdf("eBinPDF_SR_Signal","eBinPDF_SR_Signal",  boxes[box].workspace.pdf("SignalPDF_%s"%boxes[box].name), NsSR)
-            #ePDF_SR_TTj1b = rt.RooExtendPdf("ePDF_SR_TTj1b","ePDF_SR_TTj1b", boxes[box].workspace.pdf("PDF_TTj1b"), N_SR_TTj1b)
-            #ePDF_SR_TTj2b = rt.RooExtendPdf("ePDF_SR_TTj2b","ePDF_SR_TTj2b", boxes[box].workspace.pdf("PDF_TTj2b"), N_SR_TTj2b)
-            #ePDF_SR_Vpj = rt.RooExtendPdf("ePDF_SR_Vpj","ePDF_SR_Vpj", boxes[box].workspace.pdf("PDF_Vpj"), N_SR_Vpj)
-            
             boxes[box].importToWS(NsSR)
             boxes[box].importToWS(eBinPDF_SR_Signal)
             boxes[box].importToWS(N_SR_TTj1b)
@@ -621,20 +617,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
             myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
 
-            #lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
             lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
-            #lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],data, fr_central, Extend=False, norm_region=norm_region)
 
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
             sDATA.var6 = LH1DataSR
             
             myDataTree.Fill()
-
-            #lzValues = []
-            #LH1xValues = []
-            #LH0xValues = []
-
+            
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
@@ -691,13 +681,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     print 'PSigGenNum = %d' % PSigGenNum
 
-                    #this is a work around for a bug in RooHistPdf, where the number of events generated is not what we asked for                    
-                    #sigHist = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,i))
-                    #sig_toy = boxes[box].sampleDatasetFromHistogram2D(boxes[box].workspace.var('MR'),\
-                    #                                                    boxes[box].workspace.var('Rsq'),\
-                    #                                                    sigHist, PSigGenNum)
-                    #
-                    #bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
 
                     sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
                     bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 1)
@@ -710,7 +693,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #sum the toys
                     tot_toy = bkg_toy.reduce("(%s)" %boxes[box].getVarRangeCutNamed([norm_region]))
                     tot_toy.append(sig_toy)
-                    #tot_toy.append(fitDataSet)
+                    
                     print "Total Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
@@ -728,74 +711,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
-                #Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
+                
                 LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
-                #LzSRnoExt, LH0xSRnoExt,LH1xSRnoExt = getLzSR(boxes[box],tot_toy, fr_central, Extend=False, norm_region=norm_region)
-                #if LzSR is None:
-                #    print 'WARNING:: Limit setting fit %i is bad. Skipping...' % i
-                #    continue
-                #lzValues.append(Lz)
-                #LH0xValues.append(LH0x)
-                #LH1xValues.append(LH1x)
-                #lzV.setVal(Lz)
-                #values.add(rt.RooArgSet(lzV,lzD,lzDH0,lzDH1))
-                #valuesSR.add(rt.RooArgSet(lzDSR,lzDH0SR,lzDH1SR))
-                #valuesSRnoExt.add(rt.RooArgSet(lzDSRnoExt,lzDH0SRnoExt,lzDH1SRnoExt))
-
-                #s.var1 = Lz
-                #s.var2 = LH0x
-                #s.var3 = LH1x
 
                 s.var4 = LzSR
                 s.var5 = LH0xSR
                 s.var6 = LH1xSR
-                #s.var7 = LzSRnoExt
-                #s.var8 = LH0xSRnoExt
-                #s.var9 = LH1xSRnoExt
-
-                #s.var10 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR1"])).numEntries()
-                #s.var11 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR2"])).numEntries()
-                #s.var12 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR3"])).numEntries()
-                #s.var13 = tot_toy.reduce(boxes[box].getVarRangeCutNamed(["sR4"])).numEntries()
-
-                del tot_toy
 
                 myTree.Fill()
-                ### plotting:
-                #frame_MR_sig = boxes[box].workspace.var('MR').frame()
-                #sig_toy.plotOn(frame_MR_sig)
-                #boxes[box].getFitPDF(name=boxes[box].fitmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kBlue))
-                #boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kGreen))
-                #boxes[box].getFitPDF(name=boxes[box].signalmodel).plotOn(frame_MR_sig, rt.RooFit.LineColor(rt.kRed), rt.RooFit.LineStyle(8), rt.RooFit.Components(signalModel))
-                #self.store(frame_MR_sig,name='MR_%i_sig'%i, dir=box)
-            
-            #calculate the area integral of the distribution    
-            #lzValues.sort()#smallest to largest
-            #lzValuesSum = sum(map(abs,lzValues))
-            
-            #zMin = min(lzValues)
-            #zMax = max(lzValues)
-            #hist_H1 = rt.TH1D('hist_H1','H1',120,zMin,zMax)
-            #for z in lzValues:
-            #    hist_H1.Fill(z)
-            
-            #lzSum = 0
-            #lzSig90 = 1e-12+(2*lzData)
-            #lzSig95 = 1e-12+(2*lzData)
-            #for lz in lzValues:
-            #    lzSum += abs(lz)
-            #    if lzSum >= 0.1*lzValuesSum:
-            #        lz90 = lz
-            #    if lzSum >= 0.05*lzValuesSum:
-            #        lz95 = lz
-            #        break
-            #    
-            #reject = (lzData>lzSig90,lzData>lzSig95)
-            #print 'Result for box %s: lambda_{data}=%f,lambda_{critical}(90,95)=%s, reject(90,95)=%s; ' % (box,lzData,str((lzSig90,lzSig95)),str(reject))
-
-            #self.store(hist_H1, dir=box)
-            #self.store(values, dir=box)
-            #self.store(valuesSR, dir=box)
 
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)

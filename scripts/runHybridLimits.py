@@ -8,7 +8,41 @@ import os.path
 import sys
 import time
 from array import *
+def getUpperXsec(box,neutralinopoint,gluinopoint):
+    lumi = 19300
+    name = "T1bbbb"
+    label = "MR400.0_R0.5"
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+    signalFile = rt.TFile("/afs/cern.ch/user/w/woodson/public/Razor2013/Signal/"+name+"_"+massPoint+"_"+label+"_"+box+".root")
+    wHisto = signalFile.Get("wHisto")
+    mrMean = wHisto.GetMean(1)
+    stop_xs = 0.0
+    yield_at_xs = [(stop_xs,0.0)]
+    #with 15 signal events, we *should* be able to set a limit
+    print "signal mrMean = %f"%mrMean
+    if mrMean < 800:
+        eventsToExclude = 150
+        poi_max = 1.
+    elif mrMean < 1000:
+        eventsToExclude = 100
+        poi_max = 0.5
+    elif mrMean < 1600:
+        eventsToExclude = 50
+        poi_max = 0.2
+    else:
+        eventsToExclude = 25
+        poi_max = 0.05
+        
+    # while yield_at_xs[-1][0] < eventsToExclude:
+    #     stop_xs += 1e-4
+    #     signal_yield = stop_xs*(wHisto.Integral())*lumi
+    #     yield_at_xs.append( (signal_yield, stop_xs) )
+    # poi_max = yield_at_xs[-1][1]
+    # print 'Estimated POI Max:',poi_max
 
+    return poi_max
+
+    
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
@@ -56,10 +90,10 @@ if __name__ == '__main__':
     
     print box
     
-    #gluinopoints = range(425,2025,100)
-    #neutralinopoints = [0, 100]
-    gluinopoints = [425]
-    neutralinopoints = [0]
+    gluinopoints = range(425,2025,100)
+    neutralinopoints = [0, 100]
+    #gluinopoints = [1325]
+    #neutralinopoints = [0]
     queue = "1nd"
     
     pwd = os.environ['PWD']
@@ -70,17 +104,22 @@ if __name__ == '__main__':
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))
 
-    xsecpoints = [0.0001,0.0005, 0.001,0.005,0.01,0.05,0.1,0.5,1.0]
+    xsecsteps = [0.01,0.05,0.1,0.5,1.0]
     hypotheses = ["B","SpB"]
 
     for neutralinopoint in neutralinopoints:
         for gluinopoint in gluinopoints:
-            for xsecpoint in xsecpoints:
+            for xsecstep in xsecsteps:
                 for hypo in hypotheses:
                     for t in xrange(0,nJobs):
+                        poi_max = getUpperXsec(box,neutralinopoint,gluinopoint)
+                        xsecunrounded = xsecstep*poi_max
+                        xsecpoint = float("%.4f"%(xsecunrounded))
+                        print "Now scanning xsec = %f"%xsecpoint
+                        
                         outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                        #time.sleep(3)
+                        time.sleep(3)
                         os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                         
