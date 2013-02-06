@@ -1052,7 +1052,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pSbModel.SetObservables(workspace.set('variables'))
         
         SetConstants(workspace, pSbModel)
-        RootTools.Utils.importToWS(workspace,pSbModel)
+
+        #the background only model
+        poiValueForBModel = 0.0
+        pBModel = rt.RooStats.ModelConfig(pSbModel)
+        pBModel.SetName("BModel")
+        pBModel.SetWorkspace(workspace)
+        
+
         
         print 'This is the final PDF'
         pdf_params = simultaneous_product.getParameters(pData)
@@ -1071,7 +1078,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
         #with 15 signal events, we *should* be able to set a limit
-        while yield_at_xs[-1][0] < 15:
+        mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
+        print "signal mrMean = %f"%mrMean
+        if mrMean < 800:
+            eventsToExclude = 150
+        elif mrMean < 1000:
+            eventsToExclude = 100
+        elif mrMean < 1600:
+            eventsToExclude = 50
+        else:
+            eventsToExclude = 25
+
+        while yield_at_xs[-1][0] < eventsToExclude:
             stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
@@ -1096,18 +1114,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         print '\nS+B: %f' % minSplusB 
         
         #save a snap-shot
-        poiValueForBModel = 0.0
         pPoiAndNuisance = rt.RooArgSet()
         pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
         pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
         pSbModel.SetSnapshot(pPoiAndNuisance)
         
         del pNll, pProfile, pPoiAndNuisance
-        
-        #the background only model
-        pBModel = rt.RooStats.ModelConfig(pSbModel)
-        pBModel.SetName("BModel")
-        pBModel.SetWorkspace(workspace)
         
         #Find a parameter point for generating pseudo-data
         #with the background-only data.
@@ -1125,6 +1137,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pBModel.SetSnapshot(pPoiAndNuisance)        
 
         #this should be right at the bottom
+        RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
                                            
         #self.store(workspace, dir='CombinedLikelihood')
