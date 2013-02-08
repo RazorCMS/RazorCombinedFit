@@ -72,6 +72,55 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.workspace.var("f2_QCD").setVal(0.)
         self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
 
+
+    def addSignalModel(self, inputFile, signalXsec, modelName = None):
+        
+        if modelName is None:
+            modelName = 'Signal'
+        
+        # signalModel is the 2D pdf [normalized to one]
+        # nSig is the integral of the histogram given as input
+        #signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
+        signalModel, nSig = self.makeRooRazor2DSignal(inputFile,modelName)
+        
+        # compute the expected yield/(pb-1)
+        if signalXsec > 0.:
+            # for SMS: the integral is the efficiency.
+            # We multiply it by the specified xsection
+            nSig = nSig*signalXsec
+        else:
+            # here nSig is the expected yields for 1000 pb-1
+            # and we turn it into the expcted yield in a pb-1
+            nSig = nSig/1000.
+
+        #set the MC efficiency relative to the number of events generated
+        #epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
+        #self.yieldToCrossSection(modelName) #define Ntot
+        self.workspace.factory("rSig[1.]")
+        self.workspace.var("rSig").setConstant(rt.kTRUE)
+        # compute the signal yield multiplying by the efficiency
+        self.workspace.factory("expr::Ntot_%s('%f*@0*@1',lumi_value, rSig)" %(modelName,nSig))
+        extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
+        #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
+        #                   rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
+        #                   )
+        theRealFitModel = "fitmodel"
+        
+        SpBPdfList = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"))
+        # prevent nan when there is no signal expected
+        if not math.isnan(self.workspace.function("Ntot_%s"%modelName).getVal()): SpBPdfList.add(self.workspace.pdf("eBinPDF_Signal"))
+        print self.workspace.function("N_2nd_TTj").getVal() 
+        if self.workspace.function("N_2nd_TTj").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF2nd_TTj"))
+        if self.workspace.function("N_1st_QCD").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF1st_QCD"))
+        if self.workspace.function("N_2nd_QCD").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF2nd_QCD"))
+                
+        add = rt.RooAddPdf('%s_%sCombined' % (theRealFitModel,modelName),'Signal+BG PDF',
+                           SpBPdfList)
+        self.importToWS(add)
+        self.signalmodel = add.GetName()
+        return extended.GetName()
+
+    
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None):
         
         rangeNone = False

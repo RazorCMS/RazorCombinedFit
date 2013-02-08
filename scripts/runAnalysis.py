@@ -115,7 +115,7 @@ if __name__ == '__main__':
                     aa.analysis(args)
                     if options.limit:
                         if not options.runCLS:
-                            aa.limit(args,options.toys)
+                            aa.limit(args, options.toys, options.nToyOffset)
                         else:
                             aa.limit_profile(args,options.toys)
                 aa.final()
