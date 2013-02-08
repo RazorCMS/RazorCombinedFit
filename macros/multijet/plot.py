@@ -5,12 +5,107 @@ import os.path
 import sys, glob, re
 from array import *
 
+     
 def file_key(filename):
     massPoint = re.findall("[0-9]+.000000",filename)
     gluinoMass    = massPoint[0]
     LSPMass  = massPoint[1]
     return float(gluinoMass)
     
+def getHybridCLsArrays(directory, LSPmassStrip, Box):
+    tfile = rt.TFile.Open("%s/xsecUL_%s.root"%(directory,Box))
+    print "%s/xsecUL_%s.root"%(directory,Box)
+    xsecTree = tfile.Get("xsecTree")
+    xsecTree.Draw("")
+    gluinoMassArray = array('d')
+    gluinoMassArray_er = array('d')
+    observedLimit = array('d')
+    observedLimit_er = array('d')
+    expectedLimit = array('d')
+    expectedLimit_minus1sigma = array('d')
+    expectedLimit_plus1sigma = array('d')
+    expectedLimit_minus2sigma = array('d')
+    expectedLimit_plus2sigma = array('d')
+
+    
+    xsecTree.Draw('>>elist',' mchi==%f'%(float(LSPmassStrip)),'entrylist')
+
+    elist = rt.gDirectory.Get('elist')
+    entry = -1
+    while True:
+        entry = elist.Next()
+        if entry == -1: break
+        xsecTree.GetEntry(entry)
+
+        gluinoMassArray.append(xsecTree.mg)
+        gluinoMassArray_er.append(0.0)
+        exec 'xsecULObs = xsecTree.xsecULObs_%s'%Box
+        exec 'xsecULExp = xsecTree.xsecULExp_%s'%Box
+        exec 'xsecULExpPlus = xsecTree.xsecULExpPlus_%s'%Box
+        exec 'xsecULExpMinus = xsecTree.xsecULExpMinus_%s'%Box
+        
+        observedLimit.append(xsecULObs)#*crossSections[i])
+        observedLimit_er.append(0.0)#*crossSections[i])
+        
+        expectedLimit.append(xsecULExp)#*crossSections[i])
+        expectedLimit_minus1sigma.append(xsecULExp - xsecULExpMinus)#*crossSections[i])
+        expectedLimit_plus1sigma.append(xsecULExpPlus - xsecULExp)#*crossSections[i])
+        expectedLimit_minus2sigma.append(xsecULExp - xsecULExpMinus)#*crossSections[i])
+        expectedLimit_plus2sigma.append(xsecULExpPlus - xsecULExp)#*crossSections[i])        
+    
+
+    return gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma
+    
+def getAsymptoticCLsArrays(directory, LSPmassStrip, box):
+    gluinoMassArray = array('d')
+    gluinoMassArray_er = array('d')
+    observedLimit = array('d')
+    observedLimit_er = array('d')
+    expectedLimit = array('d')
+    expectedLimit_minus1sigma = array('d')
+    expectedLimit_plus1sigma = array('d')
+    expectedLimit_minus2sigma = array('d')
+    expectedLimit_plus2sigma = array('d')
+    
+    i=0
+    for filename in sorted(glob.glob(directory+'/Asym*'),key=file_key):
+        massPoint = re.findall("[0-9]+.000000",filename)
+        gluinoMass    = massPoint[0]
+        LSPMass  = massPoint[1]
+        print "LSP mass = %s, gluino mass = %s"%(LSPMass,gluinoMass)
+        
+        if not(float(LSPMass) == float(LSPmassStrip)) :
+            continue
+        if filename.find("_%s_"%box)==-1:
+            continue
+
+        tfile = rt.TFile(filename)
+        result_sigma = tfile.Get("result_sigma")
+
+        expected_med          = result_sigma.GetExpectedUpperLimit(0)
+        expected_minus1sigma  = result_sigma.GetExpectedUpperLimit(-1)
+        expected_plus1sigma   = result_sigma.GetExpectedUpperLimit(1)
+        expected_minus2sigma  = result_sigma.GetExpectedUpperLimit(-2)
+        expected_plus2sigma   = result_sigma.GetExpectedUpperLimit(2)
+      
+        observed_high    = result_sigma.UpperLimit()
+        observed_high_er = result_sigma.UpperLimitEstimatedError()
+
+        gluinoMassArray.append(float(gluinoMass))
+        gluinoMassArray_er.append(0.0)
+        
+        observedLimit.append(float(observed_high))#*crossSections[i])
+        observedLimit_er.append(float(observed_high_er))#*crossSections[i])
+        
+        expectedLimit.append(float(expected_med))#*crossSections[i])
+        expectedLimit_minus1sigma.append(float(expected_med - expected_minus1sigma))#*crossSections[i])
+        expectedLimit_plus1sigma.append(float(expected_plus1sigma - expected_med ))#*crossSections[i])
+        expectedLimit_minus2sigma.append(float( expected_med - expected_minus2sigma))#*crossSections[i])
+        expectedLimit_plus2sigma.append(float(expected_plus2sigma - expected_med ))#*crossSections[i])
+        i+=1
+
+    return gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma
+
 def setstyle():
     # For the canvas:
     rt.gStyle.SetCanvasBorderMode(0)
@@ -96,6 +191,7 @@ if __name__ == '__main__':
     directory      = sys.argv[1]
     LSPmassStrip   = sys.argv[2]
     box = sys.argv[3]
+    box = box.lower()
 
     if box.lower() == "tautaujet":
         Box = "TauTauJet"
@@ -165,56 +261,13 @@ if __name__ == '__main__':
 
     h_limit = rt.TMultiGraph()
     h_limit.SetTitle(" ;m_{#tilde{g}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
-    gluinoMassArray         = array('d')
-    gluinoMassArray_er      = array('d')
-    observedLimit    = array('d')
-    observedLimit_er = array('d')
-    expectedLimit    = array('d')
-    expectedLimit_minus2sigma = array('d')
-    expectedLimit_minus1sigma = array('d')
-    expectedLimit_plus1sigma  = array('d')
-    expectedLimit_plus2sigma  = array('d')
 
-    i=0
-    #for filename in glob.glob(directory+'/*/Asym*'):
-    for filename in sorted(glob.glob(directory+'/Asym*'),key=file_key):
-        massPoint = re.findall("[0-9]+.000000",filename)
-        gluinoMass    = massPoint[0]
-        LSPMass  = massPoint[1]
-        print "LSP mass = %s, gluino mass = %s"%(LSPMass,gluinoMass)
-        #sys.exit()
-        if not(float(LSPMass) == float(LSPmassStrip)) :
-            continue
-        if filename.find("_%s_"%box)==-1:
-            continue
 
-        print filename
-        file = rt.TFile(filename)
-        result_sigma = file.Get("result_sigma")
+    if directory.lower().find("hybrid") !=-1:      
+        gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma = getHybridCLsArrays(directory, LSPmassStrip, Box)
+    else:
+        gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma = getAsymptoticCLsArrays(directory, LSPmassStrip, box)
 
-        expected_med          = result_sigma.GetExpectedUpperLimit(0)
-        expected_minus1sigma  = result_sigma.GetExpectedUpperLimit(-1)
-        expected_plus1sigma   = result_sigma.GetExpectedUpperLimit(1)
-        expected_minus2sigma  = result_sigma.GetExpectedUpperLimit(-2)
-        expected_plus2sigma   = result_sigma.GetExpectedUpperLimit(2)
-      
-        observed_high    = result_sigma.UpperLimit()
-        observed_high_er = result_sigma.UpperLimitEstimatedError()
-
-        gluinoMassArray.append(float(gluinoMass))
-        gluinoMassArray_er.append(0.0)
-        
-        observedLimit.append(float(observed_high))#*crossSections[i])
-        observedLimit_er.append(float(observed_high_er))#*crossSections[i])
-        
-        expectedLimit.append(float(expected_med))#*crossSections[i])
-        expectedLimit_minus1sigma.append(float(expected_med - expected_minus1sigma))#*crossSections[i])
-        expectedLimit_plus1sigma.append(float(expected_plus1sigma - expected_med ))#*crossSections[i])
-        expectedLimit_minus2sigma.append(float( expected_med - expected_minus2sigma))#*crossSections[i])
-        expectedLimit_plus2sigma.append(float(expected_plus2sigma - expected_med ))#*crossSections[i])
-        i+=1
-
-     
     rt.gStyle.SetOptStat(0)
 
 
@@ -266,7 +319,7 @@ if __name__ == '__main__':
     if box.lower() == "all" or box.lower() == "multijet":
         h_limit.SetMinimum(1e-4)
     else:
-        h_limit.SetMinimum(1e-4)
+        h_limit.SetMinimum(9e-4)
     h_limit.Add(gr_expectedLimit2sigma)
     h_limit.Add(gr_expectedLimit1sigma)
     h_limit.Add(gr_observedLimit)
@@ -295,9 +348,18 @@ if __name__ == '__main__':
     l.DrawLatex(0.55,0.719,"%s #geq 1b-tag"%Box)
     l.SetTextColor(rt.kBlue+2)
     l.DrawLatex(0.55,0.785,"Razor Inclusive")
-        
+    if directory.lower().find("hybrid")!=-1:
+        l.SetTextColor(rt.kOrange+5)   
+        l.DrawLatex(0.75,0.775,"Hybrid CL_{s}")
+    else:
+        l.SetTextColor(rt.kGreen+1)
+        l.DrawLatex(0.77,0.785,"Asymptotic")
+        l.DrawLatex(0.79,0.71,"Freq. CL_{s}")
 
-    leg = rt.TLegend(0.55,0.45,0.9,0.67)
+    if directory.lower().find("hybrid")==-1:
+        leg = rt.TLegend(0.55,0.45,0.9,0.67)
+    else:
+        leg = rt.TLegend(0.55,0.49,0.9,0.67)
     leg.SetTextFont(132)
     leg.SetFillColor(rt.kWhite)
     leg.SetLineColor(rt.kWhite)
@@ -305,7 +367,7 @@ if __name__ == '__main__':
     leg.AddEntry(gr_observedLimit, "observed limit","l")
     leg.AddEntry(gr_expectedLimit, "expected limit","l")
     leg.AddEntry(gr_expectedLimit1sigma, "expected limit #pm 1 #sigma","f")
-    leg.AddEntry(gr_expectedLimit2sigma, "expected limit #pm 2 #sigma","f")
+    if directory.lower().find("hybrid")==-1: leg.AddEntry(gr_expectedLimit2sigma, "expected limit #pm 2 #sigma","f")
     leg.Draw("SAME")
 
     c.SaveAs(directory+"/limits_LSPMass_"+re.sub('\.','_',LSPmassStrip)+"_"+box+".pdf")

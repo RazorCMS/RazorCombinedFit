@@ -415,7 +415,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             for box in boxes.keys():
                 self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
             
-    def limit(self, inputFiles, nToys):
+    def limit(self, inputFiles, nToys, nToyOffset):
         """Set a limit based on the model dependent method"""
         
         fileIndex = self.indexInputFiles(inputFiles)
@@ -463,26 +463,22 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         def getLzSR(box, ds, fr, Extend = True, norm_region = 'HighMR'):
             reset(box, fr)
+            
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
-            
             H0xNLL = box.getFitPDF(name=box.BkgModelSR).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.SumCoefRange(norm_region),rt.RooFit.Extended(Extend))
             LH0x = H0xNLL.getVal()
             H0xNLLAll = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             LH0xAll = H0xNLLAll.getVal()
-
             print "both give the same answer; both are correct"
             print "-log(L) of bkgModel SR = %f"% LH0x 
             print "-log(L) of bkgModel ALL = %f"% LH0xAll
-            
             #L(H1|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
             H1xNLL = box.getFitPDF(name=box.SigPlusBkgModelSR).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.SumCoefRange(norm_region),rt.RooFit.Extended(Extend))
             LH1x = H1xNLL.getVal()
-            
             H1xNLLAll = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             LH1xAll = H1xNLLAll.getVal()
-            
             print "both give the same answer; both are correct"
             print "-log(L) of sig+bkgModel SR = %f"% LH1x 
             print "-log(L) of sig+bkgModel ALL = %f"% LH1xAll
@@ -512,11 +508,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             
+            # add signal specific parameters and nuisance parameters
+            boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
             boxes[box].defineSet("other_parameters", self.config.getVariables(box, "other_parameters"))
+            boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
+            
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-            
-            
             #need to fix all parameters to their restored values
             #boxes[box].fixAllPars()
 
@@ -540,7 +539,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "NS = %f"%NS
             print "NsSR = %f"%NsSR.getVal()
            
-
             #add in the other signal regions
             norm_region = 'HighMR'
             fit_range = ['LowMR','LowRsq']
@@ -638,61 +636,53 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             print "calculate number of bkg events to generate"
             fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
-
             
-            # Now set nuisance parameters
-            boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
-            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
-            
-            for i in xrange(nToys):
+            for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
 
                 tot_toy = rt.RooDataSet()
                 if self.options.expectedlimit == False:
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"
-                    eff = boxes[box].workspace.function("eff")
-                    eff_box = boxes[box].workspace.var("eff_value_%s"%box)
-                    # by default this gaussian() method has mean = 0, variance = 1
-                    # and uses random seed set up in runAnalysis.py
-                    # (to make sure we don't replicate toys)
-                    eff_prime =  boxes[box].workspace.var("eff_prime")
-                    eff_prime.setVal(rt.RooRandom.gaussian())
+
                     
-                    print "EFFICIENCY FOR THIS TOY IS %f"%((eff.getVal())*(eff_box.getVal()))
-                    print " efficiency percent uncertainty = %f"%boxes[box].workspace.var('eff_uncert').getVal()
-                    print " nominal efficiency = %f "%eff_box.getVal()
+                    #for each nuisance parameter, fluctuate its value
+                    print 'Now fluctuating the nuisance parametrs'
+                    for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+                        print ' nuisance parametrer %s'%var.GetName()
+                        var.setVal(rt.RooRandom.gaussian())
+                        # by default this gaussian() method has mean = 0, variance = 1
+                        # and uses random seed set up in runAnalysis.py
+                        # (to make sure we don't replicate toys)
+                        # THIS NEEDS TO BE REDONE TO GRAB IT FROM A ROOT FILE
                     
-                    sigNorm =  ((eff.getVal())*(eff_box.getVal()))
+                    sigNorm =  (boxes[box].workspace.function('eff').getVal()) * (boxes[box].workspace.var("eff_value_%s"%box))
+                    print "EFFICIENCY FOR THIS TOY IS %f"%sigNorm
                     
                     #get nominal number of entries, including 30% SIGNAL NORMALIZATION SYSTEMATIC
-                    # for now fluctuate only signal efficiency uncertainty
-                    
                     print "calculate number of sig events to generate"
                     if self.options.signal_xsec > 0.:   
                         # for SMS
-                        sigGenNum = boxes[box].workspace.var('lumi_value').getVal()*sigNorm*self.options.signal_xsec
+                        sigGenNum = boxes[box].workspace.function('lumi').getVal()*sigNorm*self.options.signal_xsec
                     else:
                         # for CMSSM
                         sigGenNum = boxes[box].workspace.var('lumi_value').getVal()*sigNorm/1000
+                        
                     print "sigGenNum = %f" % sigGenNum
-                    
-                    print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     print 'PSigGenNum = %d' % PSigGenNum
 
-
-                    sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
+                    if PSigGenNum>0: sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
                     bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 1)
                     
-                    print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
+                    if PSigGenNum>0: print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
                     print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
                     print "numEntriesData = %i" % data.numEntries()
                     print "fitDataSet.numEntries() = %f" %fitDataSet.numEntries()
 
                     #sum the toys
                     tot_toy = bkg_toy.reduce("(%s)" %boxes[box].getVarRangeCutNamed([norm_region]))
-                    tot_toy.append(sig_toy)
+                    if PSigGenNum>0: tot_toy.append(sig_toy)
                     
                     print "Total Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
