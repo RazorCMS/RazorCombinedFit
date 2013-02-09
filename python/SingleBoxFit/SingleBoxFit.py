@@ -648,7 +648,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     
                     #for each nuisance parameter, fluctuate its value
                     print 'Now fluctuating the nuisance parametrs'
-                    for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+                    for var in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
                         print ' nuisance parametrer %s'%var.GetName()
                         var.setVal(rt.RooRandom.gaussian())
                         # by default this gaussian() method has mean = 0, variance = 1
@@ -656,7 +656,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         # (to make sure we don't replicate toys)
                         # THIS NEEDS TO BE REDONE TO GRAB IT FROM A ROOT FILE
                     
-                    sigNorm =  (boxes[box].workspace.function('eff').getVal()) * (boxes[box].workspace.var("eff_value_%s"%box))
+                    sigNorm =  (boxes[box].workspace.function('eff').getVal()) * (boxes[box].workspace.var("eff_value_%s"%box).getVal())
                     print "EFFICIENCY FOR THIS TOY IS %f"%sigNorm
                     
                     #get nominal number of entries, including 30% SIGNAL NORMALIZATION SYSTEMATIC
@@ -687,7 +687,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "Total Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
-                    del sig_toy
+                    if PSigGenNum>0: del sig_toy
                     del bkg_toy
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
