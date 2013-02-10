@@ -283,6 +283,8 @@ class RazorBox(Box.Box):
         signalModel, nSig = self.makeRooRazor3DSignal(inputFile,modelName)
         
         # compute the expected yield/(pb-1)
+        self.workspace.var('sigma').setVal(signalXsec)
+        
         if signalXsec > 0.:
             # for SMS: the integral is the efficiency.
             # We multiply it by the specified xsection
@@ -293,16 +295,10 @@ class RazorBox(Box.Box):
             nSig = nSig/1000.
 
         #set the MC efficiency relative to the number of events generated
-        #epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
-        #self.yieldToCrossSection(modelName) #define Ntot
-        self.workspace.factory("rSig[1.]")
-        self.workspace.var("rSig").setConstant(rt.kTRUE)
         # compute the signal yield multiplying by the efficiency
-        self.workspace.factory("expr::Ntot_%s('%f*@0*@1',lumi_value, rSig)" %(modelName,nSig))
+        self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',sigma, lumi, eff, eff_value_%s)" %(modelName,self.name))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
-        #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
-        #                   rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
-        #                   )
+        
         theRealFitModel = "fitmodel"
         
         SpBPdfList = rt.RooArgList(self.workspace.pdf("ePDF_TTj1b"))

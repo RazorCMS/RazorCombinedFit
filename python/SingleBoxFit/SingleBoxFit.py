@@ -437,7 +437,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     box.switchOff(z)
 
             box.fixParsExact("sigma",True)
-            #box.workspace.var("sigma").setVal(1.)
+            
+            for var in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
+                var.setVal(0.)
 
         def getLz(box, ds, fr, testForQuality = True):
             reset(box, fr)
@@ -510,9 +512,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             # add signal specific parameters and nuisance parameters
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
-            boxes[box].defineSet("other_parameters", self.config.getVariables(box, "other_parameters"))
+            boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = boxes[box].workspace)
+            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)
             boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
+
+            # change upper limits of variables
+            boxes[box].workspace.var("Ntot_TTj1b").setMax(1e9)
+            boxes[box].workspace.var("Ntot_TTj2b").setMax(1e9)
+            boxes[box].workspace.var("Ntot_Vpj").setMax(1e9)
             
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
@@ -523,7 +531,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.allVars().Print('V')
             print 'Workspace'
             boxes[box].workspace.Print('V')
-            fr_central = boxes[box].workspace.obj('independentFR')    
+            fr_central = boxes[box].workspace.obj('independentFR')
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 
@@ -532,8 +540,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             IntS  = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars).getVal()
             IntHighMR = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'HighMR').getVal()
 
-            NsSR = rt.RooRealVar("NsSR", "NsSR",NS*(IntHighMR)/IntS)
-            
+            boxes[box].workspace.factory("expr::NsSR('@0*%f',Ntot_Signal)"%(IntHighMR/IntS))
+            NsSR = boxes[box].workspace.function("NsSR")
             print "IntS = %f"%IntS
             print "IntHighMR = %f"%IntHighMR
             print "NS = %f"%NS
@@ -636,26 +644,30 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             print "calculate number of bkg events to generate"
             fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
-            
+
+            nuisFile = rt.TFile.Open(self.options.nuisanceFile)
+            nuisTree = nuisFile.Get("nuisTree")
+            nuisTree.Draw('>>nuisElist','nToy>=%i'%nToyOffset,'entrylist')
+    
+            nuisElist = rt.gDirectory.Get('nuisElist')
+
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
-
                 tot_toy = rt.RooDataSet()
                 if self.options.expectedlimit == False:
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"
-
-                    
                     #for each nuisance parameter, fluctuate its value
-                    print 'Now fluctuating the nuisance parametrs'
+                    print 'now fluctuating the nuisance parametrs'
+                    nuisEntry = nuisElist.Next()
+                    nuisTree.GetEntry(nuisEntry)
+                    print ' nToy = %i'%nuisTree.nToy
                     for var in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
+                        varVal = eval('nuisTree.%s'%var.GetName())
                         print ' nuisance parametrer %s'%var.GetName()
-                        var.setVal(rt.RooRandom.gaussian())
-                        # by default this gaussian() method has mean = 0, variance = 1
-                        # and uses random seed set up in runAnalysis.py
-                        # (to make sure we don't replicate toys)
-                        # THIS NEEDS TO BE REDONE TO GRAB IT FROM A ROOT FILE
-                    
+                        print ' value set to = %f'%varVal
+                        var.setVal(varVal)
+                        # grabs gaussian distributed variables from  ROOT file
                     sigNorm =  (boxes[box].workspace.function('eff').getVal()) * (boxes[box].workspace.var("eff_value_%s"%box).getVal())
                     print "EFFICIENCY FOR THIS TOY IS %f"%sigNorm
                     
@@ -672,7 +684,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     print 'PSigGenNum = %d' % PSigGenNum
 
-                    if PSigGenNum>0: sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
+                    if PSigGenNum>0:
+                        sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
+                        sig_toy = sig_toy.reduce("(%s)"%boxes[box].getVarRangeCutNamed([norm_region]))
                     bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 1)
                     
                     if PSigGenNum>0: print "sig_toy.numEntries() = %f" %sig_toy.numEntries()

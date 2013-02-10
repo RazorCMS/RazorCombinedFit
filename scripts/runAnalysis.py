@@ -20,6 +20,8 @@ def defineParser():
                   help="The number of toys to run")
     parser.add_option('--toy-offset',dest="nToyOffset",type="int", default=0,
                   help="The index number to start from when generating toys")
+    parser.add_option('--nuisance-file',dest="nuisanceFile",type="string", default="NuisanceTree.root",
+                  help="A tree containing randomized gaussian numbers for nuisance parameters")
     parser.add_option('--save-toys',dest="save_toys",action="store_true", default=False,
                   help="Save the toys as text files for future use.")
     parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",type="string", default="none",
