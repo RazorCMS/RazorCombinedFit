@@ -306,14 +306,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("TTj1b", True)
                 # boxes[box].fixPars("TTj2b", True)
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range))
-                # # float Vpj
-                # boxes[box].fixPars("TTj2b", False)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("f", True)
-                # boxes[box].fixPars("f3_TTj2b", False)
-                # boxes[box].fixPars("Vpj", True)
-                # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
+                # float Vpj
+                boxes[box].fixPars("TTj2b", True)
+                boxes[box].fixPars("Ntot", True)
+                boxes[box].fixPars("Vpj", False)
+                boxes[box].fixPars("TTj1b", False)
+                boxes[box].fixPars("f", True)
+                boxes[box].fixPars("f3_TTj2b", False)
+                boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
                 # # float n_TTj2b, b_TTj2b, MR0_TTj2b, R0_TTj2b, f3_TTj2b
                 # boxes[box].fixPars("TTj1b", False)
                 # boxes[box].fixPars("Ntot", True)
@@ -324,14 +324,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("TTj2b", True)
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
                 # # float n_TTj1b, b_TTj1b, MR0_TTj1b, R0_TT12b
-                # boxes[box].fixPars("R0_", False)
-                # boxes[box].fixPars("Ntot_", False)
-                # boxes[box].fixPars("n_", False)
-                # boxes[box].fixPars("b_", False)
-                # boxes[box].fixPars("f3_TTj2b",False)
-                #boxes[box].fixPars("Vpj", True)
+                boxes[box].fixPars("R0_", False)
+                boxes[box].fixPars("Ntot_", False)
+                boxes[box].fixPars("n_", False)
+                boxes[box].fixPars("b_", False)
+                boxes[box].fixPars("Vpj", False)
+                boxes[box].fixPars("f",True)
+                boxes[box].fixPars("f3_TTj2b",False)
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
-                
                 # # Procedure for Ele Full:
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowRsq,LowMR"))
                 # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range)) # float all
@@ -375,7 +375,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
             
                 #make any plots required
-                #boxes[box].plot(fileName, self, box)
+                boxes[box].plot(fileName, self, box)
                 
             else:
                 

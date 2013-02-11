@@ -29,8 +29,8 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 500
-    
+    nToys = 500 # toys per command
+                # actually run command twice to get 1000 toys
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -62,11 +62,12 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTree.root $PWD\n")
+
     nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nuisance-file NuisanceTree.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nuisance-file NuisanceTree.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
     outputfile.write("rm -rf $WD\n")
@@ -76,14 +77,13 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 3 # do 1000=500+500 toys each job
+    nJobs = 3 # do 1000=500+500 toys each job => 3000 toys
     
     print box
     
     gluinopoints = range(425,2025,200)
-    #dsneutralinopoints = [0, 100]
-    #gluinopoints = [1325]
-    neutralinopoints = [0]
+    neutralinopoints = [0,100]
+    
     queue = "1nd"
     
     pwd = os.environ['PWD']
