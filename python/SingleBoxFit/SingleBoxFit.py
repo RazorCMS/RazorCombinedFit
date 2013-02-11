@@ -36,7 +36,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "BOOST": boxes[box] = RazorBoostBox.RazorBoostBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
-            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),'3D',self.options.btag,self.options.fitregion)
+            else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag,self.options.fitregion)
 
             print 'box:', box
             print 'vars:', self.config.getVariables(box, "variables")
@@ -307,13 +307,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("TTj2b", True)
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range))
                 # float Vpj
-                boxes[box].fixPars("TTj2b", True)
-                boxes[box].fixPars("Ntot", True)
-                boxes[box].fixPars("Vpj", False)
-                boxes[box].fixPars("TTj1b", False)
-                boxes[box].fixPars("f", True)
-                boxes[box].fixPars("f3_TTj2b", False)
-                boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
                 # # float n_TTj2b, b_TTj2b, MR0_TTj2b, R0_TTj2b, f3_TTj2b
                 # boxes[box].fixPars("TTj1b", False)
                 # boxes[box].fixPars("Ntot", True)
@@ -324,17 +317,26 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].fixPars("TTj2b", True)
                 # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
                 # # float n_TTj1b, b_TTj1b, MR0_TTj1b, R0_TT12b
-                boxes[box].fixPars("R0_", False)
-                boxes[box].fixPars("Ntot_", False)
-                boxes[box].fixPars("n_", False)
-                boxes[box].fixPars("b_", False)
-                boxes[box].fixPars("Vpj", False)
-                boxes[box].fixPars("f",True)
-                boxes[box].fixPars("f3_TTj2b",False)
+
+                # boxes[box].fixPars("TTj2b", True)
+                # boxes[box].fixPars("Ntot", True)
+                # boxes[box].fixPars("Vpj", False)
+                # boxes[box].fixPars("TTj1b", False)
+                # boxes[box].fixPars("f", True)
+                # boxes[box].fixPars("f3_TTj2b", False)
+                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
+                # boxes[box].fixPars("R0_", False)
+                # boxes[box].fixPars("Ntot_", False)
+                # boxes[box].fixPars("n_", False)
+                # boxes[box].fixPars("b_", False)
+                # boxes[box].fixPars("Vpj", True)
+                # boxes[box].fixPars("f",True)
+                # boxes[box].fixPars("f3_TTj2b",False)
+                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
+                #boxes[box].fixPars("Vpj", True)
+                #boxes[box].fixPars("Ntot_Vpj", False)
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
-                # # Procedure for Ele Full:
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowRsq,LowMR"))
-                # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range)) # float all
+                
 
                 # # Procedure for Ele Sideband: 
                 # boxes[box].fixPars("R0", True)
@@ -427,6 +429,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         def reset(box, fr):
             #for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()):
             for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()):
+                print "REFIX PARAMETER %s = %f+-%f"%(p.GetName(),p.getVal(),p.getError())
                 box.workspace.var(p.GetName()).setVal(p.getVal())
                 box.workspace.var(p.GetName()).setError(p.getError())
                 
@@ -468,22 +471,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
-            H0xNLL = box.getFitPDF(name=box.BkgModelSR).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.SumCoefRange(norm_region),rt.RooFit.Extended(Extend))
+            H0xNLL = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             LH0x = H0xNLL.getVal()
-            H0xNLLAll = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
-            LH0xAll = H0xNLLAll.getVal()
-            print "both give the same answer; both are correct"
-            print "-log(L) of bkgModel SR = %f"% LH0x 
-            print "-log(L) of bkgModel ALL = %f"% LH0xAll
+            print "-log(L) of bkgModel ALL = %f"% LH0x
             #L(H1|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
-            H1xNLL = box.getFitPDF(name=box.SigPlusBkgModelSR).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.SumCoefRange(norm_region),rt.RooFit.Extended(Extend))
+            H1xNLL = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             LH1x = H1xNLL.getVal()
-            H1xNLLAll = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
-            LH1xAll = H1xNLLAll.getVal()
-            print "both give the same answer; both are correct"
-            print "-log(L) of sig+bkgModel SR = %f"% LH1x 
-            print "-log(L) of sig+bkgModel ALL = %f"% LH1xAll
+            print "-log(L) of sig+bkgModel ALL = %f"% LH1x
             
             if math.isnan(LH1x):
                 print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
@@ -499,7 +494,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Lz = L_SR(H0|x = %s) - L_SR(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
             print "**************************************************"
 
-            del H0xNLL, H1xNLL            
+            del H0xNLL, H1xNLL
             return Lz, LH0x,LH1x
 
         #start by setting all box configs the same
@@ -535,80 +530,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 
-            # define the yields and the extended pdfs in the SRs
-            NS = boxes[box].getFitPDF("eBinPDF_Signal").expectedEvents(vars)
-            IntS  = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars).getVal()
-            IntHighMR = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'HighMR').getVal()
-
-            boxes[box].workspace.factory("expr::NsSR('@0*%f',Ntot_Signal)"%(IntHighMR/IntS))
-            NsSR = boxes[box].workspace.function("NsSR")
-            print "IntS = %f"%IntS
-            print "IntHighMR = %f"%IntHighMR
-            print "NS = %f"%NS
-            print "NsSR = %f"%NsSR.getVal()
-           
             #add in the other signal regions
             norm_region = 'HighMR'
             fit_range = ['LowMR','LowRsq']
-
-            N_SR_TTj1b = rt.RooRealVar("N_SR_TTj1b","N_SR_TTj1b", boxes[box].getFitPDF("ePDF_TTj1b").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF_TTj1b").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF_TTj1b").createIntegral(vars,vars).getVal())
-            
-            N_SR_TTj2b = rt.RooRealVar("N_SR_TTj2b","N_SR_TT21b", boxes[box].getFitPDF("ePDF_TTj2b").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF_TTj2b").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF_TTj2b").createIntegral(vars,vars).getVal())
-            
-            N_SR_Vpj = rt.RooRealVar("N_SR_Vpj","N_SR_Vpj", boxes[box].getFitPDF("ePDF_Vpj").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF_Vpj").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF_Vpj").createIntegral(vars,vars).getVal())
-            
-            
-            print "TTj1b Total = %f"%boxes[box].getFitPDF("ePDF_TTj1b").expectedEvents(vars)
-            print "TTj1b LowMR,LowRsq = %f"%((boxes[box].getFitPDF("ePDF_TTj1b").expectedEvents(vars))*(boxes[box].getFitPDF("ePDF_TTj1b").createIntegral(vars,vars,0,','.join(fit_range)).getVal())/(boxes[box].getFitPDF("ePDF_TTj1b").createIntegral(vars,vars).getVal()))
-            print "TTj1b HighMR = %f"%N_SR_TTj1b.getVal()
-            print "TTj2b Total = %f"%boxes[box].getFitPDF("ePDF_TTj2b").expectedEvents(vars)
-            print "TTj2b HighMR = %f"%N_SR_TTj2b.getVal()
-            print "Vpj  Total = %f"%boxes[box].getFitPDF("ePDF_Vpj").expectedEvents(vars)
-            print "Vpj  HighMR = %f"%N_SR_Vpj.getVal()
-           
-            eBinPDF_SR_Signal = rt.RooExtendPdf("eBinPDF_SR_Signal","eBinPDF_SR_Signal",  boxes[box].workspace.pdf("SignalPDF_%s"%boxes[box].name), NsSR, norm_region)
-            ePDF_SR_TTj1b = rt.RooExtendPdf("ePDF_SR_TTj1b","ePDF_SR_TTj1b", boxes[box].workspace.pdf("PDF_TTj1b"), N_SR_TTj1b, norm_region)
-            ePDF_SR_TTj2b = rt.RooExtendPdf("ePDF_SR_TTj2b","ePDF_SR_TTj2b", boxes[box].workspace.pdf("PDF_TTj2b"), N_SR_TTj2b, norm_region)
-            ePDF_SR_Vpj = rt.RooExtendPdf("ePDF_SR_Vpj","ePDF_SR_Vpj", boxes[box].workspace.pdf("PDF_Vpj"), N_SR_Vpj, norm_region)
-            
-            boxes[box].importToWS(NsSR)
-            boxes[box].importToWS(eBinPDF_SR_Signal)
-            boxes[box].importToWS(N_SR_TTj1b)
-            boxes[box].importToWS(N_SR_TTj2b)
-            boxes[box].importToWS(N_SR_Vpj)
-            boxes[box].importToWS(ePDF_SR_TTj1b)
-            boxes[box].importToWS(ePDF_SR_TTj2b)
-            boxes[box].importToWS(ePDF_SR_Vpj)
-
-            
-            NB = boxes[box].getFitPDF(boxes[box].fitmodel).expectedEvents(vars)
-            IntB  = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars).getVal()
-            IntBHighMR = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'HighMR').getVal()
-
-            BPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF_SR_TTj1b"))
-            
-            if N_SR_TTj2b.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF_SR_TTj2b"))
-            if N_SR_Vpj.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF_SR_Vpj"))
-                
-            SpBPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF_SR_TTj1b"))
-            # prevent nan when there is no signal expected
-            if not math.isnan(NsSR.getVal()): SpBPdfList.add(boxes[box].workspace.pdf("eBinPDF_SR_Signal"))
-            if N_SR_TTj2b.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF_SR_TTj2b"))
-            if N_SR_Vpj.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF_SR_Vpj"))
-                
-
-            SigPlusBkgModelSR = rt.RooAddPdf("SigPlusBkgModelSR","SigPlusBkgModelSR",SpBPdfList)
-            BkgModelSR = rt.RooAddPdf("BkgModelSR","BkgModelSR",BPdfList)
-            boxes[box].importToWS(SigPlusBkgModelSR)
-            boxes[box].importToWS(BkgModelSR)
-            boxes[box].SigPlusBkgModelSR = "SigPlusBkgModelSR"
-            boxes[box].BkgModelSR = "BkgModelSR"
 
             print "get Lz for data"
 
@@ -685,9 +609,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print 'PSigGenNum = %d' % PSigGenNum
 
                     if PSigGenNum>0:
-                        sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
+                        sig_toy = boxes[box].getFitPDF(name="fitmodel_SignalCombined").generate(vars,PSigGenNum)
                         sig_toy = sig_toy.reduce("(%s)"%boxes[box].getVarRangeCutNamed([norm_region]))
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 1)
+                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 10)
                     
                     if PSigGenNum>0: print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
                     print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
@@ -706,8 +630,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
-                    #bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 1)
+                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 10)
                     tot_toy = bkg_toy.reduce("(%s)" %boxes[box].getVarRangeCutNamed([norm_region]))
                     #tot_toy.append(fitDataSet)
                     tot_toy.SetName("bkg")
@@ -721,8 +644,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 s.var4 = LzSR
                 s.var5 = LH0xSR
                 s.var6 = LH1xSR
-
+                print "filling tree"
                 myTree.Fill()
+                
+            print "nuisance file %s"%nuisFile.GetName()
+            del nuisElist
+            del nuisTree
+            nuisFile.Close()
+            del nuisFile
 
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)
