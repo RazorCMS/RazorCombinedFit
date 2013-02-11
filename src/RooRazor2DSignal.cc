@@ -26,7 +26,7 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 		Hpdf(0),
 		Hbtag(0),
 		iBinX(0),
-		iBinY(0){
+		iBinY(0) {
 
 	//check if the histograms are in the workspace or not
 	if(ws.obj(_nominal)){
@@ -57,7 +57,7 @@ RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* na
    Hpdf(other.Hpdf),
    Hbtag(other.Hbtag),
    iBinX(other.iBinX),
-   iBinY(other.iBinY){
+   iBinY(other.iBinY) {
  }
 
 
@@ -78,15 +78,15 @@ Double_t RooRazor2DSignal::evaluate() const
   double dy = Hnominal->GetYaxis()->GetBinWidth(ybin);
 
   double area = dx*dy;
-
+  
   if(nomVal>0.) {
 	//1.0 to the power anything is 1.0, so empty bins don't do anything
-    rhoJes = pow(1.0 + jesVal,xJes);
-    rhoPdf = pow(1.0 + pdfVal,xPdf);
-    rhoBtag = pow(1.0 + btagVal,xBtag);
+    rhoJes = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
+    rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
+    rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
   }
-  double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
-  return result;
+  double result = nomVal*rhoJes*rhoPdf*rhoBtag/area;
+  return result >= 0. ? result : 0;
 }
 
 // //---------------------------------------------------------------------------
@@ -123,7 +123,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 	  intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy,code);
       }
     }
-    return intPdf ;
+    return intPdf;
   }
   else if (code==2){
     // integral over X
@@ -134,7 +134,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int ix = xBinMin; ix <= xBinMax; ix++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return intPdf ;
+    return intPdf;
   }
   else if (code==3){
     // integral over Y
@@ -145,7 +145,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     for (int iy = yBinMin; iy <= yBinMax; iy++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
     }
-    return intPdf ;
+    return intPdf;
   }
   else {
     cout << "WARNING IN RooRazor2DTaiSignal: integration code is not correct" << endl;
@@ -155,4 +155,3 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
 
 }
 // //---------------------------------------------------------------------------
-

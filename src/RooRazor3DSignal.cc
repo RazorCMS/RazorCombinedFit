@@ -76,7 +76,6 @@ Double_t RooRazor3DSignal::evaluate() const
   double rhoJes = 1.;
   double rhoPdf = 1.;
   double rhoBtag = 1.;
- 
   
   double dx = Hnominal->GetXaxis()->GetBinWidth(xbin);
   double dy = Hnominal->GetYaxis()->GetBinWidth(ybin);
@@ -86,15 +85,12 @@ Double_t RooRazor3DSignal::evaluate() const
   
   if(nomVal>0.) {
 	//1.0 to the power anything is 1.0, so empty bins don't do anything
-    rhoJes = pow(1.0 + jesVal,xJes);
-    rhoPdf = pow(1.0 + pdfVal,xPdf);
-    rhoBtag = pow(1.0 + btagVal,xBtag);
+    rhoJes = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
+    rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
+    rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
   }
-
   double result = nomVal*rhoJes*rhoPdf*rhoBtag/volume;
-  //double result = nomVal/volume;
-  //std::cout << "result = " << result << std::endl;
-  return result;
+  return result >= 0. ? result : 0;
 }
 
 // //---------------------------------------------------------------------------

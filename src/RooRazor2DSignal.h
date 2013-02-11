@@ -25,10 +25,12 @@ public:
 		  const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
 		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
 
-   RooRazor2DSignal(const RooRazor2DSignal& other, const char* name = 0);
-   virtual TObject* clone(const char* newname) const { return new RooRazor2DSignal(*this, newname);
+   RooRazor2DSignal(const RooRazor2DSignal& other, const char* name);
+   TObject* clone(const char* newname) const {
+	   TNamed* result = new RooRazor2DSignal(*this, newname);
+	   return result;
    }
-   inline virtual ~RooRazor2DSignal(){
+   virtual ~RooRazor2DSignal(){
    }
 
    Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const;
@@ -56,17 +58,17 @@ protected:
 			     const double ymin, const double ymax,
 			     int xBin, int yBin, int code) const{
      
-     double nom, jes, pdf, btag;
      double dx, dy, area;
      Double_t binInt;
     
      int xBinMin, xBinMax;
      int yBinMin, yBinMax;
 
-     if (code==1 || code==2){ // integrate x
+     if (code==1 || code==2 ){ // integrate x
        xBinMin = Hnominal->GetXaxis()->FindBin(xmin);
        xBinMax = Hnominal->GetXaxis()->FindBin(xmax);
      
+       if (xBinMin > xBin || xBinMax < xBin) return 0;
 
        if (xBin==xBinMin && xBinMin==xBinMax) dx = xmax - xmin;
        else if (xBin==xBinMin) dx = Hnominal->GetXaxis()->GetBinUpEdge(xBin) - xmin;
@@ -83,6 +85,8 @@ protected:
        yBinMin = Hnominal->GetYaxis()->FindBin(ymin);
        yBinMax = Hnominal->GetYaxis()->FindBin(ymax);
      
+       if (yBinMin > yBin || yBinMax < yBin) return 0;
+
        if (yBin==yBinMin && yBinMin==yBinMax) dy = ymax - ymin;
        else if (yBin==yBinMin) dy = Hnominal->GetYaxis()->GetBinUpEdge(yBin) - ymin;
        else if (yBin==yBinMax) dy = ymax - Hnominal->GetYaxis()->GetBinLowEdge(yBin);
@@ -101,13 +105,18 @@ protected:
 
      double totalarea  =  DX*DY;
 
-     nom = Hnominal->GetBinContent(xBin, yBin);
-     jes = pow(1.0 + Hjes->GetBinContent(xBin, yBin), xJes);
-     pdf = pow(1.0 + Hpdf->GetBinContent(xBin, yBin), xPdf);
-     btag = pow(1.0 + Hbtag->GetBinContent(xBin, yBin), xBtag);
+     double jesVal = Hjes->GetBinContent(xBin, yBin);
+     double pdfVal = Hpdf->GetBinContent(xBin, yBin);
+     double btagVal = Hbtag->GetBinContent(xBin, yBin);
 
-     binInt =  nom * jes * pdf * btag * area / totalarea;
-     return binInt;
+     double nomVal = Hnominal->GetBinContent(xBin, yBin);
+
+     double rhoJes = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
+     double rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
+     double rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
+
+     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * area / totalarea;  
+     return binInt >= 0. ? binInt : 0;
    }
    
 
@@ -116,3 +125,4 @@ private:
 };
 //---------------------------------------------------------------------------
 #endif
+

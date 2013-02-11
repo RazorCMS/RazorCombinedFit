@@ -60,7 +60,6 @@ protected:
 			     const double zmin, const double zmax,
 			     int xBin, int yBin, int zBin, int code) const{
      
-     double nom, jes, pdf, btag;
      double dx, dy, dz, volume;
      Double_t binInt;
     
@@ -125,13 +124,18 @@ protected:
      double DZ = Hnominal->GetZaxis()->GetBinWidth(zBin);
      double totalvolume  =  DX*DY*DZ;
 
-     nom = Hnominal->GetBinContent(xBin, yBin, zBin);
-     jes = pow(1.0 + Hjes->GetBinContent(xBin, yBin, zBin), xJes);
-     pdf = pow(1.0 + Hpdf->GetBinContent(xBin, yBin, zBin), xPdf);
-     btag = pow(1.0 + Hbtag->GetBinContent(xBin, yBin, zBin), xBtag);
+     double jesVal = Hjes->GetBinContent(xBin, yBin, zBin);
+     double pdfVal = Hpdf->GetBinContent(xBin, yBin, zBin);
+     double btagVal = Hbtag->GetBinContent(xBin, yBin, zBin);
 
-     binInt =  nom * jes * pdf * btag * volume / totalvolume;
-     return binInt;
+     double nomVal = Hnominal->GetBinContent(xBin, yBin, zBin);
+
+     double rhoJes = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
+     double rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
+     double rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
+
+     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * volume / totalvolume;  
+     return binInt >= 0. ? binInt : 0;
    }
    
 private:
