@@ -1,10 +1,9 @@
 #! /usr/bin/env python
+from optparse import OptionParser
 
-#from optparse import OptionParser
-
-#import ROOT as rt
-#import RootTools
-#from RazorCombinedFit.Framework import Config
+import ROOT as rt
+import RootTools
+from RazorCombinedFit.Framework import Config
 import os.path
 import sys
 import time
@@ -12,9 +11,9 @@ from array import *
 
 def getXsecRange(box,neutralinopoint,gluinopoint):
     lumi = 19300
-    name = "T2tt"
-    label = "MR500.0_R0.22360679775"
-    massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
+    name = "T1bbbb"
+    label = "MR400.0_R0.5"
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
 
     mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
     print "mDelta = %f"%mDelta
@@ -26,15 +25,13 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
         xsecRange = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
         
 
-    #return xsecRange
-    return [0.001, 0.005, 0.01, 0.05]
+    return xsecRange
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 500
-
-    name = "SMS_T2tt_jan30_MR500.0_R0.22360679775"    
-    massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
+    nToys = 500 # toys per command
+                # actually run command twice to get 1000 toys
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
     outputname = submitDir+"/submit_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
@@ -52,67 +49,27 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("scramv1 project CMSSW CMSSW_5_3_7_patch4\n")
     outputfile.write("cd CMSSW_5_3_7_patch4/src\n")
     outputfile.write("eval `scramv1 run -sh`\n")
+    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.32.02/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -r wreece_101212_2011_style_fits -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
+    outputfile.write("cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("mkdir lib\n")
     outputfile.write("source setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.32.02/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("make\n")
     
-    outputfile.write("export NAME=\"T2tt\"\n")
-    outputfile.write("export LABEL=\"MR500.0_R0.22360679775\"\n")
+    outputfile.write("export NAME=\"T1bbbb\"\n")
+    outputfile.write("export LABEL=\"MR400.0_R0.5\"\n")
     
-    if box == 'had' or box == 'BJetHS' or box == 'BJetLS':
-        outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Had-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/%s_%s_BJet*.root $PWD\n"%(name,massPoint))
-    else:
-        outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Lep-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/%s_%s_Ele*.root $PWD\n"%(name,massPoint))
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/%s_%s_Mu*.root $PWD\n"%(name,massPoint))
-        
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTree.root $PWD\n")
 
+    nToyOffset = nToys*(2*t)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nuisance-file NuisanceTree.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    nToyOffset = nToys*(2*t+1)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i SidebandFits2012ABCD.root -l --nuisance-file NuisanceTree.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
-    if box == 'had':
-        nToyOffset = nToys*t #(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_BJetHS.root %s_%s_BJetLS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        #nToyOffset = nToys*(2*t+1)
-        #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_BJetHS.root %s_%s_BJetLS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    elif box == 'BJetHS':
-        nToyOffset = nToys*t #(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_BJetHS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        #nToyOffset = nToys*(2*t+1)
-        #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_BJetHS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    elif box == 'BJetLS':
-        nToyOffset = nToys*t #(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_BJetLS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        #nToyOffset = nToys*(2*t+1)
-        #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_BJetLS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    elif box == 'lep':
-        nToyOffset = nToys*t#(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_Ele.root %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        #nToyOffset = nToys*(2*t+1)
-        #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_Ele.root %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    elif box == 'Ele':
-        nToyOffset = nToys*t#(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_Ele.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        #nToyOffset = nToys*(2*t+1)
-        #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_Ele.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    elif box == 'Mu':
-        nToyOffset = nToys*t#(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        #nToyOffset = nToys*(2*t+1)
-        #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-        
-
-    # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybrid/\n")
+    outputfile.write("cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
@@ -120,12 +77,13 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 3 # do 1000=500+500 toys each job
+    nJobs = 3 # do 1000=500+500 toys each job => 3000 toys
     
     print box
     
-    gluinopoints = range(200,850,50)
-    neutralinopoints = [0]
+    gluinopoints = range(425,2025,200)
+    neutralinopoints = [0,100]
+    
     queue = "1nd"
     
     pwd = os.environ['PWD']
