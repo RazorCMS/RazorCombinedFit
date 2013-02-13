@@ -192,11 +192,12 @@ class RazorBox(Box.Box):
         # - ttbar+jets j2b
         self.addTailPdf("Vpj",True)
         self.addTailPdf("TTj1b",True)
-        self.addTailPdf("TTj2b",True)
+        if self.fitMode=='3D': self.addTailPdf("TTj2b",True)
         
         # build the total PDF
-        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
-                
+        if self.fitMode=='3D': myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
+        elif self.fitMode=='2D': myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"))
+                        
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
         model.Print("v")
@@ -285,15 +286,6 @@ class RazorBox(Box.Box):
         # compute the expected yield/(pb-1)
         self.workspace.var('sigma').setVal(signalXsec)
         
-        if signalXsec > 0.:
-            # for SMS: the integral is the efficiency.
-            # We multiply it by the specified xsection
-            nSig = nSig*signalXsec
-        else:
-            # here nSig is the expected yields for 1000 pb-1
-            # and we turn it into the expcted yield in a pb-1
-            nSig = nSig/1000.
-
         #set the MC efficiency relative to the number of events generated
         # compute the signal yield multiplying by the efficiency
         self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',sigma, lumi, eff, eff_value_%s)" %(modelName,self.name))
@@ -333,8 +325,8 @@ class RazorBox(Box.Box):
         #     if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
 
         if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+           [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
+           [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq1b','LowMR1b','HighMR1b'])]
             # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
             # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 25, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'])]
             # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 80, ranges=['LowRsq2b','LowMR2b','HighMR2b'])]

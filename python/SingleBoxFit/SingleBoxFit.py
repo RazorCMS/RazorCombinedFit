@@ -250,124 +250,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
 
-                #fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
-                
-                # #remove fit region
-                # if (fit_range==""):
-                #     if box=="Jet":
-                #         #boxes[box].fixPars("R0", True)
-                #         #boxes[box].fixPars("Ntot", True)
-                #         #boxes[box].fixPars("f3", True)
-                #         #boxes[box].fixPars("Vpj", True)
-                #         #boxes[box].fixPars("TTj1b", True)
-                #         #boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True)) # float only n_TTj2b, b_TTj2b
-                #         boxes[box].fixPars("R0_", False)
-                #         boxes[box].fixPars("Ntot_", False)
-                #         boxes[box].fixPars("n_", False)
-                #         boxes[box].fixPars("b_", False)
-                #         boxes[box].fixPars("f3_TTj2b",False)
-                #         fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True)) # float all
-                #     else:
-                #         fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True)) # float all
-                # else:
-                #     fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
-
-
-                
-                # # Procedure for EleTau Sideband / TauTauJet Sideband / Mu Sideband
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("LowRsq,LowMR,HighMR")) # float all
-                # boxes[box].workspace.var("b_TTj2b").setVal(2.1)
-                # boxes[box].workspace.var("n_TTj2b").setVal(7.)
-                # # Procedure for EleEle/MuEle/MuMu/EleTau Full /TauTauJet Full/ Mu Full
-                # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
-                
-                # # Procedure for MuTau boxes and Ele Sideband
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Range("LowRsq,LowMR,HighMR")) # float only n_TTj1b, b_TTj1b
-                # boxes[box].fixPars("TTj2b", False)
-                # boxes[box].fixPars("R0", True)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("f3", True)
-                # boxes[box].fixPars("f1", True)
-                # boxes[box].fixPars("Vpj", True)
-                # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Range("LowRsq,LowMR,HighMR")) # float only n_TTj2b, b_TTj12b
-                # boxes[box].fixPars("R0_", False)
-                # boxes[box].fixPars("Ntot_", False)
-                # boxes[box].fixPars("n_", False)
-                # boxes[box].fixPars("b_", False)
-                # boxes[box].fixPars("f3_TTj2b",False)
-                # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
-                
-                # # Procedure for MultiJet boxes / Jet Sideband
-                # for sideband do this:
-                # boxes[box].fixPars("Vpj", False)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("f", True)
-                # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fixPars("TTj2b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range))
-                # float Vpj
-                # # float n_TTj2b, b_TTj2b, MR0_TTj2b, R0_TTj2b, f3_TTj2b
-                # boxes[box].fixPars("TTj1b", False)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("f3", True)
-                # boxes[box].fixPars("f1", True)
-                # boxes[box].fixPars("f2", True)
-                # boxes[box].fixPars("Vpj", True)
-                # boxes[box].fixPars("TTj2b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
-                # # float n_TTj1b, b_TTj1b, MR0_TTj1b, R0_TT12b
-
-                # boxes[box].fixPars("TTj2b", True)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("Vpj", False)
-                # boxes[box].fixPars("TTj1b", False)
-                # boxes[box].fixPars("f", True)
-                # boxes[box].fixPars("f3_TTj2b", False)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range("LowMR,LowRsq,HighMR"))
-                # boxes[box].fixPars("R0_", False)
-                # boxes[box].fixPars("Ntot_", False)
-                # boxes[box].fixPars("n_", False)
-                # boxes[box].fixPars("b_", False)
-                # boxes[box].fixPars("Vpj", True)
-                # boxes[box].fixPars("f",True)
-                # boxes[box].fixPars("f3_TTj2b",False)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
-                #boxes[box].fixPars("Vpj", True)
-                #boxes[box].fixPars("Ntot_Vpj", False)
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
-                
-
-                # # Procedure for Ele Sideband: 
-                # boxes[box].fixPars("R0", True)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("f3", True)
-                # boxes[box].fixPars("Vpj", True)
-                # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fixPars("n_", False)
-                # boxes[box].fixPars("b_", False)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range("LowRsq,LowMR")) # float only n_TTj2b, b_TTj2b
-                # boxes[box].fixPars("R0_", False)
-                # boxes[box].fixPars("Ntot_", False)
-                # boxes[box].fixPars("n_", False)
-                # boxes[box].fixPars("b_", False)
-                # boxes[box].fixPars("f3_TTj2b",False)
-                # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range(fit_range)) # float all
-
-                # Procedure for Jet boxes
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Range((fit_range)))
-                # boxes[box].fixPars("R0", True)
-                # boxes[box].fixPars("Ntot", True)
-                # boxes[box].fixPars("f3", True)
-                # boxes[box].fixPars("Vpj", True)
-                # boxes[box].fixPars("TTj1b", True)
-                # boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range((fit_range))) # float only n_TTj2b, b_TTj2b
-                # boxes[box].fixPars("R0_", False)
-                # boxes[box].fixPars("Ntot_", False)
-                # boxes[box].fixPars("n_", False)
-                # boxes[box].fixPars("b_", False)
-                # boxes[box].fixPars("f3_TTj2b",False)
-                # fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range)) # float all
                 
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
@@ -425,50 +308,62 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         if self.options.input is None:
             raise Exception('Limit setting code needs a fit result file as input. None given')
-        
-        def reset(box, fr):
-            #for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()):
-            for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()):
-                print "REFIX PARAMETER %s = %f+-%f"%(p.GetName(),p.getVal(),p.getError())
-                box.workspace.var(p.GetName()).setVal(p.getVal())
-                box.workspace.var(p.GetName()).setError(p.getError())
-                
+
+        def reset(box, fr, fixSigma = True):
             # fix all parameters
+            box.fixAllPars()
+            
             for z in box.zeros:
                 box.fixPars(z)
                 if box.name in box.zeros[z]:
                     box.switchOff(z)
-
-            box.fixParsExact("sigma",True)
+            # float background shape parameters
+            for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()):
+                box.workspace.var(p.GetName()).setVal(p.getVal())
+                box.workspace.var(p.GetName()).setError(p.getError())
+                box.fixParsExact(p.GetName(),False)
+                
+            # float poi or not
+            box.fixParsExact("sigma",fixSigma)
             
-            for var in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
-                var.setVal(0.)
+            # fix signal nuisance parameters
+            for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
+                p.setVal(0.)
+                box.fixParsExact(p.GetName(),True)
 
-        def getLz(box, ds, fr, testForQuality = True):
-            reset(box, fr)
-            
-            #L(H0|x)
+        def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
+            reset(box, fr, fixSigma=True)
+            #L(s,^th_s|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
             theRealFitModel = "fitmodel"
-            H0xNLL = box.getFitPDF(name=theRealFitModel).createNLL(ds)
+            H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
+            mH0 = rt.RooMinuit(H0xNLL)
+            statusH0 = mH0.migrad()
             LH0x = H0xNLL.getVal()
-            #L(H1|x)
+            
+            box.fixParsExact("sigma",False)
+            #L(^s,^th|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
-            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds)
+            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
+            mH1 = rt.RooMinuit(H1xNLL)
+            statusH1 = mH1.migrad()
             LH1x = H1xNLL.getVal()
 
             Lz = LH0x-LH1x
             print "**************************************************"
-            print "L(H0|x = %s) = %f" %(ds.GetName(),LH0x)
-            print "L(H1|x = %s) = %f" %(ds.GetName(),LH1x)
-            print "Lz = L(H0|x = %s) - L(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "L(s,^th_s|x = %s) = %f" %(ds.GetName(),LH0x)
+            print "L(^s,^th|x = %s) = %f" %(ds.GetName(),LH1x)
+            print "Lz = L(s,^th_s|x = %s) - L(^s,^th|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "MIGRAD STATUS"
+            print "H0 fit status = %i"%statusH0
+            print "H1 fit status = %i"%statusH1
             print "**************************************************"
 
             return Lz, LH0x,LH1x
 
         def getLzSR(box, ds, fr, Extend = True, norm_region = 'HighMR'):
             reset(box, fr)
-            
+             
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
             H0xNLL = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
@@ -497,6 +392,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             del H0xNLL, H1xNLL
             return Lz, LH0x,LH1x
 
+        
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Starting limit setting for box %s' % box
@@ -519,8 +415,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-            #need to fix all parameters to their restored values
-            #boxes[box].fixAllPars()
+
+            #set upper limit of signal xsec
+            boxes[box].workspace.var("sigma").setMax(self.options.signal_xsec)
 
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')
@@ -531,7 +428,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             data = boxes[box].workspace.data('RMRTree')
 
             #add in the other signal regions
-            norm_region = 'HighMR'
+            norm_region = 'LowRsq,LowMR,HighMR'
             fit_range = ['LowMR','LowRsq']
 
             print "get Lz for data"
@@ -547,7 +444,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
             myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
 
-            lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
+            lzDataSR,LH0DataSR,LH1DataSR = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
 
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
@@ -565,16 +462,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
             myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
-            
-            print "calculate number of bkg events to generate"
-            fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
 
-            nuisFile = rt.TFile.Open(self.options.nuisanceFile)
+            nuisFile = rt.TFile.Open(self.options.nuisanceFile,"read")
             nuisTree = nuisFile.Get("nuisTree")
             nuisTree.Draw('>>nuisElist','nToy>=%i'%nToyOffset,'entrylist')
-    
             nuisElist = rt.gDirectory.Get('nuisElist')
-
+        
+            #prepare MultiGen
+            #BEWARE: ROOT 5.34.01 - 5.34.03 has a bug that
+            #wraps poisson TWICE around expectedEvents
+            BModel = boxes[box].getFitPDF(name="fitmodel")
+            SpBModel = boxes[box].getFitPDF(name="fitmodel_SignalCombined")
+            genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
                 tot_toy = rt.RooDataSet()
@@ -586,60 +487,32 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     nuisEntry = nuisElist.Next()
                     nuisTree.GetEntry(nuisEntry)
                     print ' nToy = %i'%nuisTree.nToy
+                    
+                    reset(boxes[box], fr_central, fixSigma = True)
                     for var in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
                         varVal = eval('nuisTree.%s'%var.GetName())
                         print ' nuisance parametrer %s'%var.GetName()
                         print ' value set to = %f'%varVal
                         var.setVal(varVal)
                         # grabs gaussian distributed variables from  ROOT file
-                    sigNorm =  (boxes[box].workspace.function('eff').getVal()) * (boxes[box].workspace.var("eff_value_%s"%box).getVal())
-                    print "EFFICIENCY FOR THIS TOY IS %f"%sigNorm
-                    
-                    #get nominal number of entries, including 30% SIGNAL NORMALIZATION SYSTEMATIC
-                    print "calculate number of sig events to generate"
-                    if self.options.signal_xsec > 0.:   
-                        # for SMS
-                        sigGenNum = boxes[box].workspace.function('lumi').getVal()*sigNorm*self.options.signal_xsec
-                    else:
-                        # for CMSSM
-                        sigGenNum = boxes[box].workspace.var('lumi_value').getVal()*sigNorm/1000
                         
-                    print "sigGenNum = %f" % sigGenNum
-                    PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
-                    print 'PSigGenNum = %d' % PSigGenNum
-
-                    if PSigGenNum>0:
-                        sig_toy = boxes[box].getFitPDF(name="fitmodel_SignalCombined").generate(vars,PSigGenNum)
-                        sig_toy = sig_toy.reduce("(%s)"%boxes[box].getVarRangeCutNamed([norm_region]))
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 10)
-                    
-                    if PSigGenNum>0: print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
-                    print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
-                    print "numEntriesData = %i" % data.numEntries()
-                    print "fitDataSet.numEntries() = %f" %fitDataSet.numEntries()
-
-                    #sum the toys
-                    tot_toy = bkg_toy.reduce("(%s)" %boxes[box].getVarRangeCutNamed([norm_region]))
-                    if PSigGenNum>0: tot_toy.append(sig_toy)
-                    
-                    print "Total Yield = %f" %tot_toy.numEntries()
+                    tot_toy = SpBModel.generate(genSpecSpB)
+                    print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
-                    if PSigGenNum>0: del sig_toy
-                    del bkg_toy
                 else:                    
                     #generate a toy assuming only the bkg model (same number of events as background only toy)
                     print "generate a toy assuming bkg model"
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 10)
-                    tot_toy = bkg_toy.reduce("(%s)" %boxes[box].getVarRangeCutNamed([norm_region]))
-                    #tot_toy.append(fitDataSet)
+                    
+                    reset(boxes[box], fr_central, fixSigma = True)
+                    tot_toy = BModel.generate(genSpecB)
+                    print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")
-                    del bkg_toy
 
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
                 
-                LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
+                LzSR, LH0xSR,LH1xSR = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
 
                 s.var4 = LzSR
                 s.var5 = LH0xSR
@@ -647,14 +520,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "filling tree"
                 myTree.Fill()
                 
-            print "nuisance file %s"%nuisFile.GetName()
-            del nuisElist
-            del nuisTree
+            print "now closing nuisance file"
             nuisFile.Close()
-            del nuisFile
-
+            print "now storing tree"
             self.store(myTree, dir=box)
             self.store(myDataTree, dir=box)
+            print "now deleting objects"
+            del nuisElist
+            del nuisTree
+            del nuisFile
             del sDATA
             del s
 

@@ -52,11 +52,11 @@ def defineParser():
                   help="Run the Razor Boost analysis")
     parser.add_option('--tau',dest="doTau", default=False, action='store_true',
                   help="Run the Razor Tau analysis")
-    parser.add_option('--fit-region',dest="fitregion", type="string", default='',
+    parser.add_option('--fit-region',dest="fitregion", type="string", default='FULL',
                   help="Perform the fit in the selected region: FULL, SidebandL, SidebandMR, SidebandRsq")
     parser.add_option('--nosave-workspace',dest="nosave_workspace", default=False,action='store_true',
                   help="Do not save the RooWorkspaces to save disk space for limit setting")
-    parser.add_option('--fitmode',dest="fitMode",type="string",default='2D',
+    parser.add_option('--fitmode',dest="fitMode",type="string",default='3D',
                   help="Type of fit to run - 2D, 3D, 4D are all valid options")
     parser.add_option('--btag',dest="btag",action="store_true",default=True,
                   help="Include the btag dimension in the fits")
