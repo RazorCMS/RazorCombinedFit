@@ -3,24 +3,24 @@ import math
 from array import array
 
 # return histogram with max and min variations value
-def GetCenAndErr(h1, h2, h3, h4):
-    ibinx = h1.GetNbinsX()
-    ibiny = h1.GetNbinsY()    
+def GetCenAndErr(hLIST, relative):
+    ibinx = hLIST[0].GetNbinsX()
+    ibiny = hLIST[0].GetNbinsY()    
     for i in range(1,ibinx+1):
         for j in range(1,ibiny+1):
-            MAX = h1.GetBinContent(i,j)
-            MIN = h1.GetBinContent(i,j)
+            MAX = hLIST[0].GetBinContent(i,j)
+            MIN = hLIST[0].GetBinContent(i,j)
             if MAX != MAX: MAX = 0.
             if MIN != MIN: MIN = 0.
-            if h2.GetBinContent(i,j) > MAX and h2.GetBinContent(i,j) == h2.GetBinContent(i,j): MAX = h2.GetBinContent(i,j)
-            if h3.GetBinContent(i,j) > MAX and h3.GetBinContent(i,j) == h3.GetBinContent(i,j): MAX = h3.GetBinContent(i,j)
-            if h4.GetBinContent(i,j) > MAX and h4.GetBinContent(i,j) == h4.GetBinContent(i,j): MAX = h4.GetBinContent(i,j)
-            if h2.GetBinContent(i,j) < MIN and h2.GetBinContent(i,j) == h2.GetBinContent(i,j): MIN = h2.GetBinContent(i,j)
-            if h3.GetBinContent(i,j) < MIN and h3.GetBinContent(i,j) == h3.GetBinContent(i,j): MIN = h3.GetBinContent(i,j)
-            if h4.GetBinContent(i,j) < MIN and h4.GetBinContent(i,j) == h4.GetBinContent(i,j): MIN = h4.GetBinContent(i,j)
-            h1.SetBinContent(i, j, (MAX+MIN)/2.)
-            h2.SetBinContent(i, j, (MAX-MIN)/2.)            
-    return h1,h2
+            for k in range(1,len(hLIST)):
+                if hLIST[k].GetBinContent(i,j) > MAX and hLIST[k].GetBinContent(i,j) == hLIST[k].GetBinContent(i,j): MAX = hLIST[k].GetBinContent(i,j)
+                if hLIST[k].GetBinContent(i,j) < MIN and hLIST[k].GetBinContent(i,j) == hLIST[k].GetBinContent(i,j): MIN = hLIST[k].GetBinContent(i,j)
+            hLIST[0].SetBinContent(i, j, (MAX+MIN)/2.)
+            if relative == True:
+                if math.fabs(MAX+MIN) > 0.: hLIST[1].SetBinContent(i, j, (MAX-MIN)/(MAX+MIN))
+                else: hLIST[1].SetBinContent(i, j, 0.)
+            else: hLIST[1].SetBinContent(i, j, (MAX-MIN)/2.)            
+    return hLIST[0], hLIST[1]
 
 def GetErrAbs(w, w2, wALL, selectedEvents_, originalEvents_):
     originalAcceptance = float(selectedEvents_)/float(originalEvents_)
@@ -112,7 +112,7 @@ def GetErrEigenEff(w, w2, wALL, selectedEvents_, originalEvents_, CTEQ=False):
   
     return wminus,wplus
 
-def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
+def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, relative):
     
     # for PDFs
     hCTEQ66_EIGENP = rt.TH2D("hCTEQ66_EIGENP",   "hCTEQ66_EIGENP", ibinx, xarray, ibiny, yarray)
@@ -121,22 +121,17 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
     hMRST2006NNLO_EIGENP = rt.TH2D("hMRST2006NNLO_EIGENP",   "hMRST2006NNLO_EIGENP", ibinx, xarray, ibiny, yarray)
     hMRST2006NNLO_EIGENM = rt.TH2D("hMRST2006NNLO_EIGEN", "hMRST2006NNLO_EIGEN", ibinx, xarray, ibiny, yarray)
     
-    #hMRST2007lomod_ABS = rt.TH2D("hMRST2007lomod_ABS",   "hMRST2007lomod_ABS", ibinx, xarray, ibiny, yarray)
-    
-    minx = xarray[0]
-    maxx = xarray[-1]
-
-    miny = yarray[0]
-    maxy = yarray[-1]
+    #hNNPDF10100_EIGENP = rt.TH2D("hNNPDF10100_EIGENP",   "hNNPDF10100_EIGENP", ibinx, xarray, ibiny, yarray)
+    #hNNPDF10100_EIGENM = rt.TH2D("hNNPDF10100_EIGENM",   "hNNPDF10100_EIGENM", ibinx, xarray, ibiny, yarray)
 
     hwCTEQ66 = []
     hwCTEQ66SQ = []
     for i in range(0, 45):
         #make histogram for this weight
         wCTEQ66 = rt.TH2D("wCTEQ66_%i" %i,"wCTEQ66_%i" %i, ibinx, xarray, ibiny, yarray)
-        tree.Project("wCTEQ66_%i" %i, "RSQ:MR", 'LEP_W*W*CTEQ66_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
+        tree.Project("wCTEQ66_%i" %i, "RSQ:MR", 'CTEQ66_W[%i]*(%s)' % (i, condition))
         wCTEQ66SQ = rt.TH2D("wCTEQ66SQ_%i" %i,"wCTEQ66SQ_%i", ibinx, xarray, ibiny, yarray)
-        tree.Project("wCTEQ66SQ_%i" %i, "RSQ:MR", 'LEP_W*W*pow(CTEQ66_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
+        tree.Project("wCTEQ66SQ_%i" %i, "RSQ:MR", 'pow(CTEQ66_W[%i],2.)*(%s)' % (i, condition))
         hwCTEQ66.append(wCTEQ66)
         hwCTEQ66SQ.append(wCTEQ66SQ)
         
@@ -145,22 +140,22 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
     for i in range(0,31):
         #make histogram for this weight
         wMRST2006NNLO = rt.TH2D("wMRST2006NNLO_%i" %i,"wMRST2006NNLO_%i" %i, ibinx, xarray, ibiny, yarray)
-        tree.Project("wMRST2006NNLO_%i" %i, "RSQ:MR", 'LEP_W*W*MRST2006NNLO_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
+        tree.Project("wMRST2006NNLO_%i" %i, "RSQ:MR", 'MRST2006NNLO_W[%i]*(%s)' % (i,condition))
         wMRST2006NNLOSQ = rt.TH2D("wMRST2006NNLOSQ_%i" %i,"wMRST2006NNLOSQ_%i", ibinx, xarray, ibiny, yarray)
-        tree.Project("wMRST2006NNLOSQ_%i" %i,"RSQ:MR",'LEP_W*W*pow(MRST2006NNLO_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
+        tree.Project("wMRST2006NNLOSQ_%i" %i,"RSQ:MR",'pow(MRST2006NNLO_W[%i],2.)*(%s)' % (i,condition))
         hwMRST2006NNLO.append(wMRST2006NNLO)
         hwMRST2006NNLOSQ.append(wMRST2006NNLOSQ)
 
-    #hwMRST2007lomod = []
-    #hwMRST2007lomodSQ = []
+    #hwNNPDF10100 = []
+    #hwNNPDF10100SQ = []
     #for i in range(0,1):
     #    #make histogram for this weight
-    #    wMRST2007lomod = rt.TH2D("wMRST2007lomod_%i" %i,"wMRST2007lomod_%i" %i, ibinx, xarray, ibiny, yarray)
-    #    tree.Project("wMRST2007lomod_%i" %i, "RSQ:MR", 'LEP_W*W*MRST2007lomod_W[%i]*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-    #    wMRST2007lomodSQ = rt.TH2D("wMRST2007lomodSQ_%i" %i,"wMRST2007lomodSQ_%i", ibinx, xarray, ibiny, yarray)
-    #    tree.Project("wMRST2007lomodSQ_%i" %i, "RSQ:MR", 'LEP_W*W*pow(MRST2007lomod_W[%i],2.)*(MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s))' % (i, minx,maxx,miny,maxy,box))
-    #    hwMRST2007lomod.append(wMRST2007lomod)
-    #    hwMRST2007lomodSQ.append(wMRST2007lomodSQ)
+    #    wNNPDF10100 = rt.TH2D("wNNPDF10100_%i" %i,"wNNPDF10100_%i" %i, ibinx, xarray, ibiny, yarray)
+    #    tree.Project("wNNPDF10100_%i" %i, "RSQ:MR", 'NNPDF10100_W[%i]*(%s)' % (i,condition))
+    #    wNNPDF10100SQ = rt.TH2D("wNNPDF10100SQ_%i" %i,"wNNPDF10100SQ_%i", ibinx, xarray, ibiny, yarray)
+    #    tree.Project("wNNPDF10100SQ_%i" %i, "RSQ:MR", 'pow(NNPDF10100_W[%i],2.)*(%s)' % (i, condition))
+    #    hwNNPDF10100.append(wNNPDF10100)
+    #    hwNNPDF10100SQ.append(wNNPDF10100SQ)
 
     for i in range(1, ibinx+1):
         for j in range(1, ibiny+1):
@@ -195,19 +190,31 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, box):
     #    for j in range(1, ibiny+1):
     #        hw = []
     #        hw2 = []
-    #        for k in range(0,1):
-    #            w.append(hwMRST2007lomod[k].Integral())
-    #            hw.append(hwMRST2007lomod[k].GetBinContent(i,j))
-    #            hw2.append(hwMRST2007lomodSQ[k].GetBinContent(i,j))
+    #        for k in range(0,101):
+    #            w.append(hwNNPDF10100[k].Integral())
+    #            hw.append(hwNNPDF10100[k].GetBinContent(i,j))
+    #            hw2.append(hwNNPDF10100SQ[k].GetBinContent(i,j))
     #        if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:    
-    #            hMRST2007lomod_ABS.SetBinContent(i, j, GetErrAbs(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral()))
-    #del hwMRST2007lomod, hwMRST2007lomodSQ
+    #            GetErrEigenM, GetErrEigenP = GetErrEigen(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral(), False)
+    #            hNNPDF10100_EIGENP.SetBinContent(i, j, GetErrEigenP)
+    #            hNNPDF10100_EIGENM.SetBinContent(i, j, GetErrEigenM)    
+    #del hwNNPDF10100, hwNNPDF10100SQ
     
-    Cen,Error = GetCenAndErr(hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM)
+    #Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM], relative)
+    #del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM
+    Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM], relative)
     del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM
     return Cen,Error
 
-def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
+def makePDFPlotCOND2D(tree, histo, condition, relative):
+    ibinx = histo.GetXaxis().GetNbins()
+    minx = histo.GetXaxis().GetXmin()
+    maxx = histo.GetXaxis().GetXmax()
+
+    ibiny = histo.GetYaxis().GetNbins()
+    miny = histo.GetYaxis().GetXmin()    
+    maxy = histo.GetYaxis().GetXmax()
+
     myX = []
     for i in range (0,ibinx+1):
         myX.append(minx+ (maxx-minx)/ibinx*i)
@@ -216,9 +223,47 @@ def makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
     myY = []
     for i in range (0,ibiny+1): myY.append(miny+ (maxy-miny)/ibiny*i)
     myYarray = array("d", myY)
-    Cen,Error = makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, box)
+    Cen,Error = makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, condition, relative)
     del myXarray, myYarray
     return Cen,Error
 
-def makePDFPlot(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, box):
-    return makePDFPlotCOND(tree, histo, ibinx, minx, maxx, ibiny, miny, maxy, "BOX_NUM == %i" %box)
+def makePDFPlotCOND3D(tree, histo, condition, relative):
+    ibinx = histo.GetXaxis().GetNbins()
+    minx = histo.GetXaxis().GetXmin()
+    maxx = histo.GetXaxis().GetXmax()
+
+    ibiny = histo.GetYaxis().GetNbins()
+    miny = histo.GetYaxis().GetXmin()    
+    maxy = histo.GetYaxis().GetXmax()
+
+    ibinz = histo.GetZaxis().GetNbins()
+    minz = histo.GetZaxis().GetXmin()    
+    maxz = histo.GetZaxis().GetXmax()
+
+    myX = []
+    for i in range (1,ibinx+2):
+        myX.append(histo.GetXaxis().GetBinLowEdge(i))
+    myXarray = array("d",myX)
+    myY = []
+    for j in range (1,ibiny+2):
+        myY.append(histo.GetYaxis().GetBinLowEdge(j))
+    myYarray = array("d", myY)
+
+    # call the 2D function for each bin of the z axis
+    Cen = histo.Clone(histo.GetName()+"_pdferr_nom")
+    Cen.SetTitle(histo.GetName()+"_pdferr_nom")
+    Error = histo.Clone(histo.GetName()+"_pdferr_pe")
+    Error.SetTitle(histo.GetName()+"_pdferr_pe")
+    for k in range(1,ibinz+1):
+        condition = "("+condition+")&&(btag_nom==%i)"%k
+        TMPCen,TMPError = makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, condition, relative)        
+        for i in range(1,ibinx+1):
+            for j in range(1,ibiny+1):
+                Cen.SetBinContent(i,j,k,TMPCen.GetBinContent(i,j))
+                Error.SetBinContent(i,j,k,TMPError.GetBinContent(i,j))
+    del myXarray, myYarray
+    return Cen,Error
+
+def makePDFPlot(tree, histo, condition, relative = False):
+    if histo.InheritsFrom("TH3"): return makePDFPlotCOND3D(tree, histo, condition, relative)
+    else: return makePDFPlotCOND2D(tree, histo, condition, relative)
