@@ -30,7 +30,9 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, smsc
     args.Print()
     
     nominal.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
-    print "signal efficiency from hist = %f"%nominal.Integral()
+    pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
+    print "signal efficiency from nominal     = %f"%nominal.Integral()
+    print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
     
     nominal.Write()
     jes_pe.Write()
@@ -105,8 +107,11 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut):
     
     btag_pe.Divide(btag_denom)
     
-    print "Number of entries in Box %s = %f"%(box,nominal.GetEntries())
-    print "Sum of weights in Box %s = %f"%(box,nominal.Integral())
+    print "Number of entries in Box %s nominal     = %i"%(box,nominal.GetEntries())
+    print "Sum of weights in Box %s nominal        = %f"%(box,nominal.Integral())
+    
+    print "Number of entries in Box %s pdf nominal = %i"%(box,pdf_nom.GetEntries())
+    print "Sum of weights in Box %s pdf nominal    = %f"%(box,pdf_nom.Integral())
     
     return jes_pe, pdf_pe, btag_pe, nominal, pdf_nom
     
@@ -168,6 +173,8 @@ if __name__ == '__main__':
                   help="Output directory to store datasets")
     parser.add_option('-x','--box',dest="box",default=None,type="string",
                   help="Specify only one box")
+    parser.add_option('--histofile',dest="histoFileName",default="T1bbbb_histo.root",type="string",
+                  help="File containing histogram of map of SMS generated events")
     parser.add_option('-w','--weight',dest="useWeight",default=True,action='store_true',
                   help="Use weights, if available, default is WLEP*WPU")
       
@@ -180,7 +187,7 @@ if __name__ == '__main__':
     cfg = Config.Config(options.config)
     
     print 'Input files are %s' % ', '.join(args)
-    histoFile = rt.TFile.Open('SMS/T1bbbb_histo.root')
+    histoFile = rt.TFile.Open(options.histoFileName)
     for f in args:
         if f.lower().endswith('.root'):
             input = rt.TFile.Open(f)
