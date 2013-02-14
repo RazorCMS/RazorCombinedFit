@@ -396,6 +396,27 @@ class Box(object):
             if p.getVal() == p.getMin() or p.getVal() == p.getMax(): parsAtLimit = True
         return pars, parsAtLimit
 
+    def isMinCoeffNegative(self, vars, pars, component = 'TTj1b'):
+        xmin = vars['MR'].getMin()
+        ymin = vars['Rsq'].getMin()
+        try:
+            btoy = pars['b_%s'%component].getVal()
+            x0toy =  pars['MR0_%s'%component].getVal()
+            y0toy =  pars['R0_%s'%component].getVal()
+            toyMinCoeff = btoy*rt.TMath.Power((xmin - x0toy)*(ymin -y0toy), 1.0/ntoy) - 1.0 
+            print "%s MIN COEFFICIENT: b[(xmin-x0)(ymin-y0)]^(1/n)-1 = %f"%(component,toyMinCoeff)
+            if toyMinCoeff < 0:
+                print "NEGATIVE! RETHROW TOY"
+                return True
+        except KeyError:
+            return False
+        try:
+            ntoy = pars['n_%s'%component].getVal()
+        except:
+            ntoy = 1.    
+
+        return False
+
     def generateToyFRWithYield(self, genmodel, fr, number, *options):
         """Generate a toy dataset with the specified number of events"""
         
@@ -405,30 +426,90 @@ class Box(object):
         if self.workspace.cat('Boxes'):
             vars.add(self.workspace.cat('Boxes'))
         parSet = self.workspace.allVars()
+
         #set the parameter values
-        parsAtLimit = True
-        while parsAtLimit :
-            pars, parsAtLimit = self.smearParsWithCovariance(fr)
+        #parsAtLimit = True
+        #while parsAtLimit :
+        #    pars, parsAtLimit = self.smearParsWithCovariance(fr)
 
-        for name, value in pars.iteritems():
-            print "FIX PARAMETER: %s " %name
-            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
-        print "GENERATE: "
-        Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
-        gdata = pdf.generate(vars,Pnumber,*options)
+        #set the parameter values
+        badToy = True
         
-        #now set the parameters back
-        pars = {}
-        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
-            pars[p.GetName()] = p
-            print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
+        while badToy:
+            pars, parsAtLimit = self.smearParsWithCovariance(fr)
+            # find the components that are on (Ntot on)
+            componentsOn = [parName.split('_')[-1] for parName in pars.keys() if parName.find('Ntot')!=-1]
+
+            # set  booleans to false
+            zeroIntegral = False
+            anyNegComp = False
+            
+            if not parsAtLimit:
+                # get a list of booleans answering whether the component goes negative
+                negComponents =  [self.isMinCoeffNegative(vars, pars, component) for component in componentsOn]
+            
+                # take the OR of the booleans 
+                anyNegComp = any(negComponents)
+
+                if not anyNegComp:
+                    # set parameters to their values from the covariance sampling
+                    for name, value in pars.iteritems():
+                        self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+
+                    # check how many error messages we have before evaluating pdfs
+                    errorCountBefore = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+            
+                    # evaluate each pdf, assumed to be called "PDF1st_{component} or PDF2nd_{component}"
+                    #print componentsOn
+                    for component in componentsOn:
+                        pdfComp = self.workspace.pdf("PDF1st_%s"%component)
+                        pdfValV = pdfComp.getValV(vars)
+                        pdfComp = self.workspace.pdf("PDF2nd_%s"%component)
+                        pdfValV = pdfComp.getValV(vars)
+
+                    # check how many error messages we have after evaluating pdfs
+                    errorCountAfter = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+
+                    # check if we have more error messages after evaluating each pdf, relative to before
+                    # if so, set the zero integral boolean to true
+                    if errorCountAfter>errorCountBefore: zeroIntegral = True
+
+            # if there were any problems, the toy is bad
+            badToy = parsAtLimit or anyNegComp or zeroIntegral
+   
+
         for name, value in pars.iteritems():
             print "FIX PARAMETER: %s " %name
             self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
 
+#        print "GENERATE: "
+#        Pnumber = rt.RooRandom.randomGenerator().Poisson(number)
+#        gdata = pdf.generate(vars,Pnumber,*options)
+#        
+#        #now set the parameters back
+#        pars = {}
+#        for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()): 
+#            pars[p.GetName()] = p
+#            print "RESET PARAMETER: %s = %f +- %f" %(p.GetName(),p.getVal(),p.getError())            
+#        for name, value in pars.iteritems():
+#            print "FIX PARAMETER: %s " %name
+#            self.fixParsExact(name,value.isConstant(),value.getVal(),value.getError())
+#
+#        gdata_cut = gdata.reduce(self.cut)
+#        return gdata_cut
+ 
+        #by calculating expectedEvents() again, we get the fluctated events!
+        print "expectedEvents = %f" % pdf.expectedEvents(vars)
+        expNumber = pdf.expectedEvents(vars)
+        roundExpNumber = int(expNumber+0.5)
+        print "rounded expectedEvents = %f" % roundExpNumber
+        gdata = pdf.generate(vars,roundExpNumber,*options)
+        
         gdata_cut = gdata.reduce(self.cut)
         return gdata_cut
-    
+      
     def generateToyFRWithVarYield(self, genmodel, fr, *options):
         """Generate a toy dataset from fit result"""
         
