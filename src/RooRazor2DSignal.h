@@ -44,7 +44,7 @@ protected:
    RooRealProxy xPdf;   // xPdf
    RooRealProxy xBtag;   // xBtag
 
-   TH2* Hnonimal;
+   TH2* Hnominal;
    TH2* Hjes;
    TH2* Hpdf;
    TH2* Hbtag;
@@ -58,7 +58,6 @@ protected:
 			     const double ymin, const double ymax,
 			     int xBin, int yBin, int code) const{
      
-     double nom, jes, pdf, btag;
      double dx, dy, area;
      Double_t binInt;
     
@@ -66,16 +65,16 @@ protected:
      int yBinMin, yBinMax;
 
      if (code==1 || code==2 ){ // integrate x
-       xBinMin = Hnonimal->GetXaxis()->FindBin(xmin);
-       xBinMax = Hnonimal->GetXaxis()->FindBin(xmax);
+       xBinMin = Hnominal->GetXaxis()->FindBin(xmin);
+       xBinMax = Hnominal->GetXaxis()->FindBin(xmax);
      
        if (xBinMin > xBin || xBinMax < xBin) return 0;
 
        if (xBin==xBinMin && xBinMin==xBinMax) dx = xmax - xmin;
-       else if (xBin==xBinMin) dx = Hnonimal->GetXaxis()->GetBinUpEdge(xBin) - xmin;
-       else if (xBin==xBinMax) dx = xmax - Hnonimal->GetXaxis()->GetBinLowEdge(xBin);
+       else if (xBin==xBinMin) dx = Hnominal->GetXaxis()->GetBinUpEdge(xBin) - xmin;
+       else if (xBin==xBinMax) dx = xmax - Hnominal->GetXaxis()->GetBinLowEdge(xBin);
        else {
-	 dx = Hnonimal->GetXaxis()->GetBinWidth(xBin);
+	 dx = Hnominal->GetXaxis()->GetBinWidth(xBin);
        }
        
      } else{ // don't integrate x
@@ -83,16 +82,16 @@ protected:
      }
      
      if (code==1 || code==3){ // integrate y
-       yBinMin = Hnonimal->GetYaxis()->FindBin(ymin);
-       yBinMax = Hnonimal->GetYaxis()->FindBin(ymax);
+       yBinMin = Hnominal->GetYaxis()->FindBin(ymin);
+       yBinMax = Hnominal->GetYaxis()->FindBin(ymax);
      
        if (yBinMin > yBin || yBinMax < yBin) return 0;
 
        if (yBin==yBinMin && yBinMin==yBinMax) dy = ymax - ymin;
-       else if (yBin==yBinMin) dy = Hnonimal->GetYaxis()->GetBinUpEdge(yBin) - ymin;
-       else if (yBin==yBinMax) dy = ymax - Hnonimal->GetYaxis()->GetBinLowEdge(yBin);
+       else if (yBin==yBinMin) dy = Hnominal->GetYaxis()->GetBinUpEdge(yBin) - ymin;
+       else if (yBin==yBinMax) dy = ymax - Hnominal->GetYaxis()->GetBinLowEdge(yBin);
        else {
-	 dy = Hnonimal->GetYaxis()->GetBinWidth(yBin);
+	 dy = Hnominal->GetYaxis()->GetBinWidth(yBin);
        }
 
      } else{ // don't integrate y
@@ -101,18 +100,27 @@ protected:
      
      area = dx*dy;
      
-     double DX = Hnonimal->GetXaxis()->GetBinWidth(xBin);
-     double DY = Hnonimal->GetYaxis()->GetBinWidth(yBin);
+     double DX = Hnominal->GetXaxis()->GetBinWidth(xBin);
+     double DY = Hnominal->GetYaxis()->GetBinWidth(yBin);
 
      double totalarea  =  DX*DY;
 
-     nom = Hnonimal->GetBinContent(xBin, yBin);
+     double jesVal = Hjes->GetBinContent(xBin, yBin);
+     double pdfVal = Hpdf->GetBinContent(xBin, yBin);
+     double btagVal = Hbtag->GetBinContent(xBin, yBin);
+
+     double nomVal = Hnominal->GetBinContent(xBin, yBin);
+
+     double rhoJes = 1.;
+     double rhoPdf = 1.;
+     double rhoBtag = 1.;
+
      (fabs(jesVal) < 1.0e-10) ? rhoJes  = 1.0 : rhoJes  = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
      (fabs(pdfVal) < 1.0e-10) ? rhoPdf  = 1.0 : rhoPdf  = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
      (fabs(btagVal)< 1.0e-10) ? rhoBtag = 1.0 : rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
 
-     binInt =  nom * jes * pdf * btag * area / totalarea;
-     return binInt;
+     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * area / totalarea;  
+     return binInt >= 0. ? binInt : 0;
    }
    
 

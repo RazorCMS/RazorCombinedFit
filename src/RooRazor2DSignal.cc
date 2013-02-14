@@ -21,7 +21,7 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 		xJes("xJes", "xJes", this, _xJes	),
 		xPdf("xPdf", "xPdf", this, _xPdf),
 		xBtag("xBtag", "xBtag", this, _xBtag),
-		Hnonimal(0),
+		Hnominal(0),
 		Hjes(0),
 		Hpdf(0),
 		Hbtag(0),
@@ -30,9 +30,9 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 
 	//check if the histograms are in the workspace or not
 	if(ws.obj(_nominal)){
-		Hnonimal = dynamic_cast<TH2*>(ws.obj(_nominal));
-		iBinX = Hnonimal->GetXaxis()->GetNbins();
-		iBinY = Hnonimal->GetYaxis()->GetNbins();
+		Hnominal = dynamic_cast<TH2*>(ws.obj(_nominal));
+		iBinX = Hnominal->GetXaxis()->GetNbins();
+		iBinY = Hnominal->GetYaxis()->GetNbins();
 	}
 	if(ws.obj(_jes)){
 		Hjes = dynamic_cast<TH2*>(ws.obj(_jes));
@@ -52,7 +52,7 @@ RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* na
    xJes("xJes",this,other.xJes),
    xPdf("xPdf",this,other.xPdf),
    xBtag("xBtag",this,other.xBtag),
-   Hnonimal(other.Hnonimal),
+   Hnominal(other.Hnominal),
    Hjes(other.Hjes),
    Hpdf(other.Hpdf),
    Hbtag(other.Hbtag),
@@ -63,10 +63,10 @@ RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* na
 
 Double_t RooRazor2DSignal::evaluate() const
 {
-  int xbin = Hnonimal->GetXaxis()->FindBin(X);
-  int ybin = Hnonimal->GetYaxis()->FindBin(Y);
+  int xbin = Hnominal->GetXaxis()->FindBin(X);
+  int ybin = Hnominal->GetYaxis()->FindBin(Y);
 
-  double nomVal = Hnonimal->GetBinContent(xbin, ybin);
+  double nomVal = Hnominal->GetBinContent(xbin, ybin);
   double jesVal = Hjes->GetBinContent(xbin, ybin);
   double pdfVal = Hpdf->GetBinContent(xbin, ybin);
   double btagVal = Hbtag->GetBinContent(xbin, ybin);
@@ -74,8 +74,8 @@ Double_t RooRazor2DSignal::evaluate() const
   double rhoPdf = 1.;
   double rhoBtag = 1.;
  
-  double dx = Hnonimal->GetXaxis()->GetBinWidth(xbin);
-  double dy = Hnonimal->GetYaxis()->GetBinWidth(ybin);
+  double dx = Hnominal->GetXaxis()->GetBinWidth(xbin);
+  double dy = Hnominal->GetYaxis()->GetBinWidth(ybin);
 
   double area = dx*dy;
 
@@ -116,10 +116,10 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
   const Double_t ymin = Y.min(rangeName);
   const Double_t ymax = Y.max(rangeName);
 
-  int xBinMin = Hnonimal->GetXaxis()->FindBin(xmin);
-  int xBinMax = Hnonimal->GetXaxis()->FindBin(xmax);
-  int yBinMin = Hnonimal->GetYaxis()->FindBin(ymin);
-  int yBinMax = Hnonimal->GetYaxis()->FindBin(ymax);
+  int xBinMin = Hnominal->GetXaxis()->FindBin(xmin);
+  int xBinMax = Hnominal->GetXaxis()->FindBin(xmax);
+  int yBinMin = Hnominal->GetYaxis()->FindBin(ymin);
+  int yBinMax = Hnominal->GetYaxis()->FindBin(ymax);
 
   if (code==1){
     // integral on both X and Y
@@ -136,7 +136,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     // integral over X
     Double_t intPdf = 0.;
 
-    int iy = Hnonimal->GetYaxis()->FindBin(Y);
+    int iy = Hnominal->GetYaxis()->FindBin(Y);
     
     for (int ix = xBinMin; ix <= xBinMax; ix++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
@@ -147,7 +147,7 @@ Double_t RooRazor2DSignal::analyticalIntegral(Int_t code, const char* rangeName)
     // integral over Y
     Double_t intPdf = 0.;
     
-    int ix = Hnonimal->GetXaxis()->FindBin(X);
+    int ix = Hnominal->GetXaxis()->FindBin(X);
 
     for (int iy = yBinMin; iy <= yBinMax; iy++) {
       intPdf += getBinIntegral2D(xmin,xmax,ymin,ymax,ix,iy, code);
