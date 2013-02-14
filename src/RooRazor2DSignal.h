@@ -107,9 +107,9 @@ protected:
      double totalarea  =  DX*DY;
 
      nom = Hnonimal->GetBinContent(xBin, yBin);
-     jes = pow(1.0 + Hjes->GetBinContent(xBin, yBin), xJes);
-     pdf = pow(1.0 + Hpdf->GetBinContent(xBin, yBin), xPdf);
-     btag = pow(1.0 + Hbtag->GetBinContent(xBin, yBin), xBtag);
+     (fabs(jesVal) < 1.0e-10) ? rhoJes  = 1.0 : rhoJes  = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
+     (fabs(pdfVal) < 1.0e-10) ? rhoPdf  = 1.0 : rhoPdf  = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
+     (fabs(btagVal)< 1.0e-10) ? rhoBtag = 1.0 : rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
 
      binInt =  nom * jes * pdf * btag * area / totalarea;
      return binInt;
