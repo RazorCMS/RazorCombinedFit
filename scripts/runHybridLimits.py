@@ -78,14 +78,14 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 3 # do 1000=500+500 toys each job => 3000 toys
+    nJobs = 6 # do 1000=500+500 toys each job => 3000 toys
     
     print box
     
     gluinopoints = range(425,2025,200)
-    neutralinopoints = [0,100]
+    neutralinopoints = [0]
     
-    queue = "1nd"
+    queue = "8nh"
     
     pwd = os.environ['PWD']
     
