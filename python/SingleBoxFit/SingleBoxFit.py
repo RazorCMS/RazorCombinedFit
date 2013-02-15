@@ -340,33 +340,35 @@ class SingleBoxAnalysis(Analysis.Analysis):
             opt = rt.RooLinkedList()
             opt.Add(rt.RooFit.Range(norm_region))
             opt.Add(rt.RooFit.Extended(Extend))
-            #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
-            H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds, opt)
+            opt.Add(rt.RooFit.Save(True))
+            opt.Add(rt.RooFit.Hesse(False))
+            opt.Add(rt.RooFit.Minos(False))
+            opt.Add(rt.RooFit.PrintLevel(-1))
+            opt.Add(rt.RooFit.PrintEvalErrors(10))
+            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
             
-            mH0 = rt.RooMinuit(H0xNLL)
-            statusH0 = mH0.migrad()
-            frH0 = mH0.save()
+            frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
+            statusH0 = frH0.status()
             frH0.Print("v")
             covqualH0 = frH0.covQual()
-            LH0x = H0xNLL.getVal()
+            LH0x = frH0.minNll()
             print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+
 
             if self.options.expectedlimit==True or ds.GetName=="RMRTree":
                 #this means we're doing background-only toys or data
                 #so we should reset to nominal fit pars
                 reset(box, fr, fixSigma=True)
                 box.workspace.var("sigma").setVal(1e-5)
-                
             box.fixParsExact("sigma",False)
             #L(^s,^th|x)
-            print "-log L(x = %s|^s,^th)" %(ds.GetName())
-            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds, opt)
-            mH1 = rt.RooMinuit(H1xNLL)
-            statusH1 = mH1.migrad()
-            frH1 = mH1.save()
+            print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
+            
+            frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
+            statusH1 = frH1.status()
             frH1.Print("v")
             covqualH1 = frH1.covQual()
-            LH1x = H1xNLL.getVal()
+            LH1x = frH1.minNll()
             print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
 
             if box.workspace.var("sigma")>self.options.signal_xsec:
@@ -381,10 +383,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 LH1x = LH0x
 
                 
-            del H1xNLL
-            del H0xNLL
-            del mH1
-            del mH0
+            #del H1xNLL
+            #del H0xNLL
+            #del mH1
+            #del mH0
 
             Lz = LH0x-LH1x
             print "**************************************************"
