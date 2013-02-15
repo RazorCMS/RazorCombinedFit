@@ -335,7 +335,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             reset(box, fr, fixSigma=True)
             box.workspace.var("sigma").setVal(self.options.signal_xsec)
             #L(s,^th_s|x)
-            print "retrieving L(H0|x = %s)"%ds.GetName()
+            print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
             H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             mH0 = rt.RooMinuit(H0xNLL)
             statusH0 = mH0.migrad()
@@ -343,10 +343,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
             frH0.Print("v")
             covqualH0 = frH0.covQual()
             LH0x = H0xNLL.getVal()
-            
+            print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+
+            if self.options.expectedlimit==True or ds.GetName=="RMRTree":
+                #this means we're doing background-only toys or data
+                #so we should reset to nominal fit pars
+                reset(box, fr, fixSigma=True)
+                box.workspace.var("sigma").setVal(1e-5)
+                
             box.fixParsExact("sigma",False)
             #L(^s,^th|x)
-            print "retrieving L(H1|x = %s)"%ds.GetName()
+            print "-log L(x = %s|^s,^th)" %(ds.GetName())
             H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             mH1 = rt.RooMinuit(H1xNLL)
             statusH1 = mH1.migrad()
@@ -354,6 +361,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
             frH1.Print("v")
             covqualH1 = frH1.covQual()
             LH1x = H1xNLL.getVal()
+            print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
+
+            if box.workspace.var("sigma")>self.options.signal_xsec:
+                print "INFO: ^sigma > sigma"
+                print " returning q = 0 as per LHC style CLs prescription"
+                LH1x = LH0x
+                
+                
+            if math.isnan(LH1x):
+                print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
+                print "         Since this corresponds to no signal/bkg discrimination, returning q = 0"
+                LH1x = LH0x
+
+                
             del H1xNLL
             del H0xNLL
             del mH1
@@ -361,9 +382,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             Lz = LH0x-LH1x
             print "**************************************************"
-            print "L(s,^th_s|x = %s) = %f" %(ds.GetName(),LH0x)
-            print "L(^s,^th|x = %s) = %f" %(ds.GetName(),LH1x)
-            print "Lz = L(s,^th_s|x = %s) - L(^s,^th|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+            print "-log L(x = %s|^s,^th) = %f" %(ds.GetName(),LH1x)
+            print "q = -log L(x = %s|s,^th_s) + log L(x = %s|^s,^th) = %f" %(ds.GetName(),ds.GetName(),Lz)
             print "MIGRAD/COVARIANCE MATRIX STATUS"
             print "H0 fit status = %i"%statusH0
             print "H0 cov. qual  = %i"%covqualH0
@@ -427,7 +448,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
 
             #set upper limit of signal xsec
-            boxes[box].workspace.var("sigma").setMax(self.options.signal_xsec)
+            #boxes[box].workspace.var("sigma").setMax(self.options.signal_xsec)
 
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')
@@ -446,7 +467,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var3;Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;Double_t var10;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
@@ -476,7 +497,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Double_t var3;Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;Double_t var10;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyStruct
 
             s = MyStruct()
@@ -521,6 +542,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         var.setVal(varVal)
                     tot_toy = SpBModel.generate(genSpecSpB)
                     boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+                    print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
                     print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
@@ -532,6 +554,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     reset(boxes[box], fr_B, fixSigma = True)
                     boxes[box].workspace.var("sigma").setVal(0.)
                     tot_toy = BModel.generate(genSpecB)
+                    print "B Expected = %f" %BModel.expectedEvents(vars)
                     print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")
 
