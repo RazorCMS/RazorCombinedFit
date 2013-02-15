@@ -340,7 +340,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             opt = rt.RooLinkedList()
             opt.Add(rt.RooFit.Range(norm_region))
             opt.Add(rt.RooFit.Extended(Extend))
-            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+            #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
             H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds, opt)
             
             mH0 = rt.RooMinuit(H0xNLL)
