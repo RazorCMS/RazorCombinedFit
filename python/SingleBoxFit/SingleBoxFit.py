@@ -260,7 +260,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
             
                 #make any plots required
-                boxes[box].plot(fileName, self, box)
+                #boxes[box].plot(fileName, self, box)
                 
             else:
                 
@@ -336,7 +336,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
             box.workspace.var("sigma").setVal(self.options.signal_xsec)
             #L(s,^th_s|x)
             print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
-            H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
+            
+            opt = rt.RooLinkedList()
+            opt.Add(rt.RooFit.Range(norm_region))
+            opt.Add(rt.RooFit.Extended(Extend))
+            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+            H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds, opt)
+            
             mH0 = rt.RooMinuit(H0xNLL)
             statusH0 = mH0.migrad()
             frH0 = mH0.save()
@@ -354,7 +360,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             box.fixParsExact("sigma",False)
             #L(^s,^th|x)
             print "-log L(x = %s|^s,^th)" %(ds.GetName())
-            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
+            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds, opt)
             mH1 = rt.RooMinuit(H1xNLL)
             statusH1 = mH1.migrad()
             frH1 = mH1.save()
