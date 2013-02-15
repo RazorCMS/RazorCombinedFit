@@ -6,10 +6,11 @@ from math import *
 import os
 from array import *
 
-
-def useThisRho(minX,maxX):
-    #rho = 0.1
-    rho = 2.0
+def useThisRho(minX,maxX,type):
+    if type=="LHC":
+        rho = 1.0
+    if type=="LEP":
+        rho = 2.0
     return rho
     
 def getLnQData(box,fileName):
@@ -44,11 +45,13 @@ def getLnQToys(box,fileName):
         lnQToys.append(hypoTree.LzSR)
     return lnQToys
 
-def getMinMax(box,BfileName,SpBfileName):
+def getMinMax(box,BfileName,SpBfileName,type):
     hypoTree = rt.TChain("myTree")
     addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
     hypoTree.Add(addToChain)
     addToChain = SpBfileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
+    hypoTree.Add(addToChain)
+    addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
     hypoTree.Add(addToChain)
     hypoTree.Draw("LzSR")
     
@@ -56,14 +59,18 @@ def getMinMax(box,BfileName,SpBfileName):
     Xmin = htemp.GetXaxis().GetXmin()
     Xmax = htemp.GetXaxis().GetXmax()
     
-    XmaxBin = htemp.GetXaxis().FindBin(Xmax)
-    XmaxTest = Xmax
-    XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
-    while htemp.Integral(XmaxTestBin,XmaxBin)/htemp.Integral() < 0.005:
-       XmaxTest = Xmin + float(XmaxTest-Xmin)*0.95
-       XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
-    Xmax = XmaxTest
-
+    
+    if type=="LHC":
+        Xmin = 0
+    if type=="LEP":
+        XmaxBin = htemp.GetXaxis().FindBin(Xmax)
+        XmaxTest = Xmax
+        XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
+        while htemp.Integral(XmaxTestBin,XmaxBin)/htemp.Integral() < 0.005:
+            XmaxTest = Xmin + float(XmaxTest-Xmin)*0.95
+            XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
+        Xmax = XmaxTest
+        
     return Xmin, Xmax
 
 def getFuncKDE(box,fileName,Xmin,Xmax):
@@ -88,13 +95,41 @@ def getFuncKDE(box,fileName,Xmin,Xmax):
     hypoDataSet= rt.RooDataSet("hypoDataSet","hypoDataSet",hypoTree,hypoSet)
 
     
-    rho = useThisRho(Xmin,Xmax)
+    rho = useThisRho(Xmin,Xmax,type)
     hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ,hypoDataSet,rt.RooKeysPdf.NoMirror,rho)
     hypoFunc = hypoPdf.asTF(hypoList,rt.RooArgList(),hypoSet)
 
     return lnQ, hypoPdf, hypoDataSet, hypoHisto, hypoFunc
 
-def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
+
+def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func,type="LEP"):
+    if type=="LEP":
+        return getLeftSidedPValueFromKDE(Xobs,Xmin,Xmax,func)
+    if type =="LHC":
+        return getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func)
+            
+def getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
+    funcObs = func.Eval(Xobs)
+
+    pValKDE = func.Integral(Xobs,Xmax)/func.Integral(Xmin,Xmax)
+    
+    # DRAWING FUNCTION AND FILLS
+    ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
+    func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
+    funcFillRight = func.Clone("funcFillRight")
+    funcFillRight.SetRange(Xmin,Xobs)
+    funcFillRight.SetFillColor(ic.GetColor(0.1, .85, 0.5))
+    funcFillRight.SetLineColor(ic.GetColor(0.1, .85, 0.5))
+    funcFillRight.SetFillStyle(3002)
+    funcFillLeft = func.Clone("funcFillLeft")
+    funcFillLeft.SetRange(Xobs,Xmax)
+    funcFillLeft.SetFillColor(ic.GetColor(0.5, .1, 0.85))
+    funcFillLeft.SetLineColor(ic.GetColor(0.5, .1, 0.85))
+    funcFillLeft.SetFillStyle(3002)
+    
+    return pValKDE,funcFillRight, funcFillLeft
+
+def getLeftSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     funcObs = func.Eval(Xobs)
 
     pValKDE = func.Integral(Xmin,Xobs)/func.Integral(Xmin,Xmax)
@@ -114,7 +149,6 @@ def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     funcFillLeft.SetFillStyle(3002)
     
     return pValKDE,funcFillRight, funcFillLeft
-
 
 def calcCLs(lzValues_sb,lzValues_b,Box):
     BoxName, lzCrit = Box
@@ -287,30 +321,37 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
 
     return xsecUL
     
-def getCLs(mg, mchi, xsec, box, directory):
+def getCLs(mg, mchi, xsec, box, directory,type):
+    
     SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
     BFileName = getFileName("B",mg,mchi,xsec,box,directory)
     
-    Xmin, Xmax = getMinMax(box,BFileName,SpBFileName)
+    Xmin, Xmax = getMinMax(box,BFileName,SpBFileName,type)
     
     lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,SpBFileName,Xmin,Xmax)
     lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,  BFileName,Xmin,Xmax)
 
     lnQData = getLnQData(box,BFileName)
+    # for Hybrid CLs
+    if type=="LEP":
+        CLb, dummyFill, BFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc,type=type)
+        CLsb, SpBFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc,type=type)
 
-
-    CLb, dummyFill, BFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc)
+    if type=="LHC":
+        CLb, BFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc,type=type)
+        CLsb, dummyFill, SpBFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc,type=type)
     
-    CLsb, SpBFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc)
-
-    CLs = CLsb/CLb
+    if CLb==0:
+        CLs = 1.0
+    else:
+        CLs = CLsb/CLb
 
     lnQExp = array("d",[0.,0.,0.])
     CLbExp = array("d",[0.159,0.500,0.841])
     BFunc.GetQuantiles(3,lnQExp,CLbExp)
     # WE MUST REVERSE THE ORDER OF lnQExp,
     # otherwise we'll swap CLb <=> 1-CLb
-    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc)[0] for thislnQ in reversed(lnQExp)]
+    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in reversed(lnQExp)]
     CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
     
     
@@ -334,7 +375,10 @@ def getCLs(mg, mchi, xsec, box, directory):
     print "###########################"
 
     c = rt.TCanvas("c","c",500,400)
-    BFunc.GetXaxis().SetTitle("log(Q) = log(L_{s+b}/L_{b})")
+    if type=="LEP":
+        BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
+    if type =="LHC":
+        BFunc.GetXaxis().SetTitle("q_{#sigma} = -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})")
     BHisto.Scale(BFunc.GetMaximum()/BHisto.GetMaximum())
     BFunc.SetLineColor(rt.kBlue)
     BHisto.SetLineColor(rt.kBlue)
@@ -348,7 +392,9 @@ def getCLs(mg, mchi, xsec, box, directory):
     SpBHisto.Draw("histosame")
     SpBFuncFill.Draw("fsame")
     SpBFunc.Draw("same")
-    #c.SetLogy()
+    #for profile
+    if type=="LHC":
+        c.SetLogy()
     
     model = "T1bbbb"
     hybridLimit = "Razor2012HybridLimit"
@@ -370,7 +416,10 @@ def getCLs(mg, mchi, xsec, box, directory):
     leg.SetLineColor(rt.kWhite)
     leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
     leg.AddEntry(BFuncFill, "1-CL_{b}","f")
-    leg.AddEntry(line, "log(Q) on Data","l")
+    if type=="LEP":
+        leg.AddEntry(line, "#lambda on Data","l")
+    if type=="LHC":
+        leg.AddEntry(line, "q_{#sigma} on Data","l")
     leg.Draw("same")
     c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,box))
     del c
@@ -423,44 +472,38 @@ def writeCLTree(mg,mchi,xsec, boxes, directory, CLs, CLsExp):
     fileOut.Close()
     return outputFileName
 
-def getXsecMax(mg, mchi):
+
+
+def getXsecRange(box,neutralinopoint,gluinopoint):
+    lumi = 19300
     name = "T1bbbb"
     label = "MR400.0_R0.5"
-    massPoint = "MG_%f_MCHI_%f"%(mg, mchi)
-    signalFile = rt.TFile("SMS/"+name+"_"+massPoint+"_"+label+"_"+box+".root")
-    wHisto = signalFile.Get("wHisto")
-    mrMean = wHisto.GetMean(1)
-    stop_xs = 0.0
-    yield_at_xs = [(stop_xs,0.0)]
-    #with 15 signal events, we *should* be able to set a limit
-    print "deciding xsec range based on signal mrMean = %f"%mrMean
-    if mrMean < 800:
-        eventsToExclude = 150
-        poi_max = 1.
-    elif mrMean < 1000:
-        eventsToExclude = 100
-        poi_max = 0.5
-    elif mrMean < 1600:
-        eventsToExclude = 50
-        poi_max = 0.2
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+
+    mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
+    print "mDelta = %f"%mDelta
+    if mDelta < 800:
+        xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    elif mDelta < 1400:
+        xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
     else:
-        eventsToExclude = 25
-        poi_max = 0.05
-    return poi_max
+        xsecRange = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
+    return xsecRange
 
 if __name__ == '__main__':
     gluinopoints = range(425,2025,200)
-    #gluinopoints = [425]
+    gluinopoints = [1025]
     neutralinopoints = [0]
-    
-    xsecsteps = [0.01,0.05,0.1,0.5,1.0]
     
     box = sys.argv[1]
     directory = sys.argv[2]
+    type = sys.argv[3]
+    
     if box == 'All':
         boxes = ["Jet","MultiJet"]
     else:
         boxes = [box]
+        
 
         
     rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
@@ -468,14 +511,14 @@ if __name__ == '__main__':
         outputFileNames = []
         for mg in gluinopoints:
             for mchi in neutralinopoints:
-                for xsecstep in xsecsteps:
-                    xsec = xsecstep * getXsecMax(mg,mchi)
+                xsecRange = getXsecRange(box,mchi,mg)
+                for xsec in xsecRange:
                     if not glob.glob(getFileName("SpB",mg,mchi,xsec,box,directory)+"*"): continue
                     if not glob.glob(getFileName("B",mg,mchi,xsec,box,directory)+"*"): continue
                     if box!="All":
                         CLs = []
                         CLsExp = []
-                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, directory)
+                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, directory,type=type)
                         CLs.append(CLsBox)
                         CLsExp.append(CLsExpBox)
                         outputFileNames.append(writeCLTree(mg, mchi, xsec, boxes, directory, CLs, CLsExp))

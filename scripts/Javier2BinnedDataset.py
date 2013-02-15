@@ -1,6 +1,6 @@
 from optparse import OptionParser
 import os
-
+import math
 import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
@@ -30,10 +30,21 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, smsc
     args.Print()
     
     nominal.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
-    pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
+    pdf_nom.Scale(nominal.Integral()/pdf_nom.Integral())
     print "signal efficiency from nominal     = %f"%nominal.Integral()
     print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
-    
+
+    # now collapse the b-tag information for certain boxes
+    if box=="TauTauJet" or box=="MuEle" or box=="EleEle" or box=="MuMu":
+        for histo in [nominal, jes_pe, pdf_pe, btag_pe, pdf_nom]:
+            for i in xrange(1,histo.GetXaxis().GetNbins()+1):
+                for j in xrange(1,histo.GetYaxis().GetNbins()+1):
+                    sumOverBtags = sum([histo.GetBinContent(i,j,k) for k in xrange(1,histo.GetZaxis().GetNbins()+1)])
+                    histo.SetBinContent(i,j,1,sumOverBtags)
+                    [histo.SetBinContent(i,j,k,0) for k in xrange(2,histo.GetZaxis().GetNbins()+1)]
+                
+    print "signal efficiency from nominal     = %f"%nominal.Integral()
+    print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
     nominal.Write()
     jes_pe.Write()
     pdf_pe.Write()
@@ -64,23 +75,22 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut):
   
     ###### PROEJCTION METHOD OF GETTING HISTOS ######
 
-    condition = 'WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_JESerr_up','btag_nom:RSQ_JESup:MR_JESup','(%s)' % (condition) )
 
-    condition = 'WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_JESerr_down','btag_nom:RSQ_JESdown:MR_JESdown','(%s)' % (condition) )
     
-    condition = 'WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_up >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_up >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_btagerr_up','btag_up:RSQ:MR','(%s)' % (condition) )
 
-    condition = 'WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_down >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_down >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_btagerr_down','btag_down:RSQ:MR','(%s)' % (condition) )
 
-    condition = 'WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto','btag_nom:RSQ:MR','(%s)' % (condition) )
     
     pdf_nom, pdf_pe = makePDFPlot(tree, nominal, condition, relative = True)
-
     ###### JES ######
     #using (UP - DOWN)/2:
     jes_pe.Add(jes_up,0.5)

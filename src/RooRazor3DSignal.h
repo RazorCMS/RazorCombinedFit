@@ -130,9 +130,9 @@ protected:
 
      double nomVal = Hnominal->GetBinContent(xBin, yBin, zBin);
 
-     double rhoJes = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
-     double rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
-     double rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
+     double rhoJes = pow(1.0 + fabs(jesVal),xJes*TMath::Sign(1.,jesVal));
+     double rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*TMath::Sign(1.,pdfVal));
+     double rhoBtag = pow(1.0 + fabs(btagVal),xBtag*TMath::Sign(1.,btagVal));
 
      binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * volume / totalvolume;  
      return binInt >= 0. ? binInt : 0;

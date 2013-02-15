@@ -347,7 +347,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             box.fixParsExact("sigma",False)
             #L(^s,^th|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
-            theRealSignalModel = box.signalmodel
             H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             mH1 = rt.RooMinuit(H1xNLL)
             statusH1 = mH1.migrad()

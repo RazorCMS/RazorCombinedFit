@@ -85,9 +85,9 @@ Double_t RooRazor3DSignal::evaluate() const
   
   if(nomVal>0.) {
 	//1.0 to the power anything is 1.0, so empty bins don't do anything
-    rhoJes = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
-    rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
-    rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
+    rhoJes = pow(1.0 + fabs(jesVal),xJes*TMath::Sign(1.,jesVal));
+    rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*TMath::Sign(1.,pdfVal));
+    rhoBtag = pow(1.0 + fabs(btagVal),xBtag*TMath::Sign(1.,btagVal));
   }
   double result = nomVal*rhoJes*rhoPdf*rhoBtag/volume;
   return result >= 0. ? result : 0;
