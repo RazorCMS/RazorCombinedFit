@@ -309,7 +309,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if self.options.input is None:
             raise Exception('Limit setting code needs a fit result file as input. None given')
 
-        def reset(box, fr, fixSigma = True):
+        def reset(box, fr, fixSigma = True, random = False):
             # fix all parameters
             box.fixAllPars()
             
@@ -318,10 +318,39 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if box.name in box.zeros[z]:
                     box.switchOff(z)
             # float background shape parameters
-            for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()):
-                box.workspace.var(p.GetName()).setVal(p.getVal())
-                box.workspace.var(p.GetName()).setError(p.getError())
-                box.fixParsExact(p.GetName(),False)
+            if not random:
+                argList = fr.floatParsFinal()
+                for p in RootTools.RootIterator.RootIterator(argList):
+                    box.workspace.var(p.GetName()).setVal(p.getVal())
+                    box.workspace.var(p.GetName()).setError(p.getError())
+                    box.fixParsExact(p.GetName(),False)
+            else:
+                zeroIntegral = True
+                components = ['TTj1b','TTj2b','Vpj']
+                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp) > 0.]
+                while zeroIntegral:
+                    argList = fr.randomizePars()
+                    for p in RootTools.RootIterator.RootIterator(argList):
+                        box.workspace.var(p.GetName()).setVal(p.getVal())
+                        box.workspace.var(p.GetName()).setError(p.getError())
+                        box.fixParsExact(p.GetName(),False)
+                    # check how many error messages we have before evaluating pdfs
+                    errorCountBefore = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+                    # evaluate each pdf, assumed to be called "RazPDF_{component}"
+                    badPars = []
+                    for component in componentsOn:
+                        pdfComp = self.workspace.pdf("RazPDF_%s"%component)
+                        pdfValV = pdfComp.getValV(myvars)
+                        badPars.append(box.workspace.var('n_%s'%component) < 0)
+                        badPars.append(box.workspace.var('b_%s'%component) < 0)
+                        badPars.append(box.workspace.var('MR0_%s'%component) > box.workspace.var('MR').getMin())
+                        badPars.append(box.workspace.var('R0_%s'%component)  >  box.workspace.var('Rsq').getMin())
+                    # check how many error messages we have after evaluating pdfs
+                    errorCountAfter = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+                    zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
+                    print zeroIntegral
                 
             # float poi or not
             box.fixParsExact("sigma",fixSigma)
@@ -330,12 +359,22 @@ class SingleBoxAnalysis(Analysis.Analysis):
             for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
                 p.setVal(0.)
                 box.fixParsExact(p.GetName(),True)
-
+        def setNorms(box, ds):
+            # set normalizations
+            N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
+            N_TTj1b = box.workspace.var("Ntot_TTj1b").getVal()
+            N_Vpj = box.workspace.var("Ntot_Vpj").getVal()
+            N_Signal = box.workspace.function("Ntot_Signal").getVal()
+            Nds = ds.sumEntries()
+            if Nds-N_Signal>0:
+                box.workspace.var("Ntot_TTj2b").setVal((Nds-N_Signal)*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
+                box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
+                box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
+            
         def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
             reset(box, fr, fixSigma=True)
             box.workspace.var("sigma").setVal(self.options.signal_xsec)
-            #L(s,^th_s|x)
-            print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
+            setNorms(box, ds)
             
             opt = rt.RooLinkedList()
             opt.Add(rt.RooFit.Range(norm_region))
@@ -346,36 +385,49 @@ class SingleBoxAnalysis(Analysis.Analysis):
             opt.Add(rt.RooFit.PrintLevel(-1))
             opt.Add(rt.RooFit.PrintEvalErrors(10))
             opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+
+
+            #L(s,^th_s|x)
+            print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
+            covqualH0 = 0
+            fitAttempts = 0
+            while covqualH0!=3 and fitAttempts<10:
+                reset(box, fr, fixSigma=True, random=(fitAttempts>0))
+                frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
+                frH0.Print("v")
+                statusH0 = frH0.status()
+                covqualH0 = frH0.covQual()
+                LH0x = frH0.minNll()
+                print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+                fitAttempts+=1
+
             
-            frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
-            statusH0 = frH0.status()
-            frH0.Print("v")
-            covqualH0 = frH0.covQual()
-            LH0x = frH0.minNll()
-            print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
-
-
-            if self.options.expectedlimit==True or ds.GetName=="RMRTree":
-                #this means we're doing background-only toys or data
-                #so we should reset to nominal fit pars
-                reset(box, fr, fixSigma=True)
-                box.workspace.var("sigma").setVal(1e-5)
-            box.fixParsExact("sigma",False)
             #L(^s,^th|x)
             print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
-            
-            frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
-            statusH1 = frH1.status()
-            frH1.Print("v")
-            covqualH1 = frH1.covQual()
-            LH1x = frH1.minNll()
-            print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
+            covqualH1 = 0
+            fitAttempts = 0
+            while covqualH1!=3 and fitAttempts<10:
+                if self.options.expectedlimit==True or ds.GetName=="RMRTree":
+                    #this means we're doing background-only toys or data
+                    #so we should reset to nominal fit pars
+                    reset(box, fr, fixSigma=False, random=(fitAttempts>0))
+                    box.workspace.var("sigma").setVal(1e-7)
+                else:
+                    #this means we're doing signal+background toy
+                    #so we should reset to the fit with signal strength fixed
+                    reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
+                frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
+                frH1.Print("v")
+                statusH1 = frH1.status()
+                covqualH1 = frH1.covQual()
+                LH1x = frH1.minNll()
+                print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
+                fitAttempts+=1
 
             if box.workspace.var("sigma")>self.options.signal_xsec:
                 print "INFO: ^sigma > sigma"
                 print " returning q = 0 as per LHC style CLs prescription"
                 LH1x = LH0x
-                
                 
             if math.isnan(LH1x):
                 print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
@@ -468,7 +520,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             #add in the other signal regions
             norm_region = 'LowRsq,LowMR,HighMR'
-            fit_range = ['LowMR','LowRsq']
 
             print "get Lz for data"
 
@@ -526,30 +577,38 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #prepare MultiGen
             #BEWARE: ROOT 5.34.01 - 5.34.03 has a bug that
             #wraps poisson TWICE around expectedEvents
-            BModel = boxes[box].getFitPDF(name="fitmodel")
-            SpBModel = boxes[box].getFitPDF(name="fitmodel_SignalCombined")
-            genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
-            genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
-            fr_SpB = frH0Data
-            fr_B = fr_central
+
+            
+            
+            if self.options.expectedlimit == True:
+                # use the fr for B hypothesis to generate toys
+                fr_B = fr_central
+                BModel = boxes[box].getFitPDF(name="fitmodel")
+                genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            else:
+                # use the fr for SpB hypothesis to generate toys
+                fr_SpB = frH0Data
+                SpBModel = boxes[box].getFitPDF(name="fitmodel_SignalCombined")
+                genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            
+                    
             
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
                 tot_toy = rt.RooDataSet()
                 if self.options.expectedlimit == False:
-                    #generate a toy assuming signal + bkg model (same number of events as background only toy)             
+                    #generate a toy assuming signal + bkg model          
                     print "generate a toy assuming signal + bkg model"
                     nuisEntry = nuisElist.Next()
                     nuisTree.GetEntry(nuisEntry)
-
-                    # use the fr for SpB hypothesis to generate toys
                     reset(boxes[box], fr_SpB, fixSigma = True)
                     for var in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
-                        # for each nuisnace, grab gaussian distributed variables from ROOT tree
+                        # for each nuisance, grab gaussian distributed variables from ROOT tree
                         varVal = eval('nuisTree.%s'%var.GetName())
                         var.setVal(varVal)
-                    tot_toy = SpBModel.generate(genSpecSpB)
+                        print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
                     boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+                    tot_toy = SpBModel.generate(genSpecSpB)
                     print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
                     print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
@@ -557,8 +616,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:                    
                     #generate a toy assuming only the bkg model
                     print "generate a toy assuming bkg model"
-                    
-                    # use the fr for B hypothesis to generate toys
                     reset(boxes[box], fr_B, fixSigma = True)
                     boxes[box].workspace.var("sigma").setVal(0.)
                     tot_toy = BModel.generate(genSpecB)
@@ -624,7 +681,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             rootFile = rt.TFile.Open(inputFile)
             open_files.append(rootFile)
-            wHisto = rootFile.Get('wHisto_pdferr_nom')
+            wHisto = rootFile.Get('wHisto')
             btag =  rootFile.Get('wHisto_btagerr_pe')
             jes =  rootFile.Get('wHisto_JESerr_pe')
             pdf =  rootFile.Get('wHisto_pdferr_pe')

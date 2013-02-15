@@ -29,7 +29,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 500 # toys per command
+    nToys = 250 # toys per command
                 # actually run command twice to get 1000 toys
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
@@ -46,10 +46,11 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("export WD=/tmp/${USER}/Razor2012_%s_%s_%s_%i\n"%(massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
-    outputfile.write("scramv1 project CMSSW CMSSW_5_3_7_patch4\n")
-    outputfile.write("cd CMSSW_5_3_7_patch4/src\n")
+    outputfile.write("scramv1 project CMSSW CMSSW_6_1_1\n")
+    outputfile.write("cd CMSSW_6_1_1/src\n")
     outputfile.write("eval `scramv1 run -sh`\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.32.02/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
+    outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
+    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.04/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
     outputfile.write("cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
@@ -69,7 +70,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToyOffset = nToys*(2*t+1)
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTree.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
-    outputfile.write("cp $WD/CMSSW_5_3_7_patch4/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close

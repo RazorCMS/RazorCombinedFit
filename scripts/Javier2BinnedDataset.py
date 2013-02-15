@@ -30,9 +30,10 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, smsc
     args.Print()
     
     nominal.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
-    pdf_nom.Scale(nominal.Integral()/pdf_nom.Integral())
+    pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     print "signal efficiency from nominal     = %f"%nominal.Integral()
     print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
+    print "integral of pdf relative errors = %f"%pdf_pe.Integral()
 
     # now collapse the b-tag information for certain boxes
     if box=="TauTauJet" or box=="MuEle" or box=="EleEle" or box=="MuMu":

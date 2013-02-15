@@ -3,9 +3,19 @@ import math
 from array import array
 
 # return histogram with max and min variations value
-def GetCenAndErr(hLIST, relative):
-    ibinx = hLIST[0].GetNbinsX()
-    ibiny = hLIST[0].GetNbinsY()    
+def GetCenAndErr(hLIST,  ibinx, xarray, ibiny, yarray, relative):
+
+    ibinx = hLIST[0].GetXaxis().GetNbins()
+    minx = hLIST[0].GetXaxis().GetXmin()
+    maxx = hLIST[0].GetXaxis().GetXmax()
+
+    ibiny = hLIST[0].GetYaxis().GetNbins()
+    miny = hLIST[0].GetYaxis().GetXmin()    
+    maxy = hLIST[0].GetYaxis().GetXmax()
+
+    hCEN = rt.TH2D("hCEN", "hCEN", ibinx, xarray, ibiny, yarray)
+    hSIG = rt.TH2D("hSIG", "hSIG", ibinx, xarray, ibiny, yarray)
+    
     for i in xrange(1,ibinx+1):
         for j in xrange(1,ibiny+1):
             MAX = hLIST[0].GetBinContent(i,j)
@@ -15,12 +25,12 @@ def GetCenAndErr(hLIST, relative):
             for k in xrange(1,len(hLIST)):
                 if hLIST[k].GetBinContent(i,j) > MAX and hLIST[k].GetBinContent(i,j) == hLIST[k].GetBinContent(i,j): MAX = hLIST[k].GetBinContent(i,j)
                 if hLIST[k].GetBinContent(i,j) < MIN and hLIST[k].GetBinContent(i,j) == hLIST[k].GetBinContent(i,j): MIN = hLIST[k].GetBinContent(i,j)
-            hLIST[0].SetBinContent(i, j, (MAX+MIN)/2.)
+            hCEN.SetBinContent(i, j, (MAX+MIN)/2.)
             if relative == True:
-                if math.fabs(MAX+MIN) > 0.: hLIST[1].SetBinContent(i, j, (MAX-MIN)/(MAX+MIN))
-                else: hLIST[1].SetBinContent(i, j, 0.)
-            else: hLIST[1].SetBinContent(i, j, (MAX-MIN)/2.)
-    return hLIST[0], hLIST[1]
+                if math.fabs(MAX+MIN) > 0.: hSIG.SetBinContent(i, j, (MAX-MIN)/(MAX+MIN))
+                else: hSIG.SetBinContent(i, j, 0.)
+            else: hSIG.SetBinContent(i, j, (MAX-MIN)/2)
+    return hCEN, hSIG
 
 def GetErrAbs(w, w2, wALL, selectedEvents_, originalEvents_):
     originalAcceptance = float(selectedEvents_)/float(originalEvents_)
@@ -240,7 +250,7 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
                hNNPDF10100_EIGENM.SetBinContent(i, j, GetErrEigenM)
     del hwNNPDF10100, hwNNPDF10100SQ
     
-    Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM], relative)
+    Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM], ibinx, xarray, ibiny, yarray,  relative)
     del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM
     return Cen,Error
 

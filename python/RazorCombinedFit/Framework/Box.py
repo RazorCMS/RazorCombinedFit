@@ -160,7 +160,7 @@ class Box(object):
         """Makes a signal PDF from the input histograms"""
         
         rootFile = rt.TFile.Open(inputFile)
-        wHisto = rootFile.Get('wHisto_pdferr_nom')
+        wHisto = rootFile.Get('wHisto')
         btag =  rootFile.Get('wHisto_btagerr_pe')
         jes =  rootFile.Get('wHisto_JESerr_pe')
         pdf =  rootFile.Get('wHisto_pdferr_pe')
