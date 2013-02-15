@@ -333,45 +333,58 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
             reset(box, fr, fixSigma=True)
+            box.workspace.var("sigma").setVal(self.options.signal_xsec)
             #L(s,^th_s|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
-            theRealFitModel = "fitmodel"
             H0xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             mH0 = rt.RooMinuit(H0xNLL)
             statusH0 = mH0.migrad()
+            frH0 = mH0.save()
+            frH0.Print("v")
+            covqualH0 = frH0.covQual()
             LH0x = H0xNLL.getVal()
             
             box.fixParsExact("sigma",False)
             #L(^s,^th|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
+            theRealSignalModel = box.signalmodel
             H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
             mH1 = rt.RooMinuit(H1xNLL)
             statusH1 = mH1.migrad()
+            frH1 = mH1.save()
+            frH1.Print("v")
+            covqualH1 = frH1.covQual()
             LH1x = H1xNLL.getVal()
+            del H1xNLL
+            del H0xNLL
+            del mH1
+            del mH0
 
             Lz = LH0x-LH1x
             print "**************************************************"
             print "L(s,^th_s|x = %s) = %f" %(ds.GetName(),LH0x)
             print "L(^s,^th|x = %s) = %f" %(ds.GetName(),LH1x)
             print "Lz = L(s,^th_s|x = %s) - L(^s,^th|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
-            print "MIGRAD STATUS"
+            print "MIGRAD/COVARIANCE MATRIX STATUS"
             print "H0 fit status = %i"%statusH0
+            print "H0 cov. qual  = %i"%covqualH0
             print "H1 fit status = %i"%statusH1
+            print "H1 cov. qual  = %i"%covqualH1
             print "**************************************************"
 
-            return Lz, LH0x,LH1x
+            return Lz, LH0x, LH1x, frH0, frH1
 
         def getLzSR(box, ds, fr, Extend = True, norm_region = 'HighMR'):
             reset(box, fr)
              
             #L(H0|x)
             print "retrieving L(H0|x = %s)"%ds.GetName()
-            H0xNLL = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
+            H0xNLL = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
             LH0x = H0xNLL.getVal()
             print "-log(L) of bkgModel ALL = %f"% LH0x
             #L(H1|x)
             print "retrieving L(H1|x = %s)"%ds.GetName()
-            H1xNLL = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
+            H1xNLL = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
             LH1x = H1xNLL.getVal()
             print "-log(L) of sig+bkgModel ALL = %f"% LH1x
             
@@ -381,8 +394,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 LH1x = LH0x
 
             Lz = LH0x-LH1x
-            print "**************************************************"
-            print " Set Extend to %i" %Extend
             print "**************************************************"
             print "L_SR(H0|x = %s) = %f" %(ds.GetName(),LH0x)
             print "L_SR(H1|x = %s) = %f" %(ds.GetName(),LH1x)
@@ -436,32 +447,48 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var4;Double_t var5;Double_t var6;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var3;Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;Double_t var10;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
+            myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
             myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
             myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
             myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
+            myDataTree.Branch("H0status", rt.AddressOf(sDATA,'var7'),'var7/I')
+            myDataTree.Branch("H0covQual", rt.AddressOf(sDATA,'var8'),'var8/I')
+            myDataTree.Branch("H1status", rt.AddressOf(sDATA,'var9'),'var9/I')
+            myDataTree.Branch("H1covQual", rt.AddressOf(sDATA,'var10'),'var10/I')
 
-            lzDataSR,LH0DataSR,LH1DataSR = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
 
+            lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
+
+            sDATA.var3 = -1
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
             sDATA.var6 = LH1DataSR
+            sDATA.var7 = frH0Data.status()
+            sDATA.var8 = frH0Data.covQual()
+            sDATA.var9 = frH1Data.status()
+            sDATA.var10 = frH1Data.covQual()
             
             myDataTree.Fill()
             
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Double_t var4;Double_t var5;Double_t var6;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var3;Double_t var4;Double_t var5;Double_t var6;Double_t var7;Double_t var8;Double_t var9;Double_t var10;};")
             from ROOT import MyStruct
 
             s = MyStruct()
+            myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
             myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
             myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
+            myTree.Branch("H0status", rt.AddressOf(s,'var7'),'var7/I')
+            myTree.Branch("H0covQual", rt.AddressOf(s,'var8'),'var8/I')
+            myTree.Branch("H1status", rt.AddressOf(s,'var9'),'var9/I')
+            myTree.Branch("H1covQual", rt.AddressOf(s,'var10'),'var10/I')
 
             nuisFile = rt.TFile.Open(self.options.nuisanceFile,"read")
             nuisTree = nuisFile.Get("nuisTree")
@@ -473,8 +500,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #wraps poisson TWICE around expectedEvents
             BModel = boxes[box].getFitPDF(name="fitmodel")
             SpBModel = boxes[box].getFitPDF(name="fitmodel_SignalCombined")
-            genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
             genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            fr_SpB = frH0Data
+            fr_B = fr_central
             
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
@@ -482,29 +511,27 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if self.options.expectedlimit == False:
                     #generate a toy assuming signal + bkg model (same number of events as background only toy)             
                     print "generate a toy assuming signal + bkg model"
-                    #for each nuisance parameter, fluctuate its value
-                    print 'now fluctuating the nuisance parametrs'
                     nuisEntry = nuisElist.Next()
                     nuisTree.GetEntry(nuisEntry)
-                    print ' nToy = %i'%nuisTree.nToy
-                    
-                    reset(boxes[box], fr_central, fixSigma = True)
+
+                    # use the fr for SpB hypothesis to generate toys
+                    reset(boxes[box], fr_SpB, fixSigma = True)
                     for var in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
+                        # for each nuisnace, grab gaussian distributed variables from ROOT tree
                         varVal = eval('nuisTree.%s'%var.GetName())
-                        print ' nuisance parametrer %s'%var.GetName()
-                        print ' value set to = %f'%varVal
                         var.setVal(varVal)
-                        # grabs gaussian distributed variables from  ROOT file
-                        
                     tot_toy = SpBModel.generate(genSpecSpB)
+                    boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
                     print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
                 else:                    
-                    #generate a toy assuming only the bkg model (same number of events as background only toy)
+                    #generate a toy assuming only the bkg model
                     print "generate a toy assuming bkg model"
                     
-                    reset(boxes[box], fr_central, fixSigma = True)
+                    # use the fr for B hypothesis to generate toys
+                    reset(boxes[box], fr_B, fixSigma = True)
+                    boxes[box].workspace.var("sigma").setVal(0.)
                     tot_toy = BModel.generate(genSpecB)
                     print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")
@@ -512,12 +539,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
                 
-                LzSR, LH0xSR,LH1xSR = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
-
+                LzSR, LH0xSR, LH1xSR, frH0, frH1 = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
+                s.var3 = i
                 s.var4 = LzSR
                 s.var5 = LH0xSR
                 s.var6 = LH1xSR
-                print "filling tree"
+                s.var7 = frH0.status()
+                s.var8 = frH0.covQual()
+                s.var9 = frH1.status()
+                s.var10 = frH1.covQual()
+            
                 myTree.Fill()
                 
             print "now closing nuisance file"
@@ -563,7 +594,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             rootFile = rt.TFile.Open(inputFile)
             open_files.append(rootFile)
-            wHisto = rootFile.Get('wHisto')
+            wHisto = rootFile.Get('wHisto_pdferr_nom')
             btag =  rootFile.Get('wHisto_btagerr_pe')
             jes =  rootFile.Get('wHisto_JESerr_pe')
             pdf =  rootFile.Get('wHisto_pdferr_pe')

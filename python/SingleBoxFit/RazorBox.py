@@ -124,16 +124,13 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
 
     #add penalty terms and float
-    def floatComponentWithPenalty(self,flavour, alsoB):
-        self.fixParsPenalty("MR0_%s" % flavour)
+    def floatComponentWithPenalty(self,flavour):
         self.fixParsPenalty("R0_%s" % flavour)
-        self.fixPars("MR0_%s_s" % flavour)
         self.fixPars("R0_%s_s" % flavour)
-        if alsoB == True:
-            self.fixParsPenalty("b_%s" % flavour)
-            self.fixPars("b_%s_s" % flavour)
-        else:
-            self.fixParsExact("b_%s" % flavour, False)
+        self.fixParsPenalty("b_%s" % flavour)
+        self.fixPars("b_%s_s" % flavour)
+        self.fixParsPenalty("n_%s" % flavour)
+        self.fixPars("n_%s_s" % flavour)
             
     def floatBTagf3(self,flavour):
         self.fixParsExact("f3_%s" % flavour, False)
@@ -220,6 +217,7 @@ class RazorBox(Box.Box):
             """Switch on or off whatever you want here"""
             # float BTAG
             if(self.btag == "Btag") and z=="TTj2b": self.floatBTagf3(z)
+            #self.floatComponentWithPenalty(z)
             self.floatComponent(z)
             self.floatYield(z)
             
@@ -301,6 +299,7 @@ class RazorBox(Box.Box):
                 
         add = rt.RooAddPdf('%s_%sCombined' % (theRealFitModel,modelName),'Signal+BG PDF',
                            SpBPdfList)
+        
         self.importToWS(add)
         self.signalmodel = add.GetName()
         return extended.GetName()
