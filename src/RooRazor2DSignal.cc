@@ -84,15 +84,8 @@ Double_t RooRazor2DSignal::evaluate() const
     (fabs(jesVal) < 1.0e-10) ? rhoJes  = 1.0 : rhoJes  = pow(1.0 + fabs(jesVal),xJes*jesVal/fabs(jesVal));
     (fabs(pdfVal) < 1.0e-10) ? rhoPdf  = 1.0 : rhoPdf  = pow(1.0 + fabs(pdfVal),xPdf*pdfVal/fabs(pdfVal));
     (fabs(btagVal)< 1.0e-10) ? rhoBtag = 1.0 : rhoBtag = pow(1.0 + fabs(btagVal),xBtag*btagVal/fabs(btagVal));
- //    std::cout << "rhoBtag "<< rhoBtag << "  btagVal "<< btagVal << std::endl;
-//     std::cout << "rhojes "<< rhoJes << "  jesVal "<< jesVal << std::endl;
-//     std::cout << "rhoPdf "<< rhoPdf << "  pdfVal "<< pdfVal << std::endl;
   }
   double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
-  if (result < 1.0e-10 || fabs(btagVal)< 1.0e-10){
-    std::cout << "result "<<result<<std::endl;
-    std::cout << "btag" << btagVal << std::endl;
-  }
   return (result == 0.0) ? 1.7e-308 : result;
 }
 
