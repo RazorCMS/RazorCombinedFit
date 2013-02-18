@@ -10,7 +10,7 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
-lumi = 5.0
+lumi = 19.3
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
     
@@ -63,10 +63,13 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         triggerReq = "HLT_Mu12_RsqMR30_Rsq0p04_MR200 || HLT_Mu12_RsqMR40_Rsq0p04_MR200 ||  HLT_Mu12_RsqMR45_Rsq0p04_MR200"
     elif  box == "MuEle" or box == "EleEle" or box == "Ele" or box == "EleTau":
         triggerReq = "HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR30_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR40_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR45_Rsq0p04_MR200"
-            
+
+    if useWeight:
+        triggerReq = "MR>0."
+        noiseCut = "MR>0."
     #iterate over selected entries in the input tree
     if not calo:
-        tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
+        tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     else:
         tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     elist = rt.gDirectory.Get('elist')
@@ -94,8 +97,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         
         if not calo:
             a.setRealValue('MR',tree.MR)
-            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_PFTYPE1))
-            a.setRealValue('Rsq',tree.RSQ_PFTYPE1)
+            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
+            a.setRealValue('Rsq',tree.RSQ)
             if tree.BTAG_NUM >= btagcutoff:
                 a.setRealValue('nBtag',btagcutoff)
             else:

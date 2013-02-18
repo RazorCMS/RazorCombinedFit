@@ -32,6 +32,8 @@ def defineParser():
                   help="The random seed to start with")
     parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
                   help="An input file to read fit results and workspaces from")
+    parser.add_option('-j','--jet-input',dest="jet_input", default="none",type = "string",
+                  help="An input file to read fit results for JET BOX constraint")
     parser.add_option('--simultaneous',dest="simultaneous", default=False,action='store_true',
                   help="Run the simultaneous fit")
     parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',

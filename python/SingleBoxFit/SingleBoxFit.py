@@ -249,8 +249,41 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if self.options.doMultijet:
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
+                #boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Hesse(False),rt.RooFit.Minos(False))
 
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
+                while fr.covQual()!=3:
+                    zeroIntegral = True
+                    components = ['TTj1b','TTj2b','Vpj']
+                    componentsOn = [comp for comp in components if boxes[box].workspace.var('Ntot_%s'%comp).getVal() > 0.]
+                    print "The components on are ", componentsOn
+                    while zeroIntegral:
+                        argList = fr.randomizePars()
+                        for p in RootTools.RootIterator.RootIterator(argList):
+                            boxes[box].workspace.var(p.GetName()).setVal(p.getVal())
+                            boxes[box].workspace.var(p.GetName()).setError(p.getError())
+                            boxes[box].fixParsExact(p.GetName(),False)
+                            print "RANDOMIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
+                        # check how many error messages we have before evaluating pdfs
+                        errorCountBefore = rt.RooMsgService.instance().errorCount()
+                        print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+                        # evaluate each pdf, assumed to be called "RazPDF_{component}"
+                        badPars = []
+                        myvars = rt.RooArgSet(boxes[box].workspace.var('MR'),boxes[box].workspace.var('Rsq'))
+                        for component in componentsOn:
+                            pdfComp = boxes[box].workspace.pdf("RazPDF_%s"%component)
+                            pdfValV = pdfComp.getValV(myvars)
+                            badPars.append(boxes[box].workspace.var('n_%s'%component).getVal() <= 0)
+                            badPars.append(boxes[box].workspace.var('b_%s'%component).getVal() <= 0)
+                            badPars.append(boxes[box].workspace.var('MR0_%s'%component).getVal() >= boxes[box].workspace.var('MR').getMin())
+                            badPars.append(boxes[box].workspace.var('R0_%s'%component).getVal()  >=  boxes[box].workspace.var('Rsq').getMin())
+                            print badPars
+                        # check how many error messages we have after evaluating pdfs
+                        errorCountAfter = rt.RooMsgService.instance().errorCount()
+                        print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+                        zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
+                        print zeroIntegral
+                    fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
                 
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
@@ -260,7 +293,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
             
                 #make any plots required
-                #boxes[box].plot(fileName, self, box)
+                boxes[box].plot(fileName, self, box)
                 
             else:
                 
@@ -324,6 +357,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     box.workspace.var(p.GetName()).setVal(p.getVal())
                     box.workspace.var(p.GetName()).setError(p.getError())
                     box.fixParsExact(p.GetName(),False)
+                    print "INITIALIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
             else:
                 zeroIntegral = True
                 components = ['TTj1b','TTj2b','Vpj']
@@ -335,6 +369,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         box.workspace.var(p.GetName()).setVal(p.getVal())
                         box.workspace.var(p.GetName()).setError(p.getError())
                         box.fixParsExact(p.GetName(),False)
+                        print "RANDOMIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
                     # check how many error messages we have before evaluating pdfs
                     errorCountBefore = rt.RooMsgService.instance().errorCount()
                     print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
@@ -397,7 +432,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 reset(box, fr, fixSigma=True, random=(fitAttempts>0))
                 box.workspace.var("sigma").setVal(self.options.signal_xsec)
                 box.workspace.var("sigma").setConstant(True)
-                frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
+                frH0 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
                 frH0.Print("v")
                 statusH0 = frH0.status()
                 covqualH0 = frH0.covQual()
@@ -423,7 +458,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
                     box.workspace.var("sigma").setVal(self.options.signal_xsec)
                     box.workspace.var("sigma").setConstant(False)
-                frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
+                frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
                 frH1.Print("v")
                 statusH1 = frH1.status()
                 covqualH1 = frH1.covQual()
@@ -460,35 +495,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "**************************************************"
 
             return Lz, LH0x, LH1x, frH0, frH1
-
-        def getLzSR(box, ds, fr, Extend = True, norm_region = 'HighMR'):
-            reset(box, fr)
-             
-            #L(H0|x)
-            print "retrieving L(H0|x = %s)"%ds.GetName()
-            H0xNLL = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
-            LH0x = H0xNLL.getVal()
-            print "-log(L) of bkgModel ALL = %f"% LH0x
-            #L(H1|x)
-            print "retrieving L(H1|x = %s)"%ds.GetName()
-            H1xNLL = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend),rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
-            LH1x = H1xNLL.getVal()
-            print "-log(L) of sig+bkgModel ALL = %f"% LH1x
-            
-            if math.isnan(LH1x):
-                print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
-                print "         Since this corresponds to no signal/bkg discrimination, returning L(H1)=L(H0)"
-                LH1x = LH0x
-
-            Lz = LH0x-LH1x
-            print "**************************************************"
-            print "L_SR(H0|x = %s) = %f" %(ds.GetName(),LH0x)
-            print "L_SR(H1|x = %s) = %f" %(ds.GetName(),LH1x)
-            print "Lz = L_SR(H0|x = %s) - L_SR(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
-            print "**************************************************"
-
-            del H0xNLL, H1xNLL
-            return Lz, LH0x,LH1x
 
         
         #start by setting all box configs the same
@@ -533,10 +539,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
+            myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
             myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
             myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
             myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
@@ -546,9 +553,33 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
             myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
-
+            if boxes[box].name=="Jet":
+                fr_jet = rt.TFile.Open(self.options.jet_input).Get("Jet/independentFR")
+                subsetConstraint = ["b_TTj1b", "b_Vpj", "n_TTj1b", "n_Vpj"] # Preserve the same order as in the covariance matrix!
+                subsetParams = rt.RooArgSet()
+                listParams = rt.RooArgList()
+                muParams = rt.RooArgList()
+                for param in subsetConstraint:
+                    realPar = boxes[box].workspace.var(param)
+                    clonePar = realPar.clone("%s_centralvalue"%param)
+                    subsetParams.add(realPar)
+                    listParams.add(realPar)
+                    clonePar.setConstant(True)
+                    muParams.add(clonePar)
+                mvaGauss = fr_jet.createHessePdf(subsetParams)
+                mvaGauss.SetName("constraint")
+                covMatrix = mvaGauss.covarianceMatrix()
+                covMatrix *= 16 # multiply covariance matrix by 16 to enlarge the error by 4
+                mvaGauss2xErr = rt.RooMultiVarGaussian("constraint2xErr","constraint2xErr",listParams,muParams,covMatrix)
+                boxes[box].importToWS(mvaGauss2xErr)
+                boxes[box].signalmodelconst = boxes[box].signalmodel+"Constrained"
+                boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,mvaGauss2xErr.GetName()))
+            else:
+                boxes[box].signalmodelconst = boxes[box].signalmodel
+                
             lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
-
+            
+            sDATA.var2 = boxes[box].workspace.var("sigma").getVal()
             sDATA.var3 = -1
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
@@ -563,10 +594,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyStruct
 
             s = MyStruct()
+            myTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(s,'var2'),'var2/D')
             myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
             myTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(s,'var5'),'var5/D')
@@ -590,12 +622,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             if self.options.expectedlimit == True:
                 # use the fr for B hypothesis to generate toys
                 fr_B = fr_central
-                BModel = boxes[box].getFitPDF(name="fitmodel")
+                BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
                 #genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
             else:
                 # use the fr for SpB hypothesis to generate toys
                 fr_SpB = frH0Data
-                SpBModel = boxes[box].getFitPDF(name="fitmodel_SignalCombined")
+                SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
                 #genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
             
                     
@@ -634,6 +666,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "get Lz for toys"
                 
                 LzSR, LH0xSR, LH1xSR, frH0, frH1 = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
+                
+                s.var2 = boxes[box].workspace.var("sigma").getVal()
                 s.var3 = i
                 s.var4 = LzSR
                 s.var5 = LH0xSR

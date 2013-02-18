@@ -28,10 +28,12 @@ def getUnweightedToy(box, files, outdir):
     MR = row['MR']
     Rsq = row['Rsq']
     nBtag = row['nBtag']
-    CHARGE = row['CHARGE']
+    #CHARGE = row['CHARGE']
     
     
-    varSet = rt.RooArgSet(MR,Rsq,nBtag,CHARGE)
+
+    #varSet = rt.RooArgSet(MR,Rsq,nBtag,CHARGE)
+    varSet = rt.RooArgSet(MR,Rsq,nBtag)
     varList = rt.RooArgList(MR,Rsq,nBtag)
     varList2D = rt.RooArgList(MR,Rsq)
     uwdata = rt.RooDataSet('RMRTree','Unweighted Cocktail',varSet)
@@ -64,8 +66,8 @@ def getUnweightedToy(box, files, outdir):
     
     #myTH3 = rt.TH3D("h%s"%box, "h%s"%box, len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     #myTH2 = rt.TH2D("h", "h", len(MRbins)-1, x, len(Rsqbins)-1, y)
-    myTH3 = rt.TH3D("h%s"%box, "h%s"%box, 70, mRmin, mRmax, 50, rsqMin, rsqMax, int(nbtagMax-nbtagMin), nbtagMin, nbtagMax)
-    myTH2 = rt.TH2D("h", "h", 70, mRmin, mRmax, 50, rsqMin, rsqMax)
+    myTH3 = rt.TH3D("h%s"%box, "h%s"%box, 100, mRmin, mRmax, 70, rsqMin, rsqMax, int(nbtagMax-nbtagMin), nbtagMin, nbtagMax)
+    myTH2 = rt.TH2D("h", "h", 100, mRmin, mRmax, 70, rsqMin, rsqMax)
     myTH2.Sumw2()
     #myTH2 = rt.TH2D("h", "h", len(MRbins)-1, x, len(Rsqbins)-1, y)
 
@@ -101,11 +103,11 @@ def getUnweightedToy(box, files, outdir):
         varSet.setRealValue('MR',myMR)
         varSet.setRealValue('Rsq',myRsq)
         varSet.setRealValue('nBtag',mynBtag)
-        varSet.setRealValue('CHARGE',1.0)
+        #varSet.setRealValue('CHARGE',1.0)
         uwdata.add(varSet)
     
 
-    myTH2Toy = rt.TH2D("h", "h", 70, mRmin, mRmax, 50, rsqMin, rsqMax)
+    myTH2Toy = rt.TH2D("h", "h", 100, mRmin, mRmax,70, rsqMin, rsqMax)
     #myTH2Toy = rt.TH2D("h", "h",len(MRbins)-1, x, len(Rsqbins)-1, y)
     uwdata.fillHistogram(myTH2Toy, varList2D,"MR>0")
     myTH2Toy.SetTitle("Unweighted %s"%box)

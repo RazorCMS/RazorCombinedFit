@@ -27,7 +27,9 @@ class Box(object):
             self.workspace.factory('%s[%f]' % (name, value) )
             
         self.fitmodel = 'fitmodel'
+        self.fitmodelconst = self.fitmodel
         self.signalmodel = self.fitmodel
+        self.signalmodelconst = self.fitmodel
         self.cut = 'MR >= 0.0'
         
     def yieldToCrossSection(self, flavour="none"):

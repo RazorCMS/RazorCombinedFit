@@ -23,7 +23,7 @@ def getLnQData(box,fileName):
     elist = rt.gDirectory.Get('elist')
     entry = elist.Next()
     dataTree.GetEntry(entry)
-    lnQData = dataTree.LzSR
+    lnQData = eval('dataTree.LzSR_%s'%box)
     
     return lnQData
 
@@ -42,7 +42,7 @@ def getLnQToys(box,fileName):
         entry = elist.Next()
         if entry == -1: break
         hypoTree.GetEntry(entry)
-        lnQToys.append(hypoTree.LzSR)
+        lnQToys.append(eval('hypoTree.LzSR_%s'%box))
     return lnQToys
 
 def getMinMax(box,BfileName,SpBfileName,type):
@@ -53,7 +53,7 @@ def getMinMax(box,BfileName,SpBfileName,type):
     hypoTree.Add(addToChain)
     addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
     hypoTree.Add(addToChain)
-    hypoTree.Draw("LzSR")
+    hypoTree.Draw("LzSR_%s"%box)
     
     htemp = rt.gPad.GetPrimitive("htemp")
     Xmin = htemp.GetXaxis().GetXmin()
@@ -80,12 +80,12 @@ def getFuncKDE(box,fileName,Xmin,Xmax):
     hypoTree.Add(addToChain)
     
     hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
-    hypoTree.Project(hypoHisto.GetName(),"LzSR")
+    hypoTree.Project(hypoHisto.GetName(),"LzSR_%s"%box)
 
     hypoHisto.SetDirectory(0)
     hypoHisto.Scale(1./hypoHisto.Integral())
     
-    lnQ = rt.RooRealVar("LzSR","LzSR",Xmin,Xmax)
+    lnQ = rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,Xmin,Xmax)
     
     hypoSet = rt.RooArgSet("hypoSet")
     hypoSet.add(lnQ)
@@ -493,7 +493,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
 if __name__ == '__main__':
     gluinopoints = range(425,2025,200)
-    gluinopoints = [1225]
+    gluinopoints = [1025,1225]
     neutralinopoints = [0]
     
     box = sys.argv[1]
