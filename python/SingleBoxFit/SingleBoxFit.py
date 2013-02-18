@@ -327,7 +327,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             else:
                 zeroIntegral = True
                 components = ['TTj1b','TTj2b','Vpj']
-                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp) > 0.]
+                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp).getVal() > 0.]
+                print "The components on are ", componentsOn
                 while zeroIntegral:
                     argList = fr.randomizePars()
                     for p in RootTools.RootIterator.RootIterator(argList):
@@ -339,26 +340,28 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
                     # evaluate each pdf, assumed to be called "RazPDF_{component}"
                     badPars = []
+                    myvars = rt.RooArgSet(box.workspace.var('MR'),box.workspace.var('Rsq'))
                     for component in componentsOn:
-                        pdfComp = self.workspace.pdf("RazPDF_%s"%component)
+                        pdfComp = box.workspace.pdf("RazPDF_%s"%component)
                         pdfValV = pdfComp.getValV(myvars)
-                        badPars.append(box.workspace.var('n_%s'%component) < 0)
-                        badPars.append(box.workspace.var('b_%s'%component) < 0)
-                        badPars.append(box.workspace.var('MR0_%s'%component) > box.workspace.var('MR').getMin())
-                        badPars.append(box.workspace.var('R0_%s'%component)  >  box.workspace.var('Rsq').getMin())
+                        badPars.append(box.workspace.var('n_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('b_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('MR0_%s'%component).getVal() >= box.workspace.var('MR').getMin())
+                        badPars.append(box.workspace.var('R0_%s'%component).getVal()  >=  box.workspace.var('Rsq').getMin())
+                        print badPars
                     # check how many error messages we have after evaluating pdfs
                     errorCountAfter = rt.RooMsgService.instance().errorCount()
                     print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
                     zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
                     print zeroIntegral
-                
-            # float poi or not
-            box.fixParsExact("sigma",fixSigma)
             
             # fix signal nuisance parameters
             for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
                 p.setVal(0.)
                 box.fixParsExact(p.GetName(),True)
+                
+            # float poi or not
+            box.fixParsExact("sigma",fixSigma)
         def setNorms(box, ds):
             # set normalizations
             N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
@@ -373,7 +376,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
         def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
             reset(box, fr, fixSigma=True)
-            box.workspace.var("sigma").setVal(self.options.signal_xsec)
             setNorms(box, ds)
             
             opt = rt.RooLinkedList()
@@ -391,8 +393,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
             covqualH0 = 0
             fitAttempts = 0
-            while covqualH0!=3 and fitAttempts<10:
+            while covqualH0!=3 and fitAttempts<5:
                 reset(box, fr, fixSigma=True, random=(fitAttempts>0))
+                box.workspace.var("sigma").setVal(self.options.signal_xsec)
+                box.workspace.var("sigma").setConstant(True)
                 frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
                 frH0.Print("v")
                 statusH0 = frH0.status()
@@ -406,16 +410,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
             covqualH1 = 0
             fitAttempts = 0
-            while covqualH1!=3 and fitAttempts<10:
+            while covqualH1!=3 and fitAttempts<5:
                 if self.options.expectedlimit==True or ds.GetName=="RMRTree":
                     #this means we're doing background-only toys or data
                     #so we should reset to nominal fit pars
                     reset(box, fr, fixSigma=False, random=(fitAttempts>0))
-                    box.workspace.var("sigma").setVal(1e-7)
+                    box.workspace.var("sigma").setVal(1e-6)
+                    box.workspace.var("sigma").setConstant(False)
                 else:
                     #this means we're doing signal+background toy
                     #so we should reset to the fit with signal strength fixed
                     reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
+                    box.workspace.var("sigma").setVal(self.options.signal_xsec)
+                    box.workspace.var("sigma").setConstant(False)
                 frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
                 frH1.Print("v")
                 statusH1 = frH1.status()
@@ -531,13 +538,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             sDATA = MyDataStruct()
             myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
-            myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
-            myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
-            myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
-            myDataTree.Branch("H0status", rt.AddressOf(sDATA,'var7'),'var7/I')
-            myDataTree.Branch("H0covQual", rt.AddressOf(sDATA,'var8'),'var8/I')
-            myDataTree.Branch("H1status", rt.AddressOf(sDATA,'var9'),'var9/I')
-            myDataTree.Branch("H1covQual", rt.AddressOf(sDATA,'var10'),'var10/I')
+            myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
+            myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
+            myDataTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var6'),'var6/D')
+            myDataTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var7'),'var7/I')
+            myDataTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var8'),'var8/I')
+            myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
+            myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
 
             lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
@@ -561,13 +568,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             s = MyStruct()
             myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
-            myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
-            myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
-            myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
-            myTree.Branch("H0status", rt.AddressOf(s,'var7'),'var7/I')
-            myTree.Branch("H0covQual", rt.AddressOf(s,'var8'),'var8/I')
-            myTree.Branch("H1status", rt.AddressOf(s,'var9'),'var9/I')
-            myTree.Branch("H1covQual", rt.AddressOf(s,'var10'),'var10/I')
+            myTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(s,'var4'),'var4/D')
+            myTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(s,'var5'),'var5/D')
+            myTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(s,'var6'),'var6/D')
+            myTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(s,'var7'),'var7/I')
+            myTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(s,'var8'),'var8/I')
+            myTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(s,'var9'),'var9/I')
+            myTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(s,'var10'),'var10/I')
 
             nuisFile = rt.TFile.Open(self.options.nuisanceFile,"read")
             nuisTree = nuisFile.Get("nuisTree")
@@ -584,12 +591,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # use the fr for B hypothesis to generate toys
                 fr_B = fr_central
                 BModel = boxes[box].getFitPDF(name="fitmodel")
-                genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+                #genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
             else:
                 # use the fr for SpB hypothesis to generate toys
                 fr_SpB = frH0Data
                 SpBModel = boxes[box].getFitPDF(name="fitmodel_SignalCombined")
-                genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+                #genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
             
                     
             
@@ -608,7 +615,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         var.setVal(varVal)
                         print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
                     boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
-                    tot_toy = SpBModel.generate(genSpecSpB)
+                    tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
                     print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
                     print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
@@ -618,7 +625,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "generate a toy assuming bkg model"
                     reset(boxes[box], fr_B, fixSigma = True)
                     boxes[box].workspace.var("sigma").setVal(0.)
-                    tot_toy = BModel.generate(genSpecB)
+                    tot_toy = BModel.generate(vars,rt.RooFit.Extended(True))
                     print "B Expected = %f" %BModel.expectedEvents(vars)
                     print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")

@@ -486,13 +486,14 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
         xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif mDelta < 1400:
         xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+        xsecRange = [0.005, 0.01, 0.05, 0.1]
     else:
         xsecRange = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
     return xsecRange
 
 if __name__ == '__main__':
     gluinopoints = range(425,2025,200)
-    gluinopoints = [1025]
+    gluinopoints = [1225]
     neutralinopoints = [0]
     
     box = sys.argv[1]
@@ -500,7 +501,7 @@ if __name__ == '__main__':
     type = sys.argv[3]
     
     if box == 'All':
-        boxes = ["Jet","MultiJet"]
+        boxes = ["Jet","MultiJet","TauTauJet"]
     else:
         boxes = [box]
         
