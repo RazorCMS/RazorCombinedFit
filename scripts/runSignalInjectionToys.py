@@ -134,7 +134,7 @@ if __name__ == '__main__':
                 #os.system("source "+pwd+"/"+outputname)
             else:
                 for t in xrange(0,nJobs):
-                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t)
+                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t)
                     time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)

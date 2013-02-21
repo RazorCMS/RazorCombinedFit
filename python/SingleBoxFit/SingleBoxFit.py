@@ -148,9 +148,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 wsName = '%s/Box%s_workspace' % (box,box)
                 print "Restoring the workspace from %s" % self.options.input
                 boxes[box].restoreWorkspace(self.options.input, wsName)
-            
-            totalYield += boxes[box].workspace.data('RMRTree').numEntries()
-        
+            if self.options.signal_injection:
+                totalYield += boxes[box].workspace.data('sigbkg').numEntries()
+            else:
+                totalYield += boxes[box].workspace.data('RMRTree').numEntries()
+                
+        boxes[box].workspace.Print("v")
         #we only include the simultaneous fit if we're restoring
         if len(boxes) > 1 and self.options.simultaneous and self.options.input is not None:
             #merge the boxes together in some way
@@ -171,14 +174,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             if box != simName:
                 #get the data yield without cuts
-                data_yield = boxes[box].workspace.data('RMRTree').numEntries()
+                if self.options.signal_injection:
+                    data_yield = boxes[box].workspace.data('sigbkg').numEntries()
+                else:
+                    data_yield = boxes[box].workspace.data('RMRTree').numEntries()
             else:
                 data_yield = totalYield
 
             #if we just need to write out toys then skip everything else
             if self.options.save_toys_from_fit != "none":
                 if box != simName:
-                    f = boxes[box].workspace.obj('independentFR')
+                    if self.options.signal_injection:
+                        f = boxes[box].workspace.obj('independentFRsigbkg')
+                    else:
+                        f = boxes[box].workspace.obj('independentFR')
                 else:
                     f = boxes[box].workspace.obj('simultaneousFR')
                 if self.options.save_toys_from_fit.find("/") != -1:
@@ -252,38 +261,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 #boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True),rt.RooFit.Hesse(False),rt.RooFit.Minos(False))
 
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
-                while fr.covQual()!=3:
-                    zeroIntegral = True
-                    components = ['TTj1b','TTj2b','Vpj']
-                    componentsOn = [comp for comp in components if boxes[box].workspace.var('Ntot_%s'%comp).getVal() > 0.]
-                    print "The components on are ", componentsOn
-                    while zeroIntegral:
-                        argList = fr.randomizePars()
-                        for p in RootTools.RootIterator.RootIterator(argList):
-                            boxes[box].workspace.var(p.GetName()).setVal(p.getVal())
-                            boxes[box].workspace.var(p.GetName()).setError(p.getError())
-                            boxes[box].fixParsExact(p.GetName(),False)
-                            print "RANDOMIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
-                        # check how many error messages we have before evaluating pdfs
-                        errorCountBefore = rt.RooMsgService.instance().errorCount()
-                        print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
-                        # evaluate each pdf, assumed to be called "RazPDF_{component}"
-                        badPars = []
-                        myvars = rt.RooArgSet(boxes[box].workspace.var('MR'),boxes[box].workspace.var('Rsq'))
-                        for component in componentsOn:
-                            pdfComp = boxes[box].workspace.pdf("RazPDF_%s"%component)
-                            pdfValV = pdfComp.getValV(myvars)
-                            badPars.append(boxes[box].workspace.var('n_%s'%component).getVal() <= 0)
-                            badPars.append(boxes[box].workspace.var('b_%s'%component).getVal() <= 0)
-                            badPars.append(boxes[box].workspace.var('MR0_%s'%component).getVal() >= boxes[box].workspace.var('MR').getMin())
-                            badPars.append(boxes[box].workspace.var('R0_%s'%component).getVal()  >=  boxes[box].workspace.var('Rsq').getMin())
-                            print badPars
-                        # check how many error messages we have after evaluating pdfs
-                        errorCountAfter = rt.RooMsgService.instance().errorCount()
-                        print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
-                        zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
-                        print zeroIntegral
-                    fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
                 
                 self.store(fr, name = 'independentFR', dir=box)
                 self.store(fr.correlationHist("correlation_%s" % box), dir=box)
@@ -293,8 +270,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
             
                 #make any plots required
-                boxes[box].plot(fileName, self, box)
-                
+                boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
             else:
                 
                 wsName = '%s/Box%s_workspace' % (box,box)
@@ -332,7 +308,117 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if not self.options.nosave_workspace:
             for box in boxes.keys():
                 self.store(boxes[box].workspace,'Box%s_workspace' % box, dir=box)
+
+
+    
+    def signal_injection(self, inputFiles):
+        """Run signal injection fit"""
+
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+        #print 'fileindex:', fileindex
+        print 'boxes:', boxes
+
+        workspace = rt.RooWorkspace('newws')
+        
+        #start by setting all box configs the same
+        for box, fileName in fileIndex.iteritems():
+            # restore the workspace now
+            wsName = '%s/Box%s_workspace' % (box,box)
+            print "Restoring the workspace from %s" % self.options.input
+            boxes[box].restoreWorkspace(self.options.input, wsName)
             
+            vars = boxes[box].workspace.set('variables')
+            data = boxes[box].workspace.data('RMRTree')
+            fr_B = boxes[box].workspace.obj('independentFR')
+            
+            # add signal specific parameters and nuisance parameters
+            boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
+            boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = boxes[box].workspace)
+            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)
+            boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
+
+
+            for p in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
+                p.setVal(0.)
+                boxes[box].fixParsExact(p.GetName(),True)
+                
+            # change upper limits of variables
+            boxes[box].workspace.var("Ntot_TTj1b").setMax(1e9)
+            boxes[box].workspace.var("Ntot_TTj2b").setMax(1e9)
+            boxes[box].workspace.var("Ntot_Vpj").setMax(1e9)
+            
+            #add a signal model to the workspace
+            signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
+
+            print 'Variables for box %s' % box
+            boxes[box].workspace.allVars().Print('V')
+            print 'Workspace'
+            boxes[box].workspace.Print('V')
+
+            # get the signal+background toy (no nuisnaces)
+            SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
+            boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+            tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
+            print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
+            print "SpB Yield = %f" %tot_toy.numEntries()
+            tot_toy.SetName("sigbkg")
+            
+            RootTools.Utils.importToWS(workspace,tot_toy)
+            #boxes[box].importToWS(tot_toy)
+
+            # define the fit range
+            fit_range = boxes[box].fitregion
+            
+            opt = rt.RooLinkedList()
+            opt.Add(rt.RooFit.Range(fit_range))
+            opt.Add(rt.RooFit.Extended(True))
+            opt.Add(rt.RooFit.Save(True))
+            opt.Add(rt.RooFit.Hesse(True))
+            opt.Add(rt.RooFit.Minos(False))
+            opt.Add(rt.RooFit.PrintLevel(-1))
+            opt.Add(rt.RooFit.PrintEvalErrors(10))
+            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+
+            fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+            fr.SetName('independentFRsigbkg')
+            fr.Print("v")
+            boxes[box].importToWS(fr)
+            RootTools.Utils.importToWS(workspace,fr)
+
+            RootTools.Utils.importToWS(workspace,boxes[box].workspace.set('variables'))
+            RootTools.Utils.importToWS(workspace,boxes[box].getFitPDF(name=boxes[box].fitmodel))
+            
+            boxes[box].defineSet("variables", self.config.getVariables(box, "variables"),workspace)
+            
+            boxes[box].defineSet("pdfpars_TTj2b", self.config.getVariables(box, "pdf_TTj2b"),workspace)
+            boxes[box].defineSet("otherpars_TTj2b", self.config.getVariables(box, "others_TTj2b"),workspace)
+            boxes[box].defineSet("btagpars_TTj2b", self.config.getVariables(box, "btag_TTj2b"),workspace)
+            
+            boxes[box].defineSet("pdfpars_TTj1b", self.config.getVariables(box, "pdf_TTj1b"),workspace)
+            boxes[box].defineSet("otherpars_TTj1b", self.config.getVariables(box, "others_TTj1b"),workspace)
+            boxes[box].defineSet("btagpars_TTj1b", self.config.getVariables(box, "btag_TTj1b"))
+            
+            boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"),workspace)
+            boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"),workspace)
+            boxes[box].defineSet("btagpars_Vpj", self.config.getVariables(box, "btag_Vpj"),workspace)
+            
+            boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
+            
+            workspace.Print("v")
+            self.store(fr, name = 'independentFRsigbkg', dir=box)
+            self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
+            
+            #make any plots required
+            boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
+            
+        #skip saving the workspace if the option is set
+        if not self.options.nosave_workspace:
+            for box in boxes.keys():
+                self.store(workspace,'Box%s_workspace' % box, dir=box)
+
+        
     def limit(self, inputFiles, nToys, nToyOffset):
         """Set a limit based on the model dependent method"""
         
@@ -352,6 +438,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     box.switchOff(z)
             # float background shape parameters
             if not random:
+                zeroIntegral = False
                 argList = fr.floatParsFinal()
                 for p in RootTools.RootIterator.RootIterator(argList):
                     box.workspace.var(p.GetName()).setVal(p.getVal())
@@ -360,10 +447,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "INITIALIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
             else:
                 zeroIntegral = True
+                randomizeAttempts = 0
                 components = ['TTj1b','TTj2b','Vpj']
                 componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp).getVal() > 0.]
                 print "The components on are ", componentsOn
-                while zeroIntegral:
+                while zeroIntegral and randomizeAttempts<5:
                     argList = fr.randomizePars()
                     for p in RootTools.RootIterator.RootIterator(argList):
                         box.workspace.var(p.GetName()).setVal(p.getVal())
@@ -388,7 +476,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     errorCountAfter = rt.RooMsgService.instance().errorCount()
                     print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
                     zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
-                    print zeroIntegral
+                    randomizeAttempts+=1
             
             # fix signal nuisance parameters
             for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
@@ -397,6 +485,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 
             # float poi or not
             box.fixParsExact("sigma",fixSigma)
+            
+            return not zeroIntegral
+            
         def setNorms(box, ds):
             # set normalizations
             N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
@@ -455,7 +546,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 else:
                     #this means we're doing signal+background toy
                     #so we should reset to the fit with signal strength fixed
-                    reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
+                    resetGood = reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
+                    if not resetGood:
+                        #however, if for some reason the randomization is bad, try this
+                        reset(box, fr, fixSigma=False, random=(fitAttempts>0))
                     box.workspace.var("sigma").setVal(self.options.signal_xsec)
                     box.workspace.var("sigma").setConstant(False)
                 frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
@@ -505,6 +599,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             
+            boxes[box].config.getVariablesRange(box,"variables" ,boxes[box].workspace)
+            
             # add signal specific parameters and nuisance parameters
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
             boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = boxes[box].workspace)
@@ -519,9 +615,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-
-            #set upper limit of signal xsec
-            #boxes[box].workspace.var("sigma").setMax(self.options.signal_xsec)
 
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')
@@ -539,11 +632,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
-            myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
+            myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var1'),'var1/D')
+            myDataTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
             myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
             myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
             myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
@@ -553,33 +647,35 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
             myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
-            if boxes[box].name=="Jet":
-                fr_jet = rt.TFile.Open(self.options.jet_input).Get("Jet/independentFR")
-                subsetConstraint = ["b_TTj1b", "b_Vpj", "n_TTj1b", "n_Vpj"] # Preserve the same order as in the covariance matrix!
-                subsetParams = rt.RooArgSet()
-                listParams = rt.RooArgList()
-                muParams = rt.RooArgList()
-                for param in subsetConstraint:
-                    realPar = boxes[box].workspace.var(param)
-                    clonePar = realPar.clone("%s_centralvalue"%param)
-                    subsetParams.add(realPar)
-                    listParams.add(realPar)
-                    clonePar.setConstant(True)
-                    muParams.add(clonePar)
-                mvaGauss = fr_jet.createHessePdf(subsetParams)
-                mvaGauss.SetName("constraint")
-                covMatrix = mvaGauss.covarianceMatrix()
-                covMatrix *= 16 # multiply covariance matrix by 16 to enlarge the error by 4
-                mvaGauss2xErr = rt.RooMultiVarGaussian("constraint2xErr","constraint2xErr",listParams,muParams,covMatrix)
-                boxes[box].importToWS(mvaGauss2xErr)
-                boxes[box].signalmodelconst = boxes[box].signalmodel+"Constrained"
-                boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,mvaGauss2xErr.GetName()))
-            else:
-                boxes[box].signalmodelconst = boxes[box].signalmodel
+            # if boxes[box].name=="Jet":
+            #     fr_jet = rt.TFile.Open(self.options.jet_input).Get("Jet/independentFR")
+            #     subsetConstraint = ["b_TTj1b", "b_Vpj", "n_TTj1b", "n_Vpj"] # Preserve the same order as in the covariance matrix!
+            #     subsetParams = rt.RooArgSet()
+            #     listParams = rt.RooArgList()
+            #     muParams = rt.RooArgList()
+            #     for param in subsetConstraint:
+            #         realPar = boxes[box].workspace.var(param)
+            #         clonePar = realPar.clone("%s_centralvalue"%param)
+            #         subsetParams.add(realPar)
+            #         listParams.add(realPar)
+            #         clonePar.setConstant(True)
+            #         muParams.add(clonePar)
+            #     mvaGauss = fr_jet.createHessePdf(subsetParams)
+            #     mvaGauss.SetName("constraint")
+            #     covMatrix = mvaGauss.covarianceMatrix()
+            #     covMatrix *= 16 # multiply covariance matrix by 16 to enlarge the error by 4
+            #     mvaGauss2xErr = rt.RooMultiVarGaussian("constraint2xErr","constraint2xErr",listParams,muParams,covMatrix)
+            #     boxes[box].importToWS(mvaGauss2xErr)
+            #     boxes[box].signalmodelconst = boxes[box].signalmodel+"Constrained"
+            #     boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,mvaGauss2xErr.GetName()))
+            # else:
+            #
+            boxes[box].signalmodelconst = boxes[box].signalmodel
                 
             lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
             
-            sDATA.var2 = boxes[box].workspace.var("sigma").getVal()
+            sDATA.var1 = boxes[box].workspace.var("sigma").getVal()
+            sDATA.var2 = boxes[box].workspace.var("sigma").getError()
             sDATA.var3 = -1
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
@@ -594,11 +690,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyStruct
 
             s = MyStruct()
-            myTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(s,'var2'),'var2/D')
+            myTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(s,'var1'),'var1/D')
+            myTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(s,'var2'),'var2/D')
             myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
             myTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(s,'var5'),'var5/D')
@@ -667,7 +764,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 
                 LzSR, LH0xSR, LH1xSR, frH0, frH1 = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
                 
-                s.var2 = boxes[box].workspace.var("sigma").getVal()
+                s.var1 = boxes[box].workspace.var("sigma").getVal()
+                s.var2 = boxes[box].workspace.var("sigma").getError()
                 s.var3 = i
                 s.var4 = LzSR
                 s.var5 = LH0xSR
