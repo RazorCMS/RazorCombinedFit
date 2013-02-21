@@ -14,6 +14,8 @@ def useThisRho(minX,maxX,type):
     return rho
     
 def getLnQData(box,fileName):
+    if box=="All":
+        return getLnQDataAll(boxes,fileName)
     dataTree = rt.TChain("myDataTree")
     addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
     print "adding to chain: %s"% addToChain
@@ -24,11 +26,13 @@ def getLnQData(box,fileName):
     entry = elist.Next()
     dataTree.GetEntry(entry)
     lnQData = eval('dataTree.LzSR_%s'%box)
-    
     return lnQData
 
 
-def getLnQToys(box,fileName):
+def getLnQToys(box,boxes,fileName):
+    if box=="All":
+        return getLnQToysAll(boxes,fileName)
+    
     hypoTree = rt.TChain("myTree")
     addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
     print "adding to chain: %s"% addToChain
@@ -45,7 +49,7 @@ def getLnQToys(box,fileName):
         lnQToys.append(eval('hypoTree.LzSR_%s'%box))
     return lnQToys
 
-def getMinMax(box,BfileName,SpBfileName,type):
+def getMinMax(box,BfileName,SpBfileName,LzCut,type):
     hypoTree = rt.TChain("myTree")
     addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
     hypoTree.Add(addToChain)
@@ -53,7 +57,7 @@ def getMinMax(box,BfileName,SpBfileName,type):
     hypoTree.Add(addToChain)
     addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
     hypoTree.Add(addToChain)
-    hypoTree.Draw("LzSR_%s"%box)
+    hypoTree.Draw("LzSR_%s"%box,LzCut)
     
     htemp = rt.gPad.GetPrimitive("htemp")
     Xmin = htemp.GetXaxis().GetXmin()
@@ -61,7 +65,9 @@ def getMinMax(box,BfileName,SpBfileName,type):
     
     
     if type=="LHC":
-        Xmin = 0
+        print "LHC"
+        #Xmin = 0
+        #Xmax = 5
     if type=="LEP":
         XmaxBin = htemp.GetXaxis().FindBin(Xmax)
         XmaxTest = Xmax
@@ -73,14 +79,35 @@ def getMinMax(box,BfileName,SpBfileName,type):
         
     return Xmin, Xmax
 
-def getFuncKDE(box,fileName,Xmin,Xmax):
+def getFuncKDEAll(boxes,fileName,LzCut,Xmin,Xmax):
+    LzCut = ""
+    for box in boxes:
+        LzCut+="H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0.&&"%(box,box,box)
+    LzCut = LzCut[:-2]
+    hypoTree = rt.TChain("myTree")
+    lnQBox = []
+    hypoDataSetBox = []
+    for box in boxes:
+        addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
+        print "adding to chain: %s"% addToChain
+        hypoTree.Add(addToChain)
+        lnQBox.append(rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,Xmin,Xmax))
+        hypoDataSetBox.append(rt.RooDataSet("hypoDataSet_%s"%box,"hypoDataSet_%s"%box,hypoTree,hypoSet))
+        
+    lnQ = rt.RooRealVar("LzSR_All","LzSR_All",Xmin,Xmax)
+    
+    return box
+
+def getFuncKDE(box,boxes,fileName,LzCut,Xmin,Xmax):
+    if box=="All":
+        return getFuncKDEAll(boxes,fileName,LzCut,Xmin,Xmax)
     hypoTree = rt.TChain("myTree")
     addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
     print "adding to chain: %s"% addToChain
     hypoTree.Add(addToChain)
     
     hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
-    hypoTree.Project(hypoHisto.GetName(),"LzSR_%s"%box)
+    hypoTree.Project(hypoHisto.GetName(),"LzSR_%s"%box,LzCut)
 
     hypoHisto.SetDirectory(0)
     hypoHisto.Scale(1./hypoHisto.Integral())
@@ -110,7 +137,6 @@ def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func,type="LEP"):
             
 def getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     funcObs = func.Eval(Xobs)
-
     pValKDE = func.Integral(Xobs,Xmax)/func.Integral(Xmin,Xmax)
     
     # DRAWING FUNCTION AND FILLS
@@ -321,17 +347,18 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
 
     return xsecUL
     
-def getCLs(mg, mchi, xsec, box, directory,type):
+def getCLs(mg, mchi, xsec, box, boxes directory,type):
+    LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
     
     SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
     BFileName = getFileName("B",mg,mchi,xsec,box,directory)
     
-    Xmin, Xmax = getMinMax(box,BFileName,SpBFileName,type)
+    Xmin, Xmax = getMinMax(box,BFileName,SpBFileName,LzCut,type)
     
-    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,SpBFileName,Xmin,Xmax)
-    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,  BFileName,Xmin,Xmax)
+    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,boxes,SpBFileName,LzCut,Xmin,Xmax)
+    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,boxes,  BFileName,LzCut,Xmin,Xmax)
 
-    lnQData = getLnQData(box,BFileName)
+    lnQData = getLnQData(box,boxes,BFileName)
     # for Hybrid CLs
     if type=="LEP":
         CLb, dummyFill, BFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc,type=type)
@@ -486,14 +513,14 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
         xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif mDelta < 1400:
         xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
-        xsecRange = [0.005, 0.01, 0.05, 0.1]
+        #xsecRange = [0.05]
     else:
         xsecRange = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
     return xsecRange
 
 if __name__ == '__main__':
     gluinopoints = range(425,2025,200)
-    gluinopoints = [1025,1225]
+    gluinopoints = [825]
     neutralinopoints = [0]
     
     box = sys.argv[1]
@@ -501,7 +528,7 @@ if __name__ == '__main__':
     type = sys.argv[3]
     
     if box == 'All':
-        boxes = ["Jet","MultiJet","TauTauJet"]
+        boxes = ["MultiJet","TauTauJet"]
     else:
         boxes = [box]
         
@@ -519,7 +546,7 @@ if __name__ == '__main__':
                     if box!="All":
                         CLs = []
                         CLsExp = []
-                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, directory,type=type)
+                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, boxes directory,type=type)
                         CLs.append(CLsBox)
                         CLsExp.append(CLsExpBox)
                         outputFileNames.append(writeCLTree(mg, mchi, xsec, boxes, directory, CLs, CLsExp))

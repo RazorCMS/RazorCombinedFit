@@ -599,7 +599,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             
-            boxes[box].config.getVariablesRange(box,"variables" ,boxes[box].workspace)
+            self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             
             # add signal specific parameters and nuisance parameters
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)

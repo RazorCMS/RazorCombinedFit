@@ -127,11 +127,11 @@ if __name__ == '__main__':
                 elif options.signal_injection:
                     aa.signal_injection(args)
                 else:
-                    aa.analysis(args)
                     if options.limit:
                         if not options.runCLS:
                             aa.limit(args, options.toys, options.nToyOffset)
                         else:
+                            aa.analysis(args)
                             aa.limit_profile(args,options.toys)
                 aa.final()
         
