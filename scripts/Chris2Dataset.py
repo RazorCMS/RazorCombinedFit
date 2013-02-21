@@ -69,7 +69,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         noiseCut = "MR>0."
     #iterate over selected entries in the input tree
     if not calo:
-        tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
+        tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     else:
         tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     elist = rt.gDirectory.Get('elist')
@@ -97,8 +97,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         
         if not calo:
             a.setRealValue('MR',tree.MR)
-            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
-            a.setRealValue('Rsq',tree.RSQ)
+            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_PFTYPE1))
+            a.setRealValue('Rsq',tree.RSQ_PFTYPE1)
             if tree.BTAG_NUM >= btagcutoff:
                 a.setRealValue('nBtag',btagcutoff)
             else:

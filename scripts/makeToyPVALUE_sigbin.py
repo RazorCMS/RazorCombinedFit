@@ -1,5 +1,7 @@
 from optparse import OptionParser
 import ROOT as rt
+import RootTools
+import RazorCombinedFit
 from array import *
 import sys
 import makeBluePlot
@@ -302,7 +304,9 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     myTree = fileIn.Get("myTree")
     nToys  = myTree.GetEntries()
     dataFile = rt.TFile.Open(dataFileName)
-    alldata = dataFile.Get("RMRTree")
+    workspace = dataFile.Get(Box+"/Box"+Box+"_workspace")
+    alldata = workspace.obj("sigbkg")
+    #dataFile.Get("RMRTree")
     
     # p-values 1D plot
     pValHist = rt.TH1D("pVal_%ib_%s" %(btagOpt,Box), "pVal%s" %Box, 20, 0., 1.)
@@ -681,6 +685,8 @@ if __name__ == '__main__':
         if sys.argv[i].find("--fit-region=") != -1:
             frLabelString = sys.argv[i].replace("--fit-region=","")
             frLabels = frLabelString.split(",")
+        else:
+            frLabels = []
         if sys.argv[i] == "--printPlots": printPlots = True
             
         
@@ -688,7 +694,7 @@ if __name__ == '__main__':
     
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
     
-    if len(frLabels)==1:
+    if len(frLabels)<=1:
         btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
     if len(frLabels)==3:
         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
