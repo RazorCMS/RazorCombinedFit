@@ -29,7 +29,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 100 # toys per command
+    nToys = 125 # toys per command
                 # actually run command twice to get 200 toys
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
@@ -61,7 +61,6 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("export LABEL=\"MR400.0_R0.5\"\n")
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FullFits2012ABCD.root $PWD\n")
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SMCocktail_Jet.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTree.root $PWD\n")
 
@@ -78,7 +77,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 10 # do 200=100+100 toys each job => 2000 toys
+    nJobs = 12 # do 250=125+125 toys each job => 3000 toys
     
     print box
     
