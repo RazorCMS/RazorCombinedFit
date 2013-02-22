@@ -28,6 +28,7 @@ class Box(object):
             
         self.fitmodel = 'fitmodel'
         self.signalmodel = self.fitmodel
+        self.signalmodelconst = self.fitmodel
         self.cut = 'MR >= 0.0'
         
     def yieldToCrossSection(self, flavour="none"):

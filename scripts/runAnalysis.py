@@ -22,6 +22,8 @@ def defineParser():
                   help="The index number to start from when generating toys")
     parser.add_option('--save-toys',dest="save_toys",action="store_true", default=False,
                   help="Save the toys as text files for future use.")
+    parser.add_option('--nuisance-file',dest="nuisanceFile",type="string", default="NuisanceTree.root",
+                  help="A tree containing randomized gaussian numbers for nuisance parameters")
     parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",type="string", default="none",
                   help="Save the toys as text files for future use. Sample from covariance matrix.")
     parser.add_option('--scale-lumi',dest="scale_lumi",type="int", default=1,
