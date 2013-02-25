@@ -305,7 +305,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     nToys  = myTree.GetEntries()
     dataFile = rt.TFile.Open(dataFileName)
     workspace = dataFile.Get(Box+"/Box"+Box+"_workspace")
-    alldata = workspace.obj("sigbkg")
+    #alldata = workspace.obj("sigbkg")
+    alldata = workspace.obj("RMRTree")
     #dataFile.Get("RMRTree")
     
     # p-values 1D plot
@@ -685,8 +686,6 @@ if __name__ == '__main__':
         if sys.argv[i].find("--fit-region=") != -1:
             frLabelString = sys.argv[i].replace("--fit-region=","")
             frLabels = frLabelString.split(",")
-        else:
-            frLabels = []
         if sys.argv[i] == "--printPlots": printPlots = True
             
         
