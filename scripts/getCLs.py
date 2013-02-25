@@ -13,7 +13,7 @@ def useThisRho(minX,maxX,type):
         rho = 2.0
     return rho
     
-def getLnQData(box,fileName):
+def getLnQData(box,boxes,fileName):
     if box=="All":
         return getLnQDataAll(boxes,fileName)
     dataTree = rt.TChain("myDataTree")
@@ -62,11 +62,13 @@ def getMinMax(box,BfileName,SpBfileName,LzCut,type):
     htemp = rt.gPad.GetPrimitive("htemp")
     Xmin = htemp.GetXaxis().GetXmin()
     Xmax = htemp.GetXaxis().GetXmax()
-    
+    rms = htemp.GetRMS()
+    mean = htemp.GetMean()
     
     if type=="LHC":
         print "LHC"
-        #Xmin = 0
+        Xmin = 0
+        Xmax = mean+5*rms
         #Xmax = 5
     if type=="LEP":
         XmaxBin = htemp.GetXaxis().FindBin(Xmax)
@@ -213,7 +215,7 @@ def getFileName(hypo, mg, mchi, xsec, box,directory):
     return fileName
 
     
-def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULExp, xsecULExpMinus):
+def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2):
     xsecTree = rt.TTree("xsecTree", "xsecTree")
     myStructCmd = "struct MyStruct{Double_t mg;Double_t mchi;"
     ixsecUL = 0
@@ -222,7 +224,9 @@ def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULEx
         myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+1)
         myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+2)
         myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+3)
-        ixsecUL+=4
+        myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+4)
+        myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+5)
+        ixsecUL+=6
     myStructCmd += "}"
     rt.gROOT.ProcessLine(myStructCmd)
     from ROOT import MyStruct
@@ -237,13 +241,17 @@ def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULEx
     ixsecUL = 0
     for box in boxes:
         xsecTree.Branch("xsecULObs_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+0)),'xsecUL%i/D'%(ixsecUL+0))
-        xsecTree.Branch("xsecULExpPlus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+1)),'xsecUL%i/D'%(ixsecUL+1))
-        xsecTree.Branch("xsecULExp_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+2)),'xsecUL%i/D'%(ixsecUL+2))
-        xsecTree.Branch("xsecULExpMinus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+3)),'xsecUL%i/D'%(ixsecUL+3))
+        xsecTree.Branch("xsecULExpPlus2_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+1)),'xsecUL%i/D'%(ixsecUL+1))
+        xsecTree.Branch("xsecULExpPlus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+2)),'xsecUL%i/D'%(ixsecUL+2))
+        xsecTree.Branch("xsecULExp_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+3)),'xsecUL%i/D'%(ixsecUL+3))
+        xsecTree.Branch("xsecULExpMinus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+4)),'xsecUL%i/D'%(ixsecUL+4))
+        xsecTree.Branch("xsecULExpMinus2_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+5)),'xsecUL%i/D'%(ixsecUL+5))
         exec 's.xsecUL%i = xsecULObs[ixsecUL]'%(ixsecUL+0)
-        exec 's.xsecUL%i = xsecULExpPlus[ixsecUL]'%(ixsecUL+1)
-        exec 's.xsecUL%i = xsecULExp[ixsecUL]'%(ixsecUL+2)
-        exec 's.xsecUL%i = xsecULExpMinus[ixsecUL]'%(ixsecUL+3)
+        exec 's.xsecUL%i = xsecULExpPlus2[ixsecUL]'%(ixsecUL+1)
+        exec 's.xsecUL%i = xsecULExpPlus[ixsecUL]'%(ixsecUL+2)
+        exec 's.xsecUL%i = xsecULExp[ixsecUL]'%(ixsecUL+3)
+        exec 's.xsecUL%i = xsecULExpMinus[ixsecUL]'%(ixsecUL+4)
+        exec 's.xsecUL%i = xsecULExpMinus2[ixsecUL]'%(ixsecUL+5)
         ixsecUL += 4
 
     xsecTree.Fill()
@@ -256,7 +264,9 @@ def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULEx
     fileOut.Close()
     return outputFileName
 
-
+def erfcInv(prob):
+    return rt.Math.normal_quantile_c(prob/2,1.0)/rt.TMath.Sqrt(2) # = TMath::ErfcInverse(prob)
+    
 def getXsecUL(CL, rootFileName, mg, mchi, box):
     rootFile = rt.TFile.Open(rootFileName)
     clTree = rootFile.Get("clTree")
@@ -275,57 +285,60 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
         xsecVals.append(clTree.xsec)
         exec 'CLVals.append(clTree.%s_%s)'%(CL,box)
         
-    erfcInvVals = array('d',[rt.TMath.ErfcInverse(min(CLs,1.0))for CLs in CLVals])
+    
+    # removing points that are out of order
+    i = 0
+    j = 1
+    poppedOne = True
+    while len(CLVals) > 1 and poppedOne:
+        poppedOne = False
+        if CLVals[1]>=CLVals[0]:
+            CLVals.pop(0)
+            xsecVals.pop(0)
+            poppedOne = True
+        j+=1
+    
     i = 0
     while  i < len(CLVals):
-        if CLVals[i]>=1:
-            CLVals.pop(i)
-            erfcInvVals.pop(i)
-            xsecVals.pop(i)
+        j = i+1
+        while  j < len(CLVals):
+            if CLVals[j]>=CLVals[i]:
+                CLVals.pop(j)
+                xsecVals.pop(j)
+            j+=1
         i+=1
 
-    lessXsecVals = array('d')
-    lessErfcInvVals = array('d')
-    for i in xrange(0,len(xsecVals)):
-        if erfcInvVals[i] < rt.TMath.ErfcInverse(0.05):
-            lessXsecVals.append(xsecVals[i])
-            lessErfcInvVals.append(erfcInvVals[i])
-    
-    erfcTGraph = rt.TGraph(len(xsecVals),erfcInvVals,xsecVals)
-    
-    polyPars = array('d',[0,0])
-    fPoly = rt.TF1("fPoly","[0] +[1]*x",0, rt.TMath.ErfcInverse(0.05))
-    fPoly.SetParameter(0,polyPars[0])
-    fPoly.SetParameter(1,polyPars[1])
 
-    
-    if len(lessXsecVals) > 1:
-        lessErfcTGraph = rt.TGraph(len(lessXsecVals),lessErfcInvVals,lessXsecVals)
-        lessErfcTGraph.Fit(fPoly, "","",0, rt.TMath.ErfcInverse(0.05))
-        xsecULFit = fPoly.Eval(rt.TMath.ErfcInverse(0.05))
-
-    erfcTSpilne = rt.TSpline3("spline3",erfcInvVals,xsecVals,len(xsecVals))
-    xsecULSpline = erfcTGraph.Eval(rt.TMath.ErfcInverse(0.05),0,"S")
-    xsecULPolyLine = erfcTGraph.Eval(rt.TMath.ErfcInverse(0.05),0)
-    
-    if len(lessXsecVals) <= 1:
-        xsecUL = xsecULPolyLine
-    else:
-        xsecUL = xsecULFit
+    # now making array of erfc inv vals
+    erfcInvVals = array('d',[erfcInv(min(CLs,1.0)) for CLs in CLVals])
         
+    erfcTGraph = rt.TGraph(len(xsecVals),erfcInvVals,xsecVals)
+
+    #this is to be able to see the usual CLs vs. sigma plot
+    xsecTGraph = rt.TGraph(len(xsecVals),xsecVals,CLVals)
+    
+    xsecULPolyLine = erfcTGraph.Eval(erfcInv(0.05),0)
+
+    xsecUL = xsecULPolyLine
+
+    # making the lines that show the extrapolation
     lines = []
-    lines.append(rt.TLine(rt.TMath.ErfcInverse(0.05), 0, rt.TMath.ErfcInverse(0.05), xsecUL))
-    lines.append(rt.TLine(erfcTGraph.GetXaxis().GetXmin(), xsecUL, rt.TMath.ErfcInverse(0.05), xsecUL))
+    lines.append(rt.TLine(erfcInv(0.05), 0, erfcInv(0.05), xsecUL))
+    lines.append(rt.TLine(erfcTGraph.GetXaxis().GetXmin(), xsecUL, erfcInv(0.05), xsecUL))
+    #lines.append(rt.TLine(0, 0.05, xsecUL, 0.05))
+    #lines.append(rt.TLine(xsecUL, 0, xsecUL, 0.05))
     [line.SetLineColor(rt.kBlue) for line in lines]
     [line.SetLineWidth(2) for line in lines]
+    
+    # plotting things so you can see if anything went wrong 
     d = rt.TCanvas("d","d",500,400)
+    #xsecTGraph.SetLineWidth(2)
+    #xsecTGraph.Draw("al*")
+    
     erfcTGraph.SetLineWidth(2)
     erfcTGraph.Draw("al*")
-    erfcTSpilne.SetLineWidth(2)
-    erfcTSpilne.SetLineColor(rt.kGreen+2)
-    #erfcTSpilne.Draw("acsame")
-    if len(lessXsecVals) > 1: fPoly.Draw("csame")
     [line.Draw("lsame") for line in lines]
+
     model = "T1bbbb"
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
 
@@ -347,7 +360,7 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
 
     return xsecUL
     
-def getCLs(mg, mchi, xsec, box, boxes directory,type):
+def getCLs(mg, mchi, xsec, box, boxes, directory,type):
     LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
     
     SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
@@ -373,12 +386,12 @@ def getCLs(mg, mchi, xsec, box, boxes directory,type):
     else:
         CLs = CLsb/CLb
 
-    lnQExp = array("d",[0.,0.,0.])
-    CLbExp = array("d",[0.159,0.500,0.841])
-    BFunc.GetQuantiles(3,lnQExp,CLbExp)
-    # WE MUST REVERSE THE ORDER OF lnQExp,
+    lnQExp = array("d",[0.,0.,0.,0.,0.])
+    CLbExp = array("d",[0.023, 0.159,0.500,0.841,0.977])
+    BFunc.GetQuantiles(5,lnQExp,CLbExp)
+    # WE MUST REVERSE THE ORDER OF lnQExp IN LEP,
     # otherwise we'll swap CLb <=> 1-CLb
-    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in reversed(lnQExp)]
+    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in lnQExp]
     CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
     
     
@@ -393,12 +406,16 @@ def getCLs(mg, mchi, xsec, box, boxes directory,type):
     print "CLs+b         = %.3f"%CLsb
     print "CLs           = %.3f"%CLs
     print "###########################"
-    print "lnQExp+1sigma = %.3f"%lnQExp[0]
-    print "lnQExp        = %.3f"%lnQExp[1]
-    print "lnQExp-1sigma = %.3f"%lnQExp[2]
-    print "CLsExp+1sigma = %.3f"%CLsExp[0]
-    print "CLsExp        = %.3f"%CLsExp[1]
-    print "CLsExp-1sigma = %.3f"%CLsExp[2]
+    print "lnQExp+2sigma = %.3f"%lnQExp[0]
+    print "lnQExp+1sigma = %.3f"%lnQExp[1]
+    print "lnQExp        = %.3f"%lnQExp[2]
+    print "lnQExp-1sigma = %.3f"%lnQExp[3]
+    print "lnQExp-2sigma = %.3f"%lnQExp[4]
+    print "CLsExp+2sigma = %.3f"%CLsExp[0]
+    print "CLsExp+1sigma = %.3f"%CLsExp[1]
+    print "CLsExp        = %.3f"%CLsExp[2]
+    print "CLsExp-1sigma = %.3f"%CLsExp[3]
+    print "CLsExp-2sigma = %.3f"%CLsExp[4]
     print "###########################"
 
     c = rt.TCanvas("c","c",500,400)
@@ -462,7 +479,9 @@ def writeCLTree(mg,mchi,xsec, boxes, directory, CLs, CLsExp):
         myStructCmd+= "Double_t CL%i;"%(iCL+1)
         myStructCmd+= "Double_t CL%i;"%(iCL+2)
         myStructCmd+= "Double_t CL%i;"%(iCL+3)
-        iCL+=4
+        myStructCmd+= "Double_t CL%i;"%(iCL+4)
+        myStructCmd+= "Double_t CL%i;"%(iCL+5)
+        iCL+=6
     myStructCmd += "}"
     rt.gROOT.ProcessLine(myStructCmd)
     from ROOT import MyStruct
@@ -479,14 +498,18 @@ def writeCLTree(mg,mchi,xsec, boxes, directory, CLs, CLsExp):
     iCL = 0
     for box in boxes:
         clTree.Branch("CLs_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+0)),'CL%i/D'%(iCL+0))
-        clTree.Branch("CLsExpPlus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+1)),'CL%i/D'%(iCL+1))
-        clTree.Branch("CLsExp_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+2)),'CL%i/D'%(iCL+2))
-        clTree.Branch("CLsExpMinus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+3)),'CL%i/D'%(iCL+3))
+        clTree.Branch("CLsExpPlus2_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+1)),'CL%i/D'%(iCL+1))
+        clTree.Branch("CLsExpPlus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+2)),'CL%i/D'%(iCL+2))
+        clTree.Branch("CLsExp_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+3)),'CL%i/D'%(iCL+3))
+        clTree.Branch("CLsExpMinus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+4)),'CL%i/D'%(iCL+4))
+        clTree.Branch("CLsExpMinus2_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+5)),'CL%i/D'%(iCL+5))
         exec 's.CL%i = CLs[iCL]'%(iCL+0)
         exec 's.CL%i = CLsExp[iCL][0]'%(iCL+1)
         exec 's.CL%i = CLsExp[iCL][1]'%(iCL+2)
         exec 's.CL%i = CLsExp[iCL][2]'%(iCL+3)
-        iCL += 4
+        exec 's.CL%i = CLsExp[iCL][3]'%(iCL+4)
+        exec 's.CL%i = CLsExp[iCL][4]'%(iCL+5)
+        iCL += 6
 
     clTree.Fill()
 
@@ -520,7 +543,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
 if __name__ == '__main__':
     gluinopoints = range(425,2025,200)
-    gluinopoints = [825]
+    #gluinopoints = [825]
     neutralinopoints = [0]
     
     box = sys.argv[1]
@@ -546,7 +569,7 @@ if __name__ == '__main__':
                     if box!="All":
                         CLs = []
                         CLsExp = []
-                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, boxes directory,type=type)
+                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, boxes, directory,type=type)
                         CLs.append(CLsBox)
                         CLsExp.append(CLsExpBox)
                         outputFileNames.append(writeCLTree(mg, mchi, xsec, boxes, directory, CLs, CLsExp))
@@ -561,15 +584,19 @@ if __name__ == '__main__':
         for mg in gluinopoints:
             for mchi in neutralinopoints:
                 xsecULObs = []
+                xsecULExpPlus2 = []
                 xsecULExpPlus = []
                 xsecULExp = []
                 xsecULExpMinus = []
+                xsecULExpMinus2 = []
                 for box in boxes:
-                    xsecULObs.append(max(1e-3,getXsecUL("CLs", rootFileName, mg, mchi, box)))
-                    xsecULExpPlus.append(max(1e-3,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
-                    xsecULExp.append(max(1e-3,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
-                    xsecULExpMinus.append(max(1e-3,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
-                outputFileNames.append(writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULExp, xsecULExpMinus))
+                    xsecULObs.append(max(1e-4,getXsecUL("CLs", rootFileName, mg, mchi, box)))
+                    xsecULExpPlus2.append(max(1e-4,getXsecUL("CLsExpPlus2", rootFileName, mg, mchi, box)))
+                    xsecULExpPlus.append(max(1e-4,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
+                    xsecULExp.append(max(1e-4,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
+                    xsecULExpMinus.append(max(1e-4,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
+                    xsecULExpMinus2.append(max(1e-4,getXsecUL("CLsExpMinus2", rootFileName, mg, mchi, box)))
+                outputFileNames.append(writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2))
         xsecFileName = "%s/xsecUL_%s.root"%(directory,'_'.join(boxes))
         haddCmd = "hadd -f %s %s"%(xsecFileName,' '.join(outputFileNames))
         print haddCmd
