@@ -19,6 +19,9 @@ if __name__ == '__main__':
     rt.gSystem.Load("../lib/libRazor")
     from ROOT import RooRazor2DSignal
 
+    from RazorCombinedFit.Framework import Config
+    cfg = Config.Config("/afs/cern.ch/work/s/salvati/CMSSW_6_1_1/src/RazorCombinedFit_wreece_101212_2011_style_fits/config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg")
+
     # Define variables
     # ---------------------------------------
     MR = rt.RooRealVar("MR","MR",500,4000) 
@@ -32,7 +35,7 @@ if __name__ == '__main__':
     MRRsq.add(MR)
     MRRsq.add(Rsq)
     
-    varList2D = rt.RooArgList(MR,Rsq)
+    #varList2D = rt.RooArgList(MR,Rsq)
     
     MRbins, Rsqbins = getBinning()
     
@@ -65,15 +68,48 @@ if __name__ == '__main__':
     xPdf = rt.RooRealVar("xPdf","xPdf",0.,-1.,1.)
     xBtag = rt.RooRealVar("xBtag","xBtag",0.,-1.,1.)
 
-    
     rt.RooMsgService.instance().getStream(1).addTopic(rt.RooFit.Integration)
     razor = RooRazor2DSignal("razor","razor", MR, Rsq, workspace, "wHisto","wHisto_JESerr_pe","wHisto_pdferr_pe","wHisto_btagerr_pe", xJes, xPdf, xBtag)
+
+    ## add nuisance parameters to the PDF
+    xBtag_prime = rt.RooRealVar('xBtag_prime', 'xBtag_prime', 0)
+    xJes_prime = rt.RooRealVar('xJes_prime', 'xJes_prime', 0)
+    xPdf_prime = rt.RooRealVar('xPdf_prime', 'xPdf_prime', 0)
+    eff_prime = rt.RooRealVar('eff_prime', 'eff_prime', 0)
+    lumi_prime = rt.RooRealVar('lumi_prime', 'lumi_prime', 0)
+    nuisArgs = rt.RooArgSet(xBtag_prime, xJes_prime, xPdf_prime, eff_prime, lumi_prime)
+
+    lumi_value = rt.RooRealVar('lumi_value', 'lumi_value', 19300)
+    eff_value = rt.RooRealVar('eff_value', 'eff_value', 1.0)
+    lumi_uncert = rt.RooRealVar('lumi_uncert', 'lumi_uncert', 0.044)
+    eff_uncert = rt.RooRealVar('eff_uncert', 'eff_uncert', 0.1)
+    otherArgs = rt.RooArgSet(lumi_value, eff_value, lumi_uncert, eff_uncert )
+
+    sigma = rt.RooRealVar('sigma', 'sigma', 0.001)
+    poiArgs = rt.RooArgSet(sigma)
+
+    workspace.defineSet("nuisance", nuisArgs, True)
+    workspace.defineSet("other", otherArgs, True)
+    workspace.defineSet("poi", poiArgs, True)
+    workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+    workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
+
+    ## now multiply the PDF by the already smeared nuisance parameters
+    nuisFile = rt.TFile.Open("NuisanceTree.root","read")
+    nuisTree = nuisFile.Get("nuisTree")
+    nuisTree.Draw('>>nuisElist','nToy==1','entrylist')
+    nuisElist = rt.gDirectory.Get('nuisElist')
+    nuisEntry = nuisElist.Next()
+    nuisTree.GetEntry(nuisEntry)
+    for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+        # for each nuisance, grab gaussian distributed variables from ROOT tree
+        varVal = eval('nuisTree.%s'%var.GetName())
+        var.setVal(varVal)
+        print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
     
-    #razor.forceNumInt(True)
-
+    workspace.Print("v")
+    
     razordata = razor.generate(MRRsq,100)
-    #sys.exit()
-
 
     #fr = razor.fitTo(razordata3D,rt.RooFit.Save())
     #fr.Print("v")
