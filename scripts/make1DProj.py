@@ -11,7 +11,7 @@ def FindLastBin(h):
     for i in range(1,h.GetXaxis().GetNbins()):
         thisbin = h.GetXaxis().GetNbins()-i
         if h.GetBinContent(thisbin)>=0.1: return thisbin+1
-    return h.GetXaxis().GetNbins()    
+    return h.GetXaxis().GetNbins()
 
 def GetProbRange(h):
     # find the maximum
@@ -266,7 +266,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
     return err
 
 
-def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btagOpt):
+def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btagOpt):
     rt.gStyle.SetOptStat(0000)
     rt.gStyle.SetOptTitle(0)
     
@@ -293,6 +293,11 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     pad1.cd()
     rt.gPad.SetLogy()
 
+    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, False)
+    binMap = {"MR":MRbins,"RSQ":Rsqbins,"BTAG":nBtagbins}
+    print binMap
+    print binMap[varname]
+    print binMap[varname][0]
     # MR PLOT
     hMRData.SetLineWidth(2)
     hMRTOTcopy.SetMinimum(0.5)
@@ -309,7 +314,7 @@ def goodPlot(varname, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj
     hMRTOTcopy.GetXaxis().SetTitleOffset(0.8)
     hMRTOTcopy.GetYaxis().SetTitleOffset(0.7)
     hMRTOTcopy.GetXaxis().SetTicks("+-")
-    hMRTOTcopy.GetXaxis().SetRange(0,FindLastBin(hMRTOTcopy))
+    hMRTOTcopy.GetXaxis().SetRange(1,FindLastBin(hMRTOTcopy))
     hMRTOTcopy.GetYaxis().SetTitle("Events")
     if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
     elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
@@ -649,8 +654,8 @@ if __name__ == '__main__':
         pad1 = rt.TPad("pad1","pad1",0,0.25,1,1)
         pad2 = rt.TPad("pad2","pad2",0,0,1,0.25)
 
-        goodPlot("MR", outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btagOpt)
-        goodPlot("RSQ", outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData,  c1, pad1, pad2, fit3D, btagOpt)
+        goodPlot("MR",  Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btagOpt)
+        goodPlot("RSQ", Box, outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData,  c1, pad1, pad2, fit3D, btagOpt)
 
-        if fit3D and btagOpt==0: goodPlot("BTAG", outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData,  c1, pad1, pad2, fit3D, btagOpt)
+        if fit3D and btagOpt==0: goodPlot("BTAG", Box, outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData,  c1, pad1, pad2, fit3D, btagOpt)
     

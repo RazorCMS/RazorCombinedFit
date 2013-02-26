@@ -30,7 +30,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 125 # toys per command
-                # actually run command twice to get 200 toys
+                # actually run command twice to get 250 toys
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     gluinopoints = range(425,2025,200)
     neutralinopoints = [0]
     
-    queue = "8nh"
+    queue = "1nd"
     
     pwd = os.environ['PWD']
     
@@ -105,7 +105,8 @@ if __name__ == '__main__':
                         print "Now scanning xsec = %f"%xsecpoint
                         outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                        time.sleep(3)
+                        #time.sleep(3)
                         os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        #os.system("source "+pwd+"/"+outputname)
                         

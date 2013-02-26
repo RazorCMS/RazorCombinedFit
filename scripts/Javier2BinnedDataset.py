@@ -14,6 +14,10 @@ def getBinning(box):
     MRbins = cfg.getBinning(box)[0]
     Rsqbins = cfg.getBinning(box)[1]
     nBtagbins = cfg.getBinning(box)[2]
+    print "SIGNAL BINNING"
+    print "MR: ", MRbins
+    print "Rsq: ", Rsqbins
+    print "nBtag: ", nBtagbins
     return MRbins, Rsqbins, nBtagbins
 
 def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, smscount,jes_pe, pdf_pe, btag_pe, nominal, pdf_nom):

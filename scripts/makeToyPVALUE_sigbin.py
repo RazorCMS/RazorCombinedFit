@@ -630,7 +630,11 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     c2.SetLogx()
     c2.SetLogy()
     tlabels = []
-    if Box=="MultiJet" or Box=="TauTauJet" or Box=="Jet":
+    if Box=="Jet":
+        tlabels.append(rt.TLatex(330,0.485, "0.5"))
+        tlabels.append(rt.TLatex(330,0.39, "0.4"))
+        tlabels.append(rt.TLatex(330,0.295, "0.3"))
+    elif Box=="MultiJet" or Box=="TauTauJet":
         tlabels.append(rt.TLatex(330,0.76, "0.8"))
         tlabels.append(rt.TLatex(330,0.47, "0.5"))
         tlabels.append(rt.TLatex(330,0.285, "0.3"))
