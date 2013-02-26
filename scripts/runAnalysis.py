@@ -123,6 +123,7 @@ if __name__ == '__main__':
                     if options.study:
                         aa.toystudy(args, options.toys)
                     else:
+                        aa.analysis(args)
                         aa.runtoys(args, options.toys)
                 elif options.signal_injection:
                     aa.signal_injection(args)

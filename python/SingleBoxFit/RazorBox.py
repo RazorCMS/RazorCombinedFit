@@ -38,7 +38,7 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':[],'Vpj':[]}
         else:
             self.btag = "Btag"
-            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet','Jet']}
+            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet']}
                         
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
         # for CLs limit setting  remove the following line
@@ -305,48 +305,46 @@ class RazorBox(Box.Box):
         return extended.GetName()
         
     def plot(self, inputFile, store, box, data=None, fitmodel="none", frName="none"):
-
-        if self.workspace.var("Rsq").getMax()==0.5:
-            nbinsRsq = 40
-        else:
-            nbinsRsq = 50
         [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName )]
-        [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
+        [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
+        
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
+        
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data, fitmodel=fitmodel, frName=frName)]
             
-        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data, fitmodel=fitmodel, frName=frName)]
-        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data, fitmodel=fitmodel, frName=frName)]
-            
-        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
-        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
     
         # # the real plot 1d Histos:
         
         # # just the fitregion:
         # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=self.fitregion.split(","))]
-        # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=self.fitregion.split(","))]
+        # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=self.fitregion.split(","))]
         # if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=self.fitregion.split(","))]
             
-        # # # the full region
-        # if self.fitregion!='LowRsq,LowMR,HighMR':
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'])]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq','LowMR','HighMR'])]
-        #     if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
+        # # the full region
+        if self.fitregion!='LowRsq,LowMR,HighMR':
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'])]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'])]
+            if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
 
 
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
 
         if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
             [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", nbinsRsq, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
             
 
 
@@ -354,8 +352,8 @@ class RazorBox(Box.Box):
 
         rangeCut = self.getVarRangeCutNamed(ranges=ranges)
         # set the integral precision
-        rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-100)
-        rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-190)
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-30)
+        rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-30)
         
         # get the max and min (if different than default)
         xmin = self.workspace.var(varname).getMin()
@@ -373,31 +371,65 @@ class RazorBox(Box.Box):
         data_cut = data.reduce(self.cut)
         data_cut = data_cut.reduce(rangeCut)
         
-        
+        datamin = array('d',[0])
+        datamax = array('d',[0])
+        data_cut.getRange(self.workspace.var(varname), datamin, datamax, 0, False)
         
         # project the data on the variable
         if varname =="nBtag":
             frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(xmin,xmax),rt.RooFit.Bins(nbin))
         elif varname =="Rsq":
-            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(xmin,xmax),rt.RooFit.Bins(nbin))
+            rsqMin = xmin
+            if datamax[0] < 0.5:
+                rsqMax = 0.5
+                nbin = 8*(rsqMax-rsqMin)/(0.05)
+            elif datamax[0] < 0.75:
+                rsqMax = 0.75
+                nbin = 4*(rsqMax-rsqMin)/(0.05)
+            elif datamax[0] < 1.0:
+                rsqMax = 1.0
+                nbin = 3*(rsqMax-rsqMin)/(0.05)
+            elif datamax[0] < 1.25:
+                rsqMax = 1.25
+                nbin = 3*(rsqMax-rsqMin)/(0.05)
+            else:
+                rsqMax = 1.5
+                nbin = 3*(rsqMax-rsqMin)/(0.05)
+            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(rsqMin,rsqMax),rt.RooFit.Bins(int(nbin)))
         elif varname =="MR":
-            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(400,2000),rt.RooFit.Bins(nbin))
+            mrMin = xmin
+            if datamax[0] < 800:
+                mrMax = 800
+                nbin = 4*(mrMax-mrMin)/(50)
+            elif datamax[0] < 1200:
+                mrMax = 1200
+                nbin = 2*(mrMax-mrMin)/(50)
+            elif datamax[0] < 1600:
+                mrMax = 1600
+                nbin = 2*(mrMax-mrMin)/(50)
+            elif datamax[0] < 2000:
+                mrMax = 2000
+                nbin = 2*(mrMax-mrMin)/(50)
+            else:
+                mrMax = 4000
+                nbin = 1*(mrMax-mrMin)/(50)
+            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(mrMin,mrMax),rt.RooFit.Bins(int(nbin)))
         
         #plot data
         data_cut.plotOn(frameMR)
-        
+        buff = 1e-12
         if ",".join(ranges).find("3b")!=-1:
             fitlabel = "3b"
-            btagMin = 3
-            btagMax = 4
+            btagMin = 3+buff
+            btagMax = 4-buff
         elif ",".join(ranges).find("2b")!=-1:
             fitlabel = "2b"
-            btagMin = 2
-            btagMax = 3
+            btagMin = 2+buff
+            btagMax = 3-buff
         elif ",".join(ranges).find("1b")!=-1:
             fitlabel = "1b"
-            btagMin = 1
-            btagMax = 2
+            btagMin = 1+buff
+            btagMax = 2-buff
         else:
             fitlabel = ""
             btagMin = self.workspace.var("nBtag").getMin()
