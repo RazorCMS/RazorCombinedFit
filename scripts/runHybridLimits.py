@@ -10,20 +10,22 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     label = "MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
-    ## this stuff is irrelevant at the moment
-    mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
-    print "mDelta = %f"%mDelta
-    if mDelta < 800:
-        xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    elif mDelta < 1400:
-        xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
+    if gluinopoint == 400:
+        return [0.1, 0.5]
+    elif gluinopoint == 500:
+        return [0.03, 0.05, 0.1]
+    elif gluinopoint == 550:
+        return [0.03, 0.05, 0.08]
+    elif gluinopoint == 600:
+        return [0.01, 0.03, 0.05]
+    elif gluinopoint == 650:
+        return [0.01, 0.015, 0.02]
+    elif gluinopoint == 700:
+        return [0.006, 0.008, 0.01]    
+    elif gluinopoint == 800:
+        return [0.006, 0.008, 0.01]
     else:
-        xsecRange = [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1]
-        
-
-    #return xsecRange
-    return [0.001, 0.005, 0.01, 0.05]
-
+        return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
@@ -114,7 +116,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         
 
     # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybrid2000toys/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybrid10ktoys/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
@@ -122,13 +124,14 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 20 # do 100=50+50 toys each job => 2000 toys
+    nJobs = 100 # do 100=50+50 toys each job => 10000 toys
     
     print box
     
-    gluinopoints = range(200,900,100)
+    #gluinopoints = range(200,900,100)
+    gluinopoints = [400,500,550,600,650,700,800]
     neutralinopoints = [0]
-    queue = "1nd"
+    queue = "2nd"
     
     pwd = os.environ['PWD']
     
