@@ -7,11 +7,13 @@ import os
 from array import *
 
 
-def useThisRho(minX,maxX):
-    #rho = 0.1
-    rho = 2.0
+def useThisRho(minX,maxX, type):
+    if type=="LHC":
+        rho = 1.0
+    if type=="LEP":
+        rho = 2.0
     return rho
-    
+
 def getLnQData(box,fileName):
     dataTree = rt.TChain("myDataTree")
     addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
@@ -94,7 +96,7 @@ def getFuncKDEAll(boxes,fileName,LzCut,Xmin,Xmax):
     
     return box
 
-def getFuncKDE(box,fileName,LzCut,Xmin,Xmax):
+def getFuncKDE(box,fileName,LzCut,Xmin,Xmax,type):
     if box=="All":
         return getFuncKDEAll(boxes,fileName,LzCut,Xmin,Xmax)
     hypoTree = rt.TChain("myTree")
@@ -118,7 +120,7 @@ def getFuncKDE(box,fileName,LzCut,Xmin,Xmax):
     hypoDataSet= rt.RooDataSet("hypoDataSet","hypoDataSet",hypoTree,hypoSet)
 
     
-    rho = useThisRho(Xmin,Xmax)
+    rho = useThisRho(Xmin,Xmax,type)
     hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ,hypoDataSet,rt.RooKeysPdf.NoMirror,rho)
     hypoFunc = hypoPdf.asTF(hypoList,rt.RooArgList(),hypoSet)
 
@@ -440,8 +442,8 @@ def getCLs(mg, mchi, xsec, box, directory, type):
     print Xmin
     print Xmax
 
-    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,SpBFileName,LzCut,Xmin,Xmax)
-    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,  BFileName,LzCut,Xmin,Xmax)
+    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,SpBFileName,LzCut,Xmin,Xmax,type)
+    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,  BFileName,LzCut,Xmin,Xmax,type)
 
     lnQData = getLnQData(box,BFileName)
 
@@ -465,7 +467,7 @@ def getCLs(mg, mchi, xsec, box, directory, type):
     BFunc.GetQuantiles(3,lnQExp,CLbExp)
     # WE MUST REVERSE THE ORDER OF lnQExp,
     # otherwise we'll swap CLb <=> 1-CLb
-    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in reversed(lnQExp)]
+    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in lnQExp]
     CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
     
     
@@ -609,11 +611,11 @@ def getXsecMax(mg, mchi):
 
 if __name__ == '__main__':
     #gluinopoints = range(200,850,50)
-    gluinopoints = range(200,900,100)
+    gluinopoints = [400,500,550,600,650,700]#,800]
     neutralinopoints = [0]
     
-    xsecsteps = [0.001, 0.005, 0.01,0.05]#,0.5,1.0]
-    
+    #xsecsteps = [0.001, 0.005, 0.01,0.05]#,0.5,1.0]
+    xsecsteps = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     box = sys.argv[1]
     directory = sys.argv[2]
     type = sys.argv[3]
