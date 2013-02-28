@@ -9,8 +9,6 @@ from array import *
 def Binning(boxName, varName):
     if varName == "MR" : return [500.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
     if varName == "Rsq": return [0.05, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
-   ##  if varName == "MR" : return [450.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
-##     if varName == "Rsq": return [0.03, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
     if varName == "Btag": return [1.,5.]
 
 class RazorMultiJetBox(RazorBox.RazorBox):
@@ -80,30 +78,16 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         
         # signalModel is the 2D pdf [normalized to one]
         # nSig is the integral of the histogram given as input
-        #signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
         signalModel, nSig = self.makeRooRazor2DSignal(inputFile,modelName)
         
         # compute the expected yield/(pb-1)
-        if signalXsec > 0.:
-            # for SMS: the integral is the efficiency.
-            # We multiply it by the specified xsection
-            nSig = nSig*signalXsec
-        else:
-            # here nSig is the expected yields for 1000 pb-1
-            # and we turn it into the expcted yield in a pb-1
-            nSig = nSig/1000.
-
+        self.workspace.var('sigma').setVal(signalXsec)
+ 
         #set the MC efficiency relative to the number of events generated
-        #epsilon = self.workspace.factory("expr::Epsilon_%s('%i/@0',nGen_%s)" % (modelName,nSig,modelName) )
-        #self.yieldToCrossSection(modelName) #define Ntot
-        self.workspace.factory("rSig[1.]")
-        self.workspace.var("rSig").setConstant(rt.kTRUE)
         # compute the signal yield multiplying by the efficiency
-        self.workspace.factory("expr::Ntot_%s('%f*@0*@1',lumi_value, rSig)" %(modelName,nSig))
+        self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',sigma, lumi, eff, eff_value_%s)" %(modelName,self.name))
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
-        #add = rt.RooAddPdf('%s_%sCombined' % (self.fitmodel,modelName),'Signal+BG PDF',
-        #                   rt.RooArgList(self.workspace.pdf(self.fitmodel),extended)
-        #                   )
+ 
         theRealFitModel = "fitmodel"
         
         SpBPdfList = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"))
