@@ -74,7 +74,7 @@
 
 using namespace RooFit;
 using namespace RooStats;
-
+using namespace std;
 
 bool plotHypoTestResult = true;          // plot test statistic result at each point
 bool writeResult = true;                 // write HypoTestInverterResult in a file 
