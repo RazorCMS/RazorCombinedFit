@@ -1,3 +1,4 @@
+
 import ROOT as rt
 import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
@@ -293,82 +294,167 @@ class SingleBoxAnalysis(Analysis.Analysis):
         if self.options.input is None:
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
-        def reset(box, fr):
-            #for p in RootTools.RootIterator.RootIterator(fr.floatParsInit()):
-            for p in RootTools.RootIterator.RootIterator(fr.floatParsFinal()):
-                box.workspace.var(p.GetName()).setVal(p.getVal())
-                box.workspace.var(p.GetName()).setError(p.getError())
-                
+        def reset(box, fr, fixSigma = True, random = False):
             # fix all parameters
+            box.fixAllPars()
+            
             for z in box.zeros:
                 box.fixPars(z)
                 if box.name in box.zeros[z]:
                     box.switchOff(z)
-
-            box.fixParsExact("rSig",True)
-            box.workspace.var("rSig").setVal(1.)
-
-        def getLz(box, ds, fr, testForQuality = True):
-            reset(box, fr)
+            # float background shape parameters
+            if not random:
+                zeroIntegral = False
+                argList = fr.floatParsFinal()
+                for p in RootTools.RootIterator.RootIterator(argList):
+                    box.workspace.var(p.GetName()).setVal(p.getVal())
+                    box.workspace.var(p.GetName()).setError(p.getError())
+                    box.fixParsExact(p.GetName(),False)
+                    print "INITIALIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
+            else:
+                zeroIntegral = True
+                randomizeAttempts = 0
+                components = ['TTj','QCD']
+                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp).getVal() > 0.]
+                print "The components on are ", componentsOn
+                while zeroIntegral and randomizeAttempts<5:
+                    argList = fr.randomizePars()
+                    for p in RootTools.RootIterator.RootIterator(argList):
+                        box.workspace.var(p.GetName()).setVal(p.getVal())
+                        box.workspace.var(p.GetName()).setError(p.getError())
+                        box.fixParsExact(p.GetName(),False)
+                        print "RANDOMIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
+                    # check how many error messages we have before evaluating pdfs
+                    errorCountBefore = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+                    # evaluate each pdf, assumed to be called "PDF1st_{component}, etc."
+                    badPars = []
+                    myvars = rt.RooArgSet(box.workspace.var('MR'),box.workspace.var('Rsq'))
+                    for component in componentsOn:
+                        pdfComp = box.workspace.pdf("PDF1st_%s"%component)
+                        pdfValV = pdfComp.getValV(myvars)
+                        pdfComp = box.workspace.pdf("PDF2nd_%s"%component)
+                        pdfValV = pdfComp.getValV(myvars)
+                        #badPars.append(box.workspace.var('n_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('b1st_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('MR01st_%s'%component).getVal() >= box.workspace.var('MR').getMin())
+                        badPars.append(box.workspace.var('R01st_%s'%component).getVal()  >=  box.workspace.var('Rsq').getMin())
+                        badPars.append(box.workspace.var('b2nd_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('MR02nd_%s'%component).getVal() >= box.workspace.var('MR').getMin())
+                        badPars.append(box.workspace.var('R02nd_%s'%component).getVal()  >=  box.workspace.var('Rsq').getMin())
+                        print badPars
+                    # check how many error messages we have after evaluating pdfs
+                    errorCountAfter = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+                    zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
+                    randomizeAttempts+=1
             
-            #L(H0|x)
-            print "retrieving L(H0|x = %s)"%ds.GetName()
-            #H0xNLL = box.getFitPDF(name=box.fitmodel).createNLL(ds)
-            theRealFitModel = "fitmodel"
-            H0xNLL = box.getFitPDF(name=theRealFitModel).createNLL(ds)
-            LH0x = H0xNLL.getVal()
-            print "retrieving L(H1|x = %s)"%ds.GetName()
-            H1xNLL = box.getFitPDF(name=box.signalmodel).createNLL(ds)
-            LH1x = H1xNLL.getVal()
-
-            Lz = LH0x-LH1x
-            print "**************************************************"
-            print "L(H0|x = %s) = %f" %(ds.GetName(),LH0x)
-            print "L(H1|x = %s) = %f" %(ds.GetName(),LH1x)
-            print "Lz = L(H0|x = %s) - L(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
-            print "**************************************************"
-
-            return Lz, LH0x,LH1x
-
-        def getLzSR(box, ds, fr, Extend = True, norm_region = 'sR1,sR2,sR3,sR4,sR5,sR6'):
-            reset(box, fr)
-
-            #L(H0|x)
-            print "retrieving L(H0|x = %s)"%ds.GetName()
-            H0xNLLAll = box.getFitPDF(name="fitmodel").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
-            LH0xAll = H0xNLLAll.getVal()
-            H0xNLL = box.getFitPDF(name=box.BkgModelSR).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.SumCoefRange(norm_region),rt.RooFit.Extended(Extend))
-            LH0x = H0xNLL.getVal()
-            print "-log(L) of bkgModel SR = %f"% LH0x 
-            print "-log(L) of bkgModel All = %f"% LH0xAll
-            #L(H1|x)
-            print "retrieving L(H1|x = %s)"%ds.GetName()
+            # fix signal nuisance parameters
+            for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
+                p.setVal(0.)
+                box.fixParsExact(p.GetName(),True)
+                
+            # float poi or not
+            box.fixParsExact("sigma",fixSigma)
             
-            box.workspace.var("eff_prime").setVal(0.0)
-            H1xNLLAll = box.getFitPDF(name="fitmodel_SignalCombined").createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.Extended(Extend))
-            LH1xAll  = H1xNLLAll.getVal()
-            H1xNLL = box.getFitPDF(name=box.SigPlusBkgModelSR).createNLL(ds,rt.RooFit.Range(norm_region),rt.RooFit.SumCoefRange(norm_region),rt.RooFit.Extended(Extend))
+            return not zeroIntegral
+
+        def setNorms(box, ds):
+            # set normalizations
+            N_TTj = box.workspace.var("Ntot_TTj").getVal()
+            N_QCD = box.workspace.var("Ntot_QCD").getVal()
+            N_Signal = box.workspace.function("Ntot_Signal").getVal()
+            Nds = ds.sumEntries()
+            if Nds-N_Signal>0:
+                box.workspace.var("Ntot_TTj").setVal((Nds-N_Signal)*N_TTj/(N_TTj+N_QCD))
+                box.workspace.var("Ntot_QCD").setVal((Nds-N_Signal)*N_QCD/(N_TTj+N_QCD))
+  
+        def getLz(box, ds, fr, Extend=True, norm_region = 'fR1,fR2,fR3,fR4,fR5'):
+            reset(box, fr, fixSigma=True)
+            setNorms(box, ds)
             
-            LH1x = H1xNLL.getVal()
-            print "-log(L) of sig+bkgModel SR = %f"% LH1x 
-            print "-log(L) of sig+bkgModel All = %f"% LH1xAll
-            
+            opt = rt.RooLinkedList()
+            opt.Add(rt.RooFit.Range(norm_region))
+            opt.Add(rt.RooFit.Extended(Extend))
+            opt.Add(rt.RooFit.Save(True))
+            opt.Add(rt.RooFit.Hesse(False))
+            opt.Add(rt.RooFit.Minos(False))
+            opt.Add(rt.RooFit.PrintLevel(-1))
+            opt.Add(rt.RooFit.PrintEvalErrors(10))
+            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+
+            #L(s,^th_s|x)
+            print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
+            covqualH0 = 0
+            fitAttempts = 0
+            while covqualH0!=3 and fitAttempts<5:
+                reset(box, fr, fixSigma=True, random=(fitAttempts>0))
+                box.workspace.var("sigma").setVal(self.options.signal_xsec)
+                box.workspace.var("sigma").setConstant(True)
+                frH0 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH0.Print("v")
+                statusH0 = frH0.status()
+                covqualH0 = frH0.covQual()
+                LH0x = frH0.minNll()
+                print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+                fitAttempts+=1
+
+
+            #L(^s,^th|x)
+            print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
+            covqualH1 = 0
+            fitAttempts = 0
+            while covqualH1!=3 and fitAttempts<5:
+                if self.options.expectedlimit==True or ds.GetName=="RMRTree":
+                    #this means we're doing background-only toys or data
+                    #so we should reset to nominal fit pars
+                    reset(box, fr, fixSigma=False, random=(fitAttempts>0))
+                    box.workspace.var("sigma").setVal(1e-6)
+                    box.workspace.var("sigma").setConstant(False)
+                else:
+                    #this means we're doing signal+background toy
+                    #so we should reset to the fit with signal strength fixed
+                    resetGood = reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
+                    if not resetGood:
+                        #however, if for some reason the randomization is bad, try this
+                        reset(box, fr, fixSigma=False, random=(fitAttempts>0))
+                    box.workspace.var("sigma").setVal(self.options.signal_xsec)
+                    box.workspace.var("sigma").setConstant(False)
+                frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH1.Print("v")
+                statusH1 = frH1.status()
+                covqualH1 = frH1.covQual()
+                LH1x = frH1.minNll()
+                print "********************* sigma, fitAttempts:", box.workspace.var("sigma").getVal(), fitAttempts
+                print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
+                fitAttempts+=1
+
+
+            if box.workspace.var("sigma")>self.options.signal_xsec:
+                print "INFO: ^sigma > sigma"
+                print " returning q = 0 as per LHC style CLs prescription"
+                LH1x = LH0x
+                
             if math.isnan(LH1x):
                 print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
-                print "         Since this corresponds to no signal/bkg discrimination, returning L(H1)=L(H0)"
+                print "         Since this corresponds to no signal/bkg discrimination, returning q = 0"
                 LH1x = LH0x
 
             Lz = LH0x-LH1x
             print "**************************************************"
-            print " Set Extend to %i" %Extend
-            print "**************************************************"
-            print "L_SR(H0|x = %s) = %f" %(ds.GetName(),LH0x)
-            print "L_SR(H1|x = %s) = %f" %(ds.GetName(),LH1x)
-            print "Lz = L_SR(H0|x = %s) - L_SR(H1|x = %s) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+            print "-log L(x = %s|^s,^th) = %f" %(ds.GetName(),LH1x)
+            print "q = -log L(x = %s|s,^th_s) + log L(x = %s|^s,^th) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "MIGRAD/COVARIANCE MATRIX STATUS"
+            print "H0 fit status = %i"%statusH0
+            print "H0 cov. qual  = %i"%covqualH0
+            print "H1 fit status = %i"%statusH1
+            print "H1 cov. qual  = %i"%covqualH1
             print "**************************************************"
 
-            del H0xNLL, H1xNLL            
-            return Lz, LH0x,LH1x
+            return Lz, LH0x, LH1x, frH0, frH1
+            
+
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
@@ -377,267 +463,229 @@ class SingleBoxAnalysis(Analysis.Analysis):
             wsName = '%s/Box%s_workspace' % (box,box)
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
+            self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
+
             # add signal specific parameters 
-            boxes[box].defineSet("nuisance_parameters", self.config.getVariables(box, "nuisance_parameters"))
-            boxes[box].defineSet("other_parameters", self.config.getVariables(box, "other_parameters"))
+            boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
+            boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = boxes[box].workspace)
+            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)            
+
+            boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
+
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-            #need to fix all parameters to their restored values
-            #boxes[box].fixAllPars()
 
-            print 'Variables for box %s' % box
-            boxes[box].workspace.allVars().Print('V')
-            print 'Workspace'
+            #print 'Variables for box %s' % box
+            #boxes[box].workspace.allVars().Print('V')
+            #print 'Workspace'
             boxes[box].workspace.Print('V')
             fr_central = boxes[box].workspace.obj('independentFR')    
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 
-            # define the yields and the extended pdfs in the SRs
-            NS = boxes[box].getFitPDF("eBinPDF_Signal").expectedEvents(vars)
-            IntS  = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars).getVal()
-            IntS1 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR1').getVal()
-            IntS2 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR2').getVal()
-            IntS3 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR3').getVal()
-            IntS4 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR4').getVal()
-            IntS5 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR5').getVal()
-            IntS6 = boxes[box].getFitPDF("eBinPDF_Signal").createIntegral(vars,vars,0,'sR6').getVal()
-
-            NsSR = rt.RooRealVar("NsSR", "NsSR",NS*(IntS1+IntS2+IntS3+IntS4+IntS5+IntS6)/IntS)
-
             #add in the other signal regions
-            norm_region = 'sR1,sR2,sR3,sR4,sR5,sR6'
-            fit_range = ['fR1','fR2','fR3','fR4','fR5']
-
-            N_1st_SR_TTj = rt.RooRealVar("N_1st_SR_TTj","N_1st_SR_TTj", boxes[box].getFitPDF("ePDF1st_TTj").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF1st_TTj").createIntegral(vars,vars).getVal())
-            N_2nd_SR_TTj = rt.RooRealVar("N_2nd_SR_TTj","N_2nd_SR_TTj", boxes[box].getFitPDF("ePDF2nd_TTj").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF2nd_TTj").createIntegral(vars,vars).getVal())
-            N_1st_SR_QCD = rt.RooRealVar("N_1st_SR_QCD","N_1st_SR_QCD", boxes[box].getFitPDF("ePDF1st_QCD").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF1st_QCD").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF1st_QCD").createIntegral(vars,vars).getVal())
-            N_2nd_SR_QCD = rt.RooRealVar("N_2nd_SR_QCD","N_2nd_SR_QCD", boxes[box].getFitPDF("ePDF2nd_QCD").expectedEvents(vars)*
-                                        boxes[box].getFitPDF("ePDF2nd_QCD").createIntegral(vars,vars,0,norm_region).getVal()/
-                                        boxes[box].getFitPDF("ePDF2nd_QCD").createIntegral(vars,vars).getVal())
-
-            eBinPDF_SR_Signal = rt.RooExtendPdf("eBinPDF_SR_Signal","eBinPDF_SR_Signal",  boxes[box].workspace.pdf("SignalPDF_%s"%boxes[box].name), NsSR, norm_region)
-            ePDF1st_SR_TTj = rt.RooExtendPdf("ePDF1st_SR_TTj","ePDF1st_SR_TTj", boxes[box].workspace.pdf("PDF1st_TTj"), N_1st_SR_TTj, norm_region)
-            ePDF2nd_SR_TTj = rt.RooExtendPdf("ePDF2nd_SR_TTj","ePDF2nd_SR_TTj", boxes[box].workspace.pdf("PDF2nd_TTj"), N_2nd_SR_TTj, norm_region)
-           
-            ePDF1st_SR_QCD = rt.RooExtendPdf("ePDF1st_SR_QCD","ePDF1st_SR_QCD", boxes[box].workspace.pdf("PDF1st_QCD"), N_1st_SR_QCD, norm_region)
-            ePDF2nd_SR_QCD = rt.RooExtendPdf("ePDF2nd_SR_QCD","ePDF2nd_SR_QCD", boxes[box].workspace.pdf("PDF2nd_QCD"), N_2nd_SR_QCD, norm_region)
-
-            boxes[box].importToWS(NsSR)
-            boxes[box].importToWS(eBinPDF_SR_Signal)
-            boxes[box].importToWS(N_1st_SR_TTj)
-            boxes[box].importToWS(N_2nd_SR_TTj)
-            boxes[box].importToWS(ePDF1st_SR_TTj)
-            boxes[box].importToWS(ePDF2nd_SR_TTj)
-            boxes[box].importToWS(N_1st_SR_QCD)
-            boxes[box].importToWS(N_2nd_SR_QCD)
-
-            NB = boxes[box].getFitPDF(boxes[box].fitmodel).expectedEvents(vars)
-            IntB  = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars).getVal()
-            IntB1 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR1').getVal()
-            IntB2 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR2').getVal()
-            IntB3 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR3').getVal()
-            IntB4 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR4').getVal()
-            
-            IntB5 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR5').getVal()
-            IntB6 = boxes[box].getFitPDF(boxes[box].fitmodel).createIntegral(vars,vars,0,'sR6').getVal()                
-
-            BPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF1st_SR_TTj"))
-            if N_2nd_SR_TTj.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2nd_SR_TTj"))
-            if N_1st_SR_QCD.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF1st_SR_QCD"))
-            if N_2nd_SR_QCD.getVal() > 0: BPdfList.add(boxes[box].workspace.pdf("ePDF2nd_SR_QCD"))
-
-            SpBPdfList = rt.RooArgList(boxes[box].workspace.pdf("ePDF1st_SR_TTj"))
-            # prevent nan when there is no signal expected
-            if not math.isnan(NsSR.getVal()): SpBPdfList.add(boxes[box].workspace.pdf("eBinPDF_SR_Signal"))
-            if N_2nd_SR_TTj.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2nd_SR_TTj"))
-            if N_1st_SR_QCD.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF1st_SR_QCD"))
-            if N_2nd_SR_QCD.getVal() > 0: SpBPdfList.add(boxes[box].workspace.pdf("ePDF2nd_SR_QCD"))
-                
-
-            SigPlusBkgModelSR = rt.RooAddPdf("SigPlusBkgModelSR","SigPlusBkgModelSR",SpBPdfList)
-            BkgModelSR = rt.RooAddPdf("BkgModelSR","BkgModelSR",BPdfList)
-            boxes[box].importToWS(SigPlusBkgModelSR)
-            boxes[box].importToWS(BkgModelSR)
-            boxes[box].SigPlusBkgModelSR = "SigPlusBkgModelSR"
-            boxes[box].BkgModelSR = "BkgModelSR"
+            norm_region = 'FULL'
 
             print "get Lz for data"
             
             myDataTree = rt.TTree("myDataTree", "myDataTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var4;Double_t var5;Double_t var6;};")
+            rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyDataStruct
 
             sDATA = MyDataStruct()
-            myDataTree.Branch("LzSR", rt.AddressOf(sDATA,'var4'),'var4/D')
-            myDataTree.Branch("LH0xSR", rt.AddressOf(sDATA,'var5'),'var5/D')
-            myDataTree.Branch("LH1xSR", rt.AddressOf(sDATA,'var6'),'var6/D')
-            #lzData,LH0Data,LH1Data = getLz(boxes[box],boxes[box].workspace.data('RMRTree'), fr_central, testForQuality=False)
-            lzDataSR,LH0DataSR,LH1DataSR = getLzSR(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
-            #lzDataSRnoExt,LH0DataSRnoExt,LH1DataSRnoExt = getLzSR(boxes[box],data, fr_central, Extend=False, norm_region=norm_region)
+            myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var1'),'var1/D')
+            myDataTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
+            myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
+            myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
+            myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
+            myDataTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var6'),'var6/D')
+            myDataTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var7'),'var7/I')
+            myDataTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var8'),'var8/I')
+            myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
+            myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
+            boxes[box].signalmodelconst = boxes[box].signalmodel
+            lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
+
+            sDATA.var1 = boxes[box].workspace.var("sigma").getVal()
+            sDATA.var2 = boxes[box].workspace.var("sigma").getError()
+            sDATA.var3 = -1
             sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
             sDATA.var6 = LH1DataSR
+            sDATA.var7 = frH0Data.status()
+            sDATA.var8 = frH0Data.covQual()
+            sDATA.var9 = frH1Data.status()
+            sDATA.var10 = frH1Data.covQual()
+
             myDataTree.Fill()
 
             myTree = rt.TTree("myTree", "myTree")
     
             # THIS IS CRAZY !!!!
-            rt.gROOT.ProcessLine("struct MyStruct{Double_t var4;Double_t var5;Double_t var6;};")
+            rt.gROOT.ProcessLine("struct MyStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyStruct
 
             s = MyStruct()
-            myTree.Branch("LzSR", rt.AddressOf(s,'var4'),'var4/D')
-            myTree.Branch("LH0xSR", rt.AddressOf(s,'var5'),'var5/D')
-            myTree.Branch("LH1xSR", rt.AddressOf(s,'var6'),'var6/D')
+            myTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(s,'var1'),'var1/D')
+            myTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(s,'var2'),'var2/D')
+            myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
+            myTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(s,'var4'),'var4/D')
+            myTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(s,'var5'),'var5/D')
+            myTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(s,'var6'),'var6/D')
+            myTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(s,'var7'),'var7/I')
+            myTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(s,'var8'),'var8/I')
+            myTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(s,'var9'),'var9/I')
+            myTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(s,'var10'),'var10/I')
 
-            print "calculate number of bkg events to generate"
-            bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
-            fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
-            
+            nuisFile = rt.TFile.Open(self.options.nuisanceFile,"read")
+            nuisTree = nuisFile.Get("nuisTree")
+            nuisTree.Draw('>>nuisElist','nToy>=%i'%nToyOffset,'entrylist')
+            nuisElist = rt.gDirectory.Get('nuisElist')
+ 
+            #prepare MultiGen
+            #BEWARE: ROOT 5.34.01 - 5.34.03 has a bug that
+            #wraps poisson TWICE around expectedEvents
+                       
+            if self.options.expectedlimit == True:
+                # use the fr for B hypothesis to generate toys
+                fr_B = fr_central
+                BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
+                #genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+            else:
+                # use the fr for SpB hypothesis to generate toys
+                fr_SpB = frH0Data
+                SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
+                #genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+ 
+            #print "calculate number of bkg events to generate"
+            #bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
+            #fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
+
+
+            ##### Do we still need this calcSignificance?
+
             # #use the same binning as the signal model
             # significance = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,0))
             # significance = significance.Clone('%s_significance' % boxes[box].name)
             # significance.Reset()
-            # sigSum = 0
-            
+            # sigSum = 0            
             def calcSignificance(binning, sig_toy, bkg_toy):
                 """Make a histogram of S/sqrt(S+B) from the signal and background datasets"""
-
                 def fill(h, ds):
                     for i in xrange(ds.numEntries()):
                         row = ds.get(i)
                         h.Fill(row.getRealValue('MR'),row.getRealValue('Rsq'))
-
                 #make the histograms
                 sigHist = binning.Clone('S')
                 sigHist.Reset()
                 fill(sigHist,sig_toy)
-                
                 bgHist = binning.Clone('B')
                 bgHist.Reset()
-                fill(bgHist,bkg_toy)
-                
+                fill(bgHist,bkg_toy)                
                 significanceToy = binning.Clone('SignificanceToy')
-                significanceToy.Reset()
-                
+                significanceToy.Reset()                
                 #calculate the significance
                 xaxis = sigHist.GetXaxis()
-                yaxis = sigHist.GetYaxis()
-    
+                yaxis = sigHist.GetYaxis()    
                 for i in xrange(1,xaxis.GetNbins()+1):
                     for j in xrange(1,yaxis.GetNbins()+1):
-                        bin = sigHist.GetBin(i,j)
-            
+                        bin = sigHist.GetBin(i,j)            
                         S = sigHist.GetBinContent(bin)
-                        B = bgHist.GetBinContent(bin)
-            
+                        B = bgHist.GetBinContent(bin)            
                         sig = 0.0
                         if B > 0.0:
                             sig = S/rt.TMath.Sqrt(B)
-                        significanceToy.SetBinContent(bin,sig)                
-                
+                        significanceToy.SetBinContent(bin,sig)                                
                 return significanceToy            
+            # end calcSignificance
+            ##### ##### #####
 
-
-            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
             
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
-
                 tot_toy = rt.RooDataSet()
                 if self.options.expectedlimit == False:
-                    #generate a toy assuming signal + bkg model (same number of events as background only toy)             
+                    #generate a toy assuming signal + bkg model          
                     print "generate a toy assuming signal + bkg model"
-                    eff = boxes[box].workspace.function("eff")
-                    eff_box = boxes[box].workspace.var("eff_value_%s"%box)
-                    # by default this gaussian() method has mean = 0, variance = 1
-                    # and uses random seed set up in runAnalysis.py
-                    # (to make sure we don't replicate toys)
-                    eff_prime =  boxes[box].workspace.var("eff_prime")
-                    eff_prime.setVal(rt.RooRandom.gaussian())
-                    
-                    print "EFFICIENCY FOR THIS TOY IS %f"%((eff.getVal())*(eff_box.getVal()))
-                    print " efficiency percent uncertainty = %f"%boxes[box].workspace.var('eff_uncert').getVal()
-                    print " nominal efficiency = %f "%eff_box.getVal()
-                    
-                    sigNorm =  ((eff.getVal())*(eff_box.getVal()))
-                    
-                    #get nominal number of entries, including 30% SIGNAL NORMALIZATION SYSTEMATIC
-                    # for now fluctuate only signal efficiency uncertainty
-                    
-                    print "calculate number of sig events to generate"
-                    if self.options.signal_xsec > 0.:   
-                        # for SMS
-                        sigGenNum = boxes[box].workspace.var('lumi_value').getVal()*sigNorm*self.options.signal_xsec
-                    else:
-                        # for CMSSM
-                        sigGenNum = boxes[box].workspace.var('lumi_value').getVal()*sigNorm/1000
+                    #### What should we use this for now?
+                    ##eff = boxes[box].workspace.function("eff")
+                    ##eff_box = boxes[box].workspace.var("eff_value_%s"%box)
+                    ### by default this gaussian() method has mean = 0, variance = 1
+                    ### and uses random seed set up in runAnalysis.py
+                    ### (to make sure we don't replicate toys)
+                    ##eff_prime =  boxes[box].workspace.var("eff_prime")
+                    ##eff_prime.setVal(rt.RooRandom.gaussian())                    
+
+                    nuisEntry = nuisElist.Next()
+                    nuisTree.GetEntry(nuisEntry)
+                    reset(boxes[box], fr_SpB, fixSigma = True)
+                    for var in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
+                        # for each nuisance, grab gaussian distributed variables from ROOT tree
+                        varVal = eval('nuisTree.%s'%var.GetName())
+                        var.setVal(varVal)
+                        print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
+                    boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+
+                    sigGenNum = boxes[box].workspace.function('Ntot_Signal').getVal()
                     print "sigGenNum = %f" % sigGenNum
-                    
                     print "numEntriesData = %i" % data.numEntries()
                     PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
                     print 'PSigGenNum = %d' % PSigGenNum
 
-
-                    if PSigGenNum>0: sig_toy = eBinPDF_SR_Signal.generate(vars,PSigGenNum)
-                    bkg_toy = boxes[box].generateToyFRWithYield(boxes[box].fitmodel,fr_central, 1)
-                    
-                    if PSigGenNum>0: print "sig_toy.numEntries() = %f" %sig_toy.numEntries()
-                    print "bkg_toy.numEntries() = %f" %bkg_toy.numEntries()
-                    print "numEntriesData = %i" % data.numEntries()
-                    print "fitDataSet.numEntries() = %f" %fitDataSet.numEntries()
-
-                    #sum the toys
-                    tot_toy = bkg_toy.reduce("(%s)" %boxes[box].getVarRangeCutNamed(norm_region.split(",")))
-                    if PSigGenNum>0: tot_toy.append(sig_toy)
-                    
-                    print "Total Yield = %f" %tot_toy.numEntries()
+                    fr_SpB.Print("v")
+                    print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
+                    tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
+                    print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
-                    if PSigGenNum>0: del sig_toy
-                    del bkg_toy
                 else:                    
-                    #generate a toy assuming only the bkg model (same number of events as background only toy)
+                    #generate a toy assuming only the bkg model
                     print "generate a toy assuming bkg model"
-                    bkg_toy = boxes[box].generateToyFRWithVarYield(boxes[box].fitmodel,fr_central)
-                    tot_toy = bkg_toy.reduce("!(%s)" %boxes[box].getVarRangeCutNamed(fit_range))
-                    tot_toy.append(fitDataSet)
+                    reset(boxes[box], fr_B, fixSigma = True)
+                    boxes[box].workspace.var("sigma").setVal(0.)
+                    tot_toy = BModel.generate(vars,rt.RooFit.Extended(True))
+                    print "B Expected = %f" %BModel.expectedEvents(vars)
+                    print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")
-                    del bkg_toy
 
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
-                #Lz, LH0x,LH1x = getLz(boxes[box],tot_toy, fr_central)
-                LzSR, LH0xSR,LH1xSR = getLzSR(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
-
-
+                LzSR, LH0xSR, LH1xSR, frH0, frH1 = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
+                s.var1 = boxes[box].workspace.var("sigma").getVal()
+                s.var2 = boxes[box].workspace.var("sigma").getError()
+                s.var3 = i
                 s.var4 = LzSR
                 s.var5 = LH0xSR
                 s.var6 = LH1xSR
+                s.var7 = frH0.status()
+                s.var8 = frH0.covQual()
+                s.var9 = frH1.status()
+                s.var10 = frH1.covQual()
                 del tot_toy
-
                 myTree.Fill()
                 
+            print "now closing nuisance file"
+            nuisFile.Close()
+            print "now storing tree"
+            self.store(myTree, dir=box)
+            self.store(myDataTree, dir=box)
+            print "now deleting objects"
+            del nuisElist
+            del nuisTree
+            del nuisFile
+            del sDATA
+            del s
+
             # sigSum /= (1.*nToys)
             # print 'Mean total significance',sigSum
             # if significance.Integral() > 0.0:
             #     significance.Scale(sigSum/significance.Integral())
             # self.store(significance, dir=box)            
 
-            self.store(myTree, dir=box)
-            self.store(myDataTree, dir=box)
-            del sDATA
-            del s
 
     def limit_profile(self, inputFiles, nToys):
         """Set a limit based on the model dependent method"""
@@ -830,11 +878,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #make a RooDataset with *all* of the data
         pData = mergeDatasets(datasets, workspace.cat('Boxes'), makeBinned = False)
         print 'Merged dataset'
-        pData.Print('V')
+        #pData.Print('V')
         RootTools.Utils.importToWS(workspace,pData)
         
         #we now combine the boxes into a RooSimultanious. Only a few of the parameters are shared
-        workspace.Print('V')
+        #workspace.Print('V')
         #Syntax: SIMUL::name(cat,a=pdf1,b=pdf2]   -- Create simultaneous p.d.f index category cat. Make pdf1 to state a, pdf2 to state b
         sim_map = ['%s=%s' % (box,pdf_name) for box, pdf_name in pdf_names.iteritems()]
         print 'SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map)
@@ -912,6 +960,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
         #with 15 signal events, we *should* be able to set a limit
+
+        #### this is useless now, perhaps we need to have some meaningful number of events to exclude
         mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
         print "signal mrMean = %f"%mrMean
         if mrMean < 800:
@@ -922,8 +972,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             eventsToExclude = 50
         else:
             eventsToExclude = 25
+        ####
 
-        while yield_at_xs[-1][0] < eventsToExclude:
+        while yield_at_xs[-1][0] < 20:
             stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
@@ -943,7 +994,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #    will anticipate it
         pNll = pSbModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(rt.RooArgSet())
-        pSbModel.Print('V')
+        #pSbModel.Print('V')
         minSplusB = pProfile.getVal() # this will do fit and set POI and nuisance parameters to fitted values
         print '\nS+B: %f' % minSplusB 
         
@@ -961,7 +1012,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pNll = pBModel.GetPdf().createNLL(pData)
         pProfile = pNll.createProfile(workspace.set('poi'))
         workspace.var('sigma').setVal(poiValueForBModel)
-        pBModel.Print('V')
+        #pBModel.Print('V')
         minBonly = pProfile.getVal() #this will do fit and set nuisance parameters to profiled values
         print '\nB only: %f' % minBonly
         
@@ -1004,7 +1055,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,60,0.0,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,15,0.0,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
                 
