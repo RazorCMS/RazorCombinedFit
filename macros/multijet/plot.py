@@ -198,19 +198,19 @@ def setstyle():
 if __name__ == '__main__':
     directory      = sys.argv[1]
     LSPmassStrip   = sys.argv[2]
-    box = sys.argv[3]
-    box = box.lower()
+    Box = sys.argv[3]
+    box = Box.lower()
 
-    if box.lower() == "tautaujet":
-        Box = "TauTauJet"
-    elif box.lower() == "multijet":
-        Box = "MultiJet"
-    elif box.lower() == "jet":
-        Box = "Jet"
-    elif box.lower() == "all" and directory.lower().find("notau"):
-        Box = "Jet+MultiJet"
-    elif box.lower() == "all":
-        Box = "Jet+TauTauJet+MultiJet"
+    # if box.lower() == "tautaujet":
+    #     Box = "TauTauJet"
+    # elif box.lower() == "multijet":
+    #     Box = "MultiJet"
+    # elif box.lower() == "jet":
+    #     Box = "Jet"
+    # elif box.lower() == "multijet_tautaujet":
+    #     Box = "TauTauJet+MultiJet"
+    # elif box.lower() == "multijet_tautaujet_jet":
+    #     Box = "Jet+TauTauJet+MultiJet"
         
     rootFile = rt.TFile.Open(directory+"/gluino.root")
     h_xsec = rootFile.Get("gluino")
@@ -293,7 +293,7 @@ if __name__ == '__main__':
     #         print gluinoMassArray
     #     j+=1
 
-    expectedLimit_minus2sigma[1] = 1.2*(expectedLimit[1] - (expectedLimit[0] - expectedLimit_minus2sigma[0]  + expectedLimit[2] - expectedLimit_minus2sigma[2] )/2)
+    #expectedLimit_minus2sigma[1] = 1.2*(expectedLimit[1] - (expectedLimit[0] - expectedLimit_minus2sigma[0]  + expectedLimit[2] - expectedLimit_minus2sigma[2] )/2)
     
     # j = 1
     # while j < len(observedLimit)-1:
@@ -330,15 +330,9 @@ if __name__ == '__main__':
     gr_expectedLimit1sigma.SetFillColor(rt.kGreen-7)
     gr_expectedLimit1sigma.SetFillStyle(3001)
 
-    if box.lower() == "all" or box.lower() == "multijet":
-        h_limit.SetMaximum(10)
-    else:
-        h_limit.SetMaximum(10)
-        
-    if box.lower() == "all" or box.lower() == "multijet":
-        h_limit.SetMinimum(1e-4)
-    else:
-        h_limit.SetMinimum(9e-4)
+    h_limit.SetMaximum(10)
+    h_limit.SetMinimum(1e-4)
+    
     h_limit.Add(gr_expectedLimit2sigma)
     h_limit.Add(gr_expectedLimit1sigma)
     h_limit.Add(gr_observedLimit)
