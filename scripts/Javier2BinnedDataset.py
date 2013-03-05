@@ -7,7 +7,7 @@ from RazorCombinedFit.Framework import Config
 from array import *
 from pdfShit import *
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'TauTauJet':8,'MultiJet':9}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'Jet2b':7,'Jet1b':7,'TauTauJet':8,'MultiJet':9}
 lumi = 19.3
 
 def getBinning(box):
@@ -47,6 +47,21 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, smsc
                     sumOverBtags = sum([histo.GetBinContent(i,j,k) for k in xrange(1,histo.GetZaxis().GetNbins()+1)])
                     histo.SetBinContent(i,j,1,sumOverBtags)
                     [histo.SetBinContent(i,j,k,0) for k in xrange(2,histo.GetZaxis().GetNbins()+1)]
+    elif box=="Jet1b":
+        for histo in [nominal, jes_pe, pdf_pe, btag_pe, pdf_nom]:
+            for i in xrange(1,histo.GetXaxis().GetNbins()+1):
+                for j in xrange(1,histo.GetYaxis().GetNbins()+1):
+                    #clear overflow bins
+                    k = histo.GetZaxis().GetNbins()+1
+                    histo.SetBinContent(i,j,k,0)
+    elif box=="Jet2b":
+        for histo in [nominal, jes_pe, pdf_pe, btag_pe, pdf_nom]:
+            for i in xrange(1,histo.GetXaxis().GetNbins()+1):
+                for j in xrange(1,histo.GetYaxis().GetNbins()+1):
+                    #clear underflow bins
+                    k = 0
+                    histo.SetBinContent(i,j,k,0)
+        
                 
     print "signal efficiency from nominal     = %f"%nominal.Integral()
     print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
@@ -158,7 +173,7 @@ def convertTree2Dataset(tree, smscount, outputFile, outputBox, config, box, min,
     if box == "MuEle" or box == "MuMu" or box == "EleEle" or box=="TauTauJet":
         btagcutoff = 1
 
-    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box=="EleEle" or box=="EleTau" or box=="Ele":
+    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box=="EleEle" or box=="EleTau" or box=="Ele" or box=="Jet2b" or box=='Jet1b':
         noiseCut = "abs(TMath::Min( abs(atan2(MET_y,MET_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_y,MET_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
     elif box == "MuEle" or box == "MuMu" or box == "MuTau" or box == "Mu":
         noiseCut = "abs(TMath::Min( abs(atan2(MET_NOMU_y,MET_NOMU_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_NOMU_y,MET_NOMU_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"

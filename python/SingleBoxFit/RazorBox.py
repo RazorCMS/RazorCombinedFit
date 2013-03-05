@@ -7,15 +7,15 @@ import sys
 
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
-    if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet":
+    if boxName == "Jet" or boxName == "TauTauJet" or boxName == "MultiJet" or boxName == "Jet2b" or boxName=="Jet1b":
         if varName == "MR" :        return [400, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" : 
-            if btag == "NoBtag" or boxName=="Jet":    return [0.25,0.3,0.35,0.40,0.45,0.50]
+            if btag == "NoBtag" or boxName=="Jet" or boxName=="Jet1b":    return [0.25,0.30,0.35,0.40,0.45,0.50]
             if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
         if varName == "MR" :        return [300, 350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" :
-            if btag == "NoBtag":    return [0.15,0.20,0.30,0.40,0.50]
+            if btag == "NoBtag":    return [0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50]
             elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if varName == "nBtag" :
         if btag == "NoBtag":        return [0,1]
@@ -38,7 +38,7 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':[],'Vpj':[]}
         else:
             self.btag = "Btag"
-            self.zeros = {'TTj1b':[],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet']}
+            self.zeros = {'TTj1b':['Jet2b'],'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b'],'Vpj':['MuEle','EleEle','MuMu','Mu','Ele','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b']}
                         
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
         # for CLs limit setting  remove the following line
@@ -59,8 +59,8 @@ class RazorBox(Box.Box):
                 #tail-systematic parameter
                 self.workspace.var("n%s" %label).setConstant(rt.kFALSE)
             else:
-                #self.workspace.factory("RooRazor2DTail::PDF%s(MR,Rsq,MR0%s,R0%s,b%s)" %(label,label,label,label))
-                self.workspace.factory("RooRazor2DTail_SYS::PDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" %(label,label,label,label,label))
+                self.workspace.factory("RooRazor2DTail::PDF%s(MR,Rsq,MR0%s,R0%s,b%s)" %(label,label,label,label))
+                #self.workspace.factory("RooRazor2DTail_SYS::PDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" %(label,label,label,label,label))
                 #tail-systematic parameter fixed to 1.0
                 self.workspace.var("n%s" %label).setVal(1.0)
                 self.workspace.var("n%s" %label).setConstant(rt.kTRUE)
@@ -189,11 +189,11 @@ class RazorBox(Box.Box):
         # - ttbar+jets j2b
         self.addTailPdf("Vpj",False)
         self.addTailPdf("TTj1b",True)
-        if self.fitMode=='3D': self.addTailPdf("TTj2b",True)
+        if self.fitMode=='3D' or self.name!="Jet1b": self.addTailPdf("TTj2b",True)
         
         # build the total PDF
         if self.fitMode=='3D': myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
-        elif self.fitMode=='2D': myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"))
+        elif self.fitMode=='2D' or self.name!="Jet1b": myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"))
                         
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
@@ -307,9 +307,9 @@ class RazorBox(Box.Box):
     def plot(self, inputFile, store, box, data=None, fitmodel="none", frName="none"):
         print "no plotting"
         
-        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName )]
-        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
-        # if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
+        [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName )]
+        [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
+        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
         
         # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
         # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
@@ -334,9 +334,9 @@ class RazorBox(Box.Box):
         #     if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'])]
 
 
-        # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-        # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-        # if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
 
         # if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
         #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
@@ -379,7 +379,7 @@ class RazorBox(Box.Box):
         
         # project the data on the variable
         if varname =="nBtag":
-            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(xmin,xmax),rt.RooFit.Bins(nbin))
+            frameMR = self.workspace.var(varname).frame(rt.RooFit.Range(xmin,xmax),rt.RooFit.Bins(int(xmax-xmin)))
         elif varname =="Rsq":
             rsqMin = xmin
             if datamax[0] < 0.5:
@@ -486,14 +486,13 @@ class RazorBox(Box.Box):
         norm_region = ','.join(MRRanges)
         N_Vpj = self.workspace.var("Ntot_Vpj").getVal()*(self.getFitPDF("ePDF_Vpj").createIntegral(vars,vars,0,norm_region).getVal()/self.getFitPDF("ePDF_Vpj").createIntegral(vars,vars).getVal())
         # plot each individual component: TTj2b
-        N_TTj2b = self.workspace.var("Ntot_TTj2b").getVal()*(self.getFitPDF("ePDF_TTj2b").createIntegral(vars,vars,0,norm_region).getVal()/self.getFitPDF("ePDF_TTj2b").createIntegral(vars,vars).getVal())
+        N_TTj2b = 0.
+        if self.fitMode!="2D":
+            N_TTj2b = self.workspace.var("Ntot_TTj2b").getVal()*(self.getFitPDF("ePDF_TTj2b").createIntegral(vars,vars,0,norm_region).getVal()/self.getFitPDF("ePDF_TTj2b").createIntegral(vars,vars).getVal())
         # plot each individual component: TTj1b
         N_TTj1b = self.workspace.var("Ntot_TTj1b").getVal()*(self.getFitPDF("ePDF_TTj1b").createIntegral(vars,vars,0,norm_region).getVal()/self.getFitPDF("ePDF_TTj1b").createIntegral(vars,vars).getVal())
 
         Ntot = N_Vpj+N_TTj2b+N_TTj1b
-
-        print N_TTj2b
-        print Ntot
         
         showVpj=(N_Vpj>0)
         showTTj2b =(N_TTj2b>0)
@@ -575,6 +574,7 @@ class RazorBox(Box.Box):
             N_Vpj = self.workspace.var("Ntot_Vpj").getVal()
         if self.workspace.function("Ntot_Signal") != None:
             N_Signal = self.workspace.function("Ntot_Signal").getVal()
+        else: N_Signal = 0.
 
             
         # Generate a sample of signal
@@ -873,7 +873,7 @@ class RazorBox(Box.Box):
         histoToyCOPY.Draw('histsame')
         histoData.Draw("pesame")
 
-        if self.workspace.function("Ntot_Signal").getVal():
+        if N_Signal>0:
             histoToySignal.SetLineColor(rt.kBlack)
             histoToySignal.SetFillColor(rt.kBlack)
             histoToySignal.SetFillStyle(3001)

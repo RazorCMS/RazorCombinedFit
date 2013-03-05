@@ -5,7 +5,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'TauTauJet':8,'MultiJet':9}
+boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'Jet2b':7,'Jet1b':7,'TauTauJet':8,'MultiJet':9}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -22,7 +22,7 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
 
 def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, calo, useWeight, write = True):
     """This defines the format of the RooDataSet"""
-    
+    MC = False
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
     workspace.factory('W[0,0,+INF]')
@@ -52,24 +52,26 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     if box == "MuEle" or box == "MuMu" or box == "EleEle" or box=="TauTauJet":
         btagcutoff = 1
 
-    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box=="EleEle" or box=="EleTau" or box=="Ele":
+    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box=="EleEle" or box=="EleTau" or box=="Ele" or box=="Jet2b" or box=="Jet1b":
         noiseCut = "abs(TMath::Min( abs(atan2(MET_y,MET_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_y,MET_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
     elif box == "MuEle" or box == "MuMu" or box == "MuTau" or box == "Mu":
         noiseCut = "abs(TMath::Min( abs(atan2(MET_NOMU_y,MET_NOMU_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_NOMU_y,MET_NOMU_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
     
-    if box == "Jet" or box == "MultiJet" or box == "TauTauJet":
+    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box =="Jet2b" or box =="Jet1b":
         triggerReq = "HLT_RsqMR55_Rsq0p09_MR150 || HLT_RsqMR60_Rsq0p09_MR150 || HLT_RsqMR65_Rsq0p09_MR150"
     elif box == "MuMu" or box == "MuTau" or box == "Mu":
         triggerReq = "HLT_Mu12_RsqMR30_Rsq0p04_MR200 || HLT_Mu12_RsqMR40_Rsq0p04_MR200 ||  HLT_Mu12_RsqMR45_Rsq0p04_MR200"
     elif  box == "MuEle" or box == "EleEle" or box == "Ele" or box == "EleTau":
         triggerReq = "HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR30_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR40_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR45_Rsq0p04_MR200"
 
-    if useWeight:
+    if useWeight or MC:
         triggerReq = "MR>0."
         noiseCut = "MR>0."
+
     #iterate over selected entries in the input tree
     if not calo:
-        tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
+        if MC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
+        else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     else:
         tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     elist = rt.gDirectory.Get('elist')
@@ -82,6 +84,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         
         if not calo:
             if tree.BTAG_NUM < btagmin: continue
+            if box =="Jet1b" and tree.BTAG_NUM>=2: continue
+            #if tree.BTAG_NUM==1 and tree.BTAG_LMT[2]!=1: continue
         else:
             if tree.BTAG_NUM_CALO < btagmin: continue
 
@@ -97,8 +101,12 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         
         if not calo:
             a.setRealValue('MR',tree.MR)
-            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_PFTYPE1))
-            a.setRealValue('Rsq',tree.RSQ_PFTYPE1)
+            if MC:
+                a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
+                a.setRealValue('Rsq',tree.RSQ)
+            else:
+                a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_PFTYPE1))
+                a.setRealValue('Rsq',tree.RSQ_PFTYPE1)
             if tree.BTAG_NUM >= btagcutoff:
                 a.setRealValue('nBtag',btagcutoff)
             else:

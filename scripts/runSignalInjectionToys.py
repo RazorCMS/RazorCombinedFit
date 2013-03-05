@@ -52,28 +52,28 @@ def writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t):
     # prepare the script to run
     outputname = submitDir+"/submit_"+datasetName+"_"+fitmode+"_"+xsecstring+"_"+box+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
-    outputfile.write('#!/bin/bash\n')
-    outputfile.write('cd %s \n'%pwd)
-    outputfile.write('echo $PWD \n')
-    outputfile.write('eval `scramv1 runtime -sh` \n')
-    outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
-    outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
-    if nToys <= nToysPerJob:
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i --signal-injection -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys),0))
-    else:
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i --signal-injection -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob)))
-    outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
-    outputfile.write("files=$(ls %s/frtoydata_*.root 2> /dev/null | wc -l) \n"%toyDir)
-    outputfile.write("if [ $files == \"%i\" ] \n"%nToys)
-    outputfile.write("then \n")
-    outputfile.write("rm %s.txt \n" %(toyDir))
-    outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
-    outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
+    # outputfile.write('#!/bin/bash\n')
+    # outputfile.write('cd %s \n'%pwd)
+    # outputfile.write('echo $PWD \n')
+    # outputfile.write('eval `scramv1 runtime -sh` \n')
+    # outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
+    # outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
+    # outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
+    # if nToys <= nToysPerJob:
+    #     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i --signal-injection -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys),0))
+    # else:
+    #     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i --signal-injection -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob)))
+    # outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
+    # outputfile.write("files=$(ls %s/frtoydata_*.root 2> /dev/null | wc -l) \n"%toyDir)
+    # outputfile.write("if [ $files == \"%i\" ] \n"%nToys)
+    # outputfile.write("then \n")
+    # outputfile.write("rm %s.txt \n" %(toyDir))
+    # outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
+    # outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
     outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, fitResultMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
-    outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots))
+    #outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots))
    
-    outputfile.write("fi \n") 
+    # outputfile.write("fi \n") 
     outputfile.close
 
     return outputname, ffDir, pwd
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     fitmode = '3D'
     queue = "1nd"
     nToys = 3000
-    nJobs = 12
+    nJobs = 1
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
@@ -128,10 +128,10 @@ if __name__ == '__main__':
         for xsec in xsecRange:
             if nToys <= nToysPerJob:
                 outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,0)
-                time.sleep(3)
+                #time.sleep(3)
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
-                #os.system("source "+pwd+"/"+outputname)
+                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
+                os.system("source "+pwd+"/"+outputname)
             else:
                 for t in xrange(0,nJobs):
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t)

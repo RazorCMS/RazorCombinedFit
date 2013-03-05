@@ -286,6 +286,9 @@ def makePDFPlotCOND3D(tree, histo, condition, relative):
     ibinz = histo.GetZaxis().GetNbins()
     minz = histo.GetZaxis().GetXmin()    
     maxz = histo.GetZaxis().GetXmax()
+    print ibinz
+    print minz
+    print maxz
 
     myX = []
     for i in xrange (1,ibinx+2):
@@ -301,6 +304,7 @@ def makePDFPlotCOND3D(tree, histo, condition, relative):
     Error = histo.Clone(histo.GetName()+"_pdferr_pe")
     Error.SetTitle(histo.GetName()+"_pdferr_pe")
     for k in xrange(1,ibinz+1):
+        print "k = ",k
         condition_btag = condition.replace("btag_nom >= 1","btag_nom == %i"%k)
         histo2D = rt.TH2D("histo2D_%i"%k,"histo2D_%i"%k, ibinx, myXarray, ibiny, myYarray)
         tree.Project("histo2D_%i"%k,"RSQ:MR","%s"%condition_btag)

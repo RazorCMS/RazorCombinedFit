@@ -72,9 +72,9 @@ def getMinMax(box,BfileName,SpBfileName,LzCut,type):
     if type=="LHC":
         print "LHC"
         Xmin = 0
-        Xmax = mean+3*rms
+        Xmax = mean+5*rms
         #Xmax = 5
-    if type=="LEP":
+    if type=="LHC":
         XmaxBin = htemp.GetXaxis().FindBin(Xmax)
         XmaxTest = Xmax
         XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
@@ -83,7 +83,6 @@ def getMinMax(box,BfileName,SpBfileName,LzCut,type):
             XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
         Xmax = XmaxTest
 
-    Xmax = min(2*mean,Xmax)
     return Xmin, Xmax
 
 def sortkey(fileName):
@@ -144,7 +143,8 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     for i in xrange(1,len(hypoDataSetBox)):
         hypoDataSet.merge(hypoDataSetBox[i])
 
-
+    
+    
     hypoSet= rt.RooArgSet("hypoSet")
     hypoList = rt.RooArgList("hypoList")
     for lnQb in lnQBox:
@@ -565,7 +565,8 @@ def getCLsAll(mg, mchi, xsec, boxes, directory,type):
     return CLs, CLsExp
 
 def getCLs(mg, mchi, xsec, box, directory,type):
-    LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
+    #LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
+    LzCut = "LzSR_%s>=0."%(box)
     
     SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
     BFileName = getFileName("B",mg,mchi,xsec,box,directory)
@@ -756,6 +757,8 @@ if __name__ == '__main__':
         
 
     doAll = (len(boxes)>1)
+    if not doAll:
+        box = boxInput
     
     rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
     if not glob.glob(rootFileName):

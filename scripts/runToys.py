@@ -62,31 +62,31 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t):
     outputname = submitDir+"/submit_"+datasetName+"_"+fitmode+"_"+sideband+"_"+box+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
     outputfile.write('#!/bin/bash\n')
-    outputfile.write('cd %s \n'%pwd)
-    outputfile.write('echo $PWD \n')
-    outputfile.write('eval `scramv1 runtime -sh` \n')
-    outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
-    outputfile.write("source setup.sh\n")
-    outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
-    if nToys <= nToysPerJob:
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys),0))
-    else:
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob)))
-    outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
-    outputfile.write("files=$(ls %s/frtoydata_*.root 2> /dev/null | wc -l) \n"%toyDir)
-    outputfile.write("if [ $files == \"%i\" ] \n"%nToys)
-    outputfile.write("then \n")
-    outputfile.write("rm %s.txt \n" %(toyDir))
-    outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
-    outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
+    #outputfile.write('cd %s \n'%pwd)
+    #outputfile.write('echo $PWD \n')
+    #outputfile.write('eval `scramv1 runtime -sh` \n')
+    #outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
+    #outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
+    #outputfile.write("source setup.sh\n")
+    #outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
+    #if nToys <= nToysPerJob:
+    #    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys),0))
+    #else:
+    #    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob)))
+    #outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
+    #outputfile.write("files=$(ls %s/frtoydata_*.root 2> /dev/null | wc -l) \n"%toyDir)
+    #outputfile.write("if [ $files == \"%i\" ] \n"%nToys)
+    #outputfile.write("then \n")
+    #outputfile.write("rm %s.txt \n" %(toyDir))
+    #outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
+    #outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
     outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, fitResultMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
     if datasetName.find("Run") != -1:
        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D,tagPrintPlots))
     else:
        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots))
    
-    outputfile.write("fi \n") 
+       #outputfile.write("fi \n") 
     outputfile.close
 
     return outputname, ffDir, pwd
@@ -111,8 +111,8 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "1nd"
-    nToys = 3000
-    nJobs = 30
+    nToys = 30
+    nJobs = 1
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:

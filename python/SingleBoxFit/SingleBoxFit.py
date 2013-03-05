@@ -258,7 +258,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 if self.options.doMultijet:
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
-                
+
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
                 
                 self.store(fr, name = 'independentFR', dir=box)
@@ -267,9 +267,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(fr,'independentFR')
                 #store the name of the PDF used
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
-            
+                
                 #make any plots required
-                boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
+                #boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
             else:
                 
                 wsName = '%s/Box%s_workspace' % (box,box)
@@ -448,7 +448,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 zeroIntegral = True
                 randomizeAttempts = 0
                 components = ['TTj1b','TTj2b','Vpj']
-                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp).getVal() > 0.]
+                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp).getVal()]
                 print "The components on are ", componentsOn
                 while zeroIntegral and randomizeAttempts<5:
                     argList = fr.randomizePars()
@@ -464,7 +464,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     badPars = []
                     myvars = rt.RooArgSet(box.workspace.var('MR'),box.workspace.var('Rsq'))
                     for component in componentsOn:
-                        pdfComp = box.workspace.pdf("RazPDF_%s"%component)
+                        pdfComp = box.workspace.pdf("%s_%s"%(pdfname,component))
                         pdfValV = pdfComp.getValV(myvars)
                         badPars.append(box.workspace.var('n_%s'%component).getVal() <= 0)
                         badPars.append(box.workspace.var('b_%s'%component).getVal() <= 0)
@@ -489,15 +489,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
         def setNorms(box, ds):
             # set normalizations
-            N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
-            N_TTj1b = box.workspace.var("Ntot_TTj1b").getVal()
-            N_Vpj = box.workspace.var("Ntot_Vpj").getVal()
-            N_Signal = box.workspace.function("Ntot_Signal").getVal()
-            Nds = ds.sumEntries()
-            if Nds-N_Signal>0:
-                box.workspace.var("Ntot_TTj2b").setVal((Nds-N_Signal)*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
-                box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
-                box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
+            print "setting norms"
+            # N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
+            # N_TTj1b = box.workspace.var("Ntot_TTj1b").getVal()
+            # N_Vpj = box.workspace.var("Ntot_Vpj").getVal()
+            # N_Signal = box.workspace.function("Ntot_Signal").getVal()
+            # Nds = ds.sumEntries()
+            # if Nds-N_Signal>0:
+            #     box.workspace.var("Ntot_TTj2b").setVal((Nds-N_Signal)*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
+            #     box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
+            #     box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
             
         def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
             reset(box, fr, fixSigma=True)
@@ -669,7 +670,23 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #     boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,mvaGauss2xErr.GetName()))
             # else:
             #
-            boxes[box].signalmodelconst = boxes[box].signalmodel
+            if boxes[box].name=="Jeto":
+                fr_central.Print("v")
+                # # replace the n parameters by a log normal
+                #workspace.factory("expr::n_TTj1b_const('@0 * pow( (1+@1), @2)', n_TTj1b_%s_value, n_TTj1b_%s_uncert, n_TTj1b_%s_prime)" % (box,box,box,box) )
+                nttj1b = boxes[box].workspace.var('n_TTj1b')
+                m0 = rt.RooConstVar("n_TTj1b_value","n_TTj1b_value",nttj1b.getVal())
+                k = rt.RooConstVar("n_TTj1b_shape","n_TTj1b_shape",1.5)
+                nttj1b_const = rt.RooLognormal("n_TTj1b_Constraint","n_TTj1b_Constraint", nttj1b, m0, k)
+                nttj1b_const.Print("v")
+                print nttj1b_const.getVal()
+                nttj1b.setVal(-5.5)
+                print nttj1b_const.getVal()
+                boxes[box].importToWS(nttj1b_const)
+                boxes[box].signalmodelconst = boxes[box].signalmodel+"Constrained"
+                boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,nttj1b_const.GetName()))
+            else:
+                boxes[box].signalmodelconst = boxes[box].signalmodel
                 
             lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
             
