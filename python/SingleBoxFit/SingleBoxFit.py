@@ -461,6 +461,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     errorCountBefore = rt.RooMsgService.instance().errorCount()
                     print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
                     # evaluate each pdf, assumed to be called "RazPDF_{component}"
+                    if box.name=="Jet1b": pdfname = "PDF"
+                    pdfname = "RazPDF"
                     badPars = []
                     myvars = rt.RooArgSet(box.workspace.var('MR'),box.workspace.var('Rsq'))
                     for component in componentsOn:
