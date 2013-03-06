@@ -116,7 +116,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         
 
     # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybrid10ktoys/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybrid5ktoys/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
@@ -124,7 +124,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 100 # do 100=50+50 toys each job => 10000 toys
+    nJobs = 50 # do 100=50+50 toys each job => 10000 toys
     
     print box
     
