@@ -63,24 +63,24 @@ class RazorBox(Box.Box):
         self.workspace.var("f2_"+species).setConstant(rt.kTRUE)
 
     #add penalty terms and float
-    def float1stComponentWithPenalty(self,flavour, alsoB):
-        self.fixParsPenalty("MR01st_%s" % flavour)
-        self.fixParsPenalty("R01st_%s" % flavour)
-        self.fixPars("MR01st_%s_s" % flavour)
+    def float1stComponentWithPenalty(self,flavour, alsoB, fitmodel = None, modeltype = "fitmodel"):
+        #self.fixParsPenalty("MR01st_%s" % flavour, False, fitmodel, modeltype)
+        self.fixParsPenalty("R01st_%s" % flavour, False, fitmodel, modeltype)
+        #self.fixPars("MR01st_%s_s" % flavour)
         self.fixPars("R01st_%s_s" % flavour)
         if alsoB == True:
-            self.fixParsPenalty("b1st_%s" % flavour)
+            self.fixParsPenalty("b1st_%s" % flavour, False, fitmodel, modeltype)
             self.fixPars("b1st_%s_s" % flavour)
         else:
             self.fixParsExact("b1st_%s" % flavour, False)
 
-    def float2ndComponentWithPenalty(self,flavour, alsoB):
-        self.fixParsPenalty("R02nd_%s" % flavour)
+    def float2ndComponentWithPenalty(self,flavour, alsoB, fitmodel=None, modeltype = "fitmodel"):
+        self.fixParsPenalty("R02nd_%s" % flavour, False, fitmodel, modeltype)
         self.fixPars("R02nd_%s_s" % flavour)
-        self.fixParsPenalty("MR02nd_%s" % flavour)
-        self.fixPars("MR02nd_%s_s" % flavour)
+        #self.fixParsPenalty("MR02nd_%s" % flavour, False, fitmodel, modeltype)
+        #self.fixPars("MR02nd_%s_s" % flavour)
         if alsoB == True:
-            self.fixParsPenalty("b2nd_%s" % flavour)
+            self.fixParsPenalty("b2nd_%s" % flavour, False, fitmodel, modeltype)
             self.fixPars("b2nd_%s_s" % flavour)
         else:
             self.fixParsExact("b2nd_%s" % flavour, False)

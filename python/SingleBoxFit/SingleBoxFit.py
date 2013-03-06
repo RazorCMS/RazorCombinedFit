@@ -1,4 +1,3 @@
-
 import ROOT as rt
 import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
@@ -391,7 +390,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 reset(box, fr, fixSigma=True, random=(fitAttempts>0))
                 box.workspace.var("sigma").setVal(self.options.signal_xsec)
                 box.workspace.var("sigma").setConstant(True)
-                frH0 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
                 frH0.Print("v")
                 statusH0 = frH0.status()
                 covqualH0 = frH0.covQual()
@@ -409,7 +408,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #this means we're doing background-only toys or data
                     #so we should reset to nominal fit pars
                     reset(box, fr, fixSigma=False, random=(fitAttempts>0))
-                    box.workspace.var("sigma").setVal(1e-6)
+                    box.workspace.var("sigma").setVal(2e-1)
                     box.workspace.var("sigma").setConstant(False)
                 else:
                     #this means we're doing signal+background toy
@@ -420,7 +419,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         reset(box, fr, fixSigma=False, random=(fitAttempts>0))
                     box.workspace.var("sigma").setVal(self.options.signal_xsec)
                     box.workspace.var("sigma").setConstant(False)
-                frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
                 frH1.Print("v")
                 statusH1 = frH1.status()
                 covqualH1 = frH1.covQual()
@@ -468,13 +467,25 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # add signal specific parameters 
             boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = boxes[box].workspace)
             boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = boxes[box].workspace)
-            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)            
-
+            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)
             boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
-            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
+            boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")        
+            boxes[box].workspace.extendSet("nuisance", boxes[box].workspace.factory('n2nd_TTj_prime[0,-5.,5.]').GetName())
+            boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_value[1.0]').GetName())
+            boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_uncert[0.1]').GetName())
+
+            #if not boxes[box].workspace.var('n2nd_TTj_%s_uncert' % box):
+            #    boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_%s_uncert[0.1]' % box).GetName())
+            #if not boxes[box].workspace.var("lumi_fraction_%s" % box):
+            #    boxes[box].workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
+
+            boxes[box].workspace.factory("expr::n2nd('@0 * pow( (1+@1), @2)', n2nd_TTj_value, n2nd_TTj_uncert, n2nd_TTj_prime)")
+            
+            N_TTj = boxes[box].workspace.var("Ntot_TTj").setMax(1e9)
+            N_QCD = boxes[box].workspace.var("Ntot_QCD").setMax(1e9)
 
             #add a signal model to the workspace
-            signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
+            boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
 
             #print 'Variables for box %s' % box
             #boxes[box].workspace.allVars().Print('V')
@@ -558,6 +569,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             else:
                 # use the fr for SpB hypothesis to generate toys
                 fr_SpB = frH0Data
+                print boxes[box].signalmodel
                 SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
                 #genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
  
@@ -628,15 +640,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         varVal = eval('nuisTree.%s'%var.GetName())
                         var.setVal(varVal)
                         print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
+                    print  boxes[box].workspace.var("n2nd_TTj_prime").getVal()
+                    boxes[box].workspace.var("n2nd_TTj_prime").setVal(rt.RooRandom.gaussian())
+                    print  boxes[box].workspace.var("n2nd_TTj_prime").getVal()
+                    print boxes[box].workspace.var("n2nd_TTj").getVal()
+                    print boxes[box].workspace.function("n2nd").getVal()
+                    boxes[box].workspace.var("n2nd_TTj").setVal(boxes[box].workspace.function("n2nd").getVal())
+                    print boxes[box].workspace.var("n2nd_TTj").getVal()
                     boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
 
-                    sigGenNum = boxes[box].workspace.function('Ntot_Signal').getVal()
-                    print "sigGenNum = %f" % sigGenNum
-                    print "numEntriesData = %i" % data.numEntries()
-                    PSigGenNum = rt.RooRandom.randomGenerator().Poisson(sigGenNum)
-                    print 'PSigGenNum = %d' % PSigGenNum
-
-                    fr_SpB.Print("v")
+                    #fr_SpB.Print("v")
                     print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
                     tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
                     print "SpB Yield = %f" %tot_toy.numEntries()

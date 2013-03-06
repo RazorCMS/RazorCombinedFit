@@ -326,12 +326,11 @@ class Box(object):
             
         return plots
 
-    def fixVariable(self, var, mean, sigma, model=None):
+    def fixVariable(self, var, mean, sigma, model=None, modeltype="fitmodel"):
         """Add a Gaussian penalty term for a semi-fixed parameter"""
-        
         if model is None:
-            model = self.fitmodel
-        
+            model = getattr(self,modeltype)
+        print "model is ", model
         var_m = '%s_mean[%f]' % (var,mean)
         if self.workspace.var('%s_s' % var):
             var_s = '%s_s' % var
@@ -343,7 +342,9 @@ class Box(object):
         fitmodel = self.workspace.pdf(model)
         modelName = '%s_fix%s' % (model, var)
         self.workspace.factory('PROD::%s(%s,%s_penalty)' % (modelName,model,var))
-        self.fitmodel = modelName
+        print getattr(self,modeltype)
+        setattr(self,modeltype,modelName)
+        print getattr(self,modeltype)
         print 'Added a Gaussian penalty term for %s: %f\pm %f [%f,%f]' % (var,mean,sigma,var_ref.getMin(),var_ref.getMax())
 
     def fixPars(self, label, doFix=rt.kTRUE, setVal=None):
@@ -372,8 +373,7 @@ class Box(object):
                 if setVal is not None: par.setVal(setVal)
                 if setError is not None: par.setError(setError)
     
-    def fixParsPenalty(self, label, floatIfNoPenalty = False):
-        
+    def fixParsPenalty(self, label, floatIfNoPenalty = False, fitmodel = None, modeltype = "fitmodel"):
         allVars = self.workspace.allVars()
         pars = {}
         for p in RootTools.RootIterator.RootIterator(allVars): pars[p.GetName()] = p
@@ -381,7 +381,7 @@ class Box(object):
             if label in par.GetName():
                 if pars.has_key('%s_s' % name):
                     sigma = pars['%s_s' % name].getVal() 
-                    self.fixVariable(par.GetName(), par.getVal(),sigma)
+                    self.fixVariable(par.GetName(), par.getVal(),sigma, fitmodel, modeltype )
                     par.setConstant(False)
                 elif floatIfNoPenalty:
                     self.fixParsExact(par.GetName(),False)

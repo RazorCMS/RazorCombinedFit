@@ -19,6 +19,18 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.zeros = {'TTj':[] , 'QCD':['Mu','Ele','CRMuBVeto','CREleBVeto']}
         self.cut = 'MR >= 0.0'
         
+    def floatSomething(self, z, fitmodel = None, modeltype = "fitmodel"):
+        """Switch on or off whatever you want here"""
+        # the "effective" first component in the Had box
+        self.float1stComponentWithPenalty(z, True, fitmodel, modeltype)
+        self.float2ndComponentWithPenalty(z, True, fitmodel, modeltype)
+        self.floatYield(z)
+        self.floatFraction(z)
+        
+        # we put the n parameter but fix it
+        self.fixParsExact("n2nd_%s" % z, True)
+
+
     def define(self, inputFile, twoComponentOnly = False):
         
         #define the ranges
@@ -43,18 +55,6 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.fixPars("QCD")
         self.fixPars("TTj")
 
-        def floatSomething(z):
-            """Switch on or off whatever you want here"""
-            # the "effective" first component in the Had box
-            self.float1stComponentWithPenalty(z, True)
-            self.float2ndComponentWithPenalty(z, True)
-            self.floatYield(z)
-            self.floatFraction(z)
-            
-            #we put the n parameter but fix it
-            self.fixParsExact("n2nd_%s" % z, True)
-
-
         fixed = []
         for z in self.zeros:
             if self.name in self.zeros[z]:
@@ -62,7 +62,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
                 self.switchOff(z)
             else:
                 if not z in fixed:
-                    floatSomething(z)
+                    self.floatSomething(z)
                     fixed.append(z)
         
         #remove redundant second components
@@ -98,10 +98,22 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         if self.workspace.function("N_1st_QCD").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF1st_QCD"))
         if self.workspace.function("N_2nd_QCD").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF2nd_QCD"))
                 
+
         add = rt.RooAddPdf('%s_%sCombined' % (theRealFitModel,modelName),'Signal+BG PDF',
                            SpBPdfList)
         self.importToWS(add)
         self.signalmodel = add.GetName()
+
+        fixed = []
+        for z in self.zeros:
+            if self.name in self.zeros[z]:
+                self.fixPars(z)
+                self.switchOff(z)
+            else:
+                if not z in fixed:
+                    self.floatSomething(z,None,"signalmodel")
+                    print "top loop", self.signalmodel
+                    fixed.append(z)
         return extended.GetName()
 
     
