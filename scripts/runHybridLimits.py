@@ -133,7 +133,7 @@ if __name__ == '__main__':
     print box
     
     #gluinopoints = range(200,900,100)
-    gluinopoints = [400,500,550,600,650,700,800]
+    gluinopoints = [200,300,400,500,550,600,650,700,800]
     neutralinopoints = [0]
     queue = "2nd"
     
