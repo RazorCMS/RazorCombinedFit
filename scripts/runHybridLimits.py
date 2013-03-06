@@ -10,8 +10,12 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     label = "MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
-    if gluinopoint == 400:
-        return [0.1, 0.5]
+    if gluinopoint == 200:
+        return [1.0, 10.0, 20.0]
+    elif gluinopoint == 300:
+        return [0.5, 1.0, 10.0]
+    elif gluinopoint == 400:
+        return [0.1, 0.5, 1.0]
     elif gluinopoint == 500:
         return [0.03, 0.05, 0.1]
     elif gluinopoint == 550:
