@@ -61,16 +61,12 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("source setup.sh\n")
     outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
     outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
-    #outputfile.write("cp /afs/cern.ch/user/s/salvati/public/ForRazorStops/HypoTestInvTool.cc $PWD/src/\n")
-    #outputfile.write("cp /afs/cern.ch/user/s/salvati/public/ForRazorStops/StandardHypoTestInvDemo.cc $PWD/src/\n")
-    #outputfile.write("cp /afs/cern.ch/user/s/salvati/public/ForRazorStops/SingleBoxFit.py $PWD/python/SingleBoxFit/\n")
-    #outputfile.write("cp /afs/cern.ch/user/s/salvati/public/ForRazorStops/RazorMultiJetBox.py $PWD/python/SingleBoxFit/\n")
     outputfile.write("make\n")
     
     outputfile.write("export NAME=\"T2tt\"\n")
     outputfile.write("export LABEL=\"MR500.0_R0.22360679775\"\n")
 
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTree.root $PWD\n")
+    #outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTree.root $PWD\n")
     if box == 'had' or box == 'BJetHS' or box == 'BJetLS':
         outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FullRegion/Run2012ABCD_Full_Search-280113.root $PWD\n")
         #outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Had-280113.root $PWD\n")
@@ -128,7 +124,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 50 # do 100=50+50 toys each job => 10000 toys
+    nJobs = 50 # do 100=50+50 toys each job => 5000 toys
     
     print box
     
