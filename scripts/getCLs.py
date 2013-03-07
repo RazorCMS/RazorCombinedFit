@@ -74,7 +74,7 @@ def getMinMax(box,BfileName,SpBfileName,LzCut,type):
         Xmin = 0
         Xmax = mean+5*rms
         #Xmax = 5
-    if type=="LHC":
+    if type=="LEP":
         XmaxBin = htemp.GetXaxis().FindBin(Xmax)
         XmaxTest = Xmax
         XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
@@ -93,10 +93,7 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     LzCut = ""
     sumName = ""
     for box in boxes:
-        if box=="Jet":
-            LzCut+="LzSR_%s>=0.&&"%(box)
-        else:
-            LzCut+="H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0.&&"%(box,box,box)
+        LzCut+="H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0.&&"%(box,box,box)
         sumName+="LzSR_%s+"%(box)
     LzCut = LzCut[:-2]
     sumName = sumName[:-1]
@@ -456,10 +453,7 @@ def getCLsAll(mg, mchi, xsec, boxes, directory,type):
     Xmin = 0
     Xmax = 0
     for box in boxes:
-        if box =="Jet":
-            LzCut = "LzSR_%s>=0."%(box)
-        else:
-            LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
+        LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
         SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
         BFileName = getFileName("B",mg,mchi,xsec,box,directory)
         XminTEST, XmaxTEST = getMinMax(box,BFileName,SpBFileName,LzCut,type)
@@ -565,8 +559,7 @@ def getCLsAll(mg, mchi, xsec, boxes, directory,type):
     return CLs, CLsExp
 
 def getCLs(mg, mchi, xsec, box, directory,type):
-    #LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
-    LzCut = "LzSR_%s>=0."%(box)
+    LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
     
     SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
     BFileName = getFileName("B",mg,mchi,xsec,box,directory)
@@ -744,7 +737,7 @@ def getXsecRange(neutralinopoint,gluinopoint):
     return xsecRange
 
 if __name__ == '__main__':
-    gluinopoints = range(425,1825,200)
+    gluinopoints = range(425,2025,200)
     neutralinopoints = [0]
     
     boxInput = sys.argv[1]

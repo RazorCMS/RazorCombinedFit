@@ -295,14 +295,12 @@ if __name__ == '__main__':
 
     #expectedLimit_minus2sigma[1] = 1.2*(expectedLimit[1] - (expectedLimit[0] - expectedLimit_minus2sigma[0]  + expectedLimit[2] - expectedLimit_minus2sigma[2] )/2)
     
-    # j = 1
-    # while j < len(observedLimit)-1:
-    #     print (expectedLimit[j]-expectedLimit_minus2sigma[j])
-    #     if ((expectedLimit[j]-expectedLimit_minus2sigma[j])<=0.0001):
-    #         expectedLimit_minus2sigma[j] = (expectedLimit_minus2sigma[j-1] +expectedLimit_minus2sigma[j+1] )/2
-    #     if (expectedLimit_plus1sigma[j]==expectedLimit_plus2sigma[j]):
-    #         expectedLimit_plus2sigma[j] = (expectedLimit_plus2sigma[j-1] +expectedLimit_plus2sigma[j+1] )/2
-    #     j+=1
+    for j in xrange(1,len(observedLimit)-1):
+        print (expectedLimit[j]-expectedLimit_minus2sigma[j])
+        if expectedLimit[j]-expectedLimit_minus2sigma[j]-0.0001<1e-10:
+            expectedLimit_minus2sigma[j] = 1.1*(expectedLimit[j] - 0.5*(expectedLimit[j-1]- expectedLimit_minus2sigma[j-1] + expectedLimit[j+1] - expectedLimit_minus2sigma[j+1]))
+            print "found at", j
+            print (expectedLimit[j]-expectedLimit_minus2sigma[j])
         
     nPoints = len(observedLimit)
     gr_observedLimit = rt.TGraph(nPoints, gluinoMassArray, observedLimit)
@@ -340,9 +338,9 @@ if __name__ == '__main__':
     h_limit.Add(xsec_gr_nom)
     h_limit.Draw("a3")
     if float(LSPmassStrip)==100.:
-        h_limit.GetXaxis().SetLimits(625,1625)
+        h_limit.GetXaxis().SetLimits(625,1825)
     elif float(LSPmassStrip)==0.:
-        h_limit.GetXaxis().SetLimits(425,1625)
+        h_limit.GetXaxis().SetLimits(425,1825)
     gr_expectedLimit.Draw("c same")
     xsec_gr_nom.Draw("c same")
     gr_observedLimit.Draw("c SAME")
@@ -358,7 +356,8 @@ if __name__ == '__main__':
     
     l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowbb#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
     
-    l.DrawLatex(0.55,0.719,"%s #geq 1b-tag"%Box)
+    l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+"))
+    #l.DrawLatex(0.55,0.719,"%s #geq 1b-tag"%Box.replace("_","+"))
     l.SetTextColor(rt.kBlue+2)
     l.DrawLatex(0.55,0.785,"Razor Inclusive")
     if directory.lower().find("hybrid")!=-1:
@@ -369,7 +368,7 @@ if __name__ == '__main__':
         l.DrawLatex(0.77,0.785,"Asymptotic")
         l.DrawLatex(0.79,0.71,"Freq. CL_{s}")
 
-    leg = rt.TLegend(0.65,0.49,0.9,0.67)
+    leg = rt.TLegend(0.70,0.49,0.9,0.67)
     leg.SetTextFont(132)
     leg.SetFillColor(rt.kWhite)
     leg.SetLineColor(rt.kWhite)
@@ -378,6 +377,6 @@ if __name__ == '__main__':
     leg.AddEntry(gr_expectedLimit, "expected limit","l")
     leg.AddEntry(gr_expectedLimit1sigma, "expected limit #pm 1 #sigma","f")
     leg.AddEntry(gr_expectedLimit2sigma, "expected limit #pm 2 #sigma","f")
-    leg.Draw("SAME")
+    #leg.Draw("SAME")
 
     c.SaveAs(directory+"/limits_LSPMass_"+re.sub('\.','_',LSPmassStrip)+"_"+box+".pdf")

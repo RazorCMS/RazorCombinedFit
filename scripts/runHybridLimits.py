@@ -80,11 +80,17 @@ if __name__ == '__main__':
     nJobs = 12 # do 250=125+125 toys each job => 3000 toys
     
     print box
+
+    gchipairs = [(1125,100), (1225, 100), (1325, 100),
+                 #(1125,200), (1225, 200), (1325, 200), (1375, 200),
+                 (1125,300), (1225, 300), (1325, 300), (1375, 300),
+                 (1125,400), (1225, 400), (1325, 400), (1375, 400),
+                 (925, 500), (1225,500), (1325, 500), (1375, 500),
+                 (925, 600), (1175, 600), (1275, 600),
+                 (925, 700), (1025, 700), (1225, 700)]
+                 #(925, 800), (1025, 800), (1225, 800)]
     
-    gluinopoints = range(425,2025,200)
-    neutralinopoints = [0]
-    
-    queue = "1nd"
+    queue = "8nh"
     
     pwd = os.environ['PWD']
     
@@ -96,17 +102,16 @@ if __name__ == '__main__':
 
     hypotheses = ["B","SpB"]
 
-    for neutralinopoint in neutralinopoints:
-        for gluinopoint in gluinopoints:
-            xsecRange = getXsecRange(box,neutralinopoint,gluinopoint)
-            for xsecpoint in xsecRange:
-                for hypo in hypotheses:
-                    for t in xrange(0,nJobs):
-                        print "Now scanning xsec = %f"%xsecpoint
-                        outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                        #time.sleep(3)
-                        os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("source "+pwd+"/"+outputname)
+    for gluinopoint, neutralinopoint in gchipairs:
+        xsecRange = getXsecRange(box,neutralinopoint,gluinopoint)
+        for xsecpoint in xsecRange:
+            for hypo in hypotheses:
+                for t in xrange(0,nJobs):
+                    print "Now scanning xsec = %f"%xsecpoint
+                    outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                    #time.sleep(3)
+                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("source "+pwd+"/"+outputname)
                         

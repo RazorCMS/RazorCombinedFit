@@ -94,23 +94,35 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut):
     nominal = rt.TH3D("wHisto", "wHisto", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
   
     ###### PROEJCTION METHOD OF GETTING HISTOS ######
+    #BTAGNOM = "btag_nom"
+    #BTAGUP = "btag_up"
+    #BTAGDOWN = "btag_down"
 
-    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
-    tree.Project('wHisto_JESerr_up','btag_nom:RSQ_JESup:MR_JESup','(%s)' % (condition) )
+    BTAGNOM = "BTAG_NUM"
+    BTAGUP = "BTAG_NUM"
+    BTAGDOWN = "BTAG_NUM"
 
-    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
-    tree.Project('wHisto_JESerr_down','btag_nom:RSQ_JESdown:MR_JESdown','(%s)' % (condition) )
+    #condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    tree.Project('wHisto_JESerr_up','%s:RSQ_JESup:MR_JESup'%(BTAGNOM),'(%s)' % (condition) )
+
+    #condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    tree.Project('wHisto_JESerr_down','%s:RSQ_JESdown:MR_JESdown'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_up >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
-    tree.Project('wHisto_btagerr_up','btag_up:RSQ:MR','(%s)' % (condition) )
+    #condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
+    tree.Project('wHisto_btagerr_up','%s:RSQ:MR'%(BTAGUP),'(%s)' % (condition) )
 
-    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_down >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
-    tree.Project('wHisto_btagerr_down','btag_down:RSQ:MR','(%s)' % (condition) )
+    #condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
+    tree.Project('wHisto_btagerr_down','%s:RSQ:MR'%(BTAGDOWN),'(%s)' % (condition) )
 
-    condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && btag_nom >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,mRmin,mRmax,rsqMin,rsqMax)
-    tree.Project('wHisto','btag_nom:RSQ:MR','(%s)' % (condition) )
+    #condition = '0.95*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    tree.Project('wHisto','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    pdf_nom, pdf_pe = makePDFPlot(tree, nominal, condition, relative = True)
+    pdf_nom, pdf_pe = makePDFPlot(tree, nominal, condition, relative = True, BTAGNOM = BTAGNOM)
     ###### JES ######
     #using (UP - DOWN)/2:
     jes_pe.Add(jes_up,0.5)
@@ -235,7 +247,7 @@ if __name__ == '__main__':
                     #convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.useWeight)
                     #convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.useWeight)
                     #convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'), decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'),  decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), histoFile.Get('SMSCount'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.useWeight)
             
