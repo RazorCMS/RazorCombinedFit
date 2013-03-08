@@ -552,8 +552,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         #this means we're doing background-only toys or data
                         #so we should reset to nominal fit pars
                         reset(box, fr, fixSigma=False, random=(fitAttempts>0))
-                        box.workspace.var("sigma").setVal(1e-6)
-                        box.workspace.var("sigma").setConstant(False)
+                        #we store the floated sigma as the last element in the array
+                        if(i < nSteps+1):
+                            box.workspace.var("sigma").setVal(sigmaStep*i)
+                            box.workspace.var("sigma").setConstant(True)
+                        else:
+                            box.workspace.var("sigma").setVal(1e-6)
+                            box.workspace.var("sigma").setConstant(False)
                     else:
                         #this means we're doing signal+background toy
                         #so we should reset to the fit with signal strength fixed
@@ -604,10 +609,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "H1 cov. qual  = %i"%covqualH1
                 print "sigmaScan:    = %f"%(box.workspace.var("sigma").getVal())
                 print "**************************************************"
-
-                #we only need to scan if we are doing the signal+background fits 
-                if self.options.expectedlimit==True or ds.GetName=="RMRTree":
-                    break
 
 
             return vLz, LH0x, vLH1x, frH0, vfrH1, vSigma
