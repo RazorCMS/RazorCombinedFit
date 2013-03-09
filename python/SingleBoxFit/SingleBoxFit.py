@@ -24,7 +24,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorBox
         import RazorBjetBox
         import RazorMultiJetBox
-        #import RazorBoostBox
+        import RazorBoostBox
         import RazorTauBox
         boxes = {}
 
