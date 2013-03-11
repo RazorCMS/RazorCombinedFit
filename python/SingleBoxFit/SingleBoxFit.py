@@ -542,7 +542,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             vSigma = []
             vLz = []
             
-            for i in xrange(1,nSteps+2):
+            for i in xrange(0,nSteps+2):
                 #L(^s,^th|x)
                 print "retrieving -log L(x = %s|^s,^th) [%d]" %(ds.GetName(), i)
                 covqualH1 = 0
@@ -554,7 +554,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         reset(box, fr, fixSigma=False, random=(fitAttempts>0))
                         #we store the floated sigma as the last element in the array
                         if(i < nSteps+1):
-                            box.workspace.var("sigma").setVal(sigmaStep*i)
+                            if i != 0:
+                                #scan in powers of 10 down
+                                box.workspace.var("sigma").setVal(self.options.signal_xsec*math.pow(0.1,i))
+                            else:
+                                box.workspace.var("sigma").setVal(0.0)
                             box.workspace.var("sigma").setConstant(True)
                         else:
                             box.workspace.var("sigma").setVal(1e-6)
