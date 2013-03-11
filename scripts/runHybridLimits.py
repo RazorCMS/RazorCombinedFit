@@ -10,26 +10,45 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     label = "MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
+#    if gluinopoint == 200:
+#        return [1.0, 10.0, 20.0]
+#    elif gluinopoint == 300:
+#        return [0.5, 1.0, 10.0]
+#    elif gluinopoint == 400:
+#        return [0.1, 0.5, 1.0]
+#    elif gluinopoint == 500:
+#        return [0.03, 0.05, 0.1]
+#    elif gluinopoint == 550:
+#        return [0.03, 0.05, 0.08]
+#    elif gluinopoint == 600:
+#        return [0.01, 0.03, 0.05]
+#    elif gluinopoint == 650:
+#        return [0.01, 0.015, 0.02]
+#    elif gluinopoint == 700:
+#        return [0.006, 0.008, 0.01]    
+#    elif gluinopoint == 800:
+#        return [0.006, 0.008, 0.01]
+#    else:
     if gluinopoint == 200:
-        return [1.0, 10.0, 20.0]
+        return [0.01, 0.1, 1.0, 10.0, 100.0]
     elif gluinopoint == 300:
-        return [0.5, 1.0, 10.0]
+        return [0.01, 0.1, 1.0, 10.0, 100.0]
     elif gluinopoint == 400:
-        return [0.1, 0.5, 1.0]
+        return [0.001, 0.01, 0.1, 1.0, 10.0]
     elif gluinopoint == 500:
-        return [0.03, 0.05, 0.1]
+        return [0.001, 0.01, 0.1, 1.0, 10.0]
     elif gluinopoint == 550:
-        return [0.03, 0.05, 0.08]
+        return [0.001, 0.01, 0.1, 1.0, 10.0]
     elif gluinopoint == 600:
-        return [0.01, 0.03, 0.05]
+        return [0.001, 0.01, 0.1, 1.0, 10.0]
     elif gluinopoint == 650:
-        return [0.01, 0.015, 0.02]
+        return [0.0001, 0.001, 0.01, 0.1, 1.0]
     elif gluinopoint == 700:
-        return [0.006, 0.008, 0.01]    
+        return [0.0001, 0.001, 0.01, 0.1, 1.0]
     elif gluinopoint == 800:
-        return [0.006, 0.008, 0.01]
+        return [0.0001, 0.001, 0.01, 0.1, 1.0]
     else:
-        return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        return [0.001, 0.01, 0.1, 1.0, 10.0]
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
