@@ -502,7 +502,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #     box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
             #     box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
             
-        def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR', nSteps = 10):
+        def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR', nSteps = 2):
             reset(box, fr, fixSigma=True)
             setNorms(box, ds)
             
@@ -542,7 +542,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             vSigma = []
             vLz = []
             
-            for i in xrange(0,nSteps+2):
+            for i in xrange(0,nSteps+1):
                 #L(^s,^th|x)
                 print "retrieving -log L(x = %s|^s,^th) [%d]" %(ds.GetName(), i)
                 covqualH1 = 0
@@ -553,12 +553,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         #so we should reset to nominal fit pars
                         reset(box, fr, fixSigma=False, random=(fitAttempts>0))
                         #we store the floated sigma as the last element in the array
-                        if(i < nSteps+1):
-                            if i != 0:
-                                #scan in powers of 10 down
-                                box.workspace.var("sigma").setVal(self.options.signal_xsec*math.pow(0.1,i))
-                            else:
-                                box.workspace.var("sigma").setVal(0.0)
+                        if(i < nSteps):
+                            # if i != 0:
+                            #     #scan in powers of 10 down
+                            #     box.workspace.var("sigma").setVal(self.options.signal_xsec*math.pow(0.1,i))
+                            # else:
+                            #     box.workspace.var("sigma").setVal(0.0)
+                            box.workspace.var("sigma").setVal(sigmaStep*i)
                             box.workspace.var("sigma").setConstant(True)
                         else:
                             box.workspace.var("sigma").setVal(1e-6)
@@ -571,7 +572,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                             #however, if for some reason the randomization is bad, try this
                             reset(box, fr, fixSigma=False, random=(fitAttempts>0))
                         #we store the floated sigma as the last element in the array
-                        if(i < nSteps+1):
+                        if(i < nSteps):
                             box.workspace.var("sigma").setVal(sigmaStep*i)
                             box.workspace.var("sigma").setConstant(True)
                         else:
@@ -585,10 +586,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "-log L(x = %s|^s,^th) =  %f [%d]"%(ds.GetName(),LH1x,i)
                     fitAttempts+=1
 
-                if box.workspace.var("sigma")>self.options.signal_xsec:
-                    print "INFO: ^sigma > sigma"
-                    print " returning q = 0 as per LHC style CLs prescription"
-                    LH1x = LH0x
+                # if box.workspace.var("sigma")>self.options.signal_xsec:
+                #     print "INFO: ^sigma > sigma"
+                #     print " returning q = 0 as per LHC style CLs prescription"
+                #     LH1x = LH0x
                 
                 if math.isnan(LH1x):
                     print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
