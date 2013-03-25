@@ -10,64 +10,86 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     label = "MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
-    if box == 'BJetHS':
-        if gluinopoint == 200:
-            return [0.01, 0.1, 10.0, 100.0]
-        elif gluinopoint == 250:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
-        elif gluinopoint == 300:
-            return [0.01, 0.1, 100.0]
-        elif gluinopoint == 350:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
-        elif gluinopoint == 400:
-            return [0.01, 10.0, 100.0]
-        elif gluinopoint == 450:
-            return [0.001, 0.01, 0.1, 1.0, 10.0]
-        elif gluinopoint == 500:
-            return [0.001, 0.01, 10.0]
-        elif gluinopoint == 550:
-            return [0.001, 0.01, 0.1, 10.0]
-        elif gluinopoint == 600:
-            return [0.001, 1.0, 10.0]
-        elif gluinopoint == 650:
-            return [0.001, 1.0, 10.0]
-        elif gluinopoint == 700:
-            return [0.001, 1.0, 10.0]
-        elif gluinopoint == 750:
-            return [0.0001, 0.001, 0.01, 0.1, 1.0]
-        elif gluinopoint == 800:
-            return [0.0001, 0.001, 1.0]
-        else:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
-    elif box == 'BJetLS':
-        if gluinopoint == 200:
-            return [0.01, 0.1, 1.0, 100.0]
-        elif gluinopoint == 250:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
-        elif gluinopoint == 300:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
-        elif gluinopoint == 350:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
-        elif gluinopoint == 400:
-            return [0.01, 0.1, 10.0, 100.0]
-        elif gluinopoint == 450:
-            return [0.001, 0.01, 0.1, 1.0, 10.0]
-        elif gluinopoint == 500:
-            return [0.001, 0.01, 1.0, 10.0]
-        elif gluinopoint == 550:
-            return [0.001, 0.01, 0.1, 1.0, 10.0]
-        elif gluinopoint == 600:
-            return [0.001, 0.01, 1.0, 10.0]
-        elif gluinopoint == 650:
-            return [0.001, 0.01, 1.0, 10.0]
-        elif gluinopoint == 700:
-            return [0.001, 0.01, 0.1, 1.0, 10.0]
-        elif gluinopoint == 750:
-            return [0.0001, 0.001, 0.01, 0.1, 1.0]
-        elif gluinopoint == 800:
-            return [0.0001, 0.001, 0.1, 1.0]
-        else:
-            return [0.01, 0.1, 1.0, 10.0, 100.0]
+    if gluinopoint == 200:
+        return [0.01, 0.1, 1.0, 10.0, 20.0]
+    elif gluinopoint == 300:
+        return [0.01, 0.1, 0.5, 1.0, 10.0]
+    elif gluinopoint == 400:
+        return [0.001, 0.01, 0.1, 0.5, 1.0]
+    elif gluinopoint == 500:
+        return [0.001, 0.01, 0.1, 0.5, 1.0]
+    elif gluinopoint == 550:
+        return [0.001, 0.01, 0.1,0.5, 1.0]
+    elif gluinopoint == 600:
+        return [0.001, 0.01, 0.1, 0.5]
+    elif gluinopoint == 650:
+        return [0.0001, 0.001, 0.01,0.1, 0.5]
+    elif gluinopoint == 700:
+        return [0.0001, 0.001, 0.01,0.05, 0.1]    
+    elif gluinopoint == 800:
+        return [ 0.0001, 0.001, 0.01,0.05, 0.1]
+    else:
+        return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+
+
+    # if box == 'BJetHS':
+    #     if gluinopoint == 200:
+    #         return [0.01, 0.1, 10.0, 100.0]
+    #     elif gluinopoint == 250:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
+    #     elif gluinopoint == 300:
+    #         return [0.01, 0.1, 100.0]
+    #     elif gluinopoint == 350:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
+    #     elif gluinopoint == 400:
+    #         return [0.01, 10.0, 100.0]
+    #     elif gluinopoint == 450:
+    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
+    #     elif gluinopoint == 500:
+    #         return [0.001, 0.01, 10.0]
+    #     elif gluinopoint == 550:
+    #         return [0.001, 0.01, 0.1, 10.0]
+    #     elif gluinopoint == 600:
+    #         return [0.001, 1.0, 10.0]
+    #     elif gluinopoint == 650:
+    #         return [0.001, 1.0, 10.0]
+    #     elif gluinopoint == 700:
+    #         return [0.001, 1.0, 10.0]
+    #     elif gluinopoint == 750:
+    #         return [0.0001, 0.001, 0.01, 0.1, 1.0]
+    #     elif gluinopoint == 800:
+    #         return [0.0001, 0.001, 1.0]
+    #     else:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
+    # elif box == 'BJetLS':
+    #     if gluinopoint == 200:
+    #         return [0.01, 0.1, 1.0, 100.0]
+    #     elif gluinopoint == 250:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
+    #     elif gluinopoint == 300:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
+    #     elif gluinopoint == 350:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
+    #     elif gluinopoint == 400:
+    #         return [0.01, 0.1, 10.0, 100.0]
+    #     elif gluinopoint == 450:
+    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
+    #     elif gluinopoint == 500:
+    #         return [0.001, 0.01, 1.0, 10.0]
+    #     elif gluinopoint == 550:
+    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
+    #     elif gluinopoint == 600:
+    #         return [0.001, 0.01, 1.0, 10.0]
+    #     elif gluinopoint == 650:
+    #         return [0.001, 0.01, 1.0, 10.0]
+    #     elif gluinopoint == 700:
+    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
+    #     elif gluinopoint == 750:
+    #         return [0.0001, 0.001, 0.01, 0.1, 1.0]
+    #     elif gluinopoint == 800:
+    #         return [0.0001, 0.001, 0.1, 1.0]
+    #     else:
+    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
 
 
 
@@ -149,11 +171,11 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     if box == 'had' or box == 'BJetHS' or box == 'BJetLS':
         outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FullRegion/Run2012ABCD_Full_Search-280113.root $PWD\n")
         #outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Had-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/%s_%s_BJet*.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/mar11/%s_%s_BJet*.root $PWD\n"%(name,massPoint))
     else:
         outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Lep-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/%s_%s_Ele*.root $PWD\n"%(name,massPoint))
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/%s_%s_Mu*.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/mar11/%s_%s_Ele*.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/mar11/%s_%s_Mu*.root $PWD\n"%(name,massPoint))
         
 
 
@@ -195,7 +217,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         
 
     # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybridBJetLS/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybridBJetLS_mLSP_50/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
@@ -207,10 +229,9 @@ if __name__ == '__main__':
     
     print box
     
-    #gluinopoints = range(200,900,100)
-    gluinopoints = [200,250, 300, 350, 400,450, 500, 550, 600, 650, 700, 750, 800]
-    #gluinopoints = [500,550,600,650,700,800]
-    neutralinopoints = [0]
+    #gluinopoints = [200,250, 300, 350, 400,450, 500, 550, 600, 650, 700, 750, 800]
+    gluinopoints = [200, 300, 400, 500, 550, 600, 650, 700, 800]
+    neutralinopoints = [50]
     queue = "2nd"
     
     pwd = os.environ['PWD']
