@@ -136,7 +136,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
 
-    name = "SMS_T2tt_jan30_MR500.0_R0.22360679775"    
+    name = "SMS_T2tt_mar11_MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
