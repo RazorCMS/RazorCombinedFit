@@ -114,15 +114,18 @@ def GetErrEigenEff(w, w2, wALL, selectedEvents_, originalEvents_, PDFSET):
     originalAcceptance = float(selectedEvents_)/float(originalEvents_)
     acc_central = 0.
     acc2_central = 0.
-    if w[0]>0:
+    
+    
+    if w[0]!=0 and wALL[0]!=0:
         acc_central = w[0]/wALL[0]
         acc2_central = w2[0]/wALL[0]
 
+
     for j in xrange(0,npairs):
         wa = 0.
-        if wALL[2*j+1]>0: wa = (w[2*j+1]/wALL[2*j+1])/acc_central-1.
+        if wALL[2*j+1]!=0 and acc_central!=0: wa = (w[2*j+1]/wALL[2*j+1])/acc_central-1.
         wb = 0.
-        if w[2*j+2]>0: wb = (w[2*j+2]/wALL[2*j+2])/acc_central-1.
+        if wALL[2*j+2]!=0 and acc_central!=0: wb = (w[2*j+2]/wALL[2*j+2])/acc_central-1.
         if NNPDF:
             if wa>0.:
                 wplus += wa*wa
@@ -235,6 +238,7 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
     
     for i in xrange(1, ibinx+1):
         for j in xrange(1, ibiny+1):
+            w = []
             hw = []
             hw2 = []
             for k in xrange(0,31):
@@ -250,6 +254,7 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
 
     for i in xrange(1, ibinx+1):
         for j in xrange(1, ibiny+1):
+            w = []
             hw = []
             hw2 = []
             for k in xrange(0,101):

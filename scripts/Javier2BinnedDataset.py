@@ -31,7 +31,7 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
 
     args.Print()
     histoFile = rt.TFile.Open(histoFileName)
-    smscount = histoFile.Get("SMSCount")
+    smscount = histoFile.Get("SMSWALL")
     nominal.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     print "signal efficiency from nominal     = %f"%nominal.Integral()
@@ -40,21 +40,21 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
 
     # now collapse the b-tag information for certain boxes
     if box=="TauTauJet" or box=="MuEle" or box=="EleEle" or box=="MuMu":
-        for histo in [nominal, jes_pe, pdf_pe, btag_pe, pdf_nom]:
+        for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
             for i in xrange(1,histo.GetXaxis().GetNbins()+1):
                 for j in xrange(1,histo.GetYaxis().GetNbins()+1):
                     sumOverBtags = sum([histo.GetBinContent(i,j,k) for k in xrange(1,histo.GetZaxis().GetNbins()+1)])
                     histo.SetBinContent(i,j,1,sumOverBtags)
                     [histo.SetBinContent(i,j,k,0) for k in xrange(2,histo.GetZaxis().GetNbins()+1)]
     elif box=="Jet1b":
-        for histo in [nominal, jes_pe, pdf_pe, btag_pe, pdf_nom]:
+        for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
             for i in xrange(1,histo.GetXaxis().GetNbins()+1):
                 for j in xrange(1,histo.GetYaxis().GetNbins()+1):
                     #clear overflow bins
                     k = histo.GetZaxis().GetNbins()+1
                     histo.SetBinContent(i,j,k,0)
     elif box=="Jet2b":
-        for histo in [nominal, jes_pe, pdf_pe, btag_pe, pdf_nom]:
+        for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
             for i in xrange(1,histo.GetXaxis().GetNbins()+1):
                 for j in xrange(1,histo.GetYaxis().GetNbins()+1):
                     #clear underflow bins
