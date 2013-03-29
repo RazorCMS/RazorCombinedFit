@@ -13,18 +13,20 @@ ClassImp(RooRazor3DSignal)
 RooRazor3DSignal::RooRazor3DSignal(const char *name, const char *title,
 				   RooAbsReal &_x, 	RooAbsReal &_y,     RooAbsReal &_z,
 				   const RooWorkspace& ws,
-				   const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
-				   RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag) : RooAbsPdf(name, title), 
+				   const char* _nominal, const char* _jes, const char* _pdf, const char* _btag, const char* _isr,
+				   RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag, RooAbsReal &_xIsr) : RooAbsPdf(name, title), 
   X("X", "X Observable", this, _x),
   Y("Y", "Y Observable", this, _y),
   Z("Z", "Z Observable", this, _z),
   xJes("xJes", "xJes", this, _xJes),
   xPdf("xPdf", "xPdf", this, _xPdf),
   xBtag("xBtag", "xBtag", this, _xBtag),
+  xIsr("xIsr", "xIsr", this, _xIsr),
   Hnominal(0),
   Hjes(0),
   Hpdf(0),
   Hbtag(0),
+  Hisr(0),
   iBinX(0),
   iBinY(0),
   iBinZ(0)
@@ -45,6 +47,9 @@ RooRazor3DSignal::RooRazor3DSignal(const char *name, const char *title,
   if(ws.obj(_btag)){
     Hbtag = dynamic_cast<TH3*>(ws.obj(_btag));
   }
+  if(ws.obj(_isr)){
+    Hisr = dynamic_cast<TH3*>(ws.obj(_isr));
+  }
 }
 RooRazor3DSignal::RooRazor3DSignal(const RooRazor3DSignal& other, const char* name) :
    RooAbsPdf(other, name), 
@@ -54,10 +59,12 @@ RooRazor3DSignal::RooRazor3DSignal(const RooRazor3DSignal& other, const char* na
    xJes("xJes", this, other.xJes),
    xPdf("xPdf", this, other.xPdf),
    xBtag("xBtag", this, other.xBtag),
+   xIsr("xIsr", this, other.xIsr),
    Hnominal(other.Hnominal),
    Hjes(other.Hjes),
    Hpdf(other.Hpdf),
    Hbtag(other.Hbtag),
+   Hisr(other.Hisr),
    iBinX(other.iBinX),
    iBinY(other.iBinY),
    iBinZ(other.iBinZ)
@@ -73,9 +80,12 @@ Double_t RooRazor3DSignal::evaluate() const
   double jesVal = Hjes->GetBinContent(xbin, ybin, zbin);
   double pdfVal = Hpdf->GetBinContent(xbin, ybin, zbin);
   double btagVal = Hbtag->GetBinContent(xbin, ybin, zbin);
+  double isrVal = Hisr->GetBinContent(xbin, ybin, zbin);
+
   double rhoJes = 1.;
   double rhoPdf = 1.;
   double rhoBtag = 1.;
+  double rhoIsr = 1.;
   
   double dx = Hnominal->GetXaxis()->GetBinWidth(xbin);
   double dy = Hnominal->GetYaxis()->GetBinWidth(ybin);
@@ -88,8 +98,9 @@ Double_t RooRazor3DSignal::evaluate() const
     rhoJes = pow(1.0 + fabs(jesVal),xJes*TMath::Sign(1.,jesVal));
     rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*TMath::Sign(1.,pdfVal));
     rhoBtag = pow(1.0 + fabs(btagVal),xBtag*TMath::Sign(1.,btagVal));
+    rhoIsr = pow(1.0 + fabs(isrVal),xIsr*TMath::Sign(1.,isrVal));
   }
-  double result = nomVal*rhoJes*rhoPdf*rhoBtag/volume;
+  double result = nomVal*rhoJes*rhoPdf*rhoBtag*rhoIsr/volume;
   return result >= 0. ? result : 0;
 }
 

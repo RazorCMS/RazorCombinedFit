@@ -22,8 +22,8 @@ public:
    RooRazor3DSignal(const char *name, const char *title,
 		    RooAbsReal &_x, RooAbsReal &_y, RooAbsReal &_z, 
 		    const RooWorkspace& ws,
-		    const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
-		    RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+		    const char* _nominal, const char* _jes, const char* _pdf, const char* _btag, const char* _isr,
+		    RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag, RooAbsReal &_xIsr);
 
    RooRazor3DSignal(const RooRazor3DSignal& other, const char* name) ;
    TObject* clone(const char* newname) const {
@@ -44,11 +44,13 @@ protected:
    RooRealProxy xJes;   // xJes
    RooRealProxy xPdf;   // xPdf
    RooRealProxy xBtag;   // xBtag
+   RooRealProxy xIsr;   // xIsr
 
    TH3* Hnominal;
    TH3* Hjes;
    TH3* Hpdf;
    TH3* Hbtag;
+   TH3* Hisr;
 
    int iBinX;
    int iBinY;
@@ -127,14 +129,16 @@ protected:
      double jesVal = Hjes->GetBinContent(xBin, yBin, zBin);
      double pdfVal = Hpdf->GetBinContent(xBin, yBin, zBin);
      double btagVal = Hbtag->GetBinContent(xBin, yBin, zBin);
+     double isrVal = Hisr->GetBinContent(xBin, yBin, zBin);
 
      double nomVal = Hnominal->GetBinContent(xBin, yBin, zBin);
 
      double rhoJes = pow(1.0 + fabs(jesVal),xJes*TMath::Sign(1.,jesVal));
      double rhoPdf = pow(1.0 + fabs(pdfVal),xPdf*TMath::Sign(1.,pdfVal));
      double rhoBtag = pow(1.0 + fabs(btagVal),xBtag*TMath::Sign(1.,btagVal));
+     double rhoIsr = pow(1.0 + fabs(isrVal),xIsr*TMath::Sign(1.,isrVal));
 
-     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * volume / totalvolume;  
+     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * rhoIsr * volume / totalvolume;  
      return binInt >= 0. ? binInt : 0;
    }
    
