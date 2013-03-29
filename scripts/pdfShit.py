@@ -162,14 +162,14 @@ def GetErrEigenEff(w, w2, wALL, PDFSET):
     if wminus != math.fabs(wminus): wminus = 0.
     if NNPDF:
         if nplus>0: wplus *= 1./math.sqrt(nplus);
-        if nminus>0: wminus *= 1./math.sqrt(nminus);            
+        if nminus>0: wminus *= 1./math.sqrt(nminus);
     if CTEQ:
         #cen = (wplus+wminus)/2.
         #err = math.fabs(wplus-wminus)/2.
         wplus = wplus/1.6
         wminus = wminus/1.6
   
-    return (acc_central-wminus)*wALL[0],(acc_central+wplus)*wALL[0]
+    return acc_central*(1-wminus)*wALL[0],acc_central*(1+wplus)*wALL[0]
 
 
 def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, relative, histoFileName, outputFile):
@@ -238,8 +238,8 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
             if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:
                 GetErrEigenM, GetErrEigenP = GetErrEigenEff(hw, hw2, w, "CTEQ")
                 # we store the absolute values (not the relative deviation returned by the function)
-                hCTEQ66_EIGENP.SetBinContent(i, j, GetErrEigenP)
-                hCTEQ66_EIGENM.SetBinContent(i, j, GetErrEigenM)
+                hCTEQ66_EIGENP.SetBinContent(i, j, GetErrEigenP/w[0])
+                hCTEQ66_EIGENM.SetBinContent(i, j, GetErrEigenM/w[0])
     del hwCTEQ66, hwCTEQ66SQ
     
     for i in xrange(1, ibinx+1):
@@ -254,8 +254,8 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
                 hw2.append(hwMRST2006NNLOSQ[k].GetBinContent(i,j))
             if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:
                 GetErrEigenM, GetErrEigenP = GetErrEigenEff(hw, hw2, w, "MRST")
-                hMRST2006NNLO_EIGENP.SetBinContent(i, j,  GetErrEigenP)
-                hMRST2006NNLO_EIGENM.SetBinContent(i, j,  GetErrEigenM)
+                hMRST2006NNLO_EIGENP.SetBinContent(i, j,  GetErrEigenP/w[0])
+                hMRST2006NNLO_EIGENM.SetBinContent(i, j,  GetErrEigenM/w[0])
     del hwMRST2006NNLO, hwMRST2006NNLOSQ
 
     # for i in xrange(1, ibinx+1):
@@ -270,8 +270,8 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
     #             hw2.append(hwNNPDF10100SQ[k].GetBinContent(i,j))
     #         if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:    
     #             GetErrEigenM, GetErrEigenP = GetErrEigenEff(hw, hw2, w, "NNPDF")
-    #             hNNPDF10100_EIGENP.SetBinContent(i, j,  GetErrEigenP)
-    #             hNNPDF10100_EIGENM.SetBinContent(i, j,  GetErrEigenM)
+    #             hNNPDF10100_EIGENP.SetBinContent(i, j,  GetErrEigenP/w[0])
+    #             hNNPDF10100_EIGENM.SetBinContent(i, j,  GetErrEigenM/w[0])
     # del hwNNPDF10100, hwNNPDF10100SQ
 
     histoFile.Close()

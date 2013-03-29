@@ -33,7 +33,7 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
     histoFile = rt.TFile.Open(histoFileName)
     smscount = histoFile.Get("SMSWALL")
     nominal.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
-    pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
+    #pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     print "signal efficiency from nominal     = %f"%nominal.Integral()
     print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
     print "integral of pdf relative errors = %f"%pdf_pe.Integral()
