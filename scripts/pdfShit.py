@@ -116,16 +116,17 @@ def GetErrEigenEff(w, w2, wALL, selectedEvents_, originalEvents_, PDFSET):
     acc2_central = 0.
     
     
-    if w[0]!=0 and wALL[0]!=0:
+    if w[0]>0 and wALL[0]>0:
         acc_central = w[0]/wALL[0]
         acc2_central = w2[0]/wALL[0]
 
 
     for j in xrange(0,npairs):
         wa = 0.
-        if wALL[2*j+1]!=0 and acc_central!=0: wa = (w[2*j+1]/wALL[2*j+1])/acc_central-1.
         wb = 0.
-        if wALL[2*j+2]!=0 and acc_central!=0: wb = (w[2*j+2]/wALL[2*j+2])/acc_central-1.
+        if acc_central!=0:
+            if w[2*j+1]>0 and wALL[2*j+1]>0: wa = (w[2*j+1]/wALL[2*j+1])/acc_central-1.
+            if w[2*j+2]>0 and wALL[2*j+2]>0: wb = (w[2*j+2]/wALL[2*j+2])/acc_central-1.
         if NNPDF:
             if wa>0.:
                 wplus += wa*wa
@@ -174,8 +175,8 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
     hMRST2006NNLO_EIGENP = rt.TH2D("hMRST2006NNLO_EIGENP",   "hMRST2006NNLO_EIGENP", ibinx, xarray, ibiny, yarray)
     hMRST2006NNLO_EIGENM = rt.TH2D("hMRST2006NNLO_EIGENM", "hMRST2006NNLO_EIGENM", ibinx, xarray, ibiny, yarray)
     
-    hNNPDF10100_EIGENP = rt.TH2D("hNNPDF10100_EIGENP",   "hNNPDF10100_EIGENP", ibinx, xarray, ibiny, yarray)
-    hNNPDF10100_EIGENM = rt.TH2D("hNNPDF10100_EIGENM",   "hNNPDF10100_EIGENM", ibinx, xarray, ibiny, yarray)
+    # hNNPDF10100_EIGENP = rt.TH2D("hNNPDF10100_EIGENP",   "hNNPDF10100_EIGENP", ibinx, xarray, ibiny, yarray)
+    # hNNPDF10100_EIGENM = rt.TH2D("hNNPDF10100_EIGENM",   "hNNPDF10100_EIGENM", ibinx, xarray, ibiny, yarray)
     
     hwCTEQ66 = []
     hwCTEQ66SQ = []
@@ -199,16 +200,16 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
         hwMRST2006NNLO.append(wMRST2006NNLO)
         hwMRST2006NNLOSQ.append(wMRST2006NNLOSQ)
 
-    hwNNPDF10100 = []
-    hwNNPDF10100SQ = []
-    for i in xrange(0,101):
-        #make histogram for this weight
-        wNNPDF10100 = rt.TH2D("wNNPDF10100_%i" %i,"wNNPDF10100_%i" %i, ibinx, xarray, ibiny, yarray)
-        tree.Project("wNNPDF10100_%i" %i, "RSQ:MR", 'NNPDF10100_W[%i]*%s' % (i, condition))
-        wNNPDF10100SQ = rt.TH2D("wNNPDF10100SQ_%i" %i,"wNNPDF10100SQ_%i", ibinx, xarray, ibiny, yarray)
-        tree.Project("wNNPDF10100SQ_%i" %i, "RSQ:MR", 'pow(NNPDF10100_W[%i],2.)*%s' % (i, condition))
-        hwNNPDF10100.append(wNNPDF10100)
-        hwNNPDF10100SQ.append(wNNPDF10100SQ)
+    # hwNNPDF10100 = []
+    # hwNNPDF10100SQ = []
+    # for i in xrange(0,101):
+    #     #make histogram for this weight
+    #     wNNPDF10100 = rt.TH2D("wNNPDF10100_%i" %i,"wNNPDF10100_%i" %i, ibinx, xarray, ibiny, yarray)
+    #     tree.Project("wNNPDF10100_%i" %i, "RSQ:MR", 'NNPDF10100_W[%i]*%s' % (i, condition))
+    #     wNNPDF10100SQ = rt.TH2D("wNNPDF10100SQ_%i" %i,"wNNPDF10100SQ_%i", ibinx, xarray, ibiny, yarray)
+    #     tree.Project("wNNPDF10100SQ_%i" %i, "RSQ:MR", 'pow(NNPDF10100_W[%i],2.)*%s' % (i, condition))
+    #     hwNNPDF10100.append(wNNPDF10100)
+    #     hwNNPDF10100SQ.append(wNNPDF10100SQ)
 
 
     MGstringstart = outputFile.find("MG")+3
@@ -252,30 +253,30 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
                 hMRST2006NNLO_EIGENM.SetBinContent(i, j,  histo.GetBinContent(i,j)*(1.+GetErrEigenM) )     
     del hwMRST2006NNLO, hwMRST2006NNLOSQ
 
-    for i in xrange(1, ibinx+1):
-        for j in xrange(1, ibiny+1):
-            w = []
-            hw = []
-            hw2 = []
-            for k in xrange(0,101):
-                htemp = histoFile.Get("SMSWNNPDF_%i"%k)
-                w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
-                hw.append(hwNNPDF10100[k].GetBinContent(i,j))
-                hw2.append(hwNNPDF10100SQ[k].GetBinContent(i,j))
-            if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:    
-                GetErrEigenM, GetErrEigenP = GetErrEigenEff(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral(), "NNPDF")
-                hNNPDF10100_EIGENP.SetBinContent(i, j,  histo.GetBinContent(i,j)*(1.+GetErrEigenP))
-                hNNPDF10100_EIGENM.SetBinContent(i, j,  histo.GetBinContent(i,j)*(1.+GetErrEigenM))
-    del hwNNPDF10100, hwNNPDF10100SQ
+    # for i in xrange(1, ibinx+1):
+    #     for j in xrange(1, ibiny+1):
+    #         w = []
+    #         hw = []
+    #         hw2 = []
+    #         for k in xrange(0,101):
+    #             htemp = histoFile.Get("SMSWNNPDF_%i"%k)
+    #             w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
+    #             hw.append(hwNNPDF10100[k].GetBinContent(i,j))
+    #             hw2.append(hwNNPDF10100SQ[k].GetBinContent(i,j))
+    #         if histo.GetBinContent(i,j) != 0 and  histo.Integral() != 0.:    
+    #             GetErrEigenM, GetErrEigenP = GetErrEigenEff(hw, hw2, w, histo.GetBinContent(i,j), histo.Integral(), "NNPDF")
+    #             hNNPDF10100_EIGENP.SetBinContent(i, j,  histo.GetBinContent(i,j)*(1.+GetErrEigenP))
+    #             hNNPDF10100_EIGENM.SetBinContent(i, j,  histo.GetBinContent(i,j)*(1.+GetErrEigenM))
+    # del hwNNPDF10100, hwNNPDF10100SQ
 
     histoFile.Close()
     del histoFile
     # compute the central value and error (relative or not)
     # taking the absolute values as input
-    Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM], ibinx, xarray, ibiny, yarray,  relative)
-    del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM
-    #Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM], ibinx, xarray, ibiny, yarray,  relative)
-    #del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM
+    #Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM], ibinx, xarray, ibiny, yarray,  relative)
+    #del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM, hNNPDF10100_EIGENP, hNNPDF10100_EIGENM
+    Cen,Error = GetCenAndErr([hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM], ibinx, xarray, ibiny, yarray,  relative)
+    del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM
     return Cen,Error
 
 def makePDFPlotCOND2D(tree, histo, condition, relative):

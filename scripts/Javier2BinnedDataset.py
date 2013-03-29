@@ -140,7 +140,7 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     #divide by (UP + NOM + DOWN)/3:
     jes_denom = rt.TH3D("wHisto_JESerr_denom", "wHisto_JESerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     jes_denom.Add(jes_up,1.0/3.0)
-    jes_denom.Add(nominal,1.0/3.0)
+    jes_denom.Add(pdf_nom,1.0/3.0)
     jes_denom.Add(jes_down,1.0/3.0)
 
     jes_pe.Divide(jes_denom)
@@ -153,7 +153,7 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     #divide by (UP + NOM + DOWN)/3
     btag_denom = rt.TH3D("wHisto_btagerr_denom", "wHisto_btagerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     btag_denom.Add(btag_up,1.0/3.0)
-    btag_denom.Add(nominal,1.0/3.0)
+    btag_denom.Add(pdf_nom,1.0/3.0)
     btag_denom.Add(btag_down,1.0/3.0)
     
     btag_pe.Divide(btag_denom)
@@ -168,7 +168,7 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     #divide by (UP + NOM + DOWN)/3
     isr_denom = rt.TH3D("wHisto_ISRerr_denom", "wHisto_ISRerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     isr_denom.Add(isr_up,1.0/3.0)
-    isr_denom.Add(nominal,1.0/3.0)
+    isr_denom.Add(pdf_nom,1.0/3.0)
     isr_denom.Add(isr_down,1.0/3.0)
     
     isr_pe.Divide(isr_denom)
@@ -263,13 +263,14 @@ if __name__ == '__main__':
                 if options.box != None:
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.useWeight)
                 else:
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.useWeight)
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.useWeight)
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName,  decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.useWeight)
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.useWeight)
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.useWeight)
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.useWeight)
-                    #convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.useWeight)
+                    if f.find("T2tt")!=-1:
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName,  decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.useWeight)
