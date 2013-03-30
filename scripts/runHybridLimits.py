@@ -27,8 +27,8 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 125 # toys per command
-                # actually run command twice to get 250 toys
+    nToys = 150 # toys per command
+    
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -62,24 +62,27 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
 
-    nToyOffset = nToys*(2*t)
+    nToyOffset = nToys*t
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-    nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+        
+    #nToyOffset = nToys*(2*t)
+    #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    #nToyOffset = nToys*(2*t+1)
+    #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
-    outputfile.write("rm -rf $WD\n")
+    outputfile.write("cd; rm -rf $WD\n")
     
     outputfile.close
 
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 12 # do 250=125+125 toys each job => 3000 toys
+    nJobs = 20 # do 150 toys each job => 3000 toys
     
     print box
 
-    gchipairs = [(1125, 100), (1225, 100), (1325, 100),
+    gchipairs = [(1125,  50), (1225,  50), (1325,  50), (1375,  50),
                  (1125, 200), (1225, 200), (1325, 200), (1375, 200),
                  (1125, 300), (1225, 300), (1325, 300), (1375, 300),
                  (1125, 400), (1225, 400), (1325, 400), (1375, 400),
@@ -90,7 +93,7 @@ if __name__ == '__main__':
 
     #gchipairs = [(1225,0)]
     
-    queue = "8nh"
+    queue = "1nh"
     
     pwd = os.environ['PWD']
     
@@ -102,6 +105,7 @@ if __name__ == '__main__':
 
     hypotheses = ["B","SpB"]
 
+    totalJobs = 0
     for gluinopoint, neutralinopoint in gchipairs:
         xsecRange = getXsecRange(box,neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
@@ -110,8 +114,10 @@ if __name__ == '__main__':
                     print "Now scanning xsec = %f"%xsecpoint
                     outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                    time.sleep(3)
+                    totalJobs+=1
+                    #time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     #os.system("source "+pwd+"/"+outputname)
                         
+    print "Total jobs = ", totalJobs
