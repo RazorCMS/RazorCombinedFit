@@ -28,11 +28,12 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 125 # toys per command
-    
+
+    model ="T1bbbb"
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
-    outputname = submitDir+"/submit_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
     
     tagHypo = ""
@@ -42,8 +43,6 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     ffDir = outputDir+"/logs_"+massPoint+"_"+xsecstring+"_"+hypo
     outputfile.write('#!/usr/bin/env bash -x\n')
     
-    outputfile.write("export NAME=\"T1bbbb\"\n")
-    outputfile.write("export LABEL=\"MR400.0_R0.5\"\n")
     outputfile.write("export WD=/tmp/${USER}/Razor2013_${NAME}_%s_%s_%s_%i\n"%(massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
@@ -57,6 +56,9 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make\n")
+    
+    outputfile.write("export NAME=\"%s\"\n"%model)
+    outputfile.write("export LABEL=\"MR400.0_R0.5\"\n")
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FullFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
