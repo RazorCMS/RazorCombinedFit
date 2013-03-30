@@ -27,7 +27,7 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 150 # toys per command
+    nToys = 125 # toys per command
     
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
@@ -62,13 +62,13 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
 
-    nToyOffset = nToys*t
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    #nToyOffset = nToys*t
+    #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
         
-    #nToyOffset = nToys*(2*t)
-    #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-    #nToyOffset = nToys*(2*t+1)
-    #outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    nToyOffset = nToys*(2*t)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    nToyOffset = nToys*(2*t+1)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/work/RAZORLIMITS/Hybrid/\n")
     outputfile.write("cd; rm -rf $WD\n")
@@ -78,22 +78,22 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     return outputname,ffDir
 if __name__ == '__main__':
     box = sys.argv[1]
-    nJobs = 20 # do 150 toys each job => 3000 toys
+    nJobs = 12 # do 250 toys each job => 3000 toys
     
     print box
 
     gchipairs = [(1125,  50), (1225,  50), (1325,  50), (1375,  50),
                  (1125, 200), (1225, 200), (1325, 200), (1375, 200),
-                 (1125, 300), (1225, 300), (1325, 300), (1375, 300),
+                 #(1125, 300), (1225, 300), (1325, 300), (1375, 300),
                  (1125, 400), (1225, 400), (1325, 400), (1375, 400),
-                 (1125, 500), (1225, 500), (1325, 500), (1375, 500),
+                 #(1125, 500), (1225, 500), (1325, 500), (1375, 500),
                  ( 825, 600), ( 925, 600), (1025, 600), (1125, 600), (1225, 600), (1325, 600), (1375, 600),
-                 ( 825, 700), ( 925, 700), (1025, 700), (1125, 700), (1225, 700), (1325, 700), (1375, 700),
-                 ( 825, 800), ( 925, 800), (1025, 800), (1125, 800), (1225, 800), (1325, 800), (1375, 800)]
+                 #( 825, 700), ( 925, 700), (1025, 700), (1125, 700), (1225, 700), (1325, 700), (1375, 700),
+                 ( 925, 800), (1025, 800), (1125, 800), (1225, 800), (1325, 800), (1375, 800)]
 
     #gchipairs = [(1225,0)]
     
-    queue = "1nh"
+    queue = "8nh"
     
     pwd = os.environ['PWD']
     
@@ -115,9 +115,9 @@ if __name__ == '__main__':
                     outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
-                    #time.sleep(3)
+                    time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     #os.system("source "+pwd+"/"+outputname)
                         
     print "Total jobs = ", totalJobs
