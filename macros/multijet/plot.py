@@ -53,8 +53,8 @@ def getHybridCLsArrays(directory, LSPmassStrip, Box):
 
         xsecULExpPlus = max(xsecULExpPlus,xsecULExp)
         xsecULExpMinus = min(xsecULExpMinus,xsecULExp)
-        xsecULExpPlus2 = max(xsecULExpPlus2,xsecULExpPlus)
-        xsecULExpMinus2 = min(xsecULExpMinus2,xsecULExpMinus)
+        xsecULExpPlus2 = max(xsecULExpPlus2,1.1*xsecULExpPlus)
+        xsecULExpMinus2 = min(xsecULExpMinus2,0.9*xsecULExpMinus)
             
         expectedLimit_minus1sigma.append(xsecULExp - xsecULExpMinus)#*crossSections[i])
         expectedLimit_plus1sigma.append(xsecULExpPlus - xsecULExp)#*crossSections[i])
@@ -296,12 +296,16 @@ if __name__ == '__main__':
     #expectedLimit_minus2sigma[1] = 1.2*(expectedLimit[1] - (expectedLimit[0] - expectedLimit_minus2sigma[0]  + expectedLimit[2] - expectedLimit_minus2sigma[2] )/2)
     
     for j in xrange(1,len(observedLimit)-1):
-        print (expectedLimit[j]-expectedLimit_minus2sigma[j])
         if expectedLimit[j]-expectedLimit_minus2sigma[j]-0.0001<1e-10:
             expectedLimit_minus2sigma[j] = 1.1*(expectedLimit[j] - 0.5*(expectedLimit[j-1]- expectedLimit_minus2sigma[j-1] + expectedLimit[j+1] - expectedLimit_minus2sigma[j+1]))
-            print "found at", j
-            print (expectedLimit[j]-expectedLimit_minus2sigma[j])
-        
+        # if observedLimit[j]>2*observedLimit[j-1] and observedLimit[j]>2*observedLimit[j+1]:
+        #     observedLimit[j] = 0.5*(observedLimit[j-1] +observedLimit[j+1])
+        #     expectedLimit_plus2sigma[j] = 0.5*expectedLimit_plus2sigma[j-2]
+        #     expectedLimit_plus2sigma[j-1] = 0.4*expectedLimit_plus2sigma[j-2]
+        #     expectedLimit_plus1sigma[j] = 0.3*expectedLimit_plus2sigma[j-2]
+        #     expectedLimit_plus1sigma[j-1] = 0.2*expectedLimit_plus2sigma[j-2]
+            
+    
     nPoints = len(observedLimit)
     gr_observedLimit = rt.TGraph(nPoints, gluinoMassArray, observedLimit)
     gr_observedLimit.SetMarkerColor(1)
@@ -338,9 +342,9 @@ if __name__ == '__main__':
     h_limit.Add(xsec_gr_nom)
     h_limit.Draw("a3")
     if float(LSPmassStrip)==100.:
-        h_limit.GetXaxis().SetLimits(625,1825)
+        h_limit.GetXaxis().SetLimits(625,1625)
     elif float(LSPmassStrip)==0.:
-        h_limit.GetXaxis().SetLimits(425,1825)
+        h_limit.GetXaxis().SetLimits(425,1625)
     gr_expectedLimit.Draw("c same")
     xsec_gr_nom.Draw("c same")
     gr_observedLimit.Draw("c SAME")
@@ -380,3 +384,14 @@ if __name__ == '__main__':
     #leg.Draw("SAME")
 
     c.SaveAs(directory+"/limits_LSPMass_"+re.sub('\.','_',LSPmassStrip)+"_"+box+".pdf")
+
+
+
+    for mgl in xrange(1400,1500, 1):
+        observed = gr_observedLimit.Eval(mgl)
+        expected = gr_expectedLimit.Eval(mgl)
+        expected = gr_expectedLimit1sigma.Eval(mgl)
+        expected = gr_expectedLimit2sigma.Eval(mgl)
+        reference = h_xsec.GetBinContent(h_xsec.FindBin(mgl))
+        print "%i, observed xsec = %f, gluino xsec = %f"%(mgl,observed,reference)
+        print "%i, expected xsec = %f, gluino xsec = %f"%(mgl,expected,reference)
