@@ -43,7 +43,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     ffDir = outputDir+"/logs_"model+"_"+massPoint+"_"+xsecstring+"_"+hypo
     outputfile.write('#!/usr/bin/env bash -x\n')
     
-    outputfile.write("export WD=/tmp/${USER}/Razor2013_${NAME}_%s_%s_%s_%i\n"%(massPoint,box,xsecstring,t))
+    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
     outputfile.write("scramv1 project CMSSW CMSSW_6_1_1\n")
@@ -55,7 +55,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("cvs co -r woodson_300313 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("source setup.sh\n")
-    outputfile.write("make\n")
+    outputfile.write("make clean; make\n")
     
     outputfile.write("export NAME=\"%s\"\n"%model)
     outputfile.write("export LABEL=\"MR400.0_R0.5\"\n")
