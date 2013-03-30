@@ -40,7 +40,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     if hypo == "B":
         tagHypo = "-e"
         
-    ffDir = outputDir+"/logs_"+massPoint+"_"+xsecstring+"_"+hypo
+    ffDir = outputDir+"/logs_"model+"_"+massPoint+"_"+xsecstring+"_"+hypo
     outputfile.write('#!/usr/bin/env bash -x\n')
     
     outputfile.write("export WD=/tmp/${USER}/Razor2013_${NAME}_%s_%s_%s_%i\n"%(massPoint,box,xsecstring,t))
