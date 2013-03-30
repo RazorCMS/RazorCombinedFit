@@ -53,7 +53,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
     outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
+    outputfile.write("cvs co -r woodson_300313 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make\n")
