@@ -24,7 +24,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorBox
         import RazorBjetBox
         import RazorMultiJetBox
-        import RazorBoostBox
+        #import RazorBoostBox
         import RazorTauBox
         boxes = {}
 
@@ -502,7 +502,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #     box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
             #     box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
             
-        def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR', nSteps = 2):
+        def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
             reset(box, fr, fixSigma=True)
             setNorms(box, ds)
             
@@ -533,90 +533,64 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
                 fitAttempts+=1
 
-            #step from 0 to sigma
-            sigmaStep = self.options.signal_xsec/(1.*nSteps)
             
-            #lists for storing vectors of quantities for scan
-            vfrH1 = []
-            vLH1x = []
-            vSigma = []
-            vLz = []
-            
-            for i in xrange(0,nSteps+1):
-                #L(^s,^th|x)
-                print "retrieving -log L(x = %s|^s,^th) [%d]" %(ds.GetName(), i)
-                covqualH1 = 0
-                fitAttempts = 0
-                while covqualH1!=3 and fitAttempts<5:
-                    if self.options.expectedlimit==True or ds.GetName=="RMRTree":
-                        #this means we're doing background-only toys or data
-                        #so we should reset to nominal fit pars
+            #L(^s,^th|x)
+            print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
+            covqualH1 = 0
+            fitAttempts = 0
+            while covqualH1!=3 and fitAttempts<5:
+                if self.options.expectedlimit==True or ds.GetName=="RMRTree":
+                    #this means we're doing background-only toys or data
+                    #so we should reset to nominal fit pars
+                    reset(box, fr, fixSigma=False, random=(fitAttempts>0))
+                    box.workspace.var("sigma").setVal(1e-6)
+                    box.workspace.var("sigma").setConstant(False)
+                else:
+                    #this means we're doing signal+background toy
+                    #so we should reset to the fit with signal strength fixed
+                    resetGood = reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
+                    if not resetGood:
+                        #however, if for some reason the randomization is bad, try this
                         reset(box, fr, fixSigma=False, random=(fitAttempts>0))
-                        #we store the floated sigma as the last element in the array
-                        if(i < nSteps):
-                            # if i != 0:
-                            #     #scan in powers of 10 down
-                            #     box.workspace.var("sigma").setVal(self.options.signal_xsec*math.pow(0.1,i))
-                            # else:
-                            #     box.workspace.var("sigma").setVal(0.0)
-                            box.workspace.var("sigma").setVal(sigmaStep*i)
-                            box.workspace.var("sigma").setConstant(True)
-                        else:
-                            box.workspace.var("sigma").setVal(1e-6)
-                            box.workspace.var("sigma").setConstant(False)
-                    else:
-                        #this means we're doing signal+background toy
-                        #so we should reset to the fit with signal strength fixed
-                        resetGood = reset(box, frH0, fixSigma=False, random=(fitAttempts>0))
-                        if not resetGood:
-                            #however, if for some reason the randomization is bad, try this
-                            reset(box, fr, fixSigma=False, random=(fitAttempts>0))
-                        #we store the floated sigma as the last element in the array
-                        if(i < nSteps):
-                            box.workspace.var("sigma").setVal(sigmaStep*i)
-                            box.workspace.var("sigma").setConstant(True)
-                        else:
-                            box.workspace.var("sigma").setVal(self.options.signal_xsec)
-                            box.workspace.var("sigma").setConstant(False)                            
-                    frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
-                    frH1.Print("v")
-                    statusH1 = frH1.status()
-                    covqualH1 = frH1.covQual()
-                    LH1x = frH1.minNll()
-                    print "-log L(x = %s|^s,^th) =  %f [%d]"%(ds.GetName(),LH1x,i)
-                    fitAttempts+=1
+                    box.workspace.var("sigma").setVal(self.options.signal_xsec)
+                    box.workspace.var("sigma").setConstant(False)
+                frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH1.Print("v")
+                statusH1 = frH1.status()
+                covqualH1 = frH1.covQual()
+                LH1x = frH1.minNll()
+                print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
+                fitAttempts+=1
 
-                # if box.workspace.var("sigma")>self.options.signal_xsec:
-                #     print "INFO: ^sigma > sigma"
-                #     print " returning q = 0 as per LHC style CLs prescription"
-                #     LH1x = LH0x
+            if box.workspace.var("sigma")>self.options.signal_xsec:
+                print "INFO: ^sigma > sigma"
+                print " returning q = 0 as per LHC style CLs prescription"
+                LH1x = LH0x
                 
-                if math.isnan(LH1x):
-                    print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
-                    print "         Since this corresponds to no signal/bkg discrimination, returning q = 0"
-                    LH1x = LH0x
-                
-                Lz = LH0x-LH1x
-                
-                vfrH1.append(frH1)
-                vLH1x.append(LH1x)
-                vSigma.append(box.workspace.var("sigma").getVal())
-                vLz.append(Lz)
-                
-                print "**************************************************"
-                print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
-                print "-log L(x = %s|^s,^th) = %f" %(ds.GetName(),LH1x)
-                print "q = -log L(x = %s|s,^th_s) + log L(x = %s|^s,^th) = %f" %(ds.GetName(),ds.GetName(),Lz)
-                print "MIGRAD/COVARIANCE MATRIX STATUS"
-                print "H0 fit status = %i"%statusH0
-                print "H0 cov. qual  = %i"%covqualH0
-                print "H1 fit status = %i"%statusH1
-                print "H1 cov. qual  = %i"%covqualH1
-                print "sigmaScan:    = %f"%(box.workspace.var("sigma").getVal())
-                print "**************************************************"
+            if math.isnan(LH1x):
+                print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
+                print "         Since this corresponds to no signal/bkg discrimination, returning q = 0"
+                LH1x = LH0x
 
+                
+            #del H1xNLL
+            #del H0xNLL
+            #del mH1
+            #del mH0
 
-            return vLz, LH0x, vLH1x, frH0, vfrH1, vSigma
+            Lz = LH0x-LH1x
+            print "**************************************************"
+            print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+            print "-log L(x = %s|^s,^th) = %f" %(ds.GetName(),LH1x)
+            print "q = -log L(x = %s|s,^th_s) + log L(x = %s|^s,^th) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "MIGRAD/COVARIANCE MATRIX STATUS"
+            print "H0 fit status = %i"%statusH0
+            print "H0 cov. qual  = %i"%covqualH0
+            print "H1 fit status = %i"%statusH1
+            print "H1 cov. qual  = %i"%covqualH1
+            print "**************************************************"
+
+            return Lz, LH0x, LH1x, frH0, frH1
 
         
         #start by setting all box configs the same
@@ -663,25 +637,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
             rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
             from ROOT import MyDataStruct
 
-            from ROOT import std
-            vec_LzSR = std.vector('double')()
-            vec_LH1xSR = std.vector('double')()
-            vec_H1status = std.vector('double')()
-            vec_H1covQual = std.vector('double')()
-            vec_Sigma = std.vector('double')()            
-
             sDATA = MyDataStruct()
             myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var1'),'var1/D')
             myDataTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
             myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
-            myDataTree.Branch("LzSR_%s"%boxes[box].name,vec_LzSR)
+            myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
             myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
-            myDataTree.Branch("LH1xSR_%s"%boxes[box].name,vec_LH1xSR)
+            myDataTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var6'),'var6/D')
             myDataTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var7'),'var7/I')
             myDataTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var8'),'var8/I')
-            myDataTree.Branch("H1status_%s"%boxes[box].name,vec_H1status)
-            myDataTree.Branch("H1covQual_%s"%boxes[box].name,vec_H1covQual)
-            myDataTree.Branch("sigmaScan_%s"%boxes[box].name,vec_Sigma)
+            myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
+            myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
             # if boxes[box].name=="Jet":
             #     fr_jet = rt.TFile.Open(self.options.jet_input).Get("Jet/independentFR")
@@ -724,27 +690,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
             else:
                 boxes[box].signalmodelconst = boxes[box].signalmodel
                 
-            #call Lz for data   
-            lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data, vSigma = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
-            
-            #fill the vectors
-            vec_LzSR.clear()
-            vec_LH1xSR.clear()
-            vec_H1status.clear()
-            vec_H1covQual.clear()
-            vec_Sigma.clear()       
-            [vec_LzSR.push_back(v) for v in lzDataSR]
-            [vec_LH1xSR.push_back(v) for v in LH1DataSR]
-            [vec_H1status.push_back(v.status()) for v in frH1Data]
-            [vec_H1covQual.push_back(v.covQual()) for v in frH1Data]
-            [vec_Sigma.push_back(v) for v in vSigma]
+            lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
             
             sDATA.var1 = boxes[box].workspace.var("sigma").getVal()
             sDATA.var2 = boxes[box].workspace.var("sigma").getError()
             sDATA.var3 = -1
+            sDATA.var4 = lzDataSR
             sDATA.var5 = LH0DataSR
+            sDATA.var6 = LH1DataSR
             sDATA.var7 = frH0Data.status()
             sDATA.var8 = frH0Data.covQual()
+            sDATA.var9 = frH1Data.status()
+            sDATA.var10 = frH1Data.covQual()
             
             myDataTree.Fill()
             
@@ -755,17 +712,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
             from ROOT import MyStruct
 
             s = MyStruct()
-            #myTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(s,'var1'),'var1/D')
-            #myTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(s,'var2'),'var2/D')
+            myTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(s,'var1'),'var1/D')
+            myTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(s,'var2'),'var2/D')
             myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
-            myTree.Branch("LzSR_%s"%boxes[box].name,vec_LzSR)
+            myTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(s,'var4'),'var4/D')
             myTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(s,'var5'),'var5/D')
-            myTree.Branch("LH1xSR_%s"%boxes[box].name,vec_LH1xSR)
+            myTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(s,'var6'),'var6/D')
             myTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(s,'var7'),'var7/I')
             myTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(s,'var8'),'var8/I')
-            myTree.Branch("H1status_%s"%boxes[box].name,vec_H1status)
-            myTree.Branch("H1covQual_%s"%boxes[box].name,vec_H1covQual)
-            myTree.Branch("sigmaScan_%s"%boxes[box].name,vec_Sigma)            
+            myTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(s,'var9'),'var9/I')
+            myTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(s,'var10'),'var10/I')
 
             nuisFile = rt.TFile.Open(self.options.nuisanceFile,"read")
             nuisTree = nuisFile.Get("nuisTree")
@@ -824,27 +780,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
                 print "get Lz for toys"
                 
-                #call Lz for toy i
-                LzSR, LH0xSR, LH1xSR, frH0, frH1, vSigma = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
-                
-                #fill the vectors
-                vec_LzSR.clear()
-                vec_LH1xSR.clear()
-                vec_H1status.clear()
-                vec_H1covQual.clear()
-                vec_Sigma.clear()       
-                [vec_LzSR.push_back(v) for v in LzSR]
-                [vec_LH1xSR.push_back(v) for v in LH1xSR]
-                [vec_H1status.push_back(v.status()) for v in frH1]
-                [vec_H1covQual.push_back(v.covQual()) for v in frH1]
-                [vec_Sigma.push_back(v) for v in vSigma]
+                LzSR, LH0xSR, LH1xSR, frH0, frH1 = getLz(boxes[box],tot_toy, fr_central, Extend=True, norm_region=norm_region)
                 
                 s.var1 = boxes[box].workspace.var("sigma").getVal()
                 s.var2 = boxes[box].workspace.var("sigma").getError()
                 s.var3 = i
+                s.var4 = LzSR
                 s.var5 = LH0xSR
+                s.var6 = LH1xSR
                 s.var7 = frH0.status()
                 s.var8 = frH0.covQual()
+                s.var9 = frH1.status()
+                s.var10 = frH1.covQual()
             
                 myTree.Fill()
                 
@@ -891,10 +838,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             rootFile = rt.TFile.Open(inputFile)
             open_files.append(rootFile)
-            wHisto = rootFile.Get('wHisto')
+            wHisto = rootFile.Get('wHisto_pdferr_nom')
             btag =  rootFile.Get('wHisto_btagerr_pe')
             jes =  rootFile.Get('wHisto_JESerr_pe')
             pdf =  rootFile.Get('wHisto_pdferr_pe')
+            isr =  rootFile.Get('wHisto_ISRferr_pe')
             
             def renameAndImport(histo):
                 #make a memory resident copy
@@ -907,6 +855,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             btag = renameAndImport(btag)
             jes = renameAndImport(jes)
             pdf = renameAndImport(pdf)
+            isr = renameAndImport(isr)
             
             #rootFile.Close()
             
@@ -917,8 +866,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             signal = rt.RooRazor3DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,
                                          workspace.var('MR'),workspace.var('Rsq'),workspace.var('nBtag'),
                                          workspace,
-                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
-                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
+                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),isr.GetName(),
+                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'),workspace.var('xIsr_prime'))
             RootTools.Utils.importToWS(workspace,signal)
             return signal
         

@@ -162,10 +162,11 @@ class Box(object):
         """Makes a signal PDF from the input histograms"""
         
         rootFile = rt.TFile.Open(inputFile)
-        wHisto = rootFile.Get('wHisto')
+        wHisto = rootFile.Get('wHisto_pdferr_nom')
         btag =  rootFile.Get('wHisto_btagerr_pe')
         jes =  rootFile.Get('wHisto_JESerr_pe')
         pdf =  rootFile.Get('wHisto_pdferr_pe')
+        isr =  rootFile.Get('wHisto_ISRerr_pe')
         
         def renameAndImport(histo):
             #make a memory resident copy
@@ -178,6 +179,7 @@ class Box(object):
         btag = renameAndImport(btag)
         jes = renameAndImport(jes)
         pdf = renameAndImport(pdf)
+        isr = renameAndImport(isr)
             
         rootFile.Close()
         
@@ -189,8 +191,8 @@ class Box(object):
         signal = rt.RooRazor3DSignal('SignalPDF_%s' % self.name,'Signal PDF for box %s' % self.name,
                                      self.workspace.var('MR'),self.workspace.var('Rsq'),self.workspace.var('nBtag'),
                                      self.workspace,
-                                     wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
-                                     self.workspace.var('xJes_prime'),self.workspace.var('xPdf_prime'),self.workspace.var('xBtag_prime'))
+                                     wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),isr.GetName(),
+                                     self.workspace.var('xJes_prime'),self.workspace.var('xPdf_prime'),self.workspace.var('xBtag_prime'),self.workspace.var('xIsr_prime'))
         self.importToWS(signal)
         
         return (signal.GetName(),sigNorm)
