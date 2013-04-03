@@ -10,14 +10,20 @@ import time
 from array import *
 
 
-def getXsecRange(box,neutralinopoint,gluinopoint):
+def getXsecRange(box,model,neutralinopoint,gluinopoint):
     mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
-    
-    if mDelta < 800:
-        xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    else:
-        xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
-        
+
+    if model=="T1bbbb":
+        if mDelta < 800:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        else:
+            xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
+    elif model=="T2tt":
+        if mDelta < 500:
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.]
+        else:
+            xsecRange = [0.0001, 0.005, 0.01, 0.05, 0.1, 0.5]
+          
     return xsecRange
 
     
@@ -103,8 +109,8 @@ if __name__ == '__main__':
                      ( 775, 700), ( 825, 700), ( 925, 700), ( 950, 700), (1025, 700), (1075, 700), (1125, 700), (1225, 700), (1325, 700), (1375, 700)]
                      #( 925, 800), (1025, 800), (1125, 800), (1225, 800), (1325, 800)]
     elif model=="T2tt":
-        gchipairs = [(150, 50), (100, 50), (150, 50), (200, 50), (250, 50), (300, 50), (350, 50), (400, 50),
-                     (450, 50), (500, 50), (550, 50), (600, 50), (650, 50), (700, 50), (750, 50), (800, 50)]
+        gchipairs = [(150, 50), (200, 50), (250, 50), (300, 50), (350, 50), (400, 50), (450, 50),
+                     (500, 50), (550, 50), (600, 50), (650, 50), (700, 50), (750, 50), (800, 50)]
     
     
     pwd = os.environ['PWD']
@@ -119,7 +125,7 @@ if __name__ == '__main__':
 
     totalJobs = 0
     for gluinopoint, neutralinopoint in gchipairs:
-        xsecRange = getXsecRange(box,neutralinopoint,gluinopoint)
+        xsecRange = getXsecRange(box,model,neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
