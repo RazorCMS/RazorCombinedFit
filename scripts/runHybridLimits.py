@@ -22,7 +22,7 @@ def getXsecRange(box,model,neutralinopoint,gluinopoint):
         if mDelta < 500:
             xsecRange = [0.01, 0.05, 0.1, 0.5, 1.]
         else:
-            xsecRange = [0.0001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
           
     return xsecRange
 
