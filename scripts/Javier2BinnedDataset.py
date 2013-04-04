@@ -271,6 +271,7 @@ if __name__ == '__main__':
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.useWeight)
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.useWeight)
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Jet1b.root', cfg,'Jet1b',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.useWeight)
