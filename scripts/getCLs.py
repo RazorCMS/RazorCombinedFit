@@ -10,7 +10,7 @@ def getLnQDataAll(boxes):
     lnQDataBox = []
     for box in boxes:
         getLnQData
-        fileName = getFileName("B",mg,mchi,xsec,box,directory)
+        fileName = getFileName("B",mg,mchi,xsec,box,model,directory)
         lnQDataBox.append(getLnQData(box, fileName))
     lnQData = sum(lnQDataBox)
     return lnQData
@@ -93,7 +93,7 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     boxDict = {}
     boxSet = {}
     for box in boxes:
-        fileName = getFileName(hypo,mg,mchi,xsec,box,directory)
+        fileName = getFileName(hypo,mg,mchi,xsec,box,model,directory)
         boxDict[box] = sorted(glob.glob(fileName.replace("//","/")+"_*.root"),key=sortkey)
         boxSet[box] = set([newFileName.replace(box,"box") for newFileName in boxDict[box]])
         
@@ -122,8 +122,9 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
         hypoSetBox.add(h1covQual)
         hypoSetBox.add(lnQBox[-1])
         hypoDataSetBox.append(rt.RooDataSet("hypoDataSet_%s"%box,"hypoDataSet_%s"%box,hypoTreeBox,hypoSetBox))
+        #rt.gROOT.ProcessLine("myTree->Delete;")
+        #rt.gROOT.ProcessLine("delete myTree;")
         #hypoDataSetBox[-1].Print("v")
-    
     hypoDataSet = hypoDataSetBox[0].Clone("hypoDataSet")
     hypoDataSet.SetTitle("hypoDataSet")
     for i in xrange(1,len(hypoDataSetBox)):
@@ -143,7 +144,6 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
 
     lnQ.setRange(Xmin,Xmax)
     
-    hypoDataSet.Print("v")
     
     rho = 1.0
     hypoDataSetCut = hypoDataSet.reduce(LzCut)
@@ -161,6 +161,7 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     
     hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ, hypoDataSetCut,rt.RooKeysPdf.NoMirror,rho)
     hypoFunc = hypoPdf.asTF(hypoSumList,rt.RooArgList(),hypoSumSet)
+
     
     return lnQ, hypoPdf, hypoDataSet, hypoHisto, hypoFunc
 
@@ -268,12 +269,12 @@ def calcCLsExp(lzValues_sb,lzValues_b,Box):
     print "CLsExp- = %f" %CLsExpValues[2]
     return CLsExpValues
 
-def getFileName(hypo, mg, mchi, xsec, box,directory):
-    model = "T1bbbb"
-    hybridLimit = "Razor2012HybridLimit"
+def getFileName(hypo, mg, mchi, xsec, box, model, directory):
+    hybridLimit = "Razor2013HybridLimit"
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
     xsecString = str(xsec).replace(".","p")
     fileName = "%s/%s_%s_%s_%s_%s_%s"%(directory,hybridLimit,model,modelPoint,box,xsecString,hypo)
+    print fileName
     return fileName
 
     
@@ -414,7 +415,6 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     erfcTGraph.Draw("al*")
     [line.Draw("lsame") for line in lines]
 
-    model = "T1bbbb"
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
 
     rt.gStyle.SetOptTitle(0)
@@ -435,13 +435,13 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
 
     return xsecUL
     
-def getCLsAll(mg, mchi, xsec, boxes, directory):
+def getCLsAll(mg, mchi, xsec, boxes, model, directory):
     Xmin = 0
     Xmax = 0
     for box in boxes:
         LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
-        SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
-        BFileName = getFileName("B",mg,mchi,xsec,box,directory)
+        SpBFileName = getFileName("SpB",mg,mchi,xsec,box,model,directory)
+        BFileName = getFileName("B",mg,mchi,xsec,box,model,directory)
         XminTEST, XmaxTEST = getMinMax(box,BFileName,SpBFileName,LzCut)
         Xmax+= XmaxTEST
         
@@ -512,8 +512,7 @@ def getCLsAll(mg, mchi, xsec, boxes, directory):
     #for profile
     c.SetLogy()
     
-    model = "T1bbbb"
-    hybridLimit = "Razor2012HybridLimit"
+    hybridLimit = "Razor2013HybridLimit"
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
     xsecString = str(xsec).replace(".","p")
     l = rt.TLatex()
@@ -540,11 +539,11 @@ def getCLsAll(mg, mchi, xsec, boxes, directory):
 
     return CLs, CLsExp
 
-def getCLs(mg, mchi, xsec, box, directory):
+def getCLs(mg, mchi, xsec, box, model, directory):
     LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
     
-    SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
-    BFileName = getFileName("B",mg,mchi,xsec,box,directory)
+    SpBFileName = getFileName("SpB",mg,mchi,xsec,box,model,directory)
+    BFileName = getFileName("B",mg,mchi,xsec,box,model,directory)
     
     Xmin, Xmax = getMinMax(box,BFileName,SpBFileName,LzCut)
 
@@ -615,8 +614,7 @@ def getCLs(mg, mchi, xsec, box, directory):
     #for profile
     c.SetLogy()
     
-    model = "T1bbbb"
-    hybridLimit = "Razor2012HybridLimit"
+    hybridLimit = "Razor2013HybridLimit"
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
     xsecString = str(xsec).replace(".","p")
     l = rt.TLatex()
@@ -643,7 +641,7 @@ def getCLs(mg, mchi, xsec, box, directory):
 
     return CLs, CLsExp
 
-def writeCLTree(mg,mchi,xsec, box, directory, CLs, CLsExp):
+def writeCLTree(mg,mchi,xsec, box, model, directory, CLs, CLsExp):
     clTree = rt.TTree("clTree", "clTree")
     myStructCmd = "struct MyStruct{Double_t mg;Double_t mchi;Double_t xsec;"
     iCL = 0
@@ -695,31 +693,45 @@ def writeCLTree(mg,mchi,xsec, box, directory, CLs, CLsExp):
 
 
 
-def getXsecRange(neutralinopoint,gluinopoint):
-    lumi = 19300
-    name = "T1bbbb"
-    label = "MR400.0_R0.5"
-    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
-
+def getXsecRange(model,neutralinopoint,gluinopoint):
     mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
-    print "mDelta = %f"%mDelta
     
-    if mDelta < 800:
-        xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    else:
-        xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
-    
+    if model=="T1bbbb":
+        if mDelta < 400:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
+        elif mDelta < 800:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        else:
+            xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
+    elif model=="T2tt":
+        if mDelta < 500:
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+
     return xsecRange
 
 if __name__ == '__main__':
-    #gluinopoints = range(425,2025,200)
-    #neutralinopoints = [0]
-    
-    gluinopoints = [1225]
-    neutralinopoints = [0]
-    
+
     boxInput = sys.argv[1]
-    directory = sys.argv[2]
+    model = sys.argv[2]
+    directory = sys.argv[3]
+
+    
+    if model=="T1bbbb":
+        gchipairs = [( 775,  50), ( 825,  50), ( 925,  50), ( 950,  50), (1025,  50), (1075,  50), (1125,  50), (1225,  50), (1325,  50), (1375,  50),
+                     ( 775, 200), ( 825, 200), ( 925, 200), ( 950, 200), (1025, 200), (1075, 200), (1125, 200), (1225, 200), (1325, 200), (1375, 200),
+                     #( 775, 300), ( 825, 300), ( 925, 300), ( 950, 300), (1025, 300), (1075, 300), (1125, 300), (1225, 300), (1325, 300), (1375, 300),
+                     ( 775, 400), ( 825, 400), ( 925, 400), ( 950, 400), (1025, 400), (1075, 400), (1125, 400), (1225, 400), (1325, 400), (1375, 400),
+                     ( 775, 525), ( 825, 525), ( 925, 525), ( 950, 525), (1025, 525), (1075, 525), (1125, 525), (1225, 525), (1325, 525), (1375, 525),
+                     ( 775, 600), ( 825, 600), ( 925, 600),  (950, 600), (1025, 600), (1075, 600), (1125, 600), (1225, 600), (1325, 600), (1375, 600),
+                     ( 775, 650), ( 825, 650), ( 925, 650), ( 950, 650), (1025, 650), (1075, 650), (1125, 650), (1225, 650), (1325, 650), (1375, 650),
+                     ( 775, 700), ( 825, 700), ( 925, 700), ( 950, 700), (1025, 700), (1075, 700), (1125, 700), (1225, 700), (1325, 700), (1375, 700)]
+                     #( 925, 800), (1025, 800), (1125, 800), (1225, 800), (1325, 800)]
+    elif model=="T2tt":
+        gchipairs = [(150, 50), (200, 50), (250, 50), (300, 50), (350, 50), (400, 50), (450, 50),
+                     (500, 50), (550, 50), (600, 50), (650, 50), (700, 50), (750, 50), (800, 50)]
+    
 
     
     #boxes = ["MultiJet","TauTauJet","Jet"]
@@ -728,60 +740,60 @@ if __name__ == '__main__':
 
     doAll = (len(boxes)>1)
     if not doAll:
-        box = boxInput
+        box = boxes[0]
     
     rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
     if not glob.glob(rootFileName):
         outputFileNames = []
-        for mg in gluinopoints:
-            for mchi in neutralinopoints:
-                xsecRange = getXsecRange(mchi,mg)
-                for xsec in xsecRange:
-                    if not doAll:
-                        if not glob.glob(getFileName("SpB",mg,mchi,xsec,box,directory)+"*"): continue
-                        if not glob.glob(getFileName("B",mg,mchi,xsec,box,directory)+"*"): continue
-                        CLs = []
-                        CLsExp = []
-                        CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, directory)
-                        CLs.append(CLsBox)
-                        CLsExp.append(CLsExpBox)
-                        outputFileNames.append(writeCLTree(mg, mchi, xsec, box, directory, CLs, CLsExp))
-                    else:
-                        anyfilesNotFound = []
-                        for box in boxes:
-                            anyfilesNotFound.append(not glob.glob(getFileName("SpB",mg,mchi,xsec,box,directory)+"*") )
-                            anyfilesNotFound.append(not glob.glob(getFileName("B",mg,mchi,xsec,box,directory)+"*"))
-                        if any(anyfilesNotFound): continue
-                        CLs = []
-                        CLsExp = []
-                        CLsBox,CLsExpBox  = getCLsAll(mg, mchi, xsec, boxes, directory)
-                        CLs.append(CLsBox)
-                        CLsExp.append(CLsExpBox)
-                        outputFileNames.append(writeCLTree(mg, mchi, xsec,'_'.join(boxes), directory, CLs, CLsExp))
-                        
+        for mg, mchi in gchipairs:
+            xsecRange = getXsecRange(model,mchi,mg)
+            for xsec in xsecRange:
+                if not doAll:
+                    if not glob.glob(getFileName("SpB",mg,mchi,xsec,box,model,directory)+"*"): continue
+                    if not glob.glob(getFileName("B",mg,mchi,xsec,box,model,directory)+"*"): continue
+                    CLs = []
+                    CLsExp = []
+                    CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, model, directory)
+                    CLs.append(CLsBox)
+                    CLsExp.append(CLsExpBox)
+                    outputFileNames.append(writeCLTree(mg, mchi, xsec, box, model, directory, CLs, CLsExp))
+                else:
+                    anyfilesNotFound = []
+                    for box in boxes:
+                        anyfilesNotFound.append(not glob.glob(getFileName("SpB",mg,mchi,xsec,box,model,directory)+"*") )
+                        anyfilesNotFound.append(not glob.glob(getFileName("B",mg,mchi,xsec,box,model,directory)+"*"))
+                    if any(anyfilesNotFound): continue
+                    xsecString = str(xsec).replace(".","p")
+                    if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))): continue
+                    CLs = []
+                    CLsExp = []
+                    CLsBox,CLsExpBox  = getCLsAll(mg, mchi, xsec, boxes, model, directory)
+                    CLs.append(CLsBox)
+                    CLsExp.append(CLsExpBox)
+                    outputFileNames.append(writeCLTree(mg, mchi, xsec,'_'.join(boxes), model,directory, CLs, CLsExp))
+
         haddCmd = "hadd -f %s %s"%(rootFileName,' '.join(outputFileNames))
         print haddCmd
         os.system(haddCmd)
     else:
         outputFileNames = []
-        for mg in gluinopoints:
-            for mchi in neutralinopoints:
-                xsecULObs = []
-                xsecULExpPlus2 = []
-                xsecULExpPlus = []
-                xsecULExp = []
-                xsecULExpMinus = []
-                xsecULExpMinus2 = []
-                if doAll: box = '_'.join(boxes)
-                try:
-                    xsecULObs.append(max(1e-4,getXsecUL("CLs", rootFileName, mg, mchi, box)))
-                    xsecULExpPlus2.append(max(1e-4,getXsecUL("CLsExpPlus2", rootFileName, mg, mchi, box)))
-                    xsecULExpPlus.append(max(1e-4,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
-                    xsecULExp.append(max(1e-4,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
-                    xsecULExpMinus.append(max(1e-4,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
-                    xsecULExpMinus2.append(max(1e-4,getXsecUL("CLsExpMinus2", rootFileName, mg, mchi, box)))
-                    outputFileNames.append(writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2))
-                except TypeError: continue
+        for mg, mchi in gchipairs:
+            xsecULObs = []
+            xsecULExpPlus2 = []
+            xsecULExpPlus = []
+            xsecULExp = []
+            xsecULExpMinus = []
+            xsecULExpMinus2 = []
+            if doAll: box = '_'.join(boxes)
+            try:
+                xsecULObs.append(max(1e-4,getXsecUL("CLs", rootFileName, mg, mchi, box)))
+                xsecULExpPlus2.append(max(1e-4,getXsecUL("CLsExpPlus2", rootFileName, mg, mchi, box)))
+                xsecULExpPlus.append(max(1e-4,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
+                xsecULExp.append(max(1e-4,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
+                xsecULExpMinus.append(max(1e-4,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
+                xsecULExpMinus2.append(max(1e-4,getXsecUL("CLsExpMinus2", rootFileName, mg, mchi, box)))
+                outputFileNames.append(writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2))
+            except TypeError: continue
         xsecFileName = "%s/xsecUL_%s.root"%(directory,'_'.join(boxes))
         haddCmd = "hadd -f %s %s"%(xsecFileName,' '.join(outputFileNames))
         print haddCmd
