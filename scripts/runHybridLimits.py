@@ -5,9 +5,9 @@ import time
 from array import *
 
 def getXsecRange(box,neutralinopoint,gluinopoint):
-    lumi = 19300
-    name = "T2tt"
-    label = "MR500.0_R0.22360679775"
+    #lumi = 19300
+    #name = "T2tt"
+    #label = "MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
     if gluinopoint == 200:
@@ -19,11 +19,11 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     elif gluinopoint == 500:
         return [0.001, 0.01, 0.1, 0.5, 1.0]
     elif gluinopoint == 550:
-        return [0.001, 0.01, 0.1,0.5, 1.0]
+        return [0.001, 0.01, 0.1, 0.5, 1.0]
     elif gluinopoint == 600:
         return [0.001, 0.01, 0.1, 0.5]
     elif gluinopoint == 650:
-        return [0.0001, 0.001, 0.01,0.1, 0.5]
+        return [0.0001, 0.001, 0.01, 0.1, 0.5]
     elif gluinopoint == 700:
         return [0.0001, 0.001, 0.01,0.05, 0.1]    
     elif gluinopoint == 800:
@@ -136,8 +136,9 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
 
-    name = "SMS_T2tt_mar11_MR500.0_R0.22360679775"
+    name = "SMS_T2tt_mLSP50_apr3_MR350.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
+    #massPoint = "%.1f_0.0"%gluinopoint
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
     outputname = submitDir+"/submit_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
@@ -165,20 +166,18 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("make\n")
     
-    outputfile.write("export NAME=\"T2tt\"\n")
-    outputfile.write("export LABEL=\"MR500.0_R0.22360679775\"\n")
+    #outputfile.write("export NAME=\"T2tt\"\n")
+    #outputfile.write("export LABEL=\"MR500.0_R0.22360679775\"\n")
 
     if box == 'had' or box == 'BJetHS' or box == 'BJetLS':
         outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FullRegion/Run2012ABCD_Full_Search-280113.root $PWD\n")
         #outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Had-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/mar11/%s_%s_BJet*.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJet*.root $PWD\n"%(name,massPoint))
     else:
         outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Lep-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/mar11/%s_%s_Ele*.root $PWD\n"%(name,massPoint))
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/forWill/RzrMJSMS/mar11/%s_%s_Mu*.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Ele*.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Mu*.root $PWD\n"%(name,massPoint))
         
-
-
     if box == 'had':
         nToyOffset = nToys*(2*t)
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Full_Search-280113.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_BJetHS.root %s_%s_BJetLS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
