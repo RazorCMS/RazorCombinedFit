@@ -15,14 +15,18 @@ def getXsecRange(box,model,neutralinopoint,gluinopoint):
 
     if model=="T1bbbb":
         if mDelta < 400:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
         elif mDelta < 800:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
         else:
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
+        if mDelta < 200:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500.]
+        if mDelta < 300:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
         if mDelta < 500:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.]
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
           
@@ -136,8 +140,8 @@ if __name__ == '__main__':
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     time.sleep(3)
-                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     #os.system("source "+pwd+"/"+outputname)
                         
     print "Total jobs = ", totalJobs
