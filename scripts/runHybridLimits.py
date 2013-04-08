@@ -5,9 +5,6 @@ import time
 from array import *
 
 def getXsecRange(box,neutralinopoint,gluinopoint):
-    #lumi = 19300
-    #name = "T2tt"
-    #label = "MR500.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
     if gluinopoint == 200:
@@ -32,106 +29,6 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
         return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
 
 
-    # if box == 'BJetHS':
-    #     if gluinopoint == 200:
-    #         return [0.01, 0.1, 10.0, 100.0]
-    #     elif gluinopoint == 250:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-    #     elif gluinopoint == 300:
-    #         return [0.01, 0.1, 100.0]
-    #     elif gluinopoint == 350:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-    #     elif gluinopoint == 400:
-    #         return [0.01, 10.0, 100.0]
-    #     elif gluinopoint == 450:
-    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
-    #     elif gluinopoint == 500:
-    #         return [0.001, 0.01, 10.0]
-    #     elif gluinopoint == 550:
-    #         return [0.001, 0.01, 0.1, 10.0]
-    #     elif gluinopoint == 600:
-    #         return [0.001, 1.0, 10.0]
-    #     elif gluinopoint == 650:
-    #         return [0.001, 1.0, 10.0]
-    #     elif gluinopoint == 700:
-    #         return [0.001, 1.0, 10.0]
-    #     elif gluinopoint == 750:
-    #         return [0.0001, 0.001, 0.01, 0.1, 1.0]
-    #     elif gluinopoint == 800:
-    #         return [0.0001, 0.001, 1.0]
-    #     else:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-    # elif box == 'BJetLS':
-    #     if gluinopoint == 200:
-    #         return [0.01, 0.1, 1.0, 100.0]
-    #     elif gluinopoint == 250:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-    #     elif gluinopoint == 300:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-    #     elif gluinopoint == 350:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-    #     elif gluinopoint == 400:
-    #         return [0.01, 0.1, 10.0, 100.0]
-    #     elif gluinopoint == 450:
-    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
-    #     elif gluinopoint == 500:
-    #         return [0.001, 0.01, 1.0, 10.0]
-    #     elif gluinopoint == 550:
-    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
-    #     elif gluinopoint == 600:
-    #         return [0.001, 0.01, 1.0, 10.0]
-    #     elif gluinopoint == 650:
-    #         return [0.001, 0.01, 1.0, 10.0]
-    #     elif gluinopoint == 700:
-    #         return [0.001, 0.01, 0.1, 1.0, 10.0]
-    #     elif gluinopoint == 750:
-    #         return [0.0001, 0.001, 0.01, 0.1, 1.0]
-    #     elif gluinopoint == 800:
-    #         return [0.0001, 0.001, 0.1, 1.0]
-    #     else:
-    #         return [0.01, 0.1, 1.0, 10.0, 100.0]
-
-
-
-    # if gluinopoint == 200:
-    #     return [1.0, 10.0, 20.0]
-    # elif gluinopoint == 300:
-    #     return [0.5, 1.0, 10.0]
-    # elif gluinopoint == 400:
-    #     return [0.1, 0.5, 1.0]
-    # elif gluinopoint == 500:
-    #     return [0.03, 0.05, 0.1, 0.5, 1.0]
-    # elif gluinopoint == 550:
-    #     return [0.03, 0.05, 0.08, 0.5, 1.0]
-    # elif gluinopoint == 600:
-    #     return [0.01, 0.03, 0.05, 0.1, 0.5]
-    # elif gluinopoint == 650:
-    #     return [0.01, 0.015, 0.02, 0.1, 0.5]
-    # elif gluinopoint == 700:
-    #     return [0.006, 0.008, 0.01, 0.05, 0.1]
-    # elif gluinopoint == 800:
-    #     return [0.006, 0.008, 0.01,0.05, 0.1]
-    # else:
-    #     return [0.001, 0.01, 0.1, 1.0, 10.0]
-
-#    if gluinopoint == 200:
-#        return [0.01, 0.1, 1.0, 10.0, 100.0]
-#    elif gluinopoint == 300:
-#        return [0.01, 0.1, 1.0, 10.0, 100.0]
-#    elif gluinopoint == 400:
-#        return [0.001, 0.01, 0.1, 1.0, 10.0]
-#    elif gluinopoint == 500:
-#        return [0.001, 0.01, 0.1, 1.0, 10.0]
-#    elif gluinopoint == 550:
-#        return [0.001, 0.01, 0.1, 1.0, 10.0]
-#    elif gluinopoint == 600:
-#        return [0.001, 0.01, 0.1, 1.0, 10.0]
-#    elif gluinopoint == 650:
-#        return [0.0001, 0.001, 0.01, 0.1, 1.0]
-#    elif gluinopoint == 700:
-#        return [0.0001, 0.001, 0.01, 0.1, 1.0]
-#    elif gluinopoint == 800:
-#        return [0.0001, 0.001, 0.01, 0.1, 1.0]
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
@@ -166,18 +63,29 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("make\n")
     
-    #outputfile.write("export NAME=\"T2tt\"\n")
-    #outputfile.write("export LABEL=\"MR500.0_R0.22360679775\"\n")
+    outputfile.write("export NAME=\"T2tt\"\n")
+    outputfile.write("export LABEL=\"MR500.0_R0.22360679775\"\n")
 
     if box == 'had' or box == 'BJetHS' or box == 'BJetLS':
         outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FullRegion/Run2012ABCD_Full_Search-280113.root $PWD\n")
         #outputfile.write("cp /afs/cern.ch/user/w/wreece/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Had-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJet*.root $PWD\n"%(name,massPoint))
-    else:
-        outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Lep-280113.root $PWD\n")
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Ele*.root $PWD\n"%(name,massPoint))
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Mu*.root $PWD\n"%(name,massPoint))
-        
+    elif box == 'Ele':
+        outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/350_0_05/FitRegion/Run2012ABCD_Fit_Ele-120313.root $PWD\n")
+    elif box == 'Mu':
+        outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/350_0_05/FitRegion/Run2012ABCD_Fit_Mu-120313.root $PWD\n")
+        #outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Lep-280113.root $PWD\n")
+
+
+    if box == 'BJetHS':
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJetHS.root $PWD\n"%(name,massPoint))
+    elif box == 'BJetLS':
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJetLS.root $PWD\n"%(name,massPoint))
+    elif box == 'Ele':
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Ele.root $PWD\n"%(name,massPoint))
+    elif box == 'Mu':
+        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Mu.root $PWD\n"%(name,massPoint))
+
+                
     if box == 'had':
         nToyOffset = nToys*(2*t)
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Full_Search-280113.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_BJetHS.root %s_%s_BJetLS.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
@@ -204,19 +112,19 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
 
     elif box == 'Ele':
         nToyOffset = nToys*(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Ele.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Ele-120313.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Ele.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
         nToyOffset = nToys*(2*t+1)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Ele.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Ele-120313.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Ele.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     elif box == 'Mu':
         nToyOffset = nToys*(2*t)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Mu-120313.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
         nToyOffset = nToys*(2*t+1)
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Had-280113.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Mu-120313.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
         
 
     # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybridBJetLS_mLSP_50/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybridEle_mLSP_50/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
