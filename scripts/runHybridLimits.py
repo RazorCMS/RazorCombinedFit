@@ -155,8 +155,8 @@ if __name__ == '__main__':
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
                     print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
-                    #outputname,ffDir = writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                    #os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                    outputname,ffDir = writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     #time.sleep(3)
                     #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
