@@ -99,7 +99,6 @@ if __name__ == '__main__':
     box = sys.argv[1]
     model = sys.argv[2]
     queue = sys.argv[3]
-    histoFileName = sys.argv[4]
     
     nJobs = 12 # do 250 toys each job => 3000 toys
     
@@ -107,10 +106,11 @@ if __name__ == '__main__':
 
     if model=="T1bbbb":
         gchipairs = []
+        histoFileName = sys.argv[4]
         histoFile = rt.TFile.Open(histoFileName)
         histo = histoFile.Get("T1bbbb_MultiJet")
-        for mg in xrange(450, 1250, 25):
-            for mchi in xrange(450, 775, 25):
+        for mg in xrange(450, 1200, 50):
+            for mchi in xrange(450, 750, 50):
                 if histo.GetBinContent(histo.FindBin(mg,mchi)):
                     if mchi!=0:
                         gchipairs.append((mg,mchi))
@@ -156,8 +156,8 @@ if __name__ == '__main__':
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
                     print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
-                    #outputname,ffDir = writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                    #os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                    outputname,ffDir = writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     #time.sleep(3)
                     #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
