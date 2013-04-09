@@ -269,7 +269,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
                 
                 #make any plots required
-                #boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
+                boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
             else:
                 
                 wsName = '%s/Box%s_workspace' % (box,box)

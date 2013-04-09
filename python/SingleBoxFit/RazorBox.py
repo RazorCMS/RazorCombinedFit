@@ -305,11 +305,11 @@ class RazorBox(Box.Box):
         return extended.GetName()
         
     def plot(self, inputFile, store, box, data=None, fitmodel="none", frName="none"):
-        print "no plotting"
+        #print "no plotting"
         
-        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName )]
-        #[store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
-        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
+        [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName )]
+        [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
+        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
         
         # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
         # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
@@ -338,15 +338,16 @@ class RazorBox(Box.Box):
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
 
-        # if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet'):
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+        if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet' or self.name=='Jet1b'):
+            if not (self.name=='Jet2b'):
+                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
+                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
+                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
+                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
             
 
 
@@ -412,6 +413,9 @@ class RazorBox(Box.Box):
             elif datamax[0] < 2000:
                 mrMax = 2000
                 nbin = 2*(mrMax-mrMin)/(50)
+            elif datamax[0] < 2500:
+                mrMax = 2500
+                nbin = 2*(mrMax-mrMin)/(50)
             else:
                 mrMax = 4000
                 nbin = 1*(mrMax-mrMin)/(50)
@@ -437,18 +441,21 @@ class RazorBox(Box.Box):
             btagMin = self.workspace.var("nBtag").getMin()
             btagMax = self.workspace.var("nBtag").getMax()
 
-        rsqMax = self.workspace.var("Rsq").getMax()
-        self.workspace.var("MR").setRange("VeryLowMR%s"%fitlabel,400,450)
-        self.workspace.var("Rsq").setRange("VeryLowMR%s"%fitlabel,0.3,rsqMax)
+        
+        mrBins = getBinning(self.name, "MR", self.btag)
+        rsqBins = getBinning(self.name, "Rsq", self.btag)
+        
+        self.workspace.var("MR").setRange("VeryLowMR%s"%fitlabel,mrBins[0],mrBins[1])
+        self.workspace.var("Rsq").setRange("VeryLowMR%s"%fitlabel,rsqBins[1],rsqBins[-1])
         self.workspace.var("nBtag").setRange("VeryLowMR%s"%fitlabel,btagMin,btagMax)
-        self.workspace.var("MR").setRange("NotVeryLowMR%s"%fitlabel,450,4000)
-        self.workspace.var("Rsq").setRange("NotVeryLowMR%s"%fitlabel,0.25,rsqMax)
+        self.workspace.var("MR").setRange("NotVeryLowMR%s"%fitlabel,mrBins[1],mrBins[-1])
+        self.workspace.var("Rsq").setRange("NotVeryLowMR%s"%fitlabel,rsqBins[0],rsqBins[-1])
         self.workspace.var("nBtag").setRange("NotVeryLowMR%s"%fitlabel,btagMin,btagMax)
-        self.workspace.var("MR").setRange("VeryLowRsq%s"%fitlabel,450,4000)
-        self.workspace.var("Rsq").setRange("VeryLowRsq%s"%fitlabel,0.25,0.3)
+        self.workspace.var("MR").setRange("VeryLowRsq%s"%fitlabel,mrBins[1],mrBins[-1])
+        self.workspace.var("Rsq").setRange("VeryLowRsq%s"%fitlabel,rsqBins[0],rsqBins[1])
         self.workspace.var("nBtag").setRange("VeryLowRsq%s"%fitlabel,btagMin,btagMax)
-        self.workspace.var("MR").setRange("NotVeryLowRsq%s"%fitlabel,400,4000)
-        self.workspace.var("Rsq").setRange("NotVeryLowRsq%s"%fitlabel,0.3,rsqMax)
+        self.workspace.var("MR").setRange("NotVeryLowRsq%s"%fitlabel,mrBins[0],mrBins[-1])
+        self.workspace.var("Rsq").setRange("NotVeryLowRsq%s"%fitlabel,rsqBins[1],rsqBins[-1])
         self.workspace.var("nBtag").setRange("NotVeryLowRsq%s"%fitlabel,btagMin,btagMax)
         if varname=="MR":
             MRRanges = ["VeryLowMR%s"%fitlabel,"NotVeryLowMR%s"%fitlabel]
@@ -533,8 +540,8 @@ class RazorBox(Box.Box):
         leg.AddEntry("Data","Data","pe")
         leg.AddEntry("Total","Total Bkgd","lf")
         if showVpj:
-            leg.AddEntry("TTj1b","1 b-tag, t#bar{t}+jets","f")
-            leg.AddEntry("Vpj","1 b-tag, V+jets","f")
+            leg.AddEntry("TTj1b","1 b-tag, t#bar{t}+jets","l")
+            leg.AddEntry("Vpj","1 b-tag, V+jets","l")
         else:
             if showTTj1b:
                 leg.AddEntry("TTj1b","1 b-tag","l")
