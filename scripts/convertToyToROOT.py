@@ -4,13 +4,13 @@ import sys
     
 if __name__ == '__main__':
     
-    MR = rt.RooRealVar("MR", "MR", 350., 2500.)
+    MR = rt.RooRealVar("MR", "MR", 350., 4000.)
     Rsq = rt.RooRealVar("Rsq", "Rsq", 0.11, 1.5)
     nBtag = rt.RooRealVar("nBtag", "nBtag", 1.0, 5.0)
     dir = sys.argv[1]
 
     nToysStart = 0
-    nToysEnd = 3000
+    nToysEnd = 10000
     for i in range(2,len(sys.argv)):
         if sys.argv[i].find("--start=") != -1:
             nToysStart = int(sys.argv[i].replace("--start=",""))

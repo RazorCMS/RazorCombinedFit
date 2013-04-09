@@ -474,6 +474,8 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 BoxName = ""
                 if Box == "MultiJet": BoxName = "MULTIJET"
                 if Box == "TauTauJet": BoxName = "TAU-TAU-JET"
+                if Box == "Jet1b": BoxName = "JET-1b"
+                if Box == "Jet2b": BoxName = "JET-2b"
                 if Box == "Jet": BoxName = "JET"
                 if Box == "Mu": BoxName = "MU"
                 if Box == "Ele": BoxName = "ELE"
@@ -630,11 +632,11 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     c2.SetLogx()
     c2.SetLogy()
     tlabels = []
-    if Box=="Jet":
+    if Box=="Jet1b":
         tlabels.append(rt.TLatex(330,0.485, "0.5"))
         tlabels.append(rt.TLatex(330,0.39, "0.4"))
         tlabels.append(rt.TLatex(330,0.295, "0.3"))
-    elif Box=="MultiJet" or Box=="TauTauJet":
+    elif Box=="MultiJet" or Box=="TauTauJet" or Box=="Jet2b":
         tlabels.append(rt.TLatex(330,0.76, "0.8"))
         tlabels.append(rt.TLatex(330,0.47, "0.5"))
         tlabels.append(rt.TLatex(330,0.285, "0.3"))

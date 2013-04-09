@@ -4,9 +4,9 @@ import os
 #this is global, to be reused in the plot making
 
 def Binning(Box, noBtag):
-    if Box == "Jet" or Box == "TauTauJet" or Box == "MultiJet":
+    if Box == "Jet" or Box=="Jet2b" or Box =="Jet1b" or Box == "TauTauJet" or Box == "MultiJet":
         MRbins =              [400, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
-        if noBtag or Box=="Jet": Rsqbins =  [0.25,0.3,0.35,0.40,0.45,0.50]
+        if noBtag or Box=="Jet1b": Rsqbins =  [0.25,0.3,0.35,0.40,0.45,0.50]
         else: Rsqbins =       [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
         MRbins =              [300, 350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
