@@ -109,8 +109,8 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "8nh"
-    nToys = 10
-    nJobs = 2
+    nToys = 10000
+    nJobs = 50
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
@@ -141,7 +141,9 @@ if __name__ == '__main__':
     else:
         sidebandNames = [sys.argv[3]]
 
+    nToysPerJob = int(nToys/nJobs)
     totalJobs = 0
+    nJobsByBox = {}
     for box in boxNames:
         for sideband in sidebandNames:
             resultDir = "toys_%s_%s"%(datasetName,fitmode)
@@ -150,11 +152,11 @@ if __name__ == '__main__':
             allToys = glob.glob("%s/*.txt"%(toyDir))
             allRoot = glob.glob("%s/*.root"%(toyDir))
             doFinalJob = (len(allToys)==nToys and len(allRoot)==nToys)
-
-            if doFinalJob: nJobs = 1
             
-            nToysPerJob = int(nToys/nJobs)
-            for t in xrange(0,nJobs):
+            nJobsByBox[(box,sideband)] = nJobs
+            if doFinalJob: nJobsByBox[(box,sideband)] = 1
+            
+            for t in xrange(0,nJobsByBox[(box,sideband)]):
                 totalJobs+=1
 
                 myToys = []
