@@ -157,10 +157,15 @@ if __name__ == '__main__':
             doFinalJob = (len(allToys)==nToys and len(allRoot)==nToys)
             
             nJobsByBox[(box,sideband)] = nJobs
-            if doFinalJob: nJobsByBox[(box,sideband)] = 1
+            if doFinalJob:
+                nJobsByBox[(box,sideband)] = 1
+                missingToys = set([])
+                missingRoot = set([])
+            else:
                 
-            missingToys = set(fullSetToys) - set(allToys)
-            missingRoot = set(fullSetRoot) - set(allRoot)
+                missingToys = set(fullSetToys) - set(allToys)
+                missingRoot = set(fullSetRoot) - set(allRoot)
+                
             print missingToys
             print missingRoot
             for t in xrange(0,nJobsByBox[(box,sideband)]):
