@@ -141,6 +141,7 @@ if __name__ == '__main__':
     else:
         sidebandNames = [sys.argv[3]]
 
+    totalJobs = 0
     for box in boxNames:
         for sideband in sidebandNames:
             resultDir = "toys_%s_%s"%(datasetName,fitmode)
@@ -154,6 +155,7 @@ if __name__ == '__main__':
             
             nToysPerJob = int(nToys/nJobs)
             for t in xrange(0,nJobs):
+                totalJobs+=1
 
                 myToys = []
                 myRoot = []
@@ -169,3 +171,5 @@ if __name__ == '__main__':
                 #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                 #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                 #os.system("source "+pwd+"/"+outputname)
+                
+    print "TOTAL JOBS IS %i"%totalJobs
