@@ -149,26 +149,31 @@ if __name__ == '__main__':
             resultDir = "toys_%s_%s"%(datasetName,fitmode)
             toyDir = resultDir+"/%s_%s"%(sideband,box)
             ffDir = toyDir+"_FF"
+            fullSetToys = ["%s/frtoydata_%s_%i.txt"%(toyDir,box,i) for i in xrange(0,nToys)]
+            fullSetRoot = ["%s/frtoydata_%s_%i.root"%(toyDir,box,i) for i in xrange(0,nToys)]
+            
             allToys = glob.glob("%s/*.txt"%(toyDir))
             allRoot = glob.glob("%s/*.root"%(toyDir))
             doFinalJob = (len(allToys)==nToys and len(allRoot)==nToys)
             
             nJobsByBox[(box,sideband)] = nJobs
             if doFinalJob: nJobsByBox[(box,sideband)] = 1
-            
+                
+            missingToys = set(fullSetToys) - set(allToys)
+            missingRoot = set(fullSetRoot) - set(allRoot)
+            print missingToys
+            print missingRoot
             for t in xrange(0,nJobsByBox[(box,sideband)]):
-                totalJobs+=1
-
-                myToys = []
-                myRoot = []
+                
+                doToys = False
+                doConvertToRoot = False
                 for i in xrange(int(t*nToysPerJob),int((t+1)*nToysPerJob)):
-                    myToys.extend(glob.glob("%s/*_%i.txt"%(toyDir,i)))
-                    myRoot.extend(glob.glob("%s/*_%s.root"%(toyDir,i)))
+                    if "%s/frtoydata_%s_%i.txt"%(toyDir,box,i) in missingToys: doToys = True
+                    if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingToys: doConvertToRoot = True
 
-                doToys = (len(myToys)!=nToysPerJob)
-                doConvertToRoot = (len(myRoot)!=nToysPerJob)
-
-                outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
+                if doFinalJob or doToys or doConvertToRoot:
+                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
+                    totalJobs+=1
                 #time.sleep(3)
                 #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                 #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
