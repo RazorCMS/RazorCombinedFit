@@ -8,12 +8,13 @@ import os.path
 import sys
 from array import *
 import time
+import glob
 
-def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t):
+def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob):
     pwd = os.environ['PWD']
             
     fitResultsDir = "FitResults_%s"%fitmode
-    #fitResultsDir = "FitResults_Jet"
+    
     config = "config_summer2012/RazorInclusive2012_%s_hybrid.config"%fitmode
 
     submitDir = "submit"
@@ -68,28 +69,22 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t):
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
     outputfile.write('eval `scramv1 runtime -sh` \n')
-    outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
-    if nToys <= nToysPerJob:
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToys),0))
-    else:
+    if doToys:
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob)))
-    outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
-    outputfile.write("files=$(ls %s/frtoydata_*.root 2> /dev/null | wc -l) \n"%toyDir)
-    outputfile.write("if [ $files == \"%i\" ] \n"%nToys)
-    outputfile.write("then \n")
-    outputfile.write("rm %s.txt \n" %(toyDir))
-    outputfile.write("ls %s/frtoydata_*.root > %s.txt \n" %(toyDir, toyDir))
-    outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
-    outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, fitResultMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
-    if datasetName.find("Run") != -1:
-       outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D,tagPrintPlots))
-    else:
-       outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots))
+    if doConvertToRoot:
+        outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
+    if doFinalJob:
+        outputfile.write("rm %s.txt \n" %(toyDir))
+        outputfile.write("ls %s/frtoydata*.root > %s.txt \n" %(toyDir, toyDir))
+        outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
+        outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, fitResultMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
+        if datasetName.find("Run") != -1:
+            outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D,tagPrintPlots,datasetName,sideband,box))
+        else:
+            outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots,datasetName,sideband,box))
    
-       outputfile.write("fi \n") 
     outputfile.close
 
     return outputname, ffDir, pwd
@@ -114,8 +109,8 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "8nh"
-    nToys = 10000
-    nJobs = 50
+    nToys = 10
+    nJobs = 2
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
@@ -146,19 +141,31 @@ if __name__ == '__main__':
     else:
         sidebandNames = [sys.argv[3]]
 
-    nToysPerJob = int(nToys/nJobs)
     for box in boxNames:
         for sideband in sidebandNames:
-            if nToys <= nToysPerJob:
-                outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,0)
+            resultDir = "toys_%s_%s"%(datasetName,fitmode)
+            toyDir = resultDir+"/%s_%s"%(sideband,box)
+            ffDir = toyDir+"_FF"
+            allToys = glob.glob("%s/*.txt"%(toyDir))
+            allRoot = glob.glob("%s/*.root"%(toyDir))
+            doFinalJob = (len(allToys)==nToys and len(allRoot)==nToys)
+
+            if doFinalJob: nJobs = 1
+            
+            nToysPerJob = int(nToys/nJobs)
+            for t in xrange(0,nJobs):
+
+                myToys = []
+                myRoot = []
+                for i in xrange(int(t*nToysPerJob),int((t+1)*nToysPerJob)):
+                    myToys.extend(glob.glob("%s/*_%i.txt"%(toyDir,i)))
+                    myRoot.extend(glob.glob("%s/*_%s.root"%(toyDir,i)))
+
+                doToys = (len(myToys)!=nToysPerJob)
+                doConvertToRoot = (len(myRoot)!=nToysPerJob)
+
+                outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
                 #time.sleep(3)
-                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
-                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(0)+".log source "+pwd+"/"+outputname)
-                os.system("source "+pwd+"/"+outputname)
-            else:
-                for t in xrange(0,nJobs):
-                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t)
-                    time.sleep(3)
-                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("source "+pwd+"/"+outputname)
+                #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                #os.system("source "+pwd+"/"+outputname)
