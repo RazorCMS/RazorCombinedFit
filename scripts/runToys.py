@@ -162,7 +162,6 @@ if __name__ == '__main__':
                 missingToys = set([])
                 missingRoot = set([])
             else:
-                
                 missingToys = set(fullSetToys) - set(allToys)
                 missingRoot = set(fullSetRoot) - set(allRoot)
                 
@@ -174,7 +173,7 @@ if __name__ == '__main__':
                 doConvertToRoot = False
                 for i in xrange(int(t*nToysPerJob),int((t+1)*nToysPerJob)):
                     if "%s/frtoydata_%s_%i.txt"%(toyDir,box,i) in missingToys: doToys = True
-                    if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingToys: doConvertToRoot = True
+                    if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingRoot: doConvertToRoot = True
 
                 if doFinalJob or doToys or doConvertToRoot:
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
