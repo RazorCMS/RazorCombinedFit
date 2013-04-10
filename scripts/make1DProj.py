@@ -569,10 +569,10 @@ if __name__ == '__main__':
         if sys.argv[i].find("-MC=") != -1:
             Preliminary = "Simulation"
             datasetName = sys.argv[i].replace("-MC=","")
+        if sys.argv[i].find("-Label=") != -1:
+            Label = sys.argv[i].replace("-Label=","")
         if sys.argv[i].find("-Lumi=") != -1: Lumi = float(sys.argv[i].replace("-Lumi=",""))
         if sys.argv[i].find("-Energy=") != -1: Energy = float(sys.argv[i].replace("-Energy=",""))
-
-    Label = fitfileName.split("/")[-1].replace(".root","").replace("razor_output_","")
 
     MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
         
