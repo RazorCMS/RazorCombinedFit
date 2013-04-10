@@ -167,6 +167,8 @@ if __name__ == '__main__':
                 
             print missingToys
             print missingRoot
+            if glob.glob("%s/expected_sigbin_%s.root"%(ffDir,root)): doFinalJob = False
+                
             for t in xrange(0,nJobsByBox[(box,sideband)]):
                 
                 doToys = False
@@ -178,9 +180,9 @@ if __name__ == '__main__':
                 if doFinalJob or doToys or doConvertToRoot:
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
                     totalJobs+=1
-                #time.sleep(3)
-                #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #os.system("source "+pwd+"/"+outputname)
+                    time.sleep(3)
+                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("source "+pwd+"/"+outputname)
                 
     print "TOTAL JOBS IS %i"%totalJobs
