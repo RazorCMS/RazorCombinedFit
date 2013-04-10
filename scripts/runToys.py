@@ -167,7 +167,7 @@ if __name__ == '__main__':
                 
             print missingToys
             print missingRoot
-            if glob.glob("%s/expected_sigbin_%s.root"%(ffDir,root)): doFinalJob = False
+            if glob.glob("%s/expected_sigbin_%s.root"%(ffDir,box)): doFinalJob = False
                 
             for t in xrange(0,nJobsByBox[(box,sideband)]):
                 
