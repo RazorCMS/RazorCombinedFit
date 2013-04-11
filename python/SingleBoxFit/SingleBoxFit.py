@@ -492,15 +492,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
         def setNorms(box, ds):
             # set normalizations
             print "setting norms"
-            # N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
-            # N_TTj1b = box.workspace.var("Ntot_TTj1b").getVal()
-            # N_Vpj = box.workspace.var("Ntot_Vpj").getVal()
-            # N_Signal = box.workspace.function("Ntot_Signal").getVal()
-            # Nds = ds.sumEntries()
-            # if Nds-N_Signal>0:
-            #     box.workspace.var("Ntot_TTj2b").setVal((Nds-N_Signal)*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
-            #     box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
-            #     box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
+            N_TTj2b = box.workspace.var("Ntot_TTj2b").getVal()
+            N_TTj1b = box.workspace.var("Ntot_TTj1b").getVal()
+            N_Vpj = box.workspace.var("Ntot_Vpj").getVal()
+            N_Signal = box.workspace.function("Ntot_Signal").getVal()
+            Nds = ds.sumEntries()
+            if Nds-N_Signal>0:
+                box.workspace.var("Ntot_TTj2b").setVal((Nds-N_Signal)*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
+                box.workspace.var("Ntot_TTj1b").setVal((Nds-N_Signal)*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
+                box.workspace.var("Ntot_Vpj").setVal((Nds-N_Signal)*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
             
         def getLz(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
             reset(box, fr, fixSigma=True)
@@ -614,7 +614,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.var("Ntot_TTj1b").setMax(1e9)
             boxes[box].workspace.var("Ntot_TTj2b").setMax(1e9)
             boxes[box].workspace.var("Ntot_Vpj").setMax(1e9)
-            
+
+            if self.options.signal_xsec > boxes[box].workspace.var("sigma").getMax():
+                #boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
+                boxes[box].workspace.Print("v")
+                boxes[box].workspace.var("sigma").Print("v")
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
 

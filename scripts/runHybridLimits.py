@@ -7,13 +7,14 @@ from RazorCombinedFit.Framework import Config
 import os.path
 import sys
 import time
+import math
 from array import *
 
 
-def getXsecRange(box,model,neutralinopoint,gluinopoint):
-    mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
+def getXsecRange(box,model,neutralinoMass,gluinoMass):
 
     if model=="T1bbbb":
+        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         if mDelta < 400:
             xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
         elif mDelta < 800:
@@ -21,11 +22,15 @@ def getXsecRange(box,model,neutralinopoint,gluinopoint):
         else:
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
-        if mDelta < 200:
+        topMass = 175.
+        mDelta = math.sqrt(max(pow(pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2)/gluinoMass , 2) - pow(topMass,2),0))
+        if gluinoMass < 2*topMass:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500.]
-        if mDelta < 300:
+        elif mDelta < 200:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500.]
+        elif mDelta < 300:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        if mDelta < 500:
+        elif mDelta < 500:
             xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
@@ -70,7 +75,7 @@ def writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
     outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -r woodson_300313 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
+    outputfile.write("cvs co -r woodson_110413 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("mkdir lib\n")
     outputfile.write("source setup.sh\n")
@@ -160,7 +165,7 @@ if __name__ == '__main__':
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     #time.sleep(3)
-                    #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     #os.system("source "+pwd+"/"+outputname)
                         
