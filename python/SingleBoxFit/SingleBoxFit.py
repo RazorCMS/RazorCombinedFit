@@ -615,8 +615,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.var("Ntot_TTj2b").setMax(1e9)
             boxes[box].workspace.var("Ntot_Vpj").setMax(1e9)
 
-            if self.options.signal_xsec > boxes[box].workspace.var("sigma").getMax():
-                #boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
+            if self.options.signal_xsec >= boxes[box].workspace.var("sigma").getMax():
+                boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
                 boxes[box].workspace.Print("v")
                 boxes[box].workspace.var("sigma").Print("v")
             #add a signal model to the workspace
