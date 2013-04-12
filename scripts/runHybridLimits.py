@@ -23,15 +23,17 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
         topMass = 175.
-        mDelta = math.sqrt(max(pow(pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2)/gluinoMass , 2) - pow(topMass,2),0))
+        mDelta = math.sqrt(max(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/gluinoMass , 2) - pow(topMass,2),0))
         if gluinoMass < 2*topMass:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500.]
+            xsecRange = [0.5, 1., 5., 10., 50., 100., 500.]
         elif mDelta < 200:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500.]
+            xsecRange = [0.5, 1., 5., 10., 50., 100., 500.]
         elif mDelta < 300:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
         elif mDelta < 500:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
           
