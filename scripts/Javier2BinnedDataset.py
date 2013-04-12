@@ -263,7 +263,7 @@ if __name__ == '__main__':
                 if options.box != None:
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.useWeight)
                 else:
-                    if f.find("T2tt")!=-1:
+                    if f.find("T2tt")!=-1 or f.find("T1tttt")!=-1:
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.useWeight)
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.useWeight)
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName,  decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.useWeight)
