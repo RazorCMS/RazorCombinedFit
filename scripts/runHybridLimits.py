@@ -194,7 +194,8 @@ if __name__ == '__main__':
                     totalJobs+=1
                     time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                     os.system("source "+pwd+"/"+outputname)
                         
     print "Total jobs = ", totalJobs
