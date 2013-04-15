@@ -45,21 +45,28 @@ def getHybridCLsArrays(directory, LSPmassStrip, Box):
         exec 'xsecULExpMinus = xsecTree.xsecULExpMinus_%s'%Box
         exec 'xsecULExpPlus2 = xsecTree.xsecULExpPlus2_%s'%Box
         exec 'xsecULExpMinus2 = xsecTree.xsecULExpMinus2_%s'%Box
+
         
+            
+            
+        xsecULObs = xsecULObs
+        xsecULExp = xsecULExp
         observedLimit.append(xsecULObs)#*crossSections[i])
         observedLimit_er.append(0.0)#*crossSections[i])
 
         expectedLimit.append(xsecULExp)#*crossSections[i])
+        
+            
 
         xsecULExpPlus = max(xsecULExpPlus,xsecULExp)
         xsecULExpMinus = min(xsecULExpMinus,xsecULExp)
-        xsecULExpPlus2 = max(xsecULExpPlus2,1.1*xsecULExpPlus)
-        xsecULExpMinus2 = min(xsecULExpMinus2,0.9*xsecULExpMinus)
-            
+        xsecULExpPlus2 = max(xsecULExpPlus2,xsecULExpPlus)
+        xsecULExpMinus2 = min(xsecULExpMinus2,xsecULExpMinus)
+
         expectedLimit_minus1sigma.append(xsecULExp - xsecULExpMinus)#*crossSections[i])
         expectedLimit_plus1sigma.append(xsecULExpPlus - xsecULExp)#*crossSections[i])
         expectedLimit_minus2sigma.append(xsecULExp - xsecULExpMinus2)#*crossSections[i])
-        expectedLimit_plus2sigma.append(xsecULExpPlus2 - xsecULExp)#*crossSections[i])        
+        expectedLimit_plus2sigma.append(xsecULExpPlus2 - xsecULExp)#*crossSections[i])
     
 
     return gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma
@@ -196,24 +203,18 @@ def setstyle():
         
 
 if __name__ == '__main__':
-    directory      = sys.argv[1]
-    LSPmassStrip   = sys.argv[2]
-    Box = sys.argv[3]
+    Box = sys.argv[1]
+    model = sys.argv[2]
+    LSPmassStrip   = sys.argv[3]
+    directory      = sys.argv[4]
     box = Box.lower()
 
-    # if box.lower() == "tautaujet":
-    #     Box = "TauTauJet"
-    # elif box.lower() == "multijet":
-    #     Box = "MultiJet"
-    # elif box.lower() == "jet":
-    #     Box = "Jet"
-    # elif box.lower() == "multijet_tautaujet":
-    #     Box = "TauTauJet+MultiJet"
-    # elif box.lower() == "multijet_tautaujet_jet":
-    #     Box = "Jet+TauTauJet+MultiJet"
-        
-    rootFile = rt.TFile.Open(directory+"/gluino.root")
-    h_xsec = rootFile.Get("gluino")
+    if model=="T1bbbb":
+        rootFile = rt.TFile.Open(directory+"/gluino.root")
+        h_xsec = rootFile.Get("gluino")
+    elif model=="T2tt":
+        rootFile = rt.TFile.Open(directory+"/stop.root")
+        h_xsec = rootFile.Get("stop")
 
     N_xsec = h_xsec.GetNbinsX();
     mass_xsec = array('d')
@@ -268,13 +269,14 @@ if __name__ == '__main__':
     xsec_gr.SetFillColor(rt.kBlue-7)
 
     h_limit = rt.TMultiGraph()
-    h_limit.SetTitle(" ;m_{#tilde{g}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
+    if model=="T2tt":
+        h_limit.SetTitle(" ;m_{#tilde{t}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
+    elif model=="T1bbbb":
+        h_limit.SetTitle(" ;m_{#tilde{g}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
 
 
-    if directory.lower().find("hybrid") !=-1:      
-        gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma = getHybridCLsArrays(directory, LSPmassStrip, Box)
-    else:
-        gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma = getAsymptoticCLsArrays(directory, LSPmassStrip, box)
+    gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma = getHybridCLsArrays(directory, LSPmassStrip, Box)
+    
 
     rt.gStyle.SetOptStat(0)
 
@@ -292,21 +294,14 @@ if __name__ == '__main__':
     #         expectedLimit_plus1sigma.pop(j)
     #         print gluinoMassArray
     #     j+=1
+    
 
     #expectedLimit_minus2sigma[1] = 1.2*(expectedLimit[1] - (expectedLimit[0] - expectedLimit_minus2sigma[0]  + expectedLimit[2] - expectedLimit_minus2sigma[2] )/2)
     
-    for j in xrange(1,len(observedLimit)-1):
-        if expectedLimit[j]-expectedLimit_minus2sigma[j]-0.0001<1e-10:
-            expectedLimit_minus2sigma[j] = 1.1*(expectedLimit[j] - 0.5*(expectedLimit[j-1]- expectedLimit_minus2sigma[j-1] + expectedLimit[j+1] - expectedLimit_minus2sigma[j+1]))
-        # if observedLimit[j]>2*observedLimit[j-1] and observedLimit[j]>2*observedLimit[j+1]:
-        #     observedLimit[j] = 0.5*(observedLimit[j-1] +observedLimit[j+1])
-        #     expectedLimit_plus2sigma[j] = 0.5*expectedLimit_plus2sigma[j-2]
-        #     expectedLimit_plus2sigma[j-1] = 0.4*expectedLimit_plus2sigma[j-2]
-        #     expectedLimit_plus1sigma[j] = 0.3*expectedLimit_plus2sigma[j-2]
-        #     expectedLimit_plus1sigma[j-1] = 0.2*expectedLimit_plus2sigma[j-2]
             
     
     nPoints = len(observedLimit)
+    print nPoints
     gr_observedLimit = rt.TGraph(nPoints, gluinoMassArray, observedLimit)
     gr_observedLimit.SetMarkerColor(1)
     gr_observedLimit.SetMarkerStyle(22)
@@ -332,8 +327,8 @@ if __name__ == '__main__':
     gr_expectedLimit1sigma.SetFillColor(rt.kGreen-7)
     gr_expectedLimit1sigma.SetFillStyle(3001)
 
-    h_limit.SetMaximum(10)
-    h_limit.SetMinimum(1e-4)
+    h_limit.SetMaximum(500)
+    h_limit.SetMinimum(1e-3)
     
     h_limit.Add(gr_expectedLimit2sigma)
     h_limit.Add(gr_expectedLimit1sigma)
@@ -341,10 +336,13 @@ if __name__ == '__main__':
     h_limit.Add(xsec_gr)
     h_limit.Add(xsec_gr_nom)
     h_limit.Draw("a3")
-    if float(LSPmassStrip)==100.:
-        h_limit.GetXaxis().SetLimits(625,1625)
-    elif float(LSPmassStrip)==0.:
-        h_limit.GetXaxis().SetLimits(425,1625)
+    #if float(LSPmassStrip)==100.:
+    #    h_limit.GetXaxis().SetLimits(625,1625)
+    #elif float(LSPmassStrip)==0.:
+    #    h_limit.GetXaxis().SetLimits(425,1625)
+    #elif float(LSPmassStrip)==0.:
+
+    h_limit.GetXaxis().SetLimits(150,800)
     gr_expectedLimit.Draw("c same")
     xsec_gr_nom.Draw("c same")
     gr_observedLimit.Draw("c SAME")
@@ -357,26 +355,26 @@ if __name__ == '__main__':
     l.SetNDC()
     l.DrawLatex(0.32,0.85,"CMS Preliminary");
     l.DrawLatex(0.55,0.85,"#sqrt{s} = 8 TeV    #int L dt = 19.3 fb^{-1}")
-    
-    l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowbb#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
-    
-    l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+"))
-    #l.DrawLatex(0.55,0.719,"%s #geq 1b-tag"%Box.replace("_","+"))
+
+    if model=="T1bbbb":
+        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowbb#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
+    elif model=="T2tt":
+        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{t}#tilde{t};   #tilde{t}#rightarrow t#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
+          
+    l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:22])
+    l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[22:])
     l.SetTextColor(rt.kBlue+2)
     l.DrawLatex(0.55,0.785,"Razor Inclusive")
-    if directory.lower().find("hybrid")!=-1:
-        l.SetTextColor(rt.kOrange+5)   
-        #l.DrawLatex(0.75,0.775,"Hybrid CL_{s}")
-    else:
-        l.SetTextColor(rt.kGreen+1)
-        l.DrawLatex(0.77,0.785,"Asymptotic")
-        l.DrawLatex(0.79,0.71,"Freq. CL_{s}")
 
     leg = rt.TLegend(0.70,0.49,0.9,0.67)
     leg.SetTextFont(132)
     leg.SetFillColor(rt.kWhite)
     leg.SetLineColor(rt.kWhite)
-    leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
+    if model=="T1bbbb":
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
+    elif model =="T2tt":
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
+        
     leg.AddEntry(gr_observedLimit, "observed limit","l")
     leg.AddEntry(gr_expectedLimit, "expected limit","l")
     leg.AddEntry(gr_expectedLimit1sigma, "expected limit #pm 1 #sigma","f")
@@ -393,5 +391,5 @@ if __name__ == '__main__':
         expected = gr_expectedLimit1sigma.Eval(mgl)
         expected = gr_expectedLimit2sigma.Eval(mgl)
         reference = h_xsec.GetBinContent(h_xsec.FindBin(mgl))
-        print "%i, observed xsec = %f, gluino xsec = %f"%(mgl,observed,reference)
-        print "%i, expected xsec = %f, gluino xsec = %f"%(mgl,expected,reference)
+        #print "%i, observed xsec = %f, gluino xsec = %f"%(mgl,observed,reference)
+        #print "%i, expected xsec = %f, gluino xsec = %f"%(mgl,expected,reference)

@@ -9,9 +9,8 @@ from array import *
 def getLnQDataAll(boxes):
     lnQDataBox = []
     for box in boxes:
-        getLnQData
         fileName = getFileName("B",mg,mchi,xsec,box,model,directory)
-        lnQDataBox.append(getLnQData(box, fileName))
+        lnQDataBox.append(max(0.,getLnQData(box, fileName)))
     lnQData = sum(lnQDataBox)
     return lnQData
     
@@ -26,7 +25,7 @@ def getLnQData(box,fileName):
     entry = elist.Next()
     dataTree.GetEntry(entry)
     lnQData = eval('dataTree.LzSR_%s'%box)
-    return lnQData
+    return max(0.,lnQData)
 
 
 def getLnQToys(box,fileName):
@@ -85,8 +84,10 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     for box in boxes:
         LzCut+="H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0.&&"%(box,box,box)
         sumName+="LzSR_%s+"%(box)
+        
     LzCut = LzCut[:-2]
     sumName = sumName[:-1]
+    #LzCut = "%s>0."%sumName
     
     lnQBox = []
     hypoDataSetBox = []
@@ -124,7 +125,6 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
         hypoDataSetBox.append(rt.RooDataSet("hypoDataSet_%s"%box,"hypoDataSet_%s"%box,hypoTreeBox,hypoSetBox))
         #rt.gROOT.ProcessLine("myTree->Delete;")
         #rt.gROOT.ProcessLine("delete myTree;")
-        #hypoDataSetBox[-1].Print("v")
     hypoDataSet = hypoDataSetBox[0].Clone("hypoDataSet")
     hypoDataSet.SetTitle("hypoDataSet")
     for i in xrange(1,len(hypoDataSetBox)):
@@ -147,6 +147,15 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     
     rho = 1.0
     hypoDataSetCut = hypoDataSet.reduce(LzCut)
+    
+    hypoDataSet.Print("v")
+    hypoDataSetCut.Print("v")
+    print "for mg=%.0f, mchi=%.0f, xsec=%.4f, hypo=%s"%(mg,mchi,xsec,hypo)
+    print "number of entries = %i"%(hypoDataSet.numEntries())
+    print "number of cut entries = %i"%(hypoDataSetCut.numEntries())
+    
+    
+    print LzCut
     
     hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
     hypoDataSetCut.fillHistogram(hypoHisto,rt.RooArgList(lnQ),LzCut)
@@ -198,7 +207,10 @@ def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     return getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func)
             
 def getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
-    funcObs = func.Eval(Xobs)
+    print Xobs
+    print Xmax
+    print Xmin
+    #funcObs = func.Eval(Xobs)
     pValKDE = 1
     if func.Integral(Xmin,Xmax) != 0:
         pValKDE = func.Integral(Xobs,Xmax)/func.Integral(Xmin,Xmax)
@@ -339,51 +351,80 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     entry = -1
     xsecVals = array('d')
     CLVals = array('d')
+    xsecList = []
+    clList  =[]
     while True:
         entry = elist.Next()
         if entry == -1: break
         clTree.GetEntry(entry)
         xsecVals.append(clTree.xsec)
-        exec 'CLVals.append(clTree.%s_%s)'%(CL,box)
+        xsecList.append(clTree.xsec)
+        CLVals.append(eval('clTree.%s_%s'%(CL,box)))
+        clList.append(eval('clTree.%s_%s'%(CL,box)))
+        
         
     
     # removing points that are out of order
-    i = 0
-    while i<len(CLVals):
-        if CLVals[i]==0:
-            CLVals.pop(i)
-            xsecVals.pop(i)
-        i+=1
+    # i = 0
+    # while i<len(CLVals):
+    #     if CLVals[i]==0:
+    #         CLVals.pop(i)
+    #         xsecVals.pop(i)
+    #     i+=1
      
-    #print "number of xsec vals", len(xsecVals)
-    #print xsecVals
-    #print CLVals
+    print "number of xsec vals", len(xsecVals)
+    print xsecVals
+    print CLVals
     
-    i = 0
-    j = 1
-    poppedOne = True
-    while len(CLVals) > 1 and poppedOne:
-        poppedOne = False
-        if CLVals[1]>=CLVals[0]:
-            CLVals.pop(0)
-            xsecVals.pop(0)
-            poppedOne = True
-        j+=1
+    # i = 0
+    # j = 1
+    # poppedOne = True
+    # while len(CLVals) > 1 and poppedOne:
+    #     poppedOne = False
+    #     if CLVals[1]>=CLVals[0]:
+    #         CLVals.pop(0)
+    #         xsecVals.pop(0)
+    #         poppedOne = True
+    #     j+=1
     
-    i = 0
-    while  i < len(CLVals):
-        j = i+1
-        while  j < len(CLVals):
-            if CLVals[j]>=CLVals[i]:
-                CLVals.pop(j)
-                xsecVals.pop(j)
-            j+=1
-        i+=1
+    # i = 0
+    # while  i < len(CLVals):
+    #     j = i+1
+    #     while  j < len(CLVals):
+    #         if CLVals[j]>=CLVals[i]:
+    #             CLVals.pop(j)
+    #             xsecVals.pop(j)
+    #         j+=1
+    #     i+=1
+
+    xsecList, clList = (list(q) for q in zip(*sorted(zip(xsecList, clList))))
+
+    CLVals = array('d',clList)
+    xsecVals = array('d',xsecList)
+    
+    slope = [(CLVals[j]-CLVals[j-1])/(xsecVals[j]-xsecVals[j-1]) for j in xrange(1,len(CLVals))]
+    while any([slope[j]>0 for j in xrange(0, len(slope))]):
+        i = 1  
+        while i< len(CLVals):
+            if slope[i-1] > 0:
+                CLVals.pop(i)
+                xsecVals.pop(i)
+            i+=1
+        slope = [(CLVals[j]-CLVals[j-1])/(xsecVals[j]-xsecVals[j-1]) for j in xrange(1,len(CLVals))]
+        
+
+    xsecVals.reverse()
+    CLVals.reverse()
+    xsecVals.append(0)
+    CLVals.append(1.0)
+    xsecVals.reverse()
+    CLVals.reverse()
 
         
-    #print "number of xsec vals", len(xsecVals)
-    #print xsecVals
-    #print CLVals
+    print "number of xsec vals", len(xsecVals)
+    print xsecVals
+    print CLVals
+    
 
     # now making array of erfc inv vals
     erfcInvVals = array('d',[erfcInv(min(CLs,1.0)) for CLs in CLVals])
@@ -423,7 +464,10 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     l.SetTextSize(0.05)
     l.SetTextFont(42)
     l.SetNDC()
-    l.DrawLatex(0.2,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
+    if model=="T2tt":
+        l.DrawLatex(0.2,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
+    elif model=="T1bbbb":
+        l.DrawLatex(0.2,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
     l.DrawLatex(0.25,0.8,"#sigma^{95%%CL} = %.4f pb"%(xsecUL))
     erfcTGraph.GetXaxis().SetTitle("Erfc(CL_{s})")
     erfcTGraph.GetYaxis().SetTitle("#sigma [pb]")
@@ -693,8 +737,8 @@ def writeCLTree(mg,mchi,xsec, box, model, directory, CLs, CLsExp):
 
 
 
-def getXsecRange(model,neutralinopoint,gluinopoint):
-    mDelta = (gluinopoint*gluinopoint - neutralinopoint*neutralinopoint)/gluinopoint
+def getXsecRange(model,neutralinoMass,gluinoMass):
+    mDelta = (gluinoMass*gluinoMass - neutralinoMass*neutralinoMass)/gluinoMass
     
     if model=="T1bbbb":
         if mDelta < 400:
@@ -704,8 +748,18 @@ def getXsecRange(model,neutralinopoint,gluinopoint):
         else:
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
-        if mDelta < 500:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.]
+        topMass = 175.
+        mDelta = sqrt(max(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/gluinoMass , 2) - pow(topMass,2),0))
+        if gluinoMass < 2*topMass:
+            xsecRange = [0.5, 1., 5., 10., 50., 100., 500.]
+        elif mDelta < 200:
+            xsecRange = [0.5, 1., 5., 10., 50., 100., 500.]
+        elif mDelta < 300:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
 
@@ -718,19 +772,33 @@ if __name__ == '__main__':
     directory = sys.argv[3]
 
     
-    if model=="T1bbbb":
-        gchipairs = [( 400,  50), ( 550,  50), ( 600,  50), ( 700,  50), ( 775,  50), ( 825,  50), ( 925,  50), ( 950,  50), (1025,  50), (1075,  50), (1125,  50), (1225,  50), (1325,  50), (1375,  50),
-                     ( 400, 200), ( 550, 200), ( 600, 200), ( 700, 200), ( 775, 200), ( 825, 200), ( 925, 200), ( 950, 200), (1025, 200), (1075, 200), (1125, 200), (1225, 200), (1325, 200), (1375, 200),
-                     ( 400, 300), ( 550, 300), ( 600, 300), ( 700, 300), ( 775, 300), ( 825, 300), ( 925, 300), ( 950, 300), (1025, 300), (1075, 300), (1125, 300), (1225, 300), (1325, 300), (1375, 300),
-                                  ( 550, 400), ( 600, 400), ( 700, 400), ( 775, 400), ( 825, 400), ( 925, 400), ( 950, 400), (1025, 400), (1075, 400), (1125, 400), (1225, 400), (1325, 400), (1375, 400),
-                                               ( 600, 500), ( 700, 500), ( 775, 525), ( 825, 525), ( 925, 525), ( 950, 525), (1025, 525), (1075, 525), (1125, 525), (1225, 525), (1325, 525), (1375, 525),
-                                                            ( 700, 600), ( 775, 600), ( 825, 600), ( 925, 600),  (950, 600), (1025, 600), (1075, 600), (1125, 600), (1225, 600), (1325, 600), (1375, 600),
-                                                            ( 700, 650), ( 775, 650), ( 825, 650), ( 925, 650), ( 950, 650), (1025, 650), (1075, 650), (1125, 650), (1225, 650), (1325, 650), (1375, 650),
-                                                                         ( 775, 700), ( 825, 700), ( 925, 700), ( 950, 700), (1025, 700), (1075, 700), (1125, 700), (1225, 700), (1325, 700), (1375, 700),
-                                                                                      ( 825, 800), ( 925, 800), ( 950, 800), (1025, 800), (1075, 800), (1125, 800), (1225, 800), (1325, 800), (1375, 800)]
+    if model=="T1bbbb": 
+        gchipairs = []
+        histoFileName = sys.argv[4]
+        histoFile = rt.TFile.Open(histoFileName)
+        histo = histoFile.Get("T1bbbb_MultiJet")
+        for mg in xrange(450, 1200, 50):
+            for mchi in xrange(450, 750, 50):
+                if histo.GetBinContent(histo.FindBin(mg,mchi)):
+                    if mchi!=0:
+                        gchipairs.append((mg,mchi))
+
+        print gchipairs
+        print len(gchipairs)
+        gchipairs.extend([( 400,  50), ( 550,  50), ( 600,  50), ( 700,  50), ( 775,  50), ( 825,  50), ( 925,  50),              (1025,  50), (1075,  50), (1125,  50), (1225,  50), (1325,  50), (1375,  50),
+                          ( 400, 200), ( 550, 200), ( 600, 200), ( 700, 200), ( 775, 200), ( 825, 200), ( 925, 200),              (1025, 200), (1075, 200), (1125, 200), (1225, 200), (1325, 200), (1375, 200),
+                          ( 400, 300), ( 550, 300), ( 600, 300), ( 700, 300), ( 775, 300), ( 825, 300), ( 925, 300),              (1025, 300), (1075, 300), (1125, 300), (1225, 300), (1325, 300), (1375, 300),
+                          ( 550, 400), ( 600, 400), ( 700, 400), ( 775, 400), ( 825, 400), ( 925, 400),              (1025, 400), (1075, 400), (1125, 400), (1225, 400), (1325, 400), (1375, 400),
+                          ( 775, 525), ( 825, 525), ( 925, 525), ( 950, 525), (1025, 525), (1075, 525), (1125, 525), (1225, 525), (1325, 525), (1375, 525),
+                          ( 700, 600), ( 775, 600), ( 825, 600), ( 925, 600), ( 950, 600), (1025, 600), (1075, 600), (1125, 600), (1225, 600), (1325, 600), (1375, 600),
+                          ( 700, 650), ( 775, 650), ( 825, 650), ( 925, 650), ( 950, 650), (1025, 650), (1075, 650), (1125, 650), (1225, 650), (1325, 650), (1375, 650),
+                          ( 775, 700), ( 825, 700), ( 925, 700), ( 950, 700), (1025, 700), (1075, 700), (1125, 700), (1225, 700), (1325, 700), (1375, 700),
+                          ( 825, 800), ( 925, 800), ( 950, 800), (1025, 800), (1075, 800), (1125, 800), (1225, 800), (1325, 800), (1375, 800)])
+        
     elif model=="T2tt":
-        gchipairs = [(150, 50), (200, 50), (250, 50), (300, 50), (350, 50), (400, 50), (450, 50),
+        gchipairs = [(200, 50), (250, 50), (300, 50), (350, 50), (400, 50), (450, 50),
                      (500, 50), (550, 50), (600, 50), (650, 50), (700, 50), (750, 50), (800, 50)]
+                     #gchipairs = [(700, 50), (750, 50), (800, 50)]
     
 
     
@@ -764,7 +832,7 @@ if __name__ == '__main__':
                         anyfilesNotFound.append(not glob.glob(getFileName("B",mg,mchi,xsec,box,model,directory)+"*"))
                     if any(anyfilesNotFound): continue
                     xsecString = str(xsec).replace(".","p")
-                    if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))): continue
+                    #if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))): continue
                     CLs = []
                     CLsExp = []
                     CLsBox,CLsExpBox  = getCLsAll(mg, mchi, xsec, boxes, model, directory)
