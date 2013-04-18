@@ -39,12 +39,10 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
     elif model=="T1tttt":
         topMass = 175.
         mDelta = math.sqrt(max(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2*topMass,2) )/gluinoMass , 2) - pow(2*topMass,2),0))
-        if gluinoMass < 2*topMass:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
-        elif mDelta < 600:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
+        if mDelta < 700:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5., 10.]
         elif mDelta < 800:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
         else:
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05, 0.1]
           
