@@ -45,9 +45,8 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
     return xsecRange
 
     
-def writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
+def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 125 # toys per command
-
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -108,9 +107,20 @@ def writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
 
     return outputname,ffDir
 if __name__ == '__main__':
+    if len(sys.argv) < 5:
+        print "\nRun the script as follows:\n"
+        print "python scripts/runHybridLimits.py Box Model Queue CompletedOutputTextFile"
+        print "with:"
+        print "- Box = name of the Box (MuMu, MuEle, etc.)"
+        print "- Model = T1bbbb, T1tttt, T2tt, etc. "
+        print "- Queue = 1nh, 8nh, 1nd, etc."
+        print "- CompletedOutputTextFile = text file containing all completed output files"
+        print ""
+        sys.exit()
     box = sys.argv[1]
     model = sys.argv[2]
     queue = sys.argv[3]
+    done  = sys.argv[4]
     
     nJobs = 12 # do 250 toys each job => 3000 toys
     
@@ -193,6 +203,16 @@ if __name__ == '__main__':
 
     hypotheses = ["B","SpB"]
 
+    # for compting what jobs are left:
+    doneFile = open(done)
+    outFileList = [outFile.replace("Razor2013HybridLimit_","").replace(".root\n","") for outFile in doneFile.readlines()]
+
+    # dictionary of src file to output file names
+    nToys = 125 # toys per command
+    srcDict = {}
+    for i in xrange(0,12):
+        srcDict[i] = ["%i-%i"%(2*i*nToys,(2*i+1)*nToys-1), "%i-%i"%((2*i+1)*nToys, (2*i+2)*nToys-1)]
+        
     totalJobs = 0
     for gluinopoint, neutralinopoint in gchipairs:
         xsecRange = getXsecRange(box,model,neutralinopoint,gluinopoint)
@@ -200,13 +220,23 @@ if __name__ == '__main__':
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
-                    outputname,ffDir = writeBashScript(box,model,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                    xsecstring = str(xsecpoint).replace(".","p")
+                    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+                    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
+                    output0 = str(outputname.replace("submit/submit_","").replace("xsec",""))
+                    output1 = str(outputname.replace("submit/submit_","").replace("xsec",""))
+                    for i in xrange(0,12):
+                        output0 = output0.replace("B_%i.src"%i,"B_%s"%srcDict[i][0])
+                        output1 = output1.replace("B_%i.src"%i,"B_%s"%srcDict[i][1])
+                    if output0 in outFileList and output1 in outFileList: continue
+                        
+                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
-                    #time.sleep(3)
-                    #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    time.sleep(3)
+                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                     #os.system("source "+pwd+"/"+outputname)
                         
     print "Total jobs = ", totalJobs
