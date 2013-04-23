@@ -20,9 +20,8 @@ def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, label):
     output.Close()
     return data.numEntries()
 
-def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, calo, useWeight, write = True):
+def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run, calo, useWeight, isMC, write = True):
     """This defines the format of the RooDataSet"""
-    MC = False
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
     workspace.factory('W[0,0,+INF]')
@@ -64,13 +63,13 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     elif  box == "MuEle" or box == "EleEle" or box == "Ele" or box == "EleTau":
         triggerReq = "HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR30_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR40_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR45_Rsq0p04_MR200"
 
-    if useWeight or MC:
+    if useWeight or isMC:
         triggerReq = "MR>0."
         noiseCut = "MR>0."
 
     #iterate over selected entries in the input tree
     if not calo:
-        if MC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
+        if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
         else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && (BOX_NUM == %i) && GOOD_PF && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
     else:
         tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && (BOX_NUM == %i) && GOOD_CALO && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxMap[box],noiseCut,triggerReq),'entrylist')
@@ -101,7 +100,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         
         if not calo:
             a.setRealValue('MR',tree.MR)
-            if MC:
+            if isMC:
                 a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
                 a.setRealValue('Rsq',tree.RSQ)
             else:
@@ -184,6 +183,8 @@ if __name__ == '__main__':
                   help="Use CALO jets, instead of PF jets")
     parser.add_option('-w','--weight',dest="useWeight",default=False,action='store_true',
                   help="Use weights, if available, default is WXSEC")
+    parser.add_option('--MC',dest="isMC",default=False,action='store_true',
+                  help="Slightly different variables for MC")
       
     (options,args) = parser.parse_args()
     
@@ -202,18 +203,18 @@ if __name__ == '__main__':
             if not options.eff:
                 #dump the trees for the different datasets
                 if options.box != None:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.calo,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
             
