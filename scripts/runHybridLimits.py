@@ -8,25 +8,26 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
     if gluinopoint == 200:
-        return [0.01, 0.1, 1.0, 10.0, 20.0]
+        return [0.05, 0.1, 0.2, 0.4, 0.8]
     elif gluinopoint == 300:
-        return [0.01, 0.1, 0.5, 1.0, 10.0]
+        return [0.05, 0.1, 0.2, 0.4, 0.8]
     elif gluinopoint == 400:
-        return [0.001, 0.01, 0.1, 0.5, 1.0]
+        return [0.005, 0.02, 0.05, 0.2, 0.4]
     elif gluinopoint == 500:
-        return [0.001, 0.01, 0.1, 0.5, 1.0]
+        return [0.005, 0.02, 0.05, 0.2, 0.4]
     elif gluinopoint == 550:
-        return [0.001, 0.01, 0.1, 0.5, 1.0]
+        return [0.005, 0.02, 0.05, 0.2, 0.4]
     elif gluinopoint == 600:
-        return [0.001, 0.01, 0.1, 0.5]
+        return [0.001, 0.005, 0.02, 0.05, 0.08]
     elif gluinopoint == 650:
-        return [0.0001, 0.001, 0.01, 0.1, 0.5]
+        return [0.001, 0.005, 0.02, 0.05, 0.08]
     elif gluinopoint == 700:
-        return [0.0001, 0.001, 0.01,0.05, 0.1]    
+        return [0.001, 0.005, 0.02, 0.05, 0.08]
     elif gluinopoint == 800:
-        return [ 0.0001, 0.001, 0.01,0.05, 0.1]
+        return [0.001, 0.005, 0.02, 0.05, 0.08]
     else:
-        return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        return []
+
 
 
     
@@ -124,7 +125,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         
 
     # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root $HOME/workspace/RazorStops/ScanHybridEle_mLSP_50/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root /afs/cern.ch/work/l/lucieg/private/workspace/RazorStops/ScanHybridEle_mLSP_50/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
@@ -139,16 +140,16 @@ if __name__ == '__main__':
     #gluinopoints = [200,250, 300, 350, 400,450, 500, 550, 600, 650, 700, 750, 800]
     gluinopoints = [200, 300, 400, 500, 550, 600, 650, 700, 800]
     neutralinopoints = [50]
-    queue = "2nd"
+    queue = "1nd"
     
     pwd = os.environ['PWD']
     
     submitDir = "submit"
-    outputDir = "output"+box
+    outputDir = "/afs/cern.ch/work/l/lucieg/private/output"+box
     
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))
-
+    os.system("mkdir -p /afs/cern.ch/work/l/lucieg/private/workspace/RazorStops/ScanHybridEle_mLSP_50/")
     hypotheses = ["B","SpB"]
 
     for neutralinopoint in neutralinopoints:
