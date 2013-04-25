@@ -24,9 +24,11 @@ from Boxes import *
 # Find the probability of an event having at least one btag
 def findBTagProb(jets, efftype = 'data', SFerrdir = 0, doLight = False, CFerrdir = 0):
     pr_j = 1
+    count = 0
     for j in jets:
         if j.pt < 30 or abs(j.eta) > 2.4 or j.btagv < 0:
             continue
+        count +=1
         eff_fast, eff_fastE = tagger.getEfficiencyFastSim(j.btagv, j.pt, j.eta, j.partonFlavour)
         #FF: full factor = SF*CF
         SF, SFerr = tagger.getBTagScaleFullSim(j.btagv, j.pt, j.eta, j.partonFlavour)
@@ -46,7 +48,7 @@ def findBTagProb(jets, efftype = 'data', SFerrdir = 0, doLight = False, CFerrdir
         if efftype == 'fast':
             eff = eff_fast
         pr_j = pr_j*(1 - eff)
-
+        
     pr_e = 1 - pr_j
     return pr_e
 
@@ -58,7 +60,7 @@ def findLeptonProb(flavor, pt, eta, efftype = 'data', errDir = 0):
         SFID = eleScaling.getScaleFactor(pt, eta, errDir)
         SFIso = 0
         SFTrigger = 0
-        
+
     return SFID, SFIso, SFTrigger 
 
 
@@ -355,15 +357,18 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         EIsoDown     = abs( SFIso_nominal - SFIso_Down )
         ETriggerDown = abs( SFTrigger_nominal - SFTrigger_Down )
 
-        lepw_up = rt.TMath.Sqrt( EIDUp*EIDUp + EIsoUp*EIsoUp + ETriggerUp*ETriggerUp )
-        lepw_dw = rt.TMath.Sqrt( EIDDown*EIDDown + EIsoDown*EIsoDown + ETriggerDown*ETriggerDown )
-    
+        lepw_Eup = rt.TMath.Sqrt( EIDUp*EIDUp + EIsoUp*EIsoUp + ETriggerUp*ETriggerUp )
+        lepw_Edw = rt.TMath.Sqrt( EIDDown*EIDDown + EIsoDown*EIsoDown + ETriggerDown*ETriggerDown )
+
+        lepw_up  = SFID_nominal*SFIso_nominal*SFTrigger_nominal + lepw_Eup
+        lepw_dw  = SFID_nominal*SFIso_nominal*SFTrigger_nominal - lepw_Edw
+        
         # Fill the histograms:
 
         MR = tree.MR
         RSQ = tree.RSQ
 
-        print 'weight', weight
+        #print 'weight', weight
 
         
         wHisto.Fill(MR, RSQ, weight*btw_nominal)
@@ -582,8 +587,8 @@ if __name__ == '__main__':
     
    ##  convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
  ##   convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-##    convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
+##    convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
    
 
 
