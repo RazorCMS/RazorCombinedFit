@@ -77,10 +77,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
     
-    outputfile.write("scramv1 project CMSSW CMSSW_5_2_4_patch1\n")
-    outputfile.write("cd CMSSW_5_2_4_patch1/src\n")
-    outputfile.write("eval `scramv1 run -sh`\n")
-    outputfile.write("source /share/apps/root_v5.34.05/bin/thisroot.sh\n")
+    outputfile.write("source /home/jduarte/.bashrc\n")
     outputfile.write("cp /home/jduarte/work/RAZORLIMITS/RazorCombinedFit.tar.gz .\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("mkdir lib\n")
@@ -100,8 +97,10 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     nToyOffset = nToys*(2*t+1)
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
-    outputfile.write("cp $WD/CMSSW_5_2_4_patch1/src/RazorCombinedFit/*.root %s \n"%hybridDir)
+    outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")
+    
+    return outputname,ffDir
     
 def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 125 # toys per command
