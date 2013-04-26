@@ -45,6 +45,64 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
     return xsecRange
 
     
+def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
+    nToys = 125 # toys per command
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+    # prepare the script to run
+    xsecstring = str(xsecpoint).replace(".","p")
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".sge"
+    outputfile = open(outputname,'w')
+    
+    label = ""
+
+    if box in ["Ele", "EleTau","EleEle","MuEle","MuMu","Mu","MuTau"]:
+       label = "MR300.0_R0.387298334621"
+    else:
+       label = "MR400.0_R0.5"
+        
+
+    tagHypo = ""
+    if hypo == "B":
+        tagHypo = "-e"
+        
+    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
+    user = os.environ['USER']
+    
+    hybridDir = "/home/%s/work/RAZORLIMITS/Hybrid/"%(user)
+    
+    
+    outputfile.write('#$ -S /bin/sh\n')
+    outputfile.write('#$ -cwd\n')
+    outputfile.write("export WD=/wntmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("mkdir -p $WD\n")
+    outputfile.write("cd $WD\n")
+    
+    outputfile.write("scramv1 project CMSSW CMSSW_5_2_4_patch1\n")
+    outputfile.write("cd CMSSW_5_2_4_patch1/src\n")
+    outputfile.write("eval `scramv1 run -sh`\n")
+    outputfile.write("source /share/apps/root_v5.34.05/bin/thisroot.sh\n")
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/RazorCombinedFit.tar.gz .\n")
+    outputfile.write("cd RazorCombinedFit\n")
+    outputfile.write("mkdir lib\n")
+    outputfile.write("source setup.sh\n")
+    outputfile.write("make clean; make\n")
+    
+    outputfile.write("export NAME=\"%s\"\n"%model)
+    outputfile.write("export LABEL=\"%s\"\n"%label)
+    
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Background/FullFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
+    
+    nToyOffset = nToys*(2*t)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    
+    nToyOffset = nToys*(2*t+1)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+
+    outputfile.write("cp $WD/CMSSW_5_2_4_patch1/src/RazorCombinedFit/*.root %s \n"%hybridDir)
+    outputfile.write("cd; rm -rf $WD\n")
+    
 def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 125 # toys per command
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
@@ -71,7 +129,6 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     hybridDir = "/afs/cern.ch/work/%s/%s/RAZORLIMITS/Hybrid/"%(user[0],user)
     
     outputfile.write('#!/usr/bin/env bash -x\n')
-    
     outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
@@ -121,6 +178,9 @@ if __name__ == '__main__':
     model = sys.argv[2]
     queue = sys.argv[3]
     done  = sys.argv[4]
+    t3 = False
+    for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--t3")!=-1: t3 = True
     
     nJobs = 12 # do 250 toys each job => 3000 toys
     
@@ -229,14 +289,25 @@ if __name__ == '__main__':
                         output0 = output0.replace("B_%i.src"%i,"B_%s"%srcDict[i][0])
                         output1 = output1.replace("B_%i.src"%i,"B_%s"%srcDict[i][1])
                     if output0 in outFileList and output1 in outFileList: continue
-                        
-                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                    totalJobs+=1
-                    time.sleep(3)
-                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                    #os.system("source "+pwd+"/"+outputname)
+                    if t3:
+                        outputname,ffDir = writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        totalJobs+=1
+                        time.sleep(3)
+                        #queues = "all.q@compute-2-2.local,all.q@compute-2-4.local,all.q@compute-3-10.local,all.q@compute-3-11.local,all.q@compute-3-12.local,all.q@compute-3-2.local,all.q@compute-3-3.local,all.q@compute-3-4.local,all.q@compute-3-5.local,all.q@compute-3-6.local,all.q@compute-3-7.local,all.q@compute-3-8.local,all.q@compute-3-9.local"
+                        queues = "all.q@compute-2-2.local"
+                        os.system("echo qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("source "+pwd+"/"+outputname)
+                    else:    
+                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        totalJobs+=1
+                        time.sleep(3)
+                        #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("source "+pwd+"/"+outputname)
                         
     print "Total jobs = ", totalJobs
