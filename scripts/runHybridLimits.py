@@ -79,6 +79,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     
     outputfile.write("source /home/jduarte/.bashrc\n")
     outputfile.write("cp /home/jduarte/work/RAZORLIMITS/RazorCombinedFit.tar.gz .\n")
+    outputfile.write("tar -xvzf RazorCombinedFit.tar.gz\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("mkdir lib\n")
     outputfile.write("source setup.sh\n")
@@ -273,6 +274,7 @@ if __name__ == '__main__':
         srcDict[i] = ["%i-%i"%(2*i*nToys,(2*i+1)*nToys-1), "%i-%i"%((2*i+1)*nToys, (2*i+2)*nToys-1)]
         
     totalJobs = 0
+    missingFiles = 0
     for gluinopoint, neutralinopoint in gchipairs:
         xsecRange = getXsecRange(box,model,neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
@@ -287,7 +289,14 @@ if __name__ == '__main__':
                     for i in xrange(0,12):
                         output0 = output0.replace("B_%i.src"%i,"B_%s"%srcDict[i][0])
                         output1 = output1.replace("B_%i.src"%i,"B_%s"%srcDict[i][1])
-                    if output0 in outFileList and output1 in outFileList: continue
+                    runJob = False
+                    if output0 not in outFileList: 
+                        missingFiles+=1
+                        runJob = True
+                    if output1 not in outFileList:
+                        missingFiles+=1
+                        runJob = True
+                    if not runJob: continue
                     if t3:
                         outputname,ffDir = writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
@@ -299,8 +308,8 @@ if __name__ == '__main__':
                         #os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
-                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        #outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        #os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
                         #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
@@ -308,5 +317,5 @@ if __name__ == '__main__':
                         os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
-                        
+    print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
