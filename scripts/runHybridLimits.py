@@ -308,8 +308,8 @@ if __name__ == '__main__':
                         #os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
-                        #outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        #os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
                         #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
