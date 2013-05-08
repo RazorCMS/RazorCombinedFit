@@ -320,6 +320,127 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
         workspace = rt.RooWorkspace('newws')
         
+        def reset(box, fr, fixSigma = True, random = False):
+            # fix all parameters
+            box.fixAllPars()
+            
+            for z in box.zeros:
+                box.fixPars(z)
+                if box.name in box.zeros[z]:
+                    box.switchOff(z)
+            # float background shape parameters
+            if not random:
+                zeroIntegral = False
+                argList = fr.floatParsFinal()
+                for p in RootTools.RootIterator.RootIterator(argList):
+                    box.workspace.var(p.GetName()).setVal(p.getVal())
+                    box.workspace.var(p.GetName()).setError(p.getError())
+                    box.fixParsExact(p.GetName(),False)
+                    print "INITIALIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
+            else:
+                zeroIntegral = True
+                randomizeAttempts = 0
+                components = ['TTj1b','TTj2b','Vpj']
+                componentsOn = [comp for comp in components if box.workspace.var('Ntot_%s'%comp).getVal()]
+                print "The components on are ", componentsOn
+                while zeroIntegral and randomizeAttempts<5:
+                    argList = fr.randomizePars()
+                    for p in RootTools.RootIterator.RootIterator(argList):
+                        box.workspace.var(p.GetName()).setVal(p.getVal())
+                        box.workspace.var(p.GetName()).setError(p.getError())
+                        box.fixParsExact(p.GetName(),False)
+                        print "RANDOMIZE PARAMETER %s = %f +- %f"%(p.GetName(),p.getVal(),p.getError())
+                    # check how many error messages we have before evaluating pdfs
+                    errorCountBefore = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT BEFORE = %i"%errorCountBefore
+                    # evaluate each pdf, assumed to be called "RazPDF_{component}"
+                    if box.name=="Jet1b": pdfname = "PDF"
+                    pdfname = "RazPDF"
+                    badPars = []
+                    myvars = rt.RooArgSet(box.workspace.var('MR'),box.workspace.var('Rsq'))
+                    for component in componentsOn:
+                        pdfComp = box.workspace.pdf("%s_%s"%(pdfname,component))
+                        pdfValV = pdfComp.getValV(myvars)
+                        badPars.append(box.workspace.var('n_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('b_%s'%component).getVal() <= 0)
+                        badPars.append(box.workspace.var('MR0_%s'%component).getVal() >= box.workspace.var('MR').getMin())
+                        badPars.append(box.workspace.var('R0_%s'%component).getVal()  >=  box.workspace.var('Rsq').getMin())
+                        print badPars
+                    # check how many error messages we have after evaluating pdfs
+                    errorCountAfter = rt.RooMsgService.instance().errorCount()
+                    print "RooMsgService ERROR COUNT AFTER  = %i"%errorCountAfter
+                    zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
+                    randomizeAttempts+=1
+            
+            # fix signal nuisance parameters
+            for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
+                p.setVal(0.)
+                box.fixParsExact(p.GetName(),True)
+                
+            # float poi or not
+            box.fixParsExact("sigma",fixSigma)
+            
+            return not zeroIntegral
+        
+        def getProfile(box, ds, fr, Extend=True, norm_region = 'LowRsq,LowMR,HighMR'):
+            reset(box, fr, fixSigma=False)
+            #setNorms(box, ds)
+        
+            opt = rt.RooLinkedList()
+            opt.Add(rt.RooFit.Range(norm_region))
+            opt.Add(rt.RooFit.Extended(True))
+            opt.Add(rt.RooFit.Save(True))
+            opt.Add(rt.RooFit.Hesse(True))
+            opt.Add(rt.RooFit.Minos(False))
+            opt.Add(rt.RooFit.PrintLevel(-1))
+            opt.Add(rt.RooFit.PrintEvalErrors(10))
+            #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+            
+            pNll = box.getFitPDF(name=box.signalmodel).createNLL(ds,opt)
+            pNll.Print("v")
+            fr_SpB = box.getFitPDF(name=box.signalmodel).fitTo(ds,opt)
+            
+            box.workspace.var("sigma").setVal(self.options.signal_xsec)
+            box.workspace.var("sigma").setConstant(False)
+            
+            print box.workspace.var("sigma").getVal()
+            fr_SpB.Print("v")
+            
+            pProfile = pNll.createProfile(box.workspace.set('poi'))
+            rt.gStyle.SetOptTitle(0)
+            frame = box.workspace.var('sigma').frame(rt.RooFit.Bins(5),rt.RooFit.Range(-0.01,0.01),rt.RooFit.Title(""))
+            pNll.plotOn(frame,rt.RooFit.ShiftToZero(),rt.RooFit.Name("pNll"))
+            #pProfile.plotOn(frame,rt.RooFit.LineColor(rt.kRed),rt.RooFit.Name("pProfile"))
+            prof = rt.TCanvas("prof","prof",500,400)
+            frame.SetMinimum(0)
+            frame.SetMaximum(3)
+            frame.SetXTitle("#sigma [pb]")
+            frame.SetYTitle("-2 #Delta log L")
+            frame.SetTitleSize(0.05,"X")
+            frame.SetTitleOffset(0.8,"X")
+            frame.SetTitleSize(0.05,"Y")
+            frame.SetTitleOffset(0.8,"Y")
+            
+            frame.Draw()
+            leg = rt.TLegend(0.2,0.7,0.5,0.85)
+            leg.SetTextFont(42)
+            leg.SetFillColor(rt.kWhite)
+            leg.SetLineColor(rt.kWhite)
+            #leg.AddEntry("pNll", "L(data|#sigma,#hat{#theta}_{#hat{#sigma}})","l")
+            #leg.AddEntry("pProfile", "L(data|#sigma,#hat{#theta}_{#sigma})","l")
+            leg.AddEntry("pNll", "L(#sigma*=%.2f|#sigma,#hat{#theta}_{#hat{#sigma}})"%self.options.signal_xsec,"l")
+            leg.AddEntry("pProfile", "L(#sigma*=%.2f|#sigma,#hat{#theta}_{#sigma})"%self.options.signal_xsec,"l")
+            leg.Draw()
+            
+            l = rt.TLatex()
+            l.SetTextAlign(12)
+            l.SetTextSize(0.05)
+            l.SetTextFont(42)
+            l.SetNDC()
+            l.DrawLatex(0.2,0.95,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV, %s Box"%(1225,50,box.name))
+            prof.Print("profileLL"+ds.GetName()+".pdf")
+
+            
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             # restore the workspace now
@@ -359,58 +480,64 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # get the signal+background toy (no nuisnaces)
             SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+            reset(boxes[box], fr_B, fixSigma = True)
             tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
+                    
             print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
             print "SpB Yield = %f" %tot_toy.numEntries()
             tot_toy.SetName("sigbkg")
             
-            RootTools.Utils.importToWS(workspace,tot_toy)
+            #RootTools.Utils.importToWS(workspace,SpBModel)
+            #RootTools.Utils.importToWS(workspace,tot_toy)
             #boxes[box].importToWS(tot_toy)
-
+            
+            getProfile(boxes[box], tot_toy, fr_B, Extend=True)
+            
             # define the fit range
-            fit_range = boxes[box].fitregion
-            
-            opt = rt.RooLinkedList()
-            opt.Add(rt.RooFit.Range(fit_range))
-            opt.Add(rt.RooFit.Extended(True))
-            opt.Add(rt.RooFit.Save(True))
-            opt.Add(rt.RooFit.Hesse(True))
-            opt.Add(rt.RooFit.Minos(False))
-            opt.Add(rt.RooFit.PrintLevel(-1))
-            opt.Add(rt.RooFit.PrintEvalErrors(10))
-            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
-            fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
-            fr.SetName('independentFRsigbkg')
-            fr.Print("v")
-            boxes[box].importToWS(fr)
-            RootTools.Utils.importToWS(workspace,fr)
+            #fit_range = boxes[box].fitregion
+            
+            #opt = rt.RooLinkedList()
+            #opt.Add(rt.RooFit.Range(fit_range))
+            #opt.Add(rt.RooFit.Extended(True))
+            #opt.Add(rt.RooFit.Save(True))
+            #opt.Add(rt.RooFit.Hesse(True))
+            #opt.Add(rt.RooFit.Minos(False))
+            #opt.Add(rt.RooFit.PrintLevel(-1))
+            #opt.Add(rt.RooFit.PrintEvalErrors(10))
+            #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
-            RootTools.Utils.importToWS(workspace,boxes[box].workspace.set('variables'))
-            RootTools.Utils.importToWS(workspace,boxes[box].getFitPDF(name=boxes[box].fitmodel))
+            #fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+            #fr.SetName('independentFRsigbkg')
+            #fr.Print("v")
+            #boxes[box].importToWS(fr)
+            #RootTools.Utils.importToWS(workspace,fr)
+
+            # RootTools.Utils.importToWS(workspace,boxes[box].workspace.set('variables'))
+            # RootTools.Utils.importToWS(workspace,boxes[box].getFitPDF(name=boxes[box].fitmodel))
             
-            boxes[box].defineSet("variables", self.config.getVariables(box, "variables"),workspace)
+            # boxes[box].defineSet("variables", self.config.getVariables(box, "variables"),workspace)
             
-            boxes[box].defineSet("pdfpars_TTj2b", self.config.getVariables(box, "pdf_TTj2b"),workspace)
-            boxes[box].defineSet("otherpars_TTj2b", self.config.getVariables(box, "others_TTj2b"),workspace)
-            boxes[box].defineSet("btagpars_TTj2b", self.config.getVariables(box, "btag_TTj2b"),workspace)
+            # boxes[box].defineSet("pdfpars_TTj2b", self.config.getVariables(box, "pdf_TTj2b"),workspace)
+            # boxes[box].defineSet("otherpars_TTj2b", self.config.getVariables(box, "others_TTj2b"),workspace)
+            # boxes[box].defineSet("btagpars_TTj2b", self.config.getVariables(box, "btag_TTj2b"),workspace)
             
-            boxes[box].defineSet("pdfpars_TTj1b", self.config.getVariables(box, "pdf_TTj1b"),workspace)
-            boxes[box].defineSet("otherpars_TTj1b", self.config.getVariables(box, "others_TTj1b"),workspace)
-            boxes[box].defineSet("btagpars_TTj1b", self.config.getVariables(box, "btag_TTj1b"))
+            # boxes[box].defineSet("pdfpars_TTj1b", self.config.getVariables(box, "pdf_TTj1b"),workspace)
+            # boxes[box].defineSet("otherpars_TTj1b", self.config.getVariables(box, "others_TTj1b"),workspace)
+            # boxes[box].defineSet("btagpars_TTj1b", self.config.getVariables(box, "btag_TTj1b"))
             
-            boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"),workspace)
-            boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"),workspace)
-            boxes[box].defineSet("btagpars_Vpj", self.config.getVariables(box, "btag_Vpj"),workspace)
+            # boxes[box].defineSet("pdfpars_Vpj", self.config.getVariables(box, "pdf_Vpj"),workspace)
+            # boxes[box].defineSet("otherpars_Vpj", self.config.getVariables(box, "others_Vpj"),workspace)
+            # boxes[box].defineSet("btagpars_Vpj", self.config.getVariables(box, "btag_Vpj"),workspace)
             
-            boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
+            # boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
             
-            workspace.Print("v")
-            self.store(fr, name = 'independentFRsigbkg', dir=box)
-            self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
+            #self.store(fr, name = 'independentFRsigbkg', dir=box)
+            #self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
             
             #make any plots required
-            boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
+            boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].signalmodel, frName='independentFRsigbkg')
+
             
         #skip saving the workspace if the option is set
         if not self.options.nosave_workspace:
@@ -514,7 +641,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             opt.Add(rt.RooFit.Minos(False))
             opt.Add(rt.RooFit.PrintLevel(-1))
             opt.Add(rt.RooFit.PrintEvalErrors(10))
-            opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+            #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
 
             #L(s,^th_s|x)
