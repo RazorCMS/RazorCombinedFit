@@ -34,10 +34,13 @@ def getXsecRange(box,neutralinopoint,gluinopoint):
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
 
-    name = "SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.22360679775"
-    #"SMS_T2tt_mLSP50_apr3_MR350.0_R0.22360679775"
+    if box == 'Mu' or box == 'Ele':
+        name = "SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.22360679775"
+    else : #assume bjetHS or bjetLS
+        name = "SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR500.0_R0.22360679775"
+    
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
-    #massPoint = "%.1f_0.0"%gluinopoint
+
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
     outputname = submitDir+"/submit_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
@@ -75,18 +78,9 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/350_0_05/FitRegion/Run2012ABCD_Fit_Ele-120313.root $PWD\n")
     elif box == 'Mu':
         outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/350_0_05/FitRegion/Run2012ABCD_Fit_Mu-120313.root $PWD\n")
-        #outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/500_0_05/FitRegion/Run2012ABCD_Fit_Lep-280113.root $PWD\n")
+      
 
-
-    if box == 'BJetHS':
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJetHS.root $PWD\n"%(name,massPoint))
-    elif box == 'BJetLS':
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJetLS.root $PWD\n"%(name,massPoint))
-    elif box == 'Mu':
-        outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_May3rd/%s_%s_Mu.root $PWD\n"%(name,massPoint))
-    elif box == 'Ele':
-        outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_May3rd/%s_%s_Ele.root $PWD\n"%(name,massPoint))
-
+    outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_May3rd/%s_%s_%s.root $PWD\n"%(name,massPoint,box))
                 
     if box == 'had':
         nToyOffset = nToys*(2*t)
@@ -138,7 +132,6 @@ if __name__ == '__main__':
     timestamp = str(datetime.date.today())
     print box
     
-    #gluinopoints = [200,250, 300, 350, 400,450, 500, 550, 600, 650, 700, 750, 800]
     gluinopoints = [ 500, 525, 550, 575, 600, 625, 650]
     neutralinopoints = [0]
     queue = "1nd"
