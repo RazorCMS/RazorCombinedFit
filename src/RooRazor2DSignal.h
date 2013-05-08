@@ -22,8 +22,8 @@ public:
    RooRazor2DSignal(const char *name, const char *title,
 		  RooAbsReal &_x, RooAbsReal &_y,
 		  const RooWorkspace& ws,
-		  const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
-		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag);
+		    const char* _nominal, const char* _jes, const char* _pdf, const char* _btag, const char* _lepSF, const char* _ISR,
+		  RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag, RooAbsReal &_xLepSF, RooAbsReal &_xISR);
 
    RooRazor2DSignal(const RooRazor2DSignal& other, const char* name);
    TObject* clone(const char* newname) const {
@@ -40,14 +40,18 @@ protected:
 
    RooRealProxy X;        // dependent variable
    RooRealProxy Y;        // dependent variable
-   RooRealProxy xJes;   // xJes
-   RooRealProxy xPdf;   // xPdf
-   RooRealProxy xBtag;   // xBtag
+   RooRealProxy xJes;     // xJes
+   RooRealProxy xPdf;     // xPdf
+   RooRealProxy xBtag;    // xBtag
+   RooRealProxy xLepSF;   // xLepSF
+   RooRealProxy xISR;     // xISR
 
    TH2* Hnominal;
    TH2* Hjes;
    TH2* Hpdf;
    TH2* Hbtag;
+   TH2* HlepSF;
+   TH2* HISR;
 
    int iBinX;
    int iBinY;
@@ -105,21 +109,27 @@ protected:
 
      double totalarea  =  DX*DY;
 
-     double jesVal = Hjes->GetBinContent(xBin, yBin);
-     double pdfVal = Hpdf->GetBinContent(xBin, yBin);
-     double btagVal = Hbtag->GetBinContent(xBin, yBin);
+     double jesVal   = Hjes   ->GetBinContent(xBin, yBin);
+     double pdfVal   = Hpdf   ->GetBinContent(xBin, yBin);
+     double btagVal  = Hbtag  ->GetBinContent(xBin, yBin);
+     double lepSFVal = HlepSF ->GetBinContent(xBin, yBin);
+     double ISRVal   = HISR   ->GetBinContent(xBin, yBin);
 
      double nomVal = Hnominal->GetBinContent(xBin, yBin);
 
-     double rhoJes = 1.;
-     double rhoPdf = 1.;
-     double rhoBtag = 1.;
+     double rhoJes   = 1.;
+     double rhoPdf   = 1.;
+     double rhoBtag  = 1.;
+     double rhoLepSF = 1.;
+     double rhoISR   = 1.;
 
      (fabs(jesVal) < 1.0e-10) ? rhoJes  = 1.0 : rhoJes  = pow(1.0 + fabs(jesVal),xJes*TMath::Sign(1.,jesVal));
      (fabs(pdfVal) < 1.0e-10) ? rhoPdf  = 1.0 : rhoPdf  = pow(1.0 + fabs(pdfVal),xPdf*TMath::Sign(1.,pdfVal));
      (fabs(btagVal)< 1.0e-10) ? rhoBtag = 1.0 : rhoBtag = pow(1.0 + fabs(btagVal),xBtag*TMath::Sign(1.,btagVal));
-
-     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * area / totalarea;  
+     (fabs(lepSFVal)< 1.0e-10) ? rhoLepSF = 1.0 : rhoLepSF = pow(1.0 + fabs(lepSFVal),xLepSF*TMath::Sign(1.,lepSFVal));
+     (fabs(ISRVal)< 1.0e-10) ? rhoISR = 1.0 : rhoISR = pow(1.0 + fabs(ISRVal),xISR*TMath::Sign(1.,ISRVal));
+ 
+     binInt =  nomVal * rhoJes * rhoPdf * rhoBtag * rhoLepSF * rhoISR * area / totalarea;  
      return binInt >= 0. ? binInt : 0;
    }
    
