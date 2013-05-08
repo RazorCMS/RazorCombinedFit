@@ -13,18 +13,21 @@ ClassImp(RooRazor2DSignal)
 RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 		RooAbsReal &_x, RooAbsReal &_y,
 		const RooWorkspace& ws,
-		const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,
-		RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag):
+				   const char* _nominal, const char* _jes, const char* _pdf, const char* _btag,  const char* _lepSF, const char* _ISR,
+				   RooAbsReal &_xJes, RooAbsReal &_xPdf, RooAbsReal &_xBtag, RooAbsReal &_xLepSF, RooAbsReal &_xISR):
 		RooAbsPdf(name, title),
 		X("X","X Observable", this, _x),
 		Y("Y", "Y Observable", this, _y),
 		xJes("xJes", "xJes", this, _xJes	),
 		xPdf("xPdf", "xPdf", this, _xPdf),
 		xBtag("xBtag", "xBtag", this, _xBtag),
+		xLepSF("xLepSF", "xLepSF", this, _xLepSF),
+		xISR("xISR", "xISR", this, _xISR),
 		Hnominal(0),
 		Hjes(0),
 		Hpdf(0),
 		Hbtag(0),
+		HISR(0),
 		iBinX(0),
 		iBinY(0) {
 
@@ -43,6 +46,12 @@ RooRazor2DSignal::RooRazor2DSignal(const char *name, const char *title,
 	if(ws.obj(_btag)){
 		Hbtag = dynamic_cast<TH2*>(ws.obj(_btag));
 	}
+	if(ws.obj(_lepSF)){
+		HlepSF = dynamic_cast<TH2*>(ws.obj(_lepSF));
+	}
+	if(ws.obj(_ISR)){
+		HISR = dynamic_cast<TH2*>(ws.obj(_ISR));
+	}
 }
 
 RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* name) :
@@ -52,10 +61,14 @@ RooRazor2DSignal::RooRazor2DSignal(const RooRazor2DSignal& other, const char* na
    xJes("xJes",this,other.xJes),
    xPdf("xPdf",this,other.xPdf),
    xBtag("xBtag",this,other.xBtag),
+   xLepSF("xLepSF",this,other.xLepSF),
+   xISR("xISR",this,other.xISR),
    Hnominal(other.Hnominal),
    Hjes(other.Hjes),
    Hpdf(other.Hpdf),
    Hbtag(other.Hbtag),
+   HlepSF(other.HlepSF),
+   HISR(other.HISR),
    iBinX(other.iBinX),
    iBinY(other.iBinY) {
  }
@@ -66,13 +79,17 @@ Double_t RooRazor2DSignal::evaluate() const
   int xbin = Hnominal->GetXaxis()->FindBin(X);
   int ybin = Hnominal->GetYaxis()->FindBin(Y);
 
-  double nomVal = Hnominal->GetBinContent(xbin, ybin);
-  double jesVal = Hjes->GetBinContent(xbin, ybin);
-  double pdfVal = Hpdf->GetBinContent(xbin, ybin);
-  double btagVal = Hbtag->GetBinContent(xbin, ybin);
-  double rhoJes = 1.;
-  double rhoPdf = 1.;
-  double rhoBtag = 1.;
+  double nomVal   = Hnominal->GetBinContent(xbin, ybin);
+  double jesVal   = Hjes->GetBinContent(xbin, ybin);
+  double pdfVal   = Hpdf->GetBinContent(xbin, ybin);
+  double btagVal  = Hbtag->GetBinContent(xbin, ybin);
+  double lepSFVal = HlepSF->GetBinContent(xbin, ybin);
+  double ISRVal   = HISR->GetBinContent(xbin, ybin);
+  double rhoJes   = 1.;
+  double rhoPdf   = 1.;
+  double rhoBtag  = 1.;
+  double rhoLepSF = 1.;
+  double rhoISR   = 1.;
  
   double dx = Hnominal->GetXaxis()->GetBinWidth(xbin);
   double dy = Hnominal->GetYaxis()->GetBinWidth(ybin);
@@ -84,8 +101,10 @@ Double_t RooRazor2DSignal::evaluate() const
     (fabs(jesVal) < 1.0e-10) ? rhoJes  = 1.0 : rhoJes  = pow(1.0 + fabs(jesVal),xJes*TMath::Sign(1.,jesVal));
     (fabs(pdfVal) < 1.0e-10) ? rhoPdf  = 1.0 : rhoPdf  = pow(1.0 + fabs(pdfVal),xPdf*TMath::Sign(1.,pdfVal));
     (fabs(btagVal)< 1.0e-10) ? rhoBtag = 1.0 : rhoBtag = pow(1.0 + fabs(btagVal),xBtag*TMath::Sign(1.,btagVal));
+    (fabs(lepSFVal)< 1.0e-10) ? rhoLepSF = 1.0 : rhoLepSF = pow(1.0 + fabs(lepSFVal),xLepSF*TMath::Sign(1.,lepSFVal));
+    (fabs(ISRVal)< 1.0e-10) ? rhoISR = 1.0 : rhoISR = pow(1.0 + fabs(ISRVal),xISR*TMath::Sign(1.,ISRVal));
   }
-  double result = nomVal*rhoJes*rhoPdf*rhoBtag / area;
+  double result = nomVal*rhoJes*rhoPdf*rhoBtag*rhoLepSF*rhoISR / area;
   return result >= 0. ? result : 0;
   // return (result == 0.0) ? 1.7e-308 : result;
 }

@@ -4,7 +4,7 @@ import math, os
 if __name__ == '__main__':
     fileOut = rt.TFile.Open("NuisanceTree_multijet.root","recreate")
 
-    rt.gROOT.ProcessLine("struct MyStruct{Int_t nToy; Double_t eff_prime; Double_t lumi_prime; Double_t xJes_prime; Double_t xPdf_prime; Double_t xBtag_prime; Double_t n2nd_TTj_prime;};")
+    rt.gROOT.ProcessLine("struct MyStruct{Int_t nToy; Double_t eff_prime; Double_t lumi_prime; Double_t xJes_prime; Double_t xPdf_prime; Double_t xBtag_prime; Double_t xLepSF_prime; Double_t xISR_prime; Double_t n2nd_TTj_prime;};")
     nuisTree = rt.TTree("nuisTree","nuisTree")
 
     from ROOT import MyStruct
@@ -16,6 +16,8 @@ if __name__ == '__main__':
     nuisTree.Branch("xJes_prime", rt.AddressOf(s, "xJes_prime"), 'xJes_prime/D')
     nuisTree.Branch("xPdf_prime", rt.AddressOf(s, "xPdf_prime"), 'xPdf_prime/D')
     nuisTree.Branch("xBtag_prime", rt.AddressOf(s, "xBtag_prime"), 'xBtag_prime/D')
+    nuisTree.Branch("xLepSF_prime", rt.AddressOf(s, "xLepSF_prime"), 'xLepSF_prime/D')
+    nuisTree.Branch("xISR_prime", rt.AddressOf(s, "xISR_prime"), 'xISR_prime/D')
     nuisTree.Branch("n2nd_TTj_prime", rt.AddressOf(s, "n2nd_TTj_prime"), 'n2nd_TTj_prime/D')
 
     for i in range(0,10000):
@@ -27,11 +29,13 @@ if __name__ == '__main__':
         gRnd = rt.TRandom3(seed)
 
         s.nToy = i
-        s.eff_prime = gRnd.Gaus(0., 1.)
-        s.lumi_prime = gRnd.Gaus(0., 1.)
-        s.xJes_prime = gRnd.Gaus(0., 1.)
-        s.xPdf_prime = gRnd.Gaus(0., 1.)
-        s.xBtag_prime = gRnd.Gaus(0., 1.)
+        s.eff_prime      = gRnd.Gaus(0., 1.)
+        s.lumi_prime     = gRnd.Gaus(0., 1.)
+        s.xJes_prime     = gRnd.Gaus(0., 1.)
+        s.xPdf_prime     = gRnd.Gaus(0., 1.)
+        s.xBtag_prime    = gRnd.Gaus(0., 1.)
+        s.xLepSF_prime   = gRnd.Gaus(0., 1.)
+        s.xISR_prime     = gRnd.Gaus(0., 1.)
         s.n2nd_TTj_prime = gRnd.Gaus(0., 1.)
 
         nuisTree.Fill()

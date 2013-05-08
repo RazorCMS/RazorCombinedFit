@@ -1,40 +1,41 @@
 #! /usr/bin/env python
 import os.path
 import sys
-import time
+import time, datetime
 from array import *
 
 def getXsecRange(box,neutralinopoint,gluinopoint):
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
     if gluinopoint == 200:
-        return [0.05, 0.1, 0.2, 0.4, 0.8]
-    elif gluinopoint == 300:
-        return [0.05, 0.1, 0.2, 0.4, 0.8]
-    elif gluinopoint == 400:
-        return [0.005, 0.02, 0.05, 0.2, 0.4]
-    elif gluinopoint == 500:
-        return [0.005, 0.02, 0.05, 0.2, 0.4]
-    elif gluinopoint == 550:
-        return [0.005, 0.02, 0.05, 0.2, 0.4]
-    elif gluinopoint == 600:
-        return [0.001, 0.005, 0.02, 0.05, 0.08]
-    elif gluinopoint == 650:
-        return [0.001, 0.005, 0.02, 0.05, 0.08]
-    elif gluinopoint == 700:
-        return [0.001, 0.005, 0.02, 0.05, 0.08]
-    elif gluinopoint == 800:
-        return [0.001, 0.005, 0.02, 0.05, 0.08]
+        return [0.01, 0.1, 1.0, 10.0, 20.0]
+   ##  elif gluinopoint == 300:
+##         return [0.01, 0.1, 0.5, 1.0, 10.0]
+##     elif gluinopoint == 400:
+##         return [0.001, 0.01, 0.1, 0.5, 1.0]
+##     elif gluinopoint == 500:
+##         return [0.001, 0.01, 0.1, 0.5, 1.0]
+##     elif gluinopoint == 550:
+##         return [0.001, 0.01, 0.1, 0.5, 1.0]
+##     elif gluinopoint == 600:
+##         return [0.001, 0.01, 0.1, 0.5]
+##     elif gluinopoint == 650:
+##         return [0.0001, 0.001, 0.01, 0.1, 0.5]
+##     elif gluinopoint == 700:
+##         return [0.0001, 0.001, 0.01,0.05, 0.1]    
+##     elif gluinopoint == 800:
+##         return [ 0.0001, 0.001, 0.01,0.05, 0.1]
     else:
-        return []
-
+        return [ 0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    
 
 
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 50 ## instead of 500 for the 2011 hybrid
 
-    name = "SMS_T2tt_mLSP50_apr3_MR350.0_R0.22360679775"
+    name = "SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.22360679775"
+    #"SMS_T2tt_mLSP50_apr3_MR350.0_R0.22360679775"
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
     #massPoint = "%.1f_0.0"%gluinopoint
     # prepare the script to run
@@ -58,8 +59,14 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
     outputfile.write("cvs co -r wreece_101212_2011_style_fits -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
+    outputfile.write("cp /afs/cern.ch/user/l/lucieg/scratch1/Ap16/CMSSW_6_1_1/src/RazorCombinedFit/src/RooRazor2DSignal.h  $PWD\n")
+    outputfile.write("cp /afs/cern.ch/user/l/lucieg/scratch1/Ap16/CMSSW_6_1_1/src/RazorCombinedFit/src/RooRazor2DSignal.cc  $PWD\n")
+    outputfile.write("cp /afs/cern.ch/user/l/lucieg/scratch1/Ap16/CMSSW_6_1_1/src/RazorCombinedFit/python/RazorCombinedFit/Framework/Box.py  $PWD\n")
+    outputfile.write("cp /afs/cern.ch/user/l/lucieg/scratch1/Ap16/CMSSW_6_1_1/src/RazorCombinedFit/NuisanceTree_multijet.root  $PWD\n")
     outputfile.write("mkdir lib\n")
     outputfile.write("source setup.sh\n")
+    #outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.7.2/x86_64-slc6/setup.sh \n")
+    #outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc6-gcc46-opt/root/bin/thisroot.sh\n")
     outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
     outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("make\n")
@@ -81,10 +88,10 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJetHS.root $PWD\n"%(name,massPoint))
     elif box == 'BJetLS':
         outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_BJetLS.root $PWD\n"%(name,massPoint))
-    elif box == 'Ele':
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Ele.root $PWD\n"%(name,massPoint))
     elif box == 'Mu':
-        outputfile.write("cp /afs/cern.ch/user/s/ssekmen/public/RzrMJ/SMS/T2tt_mLSP50_apr3/%s_%s_Mu.root $PWD\n"%(name,massPoint))
+        outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_May3rd/%s_%s_Mu.root $PWD\n"%(name,massPoint))
+    elif box == 'Ele':
+        outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_May3rd/%s_%s_Ele.root $PWD\n"%(name,massPoint))
 
                 
     if box == 'had':
@@ -125,7 +132,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
         
 
     # the output directory must be changed
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root /afs/cern.ch/work/l/lucieg/private/workspace/RazorStops/ScanHybridEle_mLSP_50/\n")
+    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root /afs/cern.ch/work/l/lucieg/private/workspace"+timestamp+"/RazorStops/ScanHybrid"+box+"_MadgraphMay3rd/\n")
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
@@ -134,22 +141,24 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
 if __name__ == '__main__':
     box = sys.argv[1]
     nJobs = 50 # do 100=50+50 toys each job => 5000 toys
-    
+    timestamp = str(datetime.date.today())
     print box
     
     #gluinopoints = [200,250, 300, 350, 400,450, 500, 550, 600, 650, 700, 750, 800]
-    gluinopoints = [200, 300, 400, 500, 550, 600, 650, 700, 800]
-    neutralinopoints = [50]
+    gluinopoints = [ 500, 525, 550, 575, 600, 625, 650]
+    neutralinopoints = [0]
     queue = "1nd"
     
     pwd = os.environ['PWD']
-    
+
     submitDir = "submit"
-    outputDir = "/afs/cern.ch/work/l/lucieg/private/output"+box
-    
+    outputDir = "output"+timestamp+"_"+box
+   
     os.system("mkdir -p %s"%(submitDir))
-    os.system("mkdir -p %s"%(outputDir))
-    os.system("mkdir -p /afs/cern.ch/work/l/lucieg/private/workspace/RazorStops/ScanHybridEle_mLSP_50/")
+    os.system("mkdir -p /afs/cern.ch/work/l/lucieg/private/workspace"+timestamp+"/RazorStops/ScanHybrid"+box+"_MadgraphMay3rd/")
+    os.system("mkdir -p /afs/cern.ch/work/l/lucieg/private/"+outputDir)
+    os.system("ln -s /afs/cern.ch/work/l/lucieg/private/"+outputDir)
+    
     hypotheses = ["B","SpB"]
 
     for neutralinopoint in neutralinopoints:

@@ -162,9 +162,11 @@ class Box(object):
         
         rootFile = rt.TFile.Open(inputFile)
         wHisto = rootFile.Get('wHisto')
-        btag =  rootFile.Get('wHisto_btagerr_pe')
-        jes =  rootFile.Get('wHisto_JESerr_pe')
-        pdf =  rootFile.Get('wHisto_pdferr_pe')
+        btag   =  rootFile.Get('wHisto_btagerr_pe')
+        isr    =  rootFile.Get('wHisto_isrerr_pe')
+        lepSF  =  rootFile.Get('wHisto_leperr_pe')
+        jes    =  rootFile.Get('wHisto_JESerr_pe')
+        pdf    =  rootFile.Get('wHisto_pdferr_pe')
         
         def renameAndImport(histo):
             #make a memory resident copy
@@ -173,24 +175,25 @@ class Box(object):
             self.importToWS(newHisto)
             return newHisto
         
-        wHisto = renameAndImport(wHisto)
-        btag = renameAndImport(btag)
-        jes = renameAndImport(jes)
-        pdf = renameAndImport(pdf)
-            
+        wHisto  = renameAndImport(wHisto)
+        btag    = renameAndImport(btag)
+        jes     = renameAndImport(jes)
+        pdf     = renameAndImport(pdf)
+        lepSF   = renameAndImport(lepSF)
+        isr     = renameAndImport(isr)
+           
         rootFile.Close()
         
         #set the per box eff value
         sigNorm = wHisto.Integral()
         self.workspace.factory('eff_value_%s[%f]' % (self.name,sigNorm))
         print 'eff_value for box %s is %f' % (self.name,self.workspace.var('eff_value_%s'%self.name).getVal())
-        signal = rt.RooRazor2DSignal('SignalPDF_%s' % self.name,'Signal PDF for box %s' % self.name,
-                                     self.workspace.var('MR'),self.workspace.var('Rsq'),
-                                     self.workspace,
-                                     wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
-                                     self.workspace.var('xJes_prime'),self.workspace.var('xPdf_prime'),self.workspace.var('xBtag_prime'))
+        signal = rt.RooRazor2DSignal('SignalPDF_%s' % self.name,'Signal PDF for box %s' % self.name,\
+                                         self.workspace.var('MR'),self.workspace.var('Rsq'),
+                                         self.workspace,
+                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),lepSF.GetName(),isr.GetName(),
+                                         self.workspace.var('xJes_prime'),self.workspace.var('xPdf_prime'),self.workspace.var('xBtag_prime'),self.workspace.var('xLepSF_prime'),self.workspace.var('xISR_prime'))
         self.importToWS(signal)
-        
         return (signal.GetName(),sigNorm)
     
     def importToWS(self, *args):

@@ -486,11 +486,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             #add a signal model to the workspace
             boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-
             #print 'Variables for box %s' % box
             #boxes[box].workspace.allVars().Print('V')
             #print 'Workspace'
             boxes[box].workspace.Print('V')
+           
             fr_central = boxes[box].workspace.obj('independentFR')    
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
@@ -560,7 +560,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #prepare MultiGen
             #BEWARE: ROOT 5.34.01 - 5.34.03 has a bug that
             #wraps poisson TWICE around expectedEvents
-                       
             if self.options.expectedlimit == True:
                 # use the fr for B hypothesis to generate toys
                 fr_B = fr_central
@@ -576,46 +575,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #print "calculate number of bkg events to generate"
             #bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
             #fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
-
-
-            ##### Do we still need this calcSignificance?
-
-            # #use the same binning as the signal model
-            # significance = RootTools.getObject(fileIndex[box],'wHisto_%s_%i'%(boxes[box].name,0))
-            # significance = significance.Clone('%s_significance' % boxes[box].name)
-            # significance.Reset()
-            # sigSum = 0            
-            def calcSignificance(binning, sig_toy, bkg_toy):
-                """Make a histogram of S/sqrt(S+B) from the signal and background datasets"""
-                def fill(h, ds):
-                    for i in xrange(ds.numEntries()):
-                        row = ds.get(i)
-                        h.Fill(row.getRealValue('MR'),row.getRealValue('Rsq'))
-                #make the histograms
-                sigHist = binning.Clone('S')
-                sigHist.Reset()
-                fill(sigHist,sig_toy)
-                bgHist = binning.Clone('B')
-                bgHist.Reset()
-                fill(bgHist,bkg_toy)                
-                significanceToy = binning.Clone('SignificanceToy')
-                significanceToy.Reset()                
-                #calculate the significance
-                xaxis = sigHist.GetXaxis()
-                yaxis = sigHist.GetYaxis()    
-                for i in xrange(1,xaxis.GetNbins()+1):
-                    for j in xrange(1,yaxis.GetNbins()+1):
-                        bin = sigHist.GetBin(i,j)            
-                        S = sigHist.GetBinContent(bin)
-                        B = bgHist.GetBinContent(bin)            
-                        sig = 0.0
-                        if B > 0.0:
-                            sig = S/rt.TMath.Sqrt(B)
-                        significanceToy.SetBinContent(bin,sig)                                
-                return significanceToy            
-            # end calcSignificance
-            ##### ##### #####
-
             
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
@@ -732,9 +691,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             rootFile = rt.TFile.Open(inputFile)
             open_files.append(rootFile)
             wHisto = rootFile.Get('wHisto')
-            btag =  rootFile.Get('wHisto_btagerr_pe')
-            jes =  rootFile.Get('wHisto_JESerr_pe')
-            pdf =  rootFile.Get('wHisto_pdferr_pe')
+            btag  =  rootFile.Get('wHisto_btagerr_pe')
+            lepSF =  rootFile.Get('wHisto_lepSFerr_pe')
+            isr   =  rootFile.Get('wHisto_ISRerr_pe')
+            jes   =  rootFile.Get('wHisto_JESerr_pe')
+            pdf   =  rootFile.Get('wHisto_pdferr_pe')
             
             def renameAndImport(histo):
                 #make a memory resident copy
@@ -743,10 +704,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 RootTools.Utils.importToWS(workspace,newHisto)
                 return newHisto
             
-            wHisto = renameAndImport(wHisto)
-            btag = renameAndImport(btag)
-            jes = renameAndImport(jes)
-            pdf = renameAndImport(pdf)
+            wHisto  = renameAndImport(wHisto)
+            btag    = renameAndImport(btag)
+            lepSF   = renameAndImport(lepSF)
+            isr     = renameAndImport(isr)
+            jes     = renameAndImport(jes)
+            pdf     = renameAndImport(pdf)
             
             #rootFile.Close()
 
@@ -757,8 +720,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             signal = rt.RooRazor2DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,\
                                          workspace.var('MR'),workspace.var('Rsq'),
                                          workspace,
-                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),
-                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'))
+                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),lepSF.GetName(),isr.GetName(),
+                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'),workspace.var('xLepSF_prime'),workspace.var('xISR_prime'))
             RootTools.Utils.importToWS(workspace,signal)
             return signal
         
