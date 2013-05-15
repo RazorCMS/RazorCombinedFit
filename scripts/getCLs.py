@@ -1,11 +1,33 @@
 import ROOT as rt
 import sys
-import RootTools
 import glob
-from math import *
 import os
-from array import *
+from array import array
 
+def getXsecRange(neutralinopoint,gluinopoint):
+
+
+    if gluinopoint == 200:
+        return [0.1, 0.4, 1.0, 2.0, 5.0, 8.0, 10.0]
+    # elif gluinopoint == 300:
+    #     return [0.01, 0.05, 0.1, 0.2, 0.4, 0.5, 0.8, 1.0]#, 2.0, 5.0, 6.0]
+    # elif gluinopoint == 400:
+    #     return [0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 2.0, 3.0]
+    # elif gluinopoint == 500:
+    #     return [0.001, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7]
+    # elif gluinopoint == 550:
+    #     return [0.001, 0.01, 0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7]
+    # elif gluinopoint == 600:
+    #     return [0.005, 0.01, 0.1, 0.2, 0.3]
+    # elif gluinopoint == 650:
+    #     return [0.01, 0.02, 0.05, 0.08, 0.1, 0.2, 0.3]
+    # elif gluinopoint == 700:
+    #     return [0.001, 0.01, 0.02, 0.05, 0.08, 0.1, 0.2]
+    # elif gluinopoint == 800:
+    #     return [0.001, 0.005, 0.01, 0.02, 0.05, 0.08, 0.1]
+    else:
+        # return [0.01, 0.05, 0.1, 0.5]
+        return [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
 
 def useThisRho(minX,maxX, type):
     if type=="LHC":
@@ -13,6 +35,15 @@ def useThisRho(minX,maxX, type):
     if type=="LEP":
         rho = 2.0
     return rho
+
+def getLnQDataAll(boxes):
+    lnQDataBox = []
+    for box in boxes:
+        getLnQData
+        fileName = getFileName("B",mg,mchi,xsecstep,box,directory)
+        lnQDataBox.append(getLnQData(box, fileName))
+    lnQData = sum(lnQDataBox)
+    return lnQData
 
 def getLnQData(box,fileName):
     dataTree = rt.TChain("myDataTree")
@@ -25,27 +56,8 @@ def getLnQData(box,fileName):
     entry = elist.Next()
     dataTree.GetEntry(entry)
     lnQData = eval('dataTree.LzSR_%s'%box)
-    
+
     return lnQData
-
-
-def getLnQToys(box,fileName):
-    hypoTree = rt.TChain("myTree")
-    addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
-    print "adding to chain: %s"% addToChain
-    hypoTree.Add(addToChain)
-    hypoTree.Draw('>>elist','','entrylist')
-    elist = rt.gDirectory.Get('elist')
-    
-    entry = -1
-    lnQToy = []
-    while True:
-        entry = elist.Next()
-        if entry == -1: break
-        hypoTree.GetEntry(entry)
-        lnQToys.append(hypoTree.LzSR)
-    return lnQToys
-
 
 def getMinMax(box,BfileName,SpBfileName,LzCut,type):
     hypoTree = rt.TChain("myTree")
@@ -56,16 +68,17 @@ def getMinMax(box,BfileName,SpBfileName,LzCut,type):
     addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
     hypoTree.Add(addToChain)
     hypoTree.Draw("LzSR_%s"%box,LzCut)
-    
+
     htemp = rt.gPad.GetPrimitive("htemp")
     Xmin = htemp.GetXaxis().GetXmin()
     Xmax = htemp.GetXaxis().GetXmax()
-    
-    
+    rms = htemp.GetRMS()
+    mean = htemp.GetMean()
+
     if type=="LHC":
         print "LHC"
-        #Xmin = 0
-        #Xmax = 5
+        Xmin = 0
+        Xmax = mean+5*rms
     if type=="LEP":
         XmaxBin = htemp.GetXaxis().FindBin(Xmax)
         XmaxTest = Xmax
@@ -74,27 +87,91 @@ def getMinMax(box,BfileName,SpBfileName,LzCut,type):
             XmaxTest = Xmin + float(XmaxTest-Xmin)*0.95
             XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
         Xmax = XmaxTest
-        
+
     return Xmin, Xmax
 
-def getFuncKDEAll(boxes,fileName,LzCut,Xmin,Xmax):
+def sortkey(fileName):
+    toyStart = fileName.split("_")[-1].split("-")[0]
+    return int(toyStart)
+
+def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     LzCut = ""
+    sumName = ""
     for box in boxes:
         LzCut+="H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0.&&"%(box,box,box)
+        sumName+="LzSR_%s+"%(box)
     LzCut = LzCut[:-2]
-    hypoTree = rt.TChain("myTree")
+    sumName = sumName[:-1]
     lnQBox = []
     hypoDataSetBox = []
+    boxDict = {}
+    boxSet = {}
     for box in boxes:
-        addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
-        print "adding to chain: %s"% addToChain
-        hypoTree.Add(addToChain)
-        lnQBox.append(rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,Xmin,Xmax))
-        hypoDataSetBox.append(rt.RooDataSet("hypoDataSet_%s"%box,"hypoDataSet_%s"%box,hypoTree,hypoSet))
-        
-    lnQ = rt.RooRealVar("LzSR_All","LzSR_All",Xmin,Xmax)
-    
-    return box
+        fileName = getFileName(hypo,mg,mchi,xsecstep,box,directory)
+        boxDict[box] = sorted(glob.glob(fileName.replace("//","/")+"_*.root"),key=sortkey)
+        boxSet[box] = set([newFileName.replace(box,"box") for newFileName in boxDict[box]])
+        for addToChain in boxDict[box]:
+            addToChain+="/%s/myTree"%(box)
+            # print "adding to chain: %s"% addToChain
+
+    totalSet = boxSet[box]
+    for box in boxes:
+        totalSet = totalSet & boxSet[box]
+
+    for box in boxes:
+        boxSet[box] = [newFileName.replace("_box_","_"+box+"_") for newFileName in totalSet]
+    for box in boxes:
+        boxDict[box] = sorted(list(boxSet[box]),key=sortkey)
+
+    for box in boxes:
+        hypoTreeBox = rt.TChain("myTree")
+        for addToChain in boxDict[box]:
+            addToChain+="/"+box+"/myTree"
+            # print "adding to chain: %s"% addToChain
+            hypoTreeBox.Add(addToChain)
+        #lnQBox.append(rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,Xmin,Xmax))
+        iToy = rt.RooRealVar("iToy","iToy",0.)
+        h0covQual = rt.RooRealVar("H0covQual_%s"%box,"H0covQual_%s"%box,0.)
+        h1covQual = rt.RooRealVar("H1covQual_%s"%box,"H1covQual_%s"%box,0.)
+        lnQBox.append(rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,0.))
+        hypoSetBox = rt.RooArgSet("hypoSet_%s"%box)  
+        hypoSetBox.add(iToy) 
+        hypoSetBox.add(h0covQual)
+        hypoSetBox.add(h1covQual)
+        hypoSetBox.add(lnQBox[-1])
+        hypoDataSetBox.append(rt.RooDataSet("hypoDataSet_%s"%box,"hypoDataSet_%s"%box,hypoTreeBox,hypoSetBox))
+
+    hypoDataSet = hypoDataSetBox[0].Clone("hypoDataSet")
+    hypoDataSet.SetTitle("hypoDataSet")
+    for i in xrange(1,len(hypoDataSetBox)):
+        # print hypoDataSet, hypoDataSetBox[i]
+        hypoDataSet.merge(hypoDataSetBox[i])
+
+    hypoSet= rt.RooArgSet("hypoSet")
+    hypoList = rt.RooArgList("hypoList")
+    for lnQb in lnQBox:
+        hypoSet.add(lnQb)
+        hypoList.add(lnQb)
+
+    lnQFunc = rt.RooFormulaVar("LzSR_%s"%('_'.join(boxes)),"LzSR_%s"%('_'.join(boxes)),sumName,hypoList)
+    lnQ = hypoDataSet.addColumn(lnQFunc)
+
+    lnQ.setRange(Xmin,Xmax)
+    rho = 1.0
+    hypoDataSetCut = hypoDataSet.reduce(LzCut)
+
+    hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
+    hypoDataSetCut.fillHistogram(hypoHisto,rt.RooArgList(lnQ),LzCut)
+    hypoHisto.SetDirectory(0)
+    hypoHisto.Scale(1./hypoHisto.GetMaximum())
+    hypoSumSet = rt.RooArgSet("hypoSumSet")
+    hypoSumSet.add(lnQ)
+    hypoSumList = rt.RooArgList("hypoSumList")
+    hypoSumList.add(lnQ)
+    hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ, hypoDataSetCut,rt.RooKeysPdf.NoMirror,rho)
+    hypoFunc = hypoPdf.asTF(hypoSumList,rt.RooArgList(),hypoSumSet)
+
+    return lnQ, hypoPdf, hypoDataSet, hypoHisto, hypoFunc
 
 def getFuncKDE(box,fileName,LzCut,Xmin,Xmax,type):
     if box=="All":
@@ -103,23 +180,20 @@ def getFuncKDE(box,fileName,LzCut,Xmin,Xmax,type):
     addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
     print "adding to chain: %s"% addToChain
     hypoTree.Add(addToChain)
-    
+
     hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
     hypoTree.Project(hypoHisto.GetName(),"LzSR_%s"%box,LzCut)
-
     hypoHisto.SetDirectory(0)
     hypoHisto.Scale(1./hypoHisto.Integral())
 
     lnQ = rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,Xmin,Xmax)
-    
+
     hypoSet = rt.RooArgSet("hypoSet")
     hypoSet.add(lnQ)
     hypoList = rt.RooArgList("hypoList")
     hypoList.add(lnQ)
-
     hypoDataSet= rt.RooDataSet("hypoDataSet","hypoDataSet",hypoTree,hypoSet)
 
-    
     rho = useThisRho(Xmin,Xmax,type)
     hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ,hypoDataSet,rt.RooKeysPdf.NoMirror,rho)
     hypoFunc = hypoPdf.asTF(hypoList,rt.RooArgList(),hypoSet)
@@ -132,27 +206,12 @@ def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func,type="LEP"):
     if type =="LHC":
         return getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func)
 
-#    funcObs = func.Eval(Xobs)
-#    pValKDE = func.Integral(Xmin,Xobs)/func.Integral(Xmin,Xmax)   
-    # DRAWING FUNCTION AND FILLS
-#    ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
-#    func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
-#    funcFillRight = func.Clone("funcFillRight")
-#    funcFillRight.SetRange(Xmin,Xobs)
-#    funcFillRight.SetFillColor(ic.GetColor(0.1, .85, 0.5))
-#    funcFillRight.SetLineColor(ic.GetColor(0.1, .85, 0.5))
-#    funcFillRight.SetFillStyle(3002)
-#    funcFillLeft = func.Clone("funcFillLeft")
-#    funcFillLeft.SetRange(Xobs,Xmax)
-#    funcFillLeft.SetFillColor(ic.GetColor(0.5, .1, 0.85))
-#    funcFillLeft.SetLineColor(ic.GetColor(0.5, .1, 0.85))
-#    funcFillLeft.SetFillStyle(3002)    
-#    return pValKDE,funcFillRight, funcFillLeft
-
 def getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
-    funcObs = func.Eval(Xobs)
-    pValKDE = func.Integral(Xobs,Xmax)/func.Integral(Xmin,Xmax)
-    
+    # funcObs = func.Eval(Xobs)
+    pValKDE = 1
+    if func.Integral(Xmin,Xmax) != 0:
+        pValKDE = func.Integral(Xobs,Xmax)/func.Integral(Xmin,Xmax)
+
     # DRAWING FUNCTION AND FILLS
     ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
     func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
@@ -166,14 +225,13 @@ def getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     funcFillLeft.SetFillColor(ic.GetColor(0.5, .1, 0.85))
     funcFillLeft.SetLineColor(ic.GetColor(0.5, .1, 0.85))
     funcFillLeft.SetFillStyle(3002)
-    
+
     return pValKDE,funcFillRight, funcFillLeft
 
 def getLeftSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
-    funcObs = func.Eval(Xobs)
+    # funcObs = func.Eval(Xobs)
 
     pValKDE = func.Integral(Xmin,Xobs)/func.Integral(Xmin,Xmax)
-    
     # DRAWING FUNCTION AND FILLS
     ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
     func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
@@ -187,59 +245,28 @@ def getLeftSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     funcFillLeft.SetFillColor(ic.GetColor(0.5, .1, 0.85))
     funcFillLeft.SetLineColor(ic.GetColor(0.5, .1, 0.85))
     funcFillLeft.SetFillStyle(3002)
-    
+
     return pValKDE,funcFillRight, funcFillLeft
-
-def calcCLs(lzValues_sb,lzValues_b,Box):
-    BoxName, lzCrit = Box
-    CLsb = float(len([lz for lz in lzValues_sb if lz < lzCrit]))/len(lzValues_sb)
-    CLb = float(len([lz for lz in lzValues_b if lz < lzCrit]))/len(lzValues_b)
-    
-    CLs = -9999999999
-    if CLb!= 0: CLs = CLsb / CLb
-    print "Critical Value for %s box is %f" % (BoxName,lzCrit)
-    print "Using %i b entries, %i s+b entries" % (len(lzValues_b), len(lzValues_sb))
-    print "CLs+b = %f" %CLsb
-    print "CLb = %f" %CLb
-    print "CLs = %f" %CLs
-    
-    return CLs
-
-def calcCLsExp(lzValues_sb,lzValues_b,Box):
-    CLbValues = [0.16, 0.5, 0.84]
-    lzValues_b.sort()
-    lzValues_sb.sort()
-    lzCritValues = [lzValues_b[int(sigma*len(lzValues_b)+0.5)] for sigma in CLbValues]
-    CLsbValues = [float(len([lz for lz in lzValues_sb if lz < lzCrit]))/len(lzValues_sb) for lzCrit in lzCritValues]
-    CLsExpValues = [CLsb/CLb for CLsb,CLb in zip(CLsbValues,CLbValues)]
-    print "Expected for %s box"%Box[0]
-    print "CLsExp+ = %f" %CLsExpValues[0]
-    print "CLsExp  = %f" %CLsExpValues[1]
-    print "CLsExp- = %f" %CLsExpValues[2]
-    return CLsExpValues
 
 def getFileName(hypo, mg, mchi, xsec, box,directory):
     model = "T2tt"
-    #hybridLimit = "Razor2012Limit"
     hybridLimit = "Razor2012HybridLimit"
     modelPoint = "%.1f_%.1f"%(mg,mchi)
     xsecString = str(xsec).replace(".","p")
     fileName = "%s/%s_%s_%s_%s_%s_%s"%(directory,hybridLimit,model,modelPoint,box,xsecString,hypo)
-    #fileName = "%s/%s_%s_%s_%s_%s"%(directory,hybridLimit,modelPoint,box,xsecString)
+    # fileName = "%s/%s_%s_%s_%s_%s"%(directory,hybridLimit,modelPoint,box,xsecString,hypo)
     print fileName
     return fileName
 
-    
-def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULExp, xsecULExpMinus):
+def writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULExp, xsecULExpMinus):
     xsecTree = rt.TTree("xsecTree", "xsecTree")
     myStructCmd = "struct MyStruct{Double_t mg;Double_t mchi;"
     ixsecUL = 0
-    for box in boxes: 
-        myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+0)
-        myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+1)
-        myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+2)
-        myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+3)
-        ixsecUL+=4
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+0)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+1)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+2)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+3)
+    ixsecUL+=4
     myStructCmd += "}"
     rt.gROOT.ProcessLine(myStructCmd)
     from ROOT import MyStruct
@@ -247,141 +274,92 @@ def writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULEx
     s = MyStruct()
     xsecTree.Branch("mg", rt.AddressOf(s,"mg"),'mg/D')
     xsecTree.Branch("mchi", rt.AddressOf(s,"mchi"),'mchi/D')
-    
+
     s.mg = mg
     s.mchi = mchi
-    
+
     ixsecUL = 0
-    for box in boxes:
-        xsecTree.Branch("xsecULObs_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+0)),'xsecUL%i/D'%(ixsecUL+0))
-        xsecTree.Branch("xsecULExpPlus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+1)),'xsecUL%i/D'%(ixsecUL+1))
-        xsecTree.Branch("xsecULExp_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+2)),'xsecUL%i/D'%(ixsecUL+2))
-        xsecTree.Branch("xsecULExpMinus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+3)),'xsecUL%i/D'%(ixsecUL+3))
-        exec 's.xsecUL%i = xsecULObs[ixsecUL]'%(ixsecUL+0)
-        exec 's.xsecUL%i = xsecULExpPlus[ixsecUL]'%(ixsecUL+1)
-        exec 's.xsecUL%i = xsecULExp[ixsecUL]'%(ixsecUL+2)
-        exec 's.xsecUL%i = xsecULExpMinus[ixsecUL]'%(ixsecUL+3)
-        ixsecUL += 4
+    # for box in boxes:
+    xsecTree.Branch("xsecULObs_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+0)),'xsecUL%i/D'%(ixsecUL+0))
+    xsecTree.Branch("xsecULExpPlus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+1)),'xsecUL%i/D'%(ixsecUL+1))
+    xsecTree.Branch("xsecULExp_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+2)),'xsecUL%i/D'%(ixsecUL+2))
+    xsecTree.Branch("xsecULExpMinus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+3)),'xsecUL%i/D'%(ixsecUL+3))
+    exec 's.xsecUL%i = xsecULObs[ixsecUL]'%(ixsecUL+0)
+    exec 's.xsecUL%i = xsecULExpPlus[ixsecUL]'%(ixsecUL+1)
+    exec 's.xsecUL%i = xsecULExp[ixsecUL]'%(ixsecUL+2)
+    exec 's.xsecUL%i = xsecULExpMinus[ixsecUL]'%(ixsecUL+3)
+    ixsecUL += 4
 
     xsecTree.Fill()
 
-    outputFileName = "%s/xsecUL_mg_%s_mchi_%s_%s.root" %(directory, mg, mchi, '_'.join(boxes))
+    outputFileName = "%s_plots/xsecUL_mg_%s_mchi_%s_%s.root" %(directory, mg, mchi, '_'.join(boxes))
     print "xsec UL values being written to %s"%outputFileName
     fileOut = rt.TFile.Open(outputFileName, "recreate")
     xsecTree.Write()
-    
+
     fileOut.Close()
     return outputFileName
 
-
 def erfcInv(prob):
     return rt.Math.normal_quantile_c(prob/2,1.0)/rt.TMath.Sqrt(2) # = TMath::ErfcInverse(prob)
-    
 
 def getXsecUL(CL, rootFileName, mg, mchi, box):
     rootFile = rt.TFile.Open(rootFileName)
     clTree = rootFile.Get("clTree")
-    
     clTree.Draw('>>elist','mg==%f && mchi==%f'%(mg,mchi),'entrylist')
-
     elist = rt.gDirectory.Get('elist')
+
     entry = -1
     xsecVals = array('d')
     CLVals = array('d')
+    xsecList = []
+    clList  =[]
     while True:
         entry = elist.Next()
         if entry == -1: break
         clTree.GetEntry(entry)
         xsecVals.append(clTree.xsec)
-        exec 'CLVals.append(clTree.%s_%s)'%(CL,box)
+        xsecList.append(clTree.xsec)
+        CLVals.append(eval('clTree.%s_%s'%(CL,box)))
+        clList.append(eval('clTree.%s_%s'%(CL,box)))
 
+    print "number of xsec vals", len(xsecVals)
+    print xsecVals
+    print CLVals
 
-#    erfcInvVals = array('d',[rt.TMath.ErfcInverse(min(CLs,1.0))for CLs in CLVals])
-#    i = 0
-#    while  i < len(CLVals):
-#        if CLVals[i]>=1:
-#            CLVals.pop(i)
-#            erfcInvVals.pop(i)
-#            xsecVals.pop(i)
-#        i+=1
-#
-#    lessXsecVals = array('d')
-#    lessErfcInvVals = array('d')
-#    for i in xrange(0,len(xsecVals)):
-#        if erfcInvVals[i] < rt.TMath.ErfcInverse(0.05):
-#            lessXsecVals.append(xsecVals[i])
-#            lessErfcInvVals.append(erfcInvVals[i])
-#    
-#    print len(xsecVals), len(erfcInvVals)
-#    erfcTGraph = rt.TGraph(len(xsecVals),erfcInvVals,xsecVals)
-#    
-#    polyPars = array('d',[0,0])
-#    fPoly = rt.TF1("fPoly","[0] +[1]*x",0, rt.TMath.ErfcInverse(0.05))
-#    fPoly.SetParameter(0,polyPars[0])
-#    fPoly.SetParameter(1,polyPars[1])
-#    
-#    if len(lessXsecVals) > 1:
-#        lessErfcTGraph = rt.TGraph(len(lessXsecVals),lessErfcInvVals,lessXsecVals)
-#        lessErfcTGraph.Fit(fPoly, "","",0, rt.TMath.ErfcInverse(0.05))
-#        xsecULFit = fPoly.Eval(rt.TMath.ErfcInverse(0.05))
-#
-#    erfcTSpilne = rt.TSpline3("spline3",erfcInvVals,xsecVals,len(xsecVals))
-#    xsecULSpline = erfcTGraph.Eval(rt.TMath.ErfcInverse(0.05),0,"S")
-#    xsecULPolyLine = erfcTGraph.Eval(rt.TMath.ErfcInverse(0.05),0)
-#    
-#    if len(lessXsecVals) <= 1:
-#        xsecUL = xsecULPolyLine
-#    else:
-#        xsecUL = xsecULFit
-#        
-#    lines = []
-#    lines.append(rt.TLine(rt.TMath.ErfcInverse(0.05), 0, rt.TMath.ErfcInverse(0.05), xsecUL))
-#    lines.append(rt.TLine(erfcTGraph.GetXaxis().GetXmin(), xsecUL, rt.TMath.ErfcInverse(0.05), xsecUL))
-#    [line.SetLineColor(rt.kBlue) for line in lines]
-#    [line.SetLineWidth(2) for line in lines]
-#    d = rt.TCanvas("d","d",500,400)
-#    erfcTGraph.SetLineWidth(2)
-#    erfcTGraph.Draw("al*")
-#    erfcTSpilne.SetLineWidth(2)
-#    erfcTSpilne.SetLineColor(rt.kGreen+2)
-#    #erfcTSpilne.Draw("acsame")
-#    if len(lessXsecVals) > 1: fPoly.Draw("csame")
-#    [line.Draw("lsame") for line in lines]
+    xsecList, clList = (list(q) for q in zip(*sorted(zip(xsecList, clList))))
 
-## new definition
-    # removing points that are out of order
-    i = 0
-    j = 1
-    poppedOne = True
-    while len(CLVals) > 1 and poppedOne:
-        poppedOne = False
-        if CLVals[1]>=CLVals[0]:
-            CLVals.pop(0)
-            xsecVals.pop(0)
-            poppedOne = True
-        j+=1
-    
-    i = 0
-    while  i < len(CLVals):
-        j = i+1
-        while  j < len(CLVals):
-            if CLVals[j]>=CLVals[i]:
-                CLVals.pop(j)
-                xsecVals.pop(j)
-            j+=1
-        i+=1
+    CLVals = array('d',clList)
+    xsecVals = array('d',xsecList)
 
+    slope = [(CLVals[j]-CLVals[j-1])/(xsecVals[j]-xsecVals[j-1]) for j in xrange(1,len(CLVals))]
+    while any([slope[j]>0 for j in xrange(0, len(slope))]):
+        i = 1
+        while i< len(CLVals):
+            if slope[i-1] > 0:
+                CLVals.pop(i)
+                xsecVals.pop(i)
+            i+=1
+        slope = [(CLVals[j]-CLVals[j-1])/(xsecVals[j]-xsecVals[j-1]) for j in xrange(1,len(CLVals))]
+
+    xsecVals.reverse()
+    CLVals.reverse()
+    xsecVals.append(0)
+    CLVals.append(1.0)
+    xsecVals.reverse()
+    CLVals.reverse()
+
+    print "number of xsec vals", len(xsecVals)
+    print xsecVals
+    print CLVals
 
     # now making array of erfc inv vals
     erfcInvVals = array('d',[erfcInv(min(CLs,1.0)) for CLs in CLVals])
-        
     erfcTGraph = rt.TGraph(len(xsecVals),erfcInvVals,xsecVals)
 
     #this is to be able to see the usual CLs vs. sigma plot
-    xsecTGraph = rt.TGraph(len(xsecVals),xsecVals,CLVals)
-    
+    # xsecTGraph = rt.TGraph(len(xsecVals),xsecVals,CLVals)
     xsecULPolyLine = erfcTGraph.Eval(erfcInv(0.05),0)
-
     xsecUL = xsecULPolyLine
 
     # making the lines that show the extrapolation
@@ -392,23 +370,18 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     #lines.append(rt.TLine(xsecUL, 0, xsecUL, 0.05))
     [line.SetLineColor(rt.kBlue) for line in lines]
     [line.SetLineWidth(2) for line in lines]
-    
-    # plotting things so you can see if anything went wrong 
+
+    # plotting things so you can see if anything went wrong
     d = rt.TCanvas("d","d",500,400)
     #xsecTGraph.SetLineWidth(2)
     #xsecTGraph.Draw("al*")
-    
+
     erfcTGraph.SetLineWidth(2)
     erfcTGraph.Draw("al*")
     [line.Draw("lsame") for line in lines]
- 
-## end new definition    
 
+    modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
 
-
-
-    model = "T2tt"
-    modelPoint = "%.1f_%.1f"%(mg,mchi)
 
     rt.gStyle.SetOptTitle(0)
     l = rt.TLatex()
@@ -416,31 +389,139 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     l.SetTextSize(0.05)
     l.SetTextFont(42)
     l.SetNDC()
-    #l.DrawLatex(0.2,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
-    l.DrawLatex(0.2,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
+    model = "T2tt"
+    if model=="T2tt":
+        l.DrawLatex(0.2,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
+    elif model=="T1bbbb":
+        l.DrawLatex(0.2,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
     l.DrawLatex(0.25,0.8,"#sigma^{95%%CL} = %.4f pb"%(xsecUL))
     erfcTGraph.GetXaxis().SetTitle("Erfc(CL_{s})")
     erfcTGraph.GetYaxis().SetTitle("#sigma [pb]")
-    
+
     d.Print("%s/xsecUL%s_%s_%s_%s.pdf"%(directory,CL,model,modelPoint,box))
     del d
-    
+
     rootFile.Close()
 
     return xsecUL
-    
+
+def getCLsAll(mg, mchi, xsec, boxes, directory,type):
+    Xmin = 0
+    Xmax = 0
+    for box in boxes:
+        LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
+        SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
+        BFileName = getFileName("B",mg,mchi,xsec,box,directory)
+        XminTEST, XmaxTEST = getMinMax(box,BFileName,SpBFileName,LzCut,type)
+        Xmax+= XmaxTEST
+
+    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDEAll(boxes,"SpB",Xmin,Xmax)
+    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDEAll(boxes,"B",Xmin,Xmax)
+
+    lnQData = getLnQDataAll(boxes)
+
+    if type=="LHC":
+        CLb, BFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc,type=type)
+        CLsb, dummyFill, SpBFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc,type=type)
+
+    if CLb==0:
+        CLs = 1.0
+    else:
+        CLs = CLsb/CLb
+
+    lnQExp = array("d",[0.,0.,0.,0.,0.])
+    CLbExp = array("d",[0.023, 0.159,0.500,0.841,0.977])
+    BFunc.GetQuantiles(5,lnQExp,CLbExp)
+    # WE MUST REVERSE THE ORDER OF lnQExp IN LEP,
+    # otherwise we'll swap CLb <=> 1-CLb
+    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in lnQExp]
+    CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
+
+
+    print "###########################"
+    print "Box           = %s"%('_'.join(boxes))
+    print "mg            = %.0f"%mg
+    print "mchi          = %.0f"%mchi
+    print "xsec          = %.4f pb"%xsec
+    print "###########################"
+    print "lnQ on Data   = %.3f"%lnQData
+    print "CLb           = %.3f"%CLb
+    print "CLs+b         = %.3f"%CLsb
+    print "CLs           = %.3f"%CLs
+    print "###########################"
+    print "lnQExp+2sigma = %.3f"%lnQExp[0]
+    print "lnQExp+1sigma = %.3f"%lnQExp[1]
+    print "lnQExp        = %.3f"%lnQExp[2]
+    print "lnQExp-1sigma = %.3f"%lnQExp[3]
+    print "lnQExp-2sigma = %.3f"%lnQExp[4]
+    print "CLsExp+2sigma = %.3f"%CLsExp[0]
+    print "CLsExp+1sigma = %.3f"%CLsExp[1]
+    print "CLsExp        = %.3f"%CLsExp[2]
+    print "CLsExp-1sigma = %.3f"%CLsExp[3]
+    print "CLsExp-2sigma = %.3f"%CLsExp[4]
+    print "###########################"
+
+    c = rt.TCanvas("c","c",500,400)
+    if type=="LEP":
+        BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
+    if type =="LHC":
+        BFunc.GetXaxis().SetTitle("q_{#sigma} = -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})")
+    BHisto.Scale(BFunc.GetMaximum()/BHisto.GetMaximum())
+    BFunc.SetLineColor(rt.kBlue)
+    BHisto.SetLineColor(rt.kBlue)
+    SpBHisto.Scale(SpBFunc.GetMaximum()/SpBHisto.GetMaximum())
+    SpBFunc.SetLineColor(rt.kRed)
+    SpBHisto.SetLineColor(rt.kRed)
+    BFunc.Draw("")
+    BHisto.Draw("histosame")
+    BFuncFill.Draw("fsame")
+    BFunc.Draw("same")
+    SpBHisto.Draw("histosame")
+    SpBFuncFill.Draw("fsame")
+    SpBFunc.Draw("same")
+    #for profile
+    if type=="LHC":
+        c.SetLogy()
+
+    model = "T2tt"
+    # hybridLimit = "Razor2012HybridLimit"
+    modelPoint = "%.1f_%.1f"%(mg,mchi)
+    xsecString = str(xsec).replace(".","p")
+    l = rt.TLatex()
+    l.SetTextAlign(12)
+    l.SetTextSize(0.05)
+    l.SetTextFont(42)
+    l.SetNDC()
+    l.DrawLatex(0.10,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,box))
+    l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
+
+    line = rt.TLine(lnQData, 0, lnQData, BHisto.GetMaximum())
+    line.SetLineWidth(2)
+    line.Draw("same")
+    leg = rt.TLegend(0.55,0.49,0.8,0.67)
+    leg.SetFillColor(rt.kWhite)
+    leg.SetLineColor(rt.kWhite)
+    leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
+    leg.AddEntry(BFuncFill, "1-CL_{b}","f")
+    if type=="LEP":
+        leg.AddEntry(line, "#lambda on Data","l")
+    if type=="LHC":
+        leg.AddEntry(line, "q_{#sigma} on Data","l")
+    leg.Draw("same")
+    c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,'_'.join(boxes)))
+    del c
+
+    return CLs, CLsExp
+
 def getCLs(mg, mchi, xsec, box, directory, type):
     LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
+    print "Entering getCLs"
+
 
     SpBFileName = getFileName("SpB",mg,mchi,xsec,box,directory)
     BFileName = getFileName("B",mg,mchi,xsec,box,directory)
 
-    if box == 'had':
-        box = 'BJetHS'
-    
     Xmin, Xmax = getMinMax(box,BFileName,SpBFileName,LzCut,type)
-    print Xmin
-    print Xmax
 
     lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,SpBFileName,LzCut,Xmin,Xmax,type)
     lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,  BFileName,LzCut,Xmin,Xmax,type)
@@ -462,32 +543,35 @@ def getCLs(mg, mchi, xsec, box, directory, type):
     else:
         CLs = CLsb/CLb
 
-    lnQExp = array("d",[0.,0.,0.])
-    CLbExp = array("d",[0.159,0.500,0.841])
-    BFunc.GetQuantiles(3,lnQExp,CLbExp)
+    lnQExp = array("d",[0.,0.,0.,0.,0.])
+    CLbExp = array("d",[0.023,0.159,0.500,0.841,0.977])
+    BFunc.GetQuantiles(5,lnQExp,CLbExp)
     # WE MUST REVERSE THE ORDER OF lnQExp,
     # otherwise we'll swap CLb <=> 1-CLb
     CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc,type=type)[0] for thislnQ in lnQExp]
     CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
-    
-    
+
     print "###########################"
     print "Box           = %s"%box
     print "mg            = %.0f"%mg
     print "mchi          = %.0f"%mchi
-    print "xsec          = %.4f pb-1"%xsec
+    print "xsec          = %.4f pb"%xsec
     print "###########################"
     print "lnQ on Data   = %.3f"%lnQData
     print "CLb           = %.3f"%CLb
     print "CLs+b         = %.3f"%CLsb
     print "CLs           = %.3f"%CLs
     print "###########################"
-    print "lnQExp+1sigma = %.3f"%lnQExp[0]
-    print "lnQExp        = %.3f"%lnQExp[1]
-    print "lnQExp-1sigma = %.3f"%lnQExp[2]
-    print "CLsExp+1sigma = %.3f"%CLsExp[0]
-    print "CLsExp        = %.3f"%CLsExp[1]
-    print "CLsExp-1sigma = %.3f"%CLsExp[2]
+    print "lnQExp+2sigma = %.3f"%lnQExp[0]
+    print "lnQExp+1sigma = %.3f"%lnQExp[1]
+    print "lnQExp        = %.3f"%lnQExp[2]
+    print "lnQExp-1sigma = %.3f"%lnQExp[3]
+    print "lnQExp-2sigma = %.3f"%lnQExp[4]
+    print "CLsExp+2sigma = %.3f"%CLsExp[0]
+    print "CLsExp+1sigma = %.3f"%CLsExp[1]
+    print "CLsExp        = %.3f"%CLsExp[2]
+    print "CLsExp-1sigma = %.3f"%CLsExp[3]
+    print "CLsExp-2sigma = %.3f"%CLsExp[4]
     print "###########################"
 
     c = rt.TCanvas("c","c",500,400)
@@ -508,10 +592,11 @@ def getCLs(mg, mchi, xsec, box, directory, type):
     SpBHisto.Draw("histosame")
     SpBFuncFill.Draw("fsame")
     SpBFunc.Draw("same")
-    #c.SetLogy()
-    
+    if type == "LHC":
+        c.SetLogy()
+
     model = "T2tt"
-    hybridLimit = "Razor2012HybridLimit"
+    # hybridLimit = "Razor2012HybridLimit"
     modelPoint = "%.1f_%.1f"%(mg,mchi)
     xsecString = str(xsec).replace(".","p")
     l = rt.TLatex()
@@ -519,10 +604,9 @@ def getCLs(mg, mchi, xsec, box, directory, type):
     l.SetTextSize(0.05)
     l.SetTextFont(42)
     l.SetNDC()
-    #l.DrawLatex(0.10,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,box))
     l.DrawLatex(0.10,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,box))
     l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
-    
+
     line = rt.TLine(lnQData, 0, lnQData, BHisto.GetMaximum())
     line.SetLineWidth(2)
     line.Draw("same")
@@ -531,23 +615,25 @@ def getCLs(mg, mchi, xsec, box, directory, type):
     leg.SetLineColor(rt.kWhite)
     leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
     leg.AddEntry(BFuncFill, "1-CL_{b}","f")
-    leg.AddEntry(line, "log(Q) on Data","l")
+    if type == "LEP":
+        leg.AddEntry(line, "#lambda on Data","l")
+    if type == "LHC":
+        leg.AddEntry(line, "q_{#sigma} on Data","l")
     leg.Draw("same")
-    c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,box))
+    c.Print("%s_plots/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,box))
     del c
 
     return CLs, CLsExp
 
-def writeCLTree(mg,mchi,xsec, boxes, directory, CLs, CLsExp):
+def writeCLTree(mg,mchi,xsec, box, directory, CLs, CLsExp):
     clTree = rt.TTree("clTree", "clTree")
     myStructCmd = "struct MyStruct{Double_t mg;Double_t mchi;Double_t xsec;"
     iCL = 0
-    for box in boxes: 
-        myStructCmd+= "Double_t CL%i;"%(iCL+0)
-        myStructCmd+= "Double_t CL%i;"%(iCL+1)
-        myStructCmd+= "Double_t CL%i;"%(iCL+2)
-        myStructCmd+= "Double_t CL%i;"%(iCL+3)
-        iCL+=4
+    myStructCmd+= "Double_t CL%i;"%(iCL+0)
+    myStructCmd+= "Double_t CL%i;"%(iCL+1)
+    myStructCmd+= "Double_t CL%i;"%(iCL+2)
+    myStructCmd+= "Double_t CL%i;"%(iCL+3)
+    iCL+=4
     myStructCmd += "}"
     rt.gROOT.ProcessLine(myStructCmd)
     from ROOT import MyStruct
@@ -556,94 +642,85 @@ def writeCLTree(mg,mchi,xsec, boxes, directory, CLs, CLsExp):
     clTree.Branch("mg", rt.AddressOf(s,"mg"),'mg/D')
     clTree.Branch("mchi", rt.AddressOf(s,"mchi"),'mchi/D')
     clTree.Branch("xsec", rt.AddressOf(s,"xsec"),'xsec/D')
-    
+
     s.mg = mg
     s.mchi = mchi
     s.xsec = xsec
-    
+
     iCL = 0
-    for box in boxes:
-        clTree.Branch("CLs_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+0)),'CL%i/D'%(iCL+0))
-        clTree.Branch("CLsExpPlus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+1)),'CL%i/D'%(iCL+1))
-        clTree.Branch("CLsExp_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+2)),'CL%i/D'%(iCL+2))
-        clTree.Branch("CLsExpMinus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+3)),'CL%i/D'%(iCL+3))
-        exec 's.CL%i = CLs[iCL]'%(iCL+0)
-        exec 's.CL%i = CLsExp[iCL][0]'%(iCL+1)
-        exec 's.CL%i = CLsExp[iCL][1]'%(iCL+2)
-        exec 's.CL%i = CLsExp[iCL][2]'%(iCL+3)
-        iCL += 4
+    clTree.Branch("CLs_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+0)),'CL%i/D'%(iCL+0))
+    clTree.Branch("CLsExpPlus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+1)),'CL%i/D'%(iCL+1))
+    clTree.Branch("CLsExp_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+2)),'CL%i/D'%(iCL+2))
+    clTree.Branch("CLsExpMinus_%s"%box, rt.AddressOf(s,"CL%i"%(iCL+3)),'CL%i/D'%(iCL+3))
+    exec 's.CL%i = CLs[iCL]'%(iCL+0)
+    exec 's.CL%i = CLsExp[iCL][1]'%(iCL+1)
+    exec 's.CL%i = CLsExp[iCL][2]'%(iCL+2)
+    exec 's.CL%i = CLsExp[iCL][3]'%(iCL+3)
+    iCL += 4
 
     clTree.Fill()
 
     xsecString = str(xsec).replace(".","p")
-    outputFileName = "%s/CLs_mg_%s_mchi_%s_xsec_%s_%s.root" %(directory, mg, mchi, xsecString,'_'.join(boxes))
+    outputFileName = "%s_plots/CLs_mg_%s_mchi_%s_xsec_%s_%s.root" %(directory, mg, mchi, xsecString,'_'.join(boxes))
     print "CLs values being written to %s"%outputFileName
     fileOut = rt.TFile.Open(outputFileName, "recreate")
     clTree.Write()
-    
+
     fileOut.Close()
     return outputFileName
 
-def getXsecMax(mg, mchi):
-    name = "T2tt"
-    label = "MR400.0_R0.5"
-    massPoint = "MG_%f_MCHI_%f"%(mg, mchi)
-    signalFile = rt.TFile("SMS/"+name+"_"+massPoint+"_"+label+"_"+box+".root")
-    wHisto = signalFile.Get("wHisto")
-    mrMean = wHisto.GetMean(1)
-    stop_xs = 0.0
-    yield_at_xs = [(stop_xs,0.0)]
-    #with 15 signal events, we *should* be able to set a limit
-    print "deciding xsec range based on signal mrMean = %f"%mrMean
-    if mrMean < 800:
-        eventsToExclude = 150
-        poi_max = 1.
-    elif mrMean < 1000:
-        eventsToExclude = 100
-        poi_max = 0.5
-    elif mrMean < 1600:
-        eventsToExclude = 50
-        poi_max = 0.2
-    else:
-        eventsToExclude = 25
-        poi_max = 0.05
-    return poi_max
-
 if __name__ == '__main__':
-    #gluinopoints = range(200,850,50)
-    gluinopoints = [400,500,550,600,650,700]#,800]
+    # gluinopoints = [200, 300, 400, 500, 550, 600, 650, 700, 800]
+    # gluinopoints = [ 500, 525, 550, 575, 600, 625, 650]
+    gluinopoints = [ 525, 550, 575, 600, 625, 650]
+
     neutralinopoints = [0]
-    
-    #xsecsteps = [0.001, 0.005, 0.01,0.05]#,0.5,1.0]
-    xsecsteps = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    box = sys.argv[1]
+
+    boxInput = sys.argv[1]
     directory = sys.argv[2]
     type = sys.argv[3]
-    if box == 'had':
-        boxes = ["BJetHS"]#,"BJetLS"]
-#        box = 'had'
-    else:
-        boxes = [box]
 
-        
-    rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
+    os.system("mkdir %s_plots" %directory)
+
+    boxes = boxInput.split("_")
+    print boxes
+    doAll = (len(boxes)>1)
+    if not doAll:
+        box = boxInput
+
+    rootFileName = "%s_plots/CLs_%s.root"%(directory,'_'.join(boxes))
     if not glob.glob(rootFileName):
         outputFileNames = []
         for mg in gluinopoints:
             for mchi in neutralinopoints:
-                for xsecstep in xsecsteps:
-                    if not glob.glob(getFileName("SpB",mg,mchi,xsecstep,box,directory)+"*"): continue
-                    if not glob.glob(getFileName("B",mg,mchi,xsecstep,box,directory)+"*"): continue
-                    if box!="All":
+                xsecRange = getXsecRange(mchi,mg)
+                for xsecstep in xsecRange:
+                    print xsecstep
+                    if not doAll:
+                        if not glob.glob(getFileName("SpB",mg,mchi,xsecstep,box,directory)+"*"): continue
+                        if not glob.glob(getFileName("B",mg,mchi,xsecstep,box,directory)+"*"): continue
                         CLs = []
                         CLsExp = []
                         CLsBox,CLsExpBox  = getCLs(mg, mchi, xsecstep, box, directory, type=type)
-                        CLs.append(CLsBox)
-                        CLsExp.append(CLsExpBox)
-                        outputFileNames.append(writeCLTree(mg, mchi, xsecstep, boxes, directory, CLs, CLsExp))
-
+                        if CLsBox > 0.001:
+                            CLs.append(CLsBox)
+                            CLsExp.append(CLsExpBox)
+                            print 'This is CLsBox:', CLsBox
+                            outputFileNames.append(writeCLTree(mg, mchi, xsecstep, box, directory, CLs, CLsExp))
                     else:
-                        print 'WORKING ON ALL STILL'
+                        anyfilesNotFound = []
+                        for box in boxes:
+                            anyfilesNotFound.append(not glob.glob(getFileName("SpB",mg,mchi,xsecstep,box,directory)+"*") )
+                            anyfilesNotFound.append(not glob.glob(getFileName("B",mg,mchi,xsecstep,box,directory)+"*"))
+                            if any(anyfilesNotFound): continue
+                        CLs = []
+                        CLsExp = []
+                        CLsBox,CLsExpBox  = getCLsAll(mg, mchi, xsecstep, boxes, directory,type=type)
+                        if CLsBox > 0.001:
+                            CLs.append(CLsBox)
+                            CLsExp.append(CLsExpBox)
+                            outputFileNames.append(writeCLTree(mg, mchi, xsecstep,'_'.join(boxes), directory, CLs, CLsExp))
+
         haddCmd = "hadd -f %s %s"%(rootFileName,' '.join(outputFileNames))
         print haddCmd
         os.system(haddCmd)
@@ -655,14 +732,15 @@ if __name__ == '__main__':
                 xsecULExpPlus = []
                 xsecULExp = []
                 xsecULExpMinus = []
-                for box in boxes:
-                    xsecULObs.append(max(1e-3,getXsecUL("CLs", rootFileName, mg, mchi, box)))
-                    xsecULExpPlus.append(max(1e-3,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
-                    xsecULExp.append(max(1e-3,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
-                    xsecULExpMinus.append(max(1e-3,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
-                outputFileNames.append(writeXsecTree(boxes, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULExp, xsecULExpMinus))
-        xsecFileName = "%s/xsecUL_%s.root"%(directory,'_'.join(boxes))
+                if doAll: box = '_'.join(boxes)
+                try:
+                    xsecULObs.append(max(1e-4,getXsecUL("CLs", rootFileName, mg, mchi, box)))
+                    xsecULExpPlus.append(max(1e-4,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
+                    xsecULExp.append(max(1e-4,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
+                    xsecULExpMinus.append(max(1e-4,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
+                    outputFileNames.append(writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus, xsecULExp, xsecULExpMinus))
+                except TypeError:continue
+        xsecFileName = "%s_plots/xsecUL_%s.root"%(directory,'_'.join(boxes))
         haddCmd = "hadd -f %s %s"%(xsecFileName,' '.join(outputFileNames))
         print haddCmd
         os.system(haddCmd)
-    
