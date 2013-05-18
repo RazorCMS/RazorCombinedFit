@@ -103,7 +103,7 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
     
     #we cut away events outside our MR window
-    mRmin = args['MR'].getMin()
+    mRmin = 500.#args['MR'].getMin()
     mRmax = args['MR'].getMax()
 
     #we cut away events outside our Rsq window
@@ -210,7 +210,7 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         vwHisto_pdfNNPDF.append(wHisto_pdfNNPDF)
         
     # Load the file with the SMS number of total events per each point
-    file = open('SMS-T2tt_mStop-500to650_mLSP-0to225_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
+    file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo_mLSP_0.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
     norms = pickle.load(file)
     print 'Number of entries:', tree.GetEntries()
 
@@ -602,10 +602,10 @@ if __name__ == '__main__':
     muonScaling = MuSFUtil()
     eleScaling  = EleSFUtil()
     
- ##   convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
- ##   convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
- ##   convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
+    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
    
 
 
