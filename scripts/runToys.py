@@ -41,9 +41,9 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
                   'TTJets':'MC/TTJets_%s_BTAG_PF_%s.root'%(label,box),
                   'ZJetsToNuNu':'MC/ZJetsToNuNu_GENTOY_%s_%s.root'%(label,box),
                   'SMCocktail':'MC/SMCocktail_GENTOY_%s_%s.root'%(label,box),
-                  'MuHad-Run2012ABCD':'DATA/MuHad-Run2012ABCD_%s_BTAG_PF_%s.root'%(label,box),
-                  'ElectronHad-Run2012ABCD':'DATA/ElectronHad-Run2012ABCD_%s_BTAG_PF_%s.root'%(label,box),
-                  'HT-HTMHT-Run2012ABCD':'DATA/HT-HTMHT-Run2012ABCD_%s_BTAG_PF_%s.root'%(label,box)}
+                  'MuHad-Run2012ABCD':'DATA_NOTAU/MuHad-Run2012ABCD_%s_BTAG_PF_%s.root'%(label,box),
+                  'ElectronHad-Run2012ABCD':'DATA_NOTAU/ElectronHad-Run2012ABCD_%s_BTAG_PF_%s.root'%(label,box),
+                  'HT-HTMHT-Run2012ABCD':'DATA_NOTAU/HT-HTMHT-Run2012ABCD_%s_BTAG_PF_%s.root'%(label,box)}
     resultDir = "toys10k_%s_%s"%(datasetName,fitmode)
     toyDir = resultDir+"/%s_%s"%(sideband,box)
     ffDir = toyDir+"_FF"
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     fitmode = '3D'
     queue = "8nh"
     nToys = 10000
-    nJobs = 1
+    nJobs = 50
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
