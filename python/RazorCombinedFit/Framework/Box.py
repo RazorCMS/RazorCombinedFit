@@ -168,6 +168,7 @@ class Box(object):
         pdf =  rootFile.Get('wHisto_pdferr_pe')
         isr =  rootFile.Get('wHisto_ISRerr_pe')
         
+        
         def renameAndImport(histo):
             #make a memory resident copy
             newHisto = histo.Clone('%s_%s' % (histo.GetName(),self.name))
@@ -762,6 +763,8 @@ class Box(object):
         histoToy.SetLineWidth(2)
 
         c = rt.TCanvas()
+        c.SetLeftMargin(0.15)
+        c.SetBottomMargin(0.15)
         c.SetName('DataMC_%s_%s_ALLCOMPONENTS' % (xvarname,'_'.join(ranges)) )
         histoData.Draw("pe")
 

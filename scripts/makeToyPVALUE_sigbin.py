@@ -700,9 +700,11 @@ if __name__ == '__main__':
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
     
     if len(frLabels)<=1:
-        btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
+        btagToDo = [23] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
     if len(frLabels)==3:
         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
+    if len(frLabels)==2:
+        btagToDo = [1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
 
     for btagOpt in btagToDo:
         h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt)

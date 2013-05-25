@@ -36,8 +36,8 @@ def GetProbRange(h):
                 prob += probLeft/h.Integral()
                 iLeft += 1
     return h.GetXaxis().GetBinUpEdge(binMax+iRight), h.GetXaxis().GetBinLowEdge(binMax-iLeft)
-            
-def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
+    
+def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLabel):
     err = []
     # for each bin of x, get the error on the sum of the y bins
     if printPlots:
@@ -48,6 +48,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         varNames = []
         for j in range(0,nbiny-1):
             if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
+            if frLabel=="HighMR" and (i<=1 or j<=0): continue #SKIP SIDEBAND FOR HIGHMR
             if fit3D:
                 if btagOpt == 0:
                     sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
@@ -117,7 +118,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
     del myhisto
     return err
             
-def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
+def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLabel):
     err = []
     # for each bin of y, get the error on the sum of the x bins
     if printPlots:
@@ -128,6 +129,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
         varNames = []
         for i in range(0,nbinx-1):
             if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
+            if frLabel=="HighMR" and (i<=1 or j<=0): continue #SKIP SIDEBAND FOR HIGHMR
             if fit3D:
                 if btagOpt == 0:
                     sumName = sumName+"b%i_%i_1+b%i_%i_2+b%i_%i_3+" %(i,j,i,j,i,j)
@@ -196,7 +198,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt):
     del myhisto
     return err
 
-def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOpt):
+def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOpt, frLabel):
     err = []
     # for each bin of z, get the error on the sum of the x, y, bins
     if printPlots:
@@ -208,6 +210,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
         for i in range(0,nbinx-1):
             for j in range(0,nbiny-1):
                 if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
+                if frLabel=="HighMR" and (i<=1 or j<=0): continue #SKIP SIDEBAND FOR HIGHMR
                 sumName = sumName+"b%i_%i_%i+" %(i,j,k)
                 varNames.extend(["b%i_%i_%i"%(i,j,k)])
         myTree.Draw(sumName[:-1])
@@ -266,7 +269,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
     return err
 
 
-def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btagOpt):
+def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hMRSignal, c1, pad1, pad2, fit3D, btagOpt):
     rt.gStyle.SetOptStat(0000)
     rt.gStyle.SetOptTitle(0)
     
@@ -317,10 +320,10 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     hMRTOTcopy.GetXaxis().SetRange(1,FindLastBin(hMRTOTcopy))
     hMRTOTcopy.GetYaxis().SetTitle("Events")
     if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
-    elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
+    elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
     elif varname == "BTAG": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
-    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(5.)
-    if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=100.: hMRTOTcopy.SetMinimum(50.)
+    #if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(5.)
+    #if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=100.: hMRTOTcopy.SetMinimum(50.)
     hMRTOTcopy.Draw("e2")
 
     # TTj1b is shown only if it has some entry
@@ -335,6 +338,7 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     showVpj = hMRVpj != None
     if showVpj:
         if  hMRVpj.Integral()<=1: showVpj = False
+    showSignal = hMRSignal !=None
     
     if showVpj:
         hMRVpj.SetFillStyle(0)
@@ -382,9 +386,22 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     hMRTOT.SetLineWidth(2)
     hMRTOT.SetFillStyle(0)
     hMRTOT.DrawCopy("histsame")
-    if showTTj2b and showTTj1b and showVpj:
+
+    if showSignal:
+        c4 = rt.gROOT.GetColor(rt.kGray+2)
+        c4.SetAlpha(1.0)
+        hMRSignal.SetLineColor(rt.kBlack)
+        hMRSignal.SetFillColor(rt.kGray+2)
+        hMRSignal.SetLineStyle(2)
+        hMRSignal.SetFillStyle(3005)
+        hMRSignal.SetLineWidth(2)
+        hMRSignal.Draw("histfsame")
+    
+    if showTTj2b and showTTj1b and showVpj and showSignal:
+        leg = rt.TLegend(0.7,0.5,0.93,0.93)
+    elif (showTTj2b and showTTj1b and showVpj) or (showTTj2b and showTTj1b and showSignal):
         leg = rt.TLegend(0.7,0.55,0.93,0.93)
-    elif showTTj2b and showTTj1b:
+    elif (showTTj2b and showTTj1b) or (showTTj2b and showSignal) or (showTTj1b and showSignal):
         leg = rt.TLegend(0.7,0.65,0.93,0.93)
     else:
         leg = rt.TLegend(0.7,0.72,0.93,0.93)
@@ -430,6 +447,9 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
             else:
                 leg.AddEntry(hMRTTj1b,"1 b-tag","l")
             leg.AddEntry(hMRTTj2b,"#geq 2 b-tag","l")
+
+    if showSignal:
+        leg.AddEntry(hMRSignal,"Signal","fl")
     leg.Draw("same")
 
     # plot labels
@@ -596,6 +616,8 @@ if __name__ == '__main__':
         btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
     if len(frLabels)==3:
         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
+    if len(frLabels)==4:
+        btagToDo = [0,0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
     
     # TTj1b histograms
     hMRTTj1bList = [fitFile.Get("%s/histoToyTTj1b_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
@@ -626,12 +648,18 @@ if __name__ == '__main__':
     hRSQDataList = [fitFile.Get("%s/histoData_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     if fit3D:
         hBTAGDataList = [fitFile.Get("%s/histoData_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
+        
+    # Signal histograms    
+    hMRSignalList = [fitFile.Get("%s/histoToySignal_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
+    hRSQSignalList = [fitFile.Get("%s/histoToySignal_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
+    if fit3D:
+        hBTAGSignalList = [fitFile.Get("%s/histoToySignal_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     
-    for hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData, btagOpt in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRVpjList, hMRDataList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQVpjList, hRSQDataList, hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGVpjList, hBTAGDataList,btagToDo):
+    for hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hMRSignal, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hRSQSignal, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData, hBTAGSignal, btagOpt, frLabel in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRVpjList, hMRDataList,  hMRSignalList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQVpjList, hRSQDataList, hRSQSignalList,  hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGVpjList, hBTAGDataList, hBTAGSignalList, btagToDo, frLabel):
 
-        errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt)
-        errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt)
-        errBTAG = GetErrorsZ(len(MRbins),len(Rsqbins),len(nBtagbins),myTree,printPlots,outFolder,fit3D,btagOpt)
+        errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
+        errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
+        errBTAG = GetErrorsZ(len(MRbins),len(Rsqbins),len(nBtagbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
         hMRTOTcopy = hMRTOT.Clone(hMRTOT.GetName()+"COPY")
         for i in range(1,len(errMR)+1):
             print hMRTOT.GetBinContent(i),errMR[i-1],hMRTOT.GetBinError(i)
@@ -654,8 +682,8 @@ if __name__ == '__main__':
         pad1 = rt.TPad("pad1","pad1",0,0.25,1,1)
         pad2 = rt.TPad("pad2","pad2",0,0,1,0.25)
 
-        goodPlot("MR",  Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, c1, pad1, pad2, fit3D, btagOpt)
-        goodPlot("RSQ", Box, outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData,  c1, pad1, pad2, fit3D, btagOpt)
+        goodPlot("MR",  Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hMRSignal, c1, pad1, pad2, fit3D, btagOpt)
+        goodPlot("RSQ", Box, outFolder, Label, Energy, Lumi, hRSQTOTcopy, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hRSQSignal, c1, pad1, pad2, fit3D, btagOpt)
 
-        if fit3D and btagOpt==0: goodPlot("BTAG", Box, outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData,  c1, pad1, pad2, fit3D, btagOpt)
+        if fit3D and btagOpt==0: goodPlot("BTAG", Box, outFolder, Label, Energy, Lumi, hBTAGTOTcopy, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData,  hBTAGSignal, c1, pad1, pad2, fit3D, btagOpt)
     

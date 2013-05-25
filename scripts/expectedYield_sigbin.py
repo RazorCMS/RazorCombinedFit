@@ -113,11 +113,6 @@ def getTree3D(MRbins,Rsqbins,nBtagbins,listfileName):
 
 
 if __name__ == '__main__':
-
-    myTree = rt.TTree("myTree", "myTree")
-
-    # define the tree structures as two structures.
-
     # read inputs
     ScaleFactor = int(sys.argv[1])
     label = sys.argv[2]
@@ -125,6 +120,12 @@ if __name__ == '__main__':
     listfileName = sys.argv[4]
     noBtag = False
     fit3D = False
+    
+    # output file
+    fileOut = rt.TFile.Open("%s" %label, "recreate")
+    # define tree
+    myTree = rt.TTree("myTree", "myTree")
+    
     for i in range(5,len(sys.argv)):
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--3D": fit3D = True
@@ -136,7 +137,7 @@ if __name__ == '__main__':
     else:
         myTree = getTree2D(MRbins,Rsqbins,listfileName)
         
-    fileOut = rt.TFile.Open("%s" %label, "recreate")
+    fileOut.cd()
     myTree.Write()
     fileOut.Close()
     

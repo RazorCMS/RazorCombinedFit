@@ -5,12 +5,11 @@ import sys
 import os
 
 if __name__ == '__main__':
-    boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet","TauTauJet","MultiJet"]
+    boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet1b","Jet2b","TauTauJet","MultiJet"]
     #boxNames = ["Jet"]
     #datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012ABCD","ElectronHad-Run2012ABCD"]
     #datasetNames = ["TTJets","SMCocktail"]
     datasetNames = ["MuHad-Run2012ABCD","ElectronHad-Run2012ABCD","HT-HTMHT-Run2012ABCD"]
-    #datasetNames = ["ElectronHad-Run2012ABCD"]
     sidebandNames = ["Sideband","FULL"]
     #sidebandNames = ["FULL"]
     sidebandMap = {"FULL": "Full Fit","Sideband":"Sideband Fit"}
@@ -62,7 +61,7 @@ if __name__ == '__main__':
             for box in boxNames:
                 for sideband in sidebandNames:
                     for btag in btagNames:
-                        ffDir = "toys_%s_%s/%s_%s_FF"%((datasetName,fitmode,sideband,box))
+                        ffDir = "toys10k_%s_%s/%s_%s_FF"%((datasetName,fitmode,sideband,box))
                         if not os.path.isdir("%s"%(ffDir)): continue
                         if not os.path.exists("%s/MR%s_%s_%s_%s.pdf"%(ffDir,btag,datasetName,sideband,box)): continue
                         if not os.path.exists("%s/RSQ%s_%s_%s_%s.pdf"%(ffDir,btag,datasetName,sideband,box)): continue
@@ -80,7 +79,7 @@ if __name__ == '__main__':
                         beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/MR%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
                         beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/RSQ%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
                         beamerPres.write("\\\\ ")
-                        if not (box=="MuEle" or box=="MuMu" or box=="EleEle" or box=="TauTauJet"):
+                        if not (box=="MuEle" or box=="MuMu" or box=="EleEle" or box=="TauTauJet" or box=="Jet1b" or box=="Jet2b"):
                             beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/BTAG%s_%s_%s_%s.pdf}\n"%(ffDir,btag,datasetName,sideband,box))
                         beamerPres.write("\\includegraphics[width=.51\\textwidth]{%s/nSigmaLog%s_%s.pdf}\n"%(ffDir,btag,box))
                         beamerPres.write("\\end{center}\n")
