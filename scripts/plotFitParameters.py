@@ -6,25 +6,23 @@ import RootTools
 from RazorCombinedFit.Framework import Config
 import os.path
 from array import *
+import sys
 
+
+boxes = ["MuJet","MuMultiJet","EleJet","EleMultiJet"]
+
+boxDict = {"MuEle":0,"MuMu":1,"EleEle":2,"MuJet":3,"MuMultiJet":4,
+           "EleJet":5,"EleMultiJet":6,"Jet2b":7,"MultiJet":8}
 def box_sort_key(parFile):
     label = parFile[0]
-    if label.find("MuEle")!=-1: boxNum=0
-    elif label.find("MuMu")!=-1: boxNum=1
-    elif label.find("EleEle")!=-1: boxNum=2
-    elif label.find("MuTau")!=-1: boxNum=3
-    elif label.find("EleTau")!=-1: boxNum=5
-    elif label.find("TauTauJet")!=-1: boxNum=8
-    elif label.find("MultiJet")!=-1: boxNum=9
-    elif label.find("Mu")!=-1: boxNum=4
-    elif label.find("Ele")!=-1: boxNum=6
-    elif label.find("Jet")!=-1: boxNum=7
+    box, fit = label
+    boxNum = boxDict[box]
     boxNum*=2
-    if label.find("FULL")!=-1: boxNum+=1
+    if fit == "Full": boxNum+=1
     return boxNum
 
 def readFitResult(label, fileName):
-    box = label.split("_")[-1]
+    box, fit = label
     rootFile = rt.TFile(fileName)
     #read the variables from the workspace
     myWS = rootFile.Get(box+"/Box"+box+"_workspace")
@@ -37,42 +35,74 @@ def readFitResult(label, fileName):
         fitPars[p.GetName()] = [p.getVal(),p.getError(),p.getMin(),p.getMax()]
     return fitPars
 
-def getHisto(parName,parFiles):
+def getParHisto(parName,parFiles):
     print parName
-    parHisto = rt.TH1D(parName,parName,len(parFiles),0,len(parFiles))
-    minMaxHisto = rt.TH1D(parName+"MinMax",parName+"MinMax",len(parFiles),0,len(parFiles))
+    numBins = 0
+    
+    for label, parValErr in sorted(parFiles.iteritems(),key=box_sort_key):
+        try:
+            parVal = parValErr[parName][0]
+        except KeyError:
+            continue
+        numBins+=1
+    parHisto = rt.TH1D(parName,parName,numBins,0,numBins)
     binNum = 0
     setAxis = parHisto.GetXaxis()
     setAxis.SetTitle("")
     for label, parValErr in sorted(parFiles.iteritems(),key=box_sort_key):
-        binNum +=1
+        box, fit = label
         try:
             parVal = parValErr[parName][0]
             parErr = parValErr[parName][1]
             parMin = parValErr[parName][2]
             parMax = parValErr[parName][3]
+            binNum +=1
             parHisto.SetBinContent(binNum,parVal)
             parHisto.SetBinError(binNum,parErr)
-            minMaxHisto.SetBinContent(binNum,(parMin+parMax)/2)
-            minMaxHisto.SetBinError(binNum,(parMax-parMin)/2)
+            if (parName.find("n_")!=-1 or parName.find("b_")!=-1) and parVal-parErr<0.:
+                #parHisto.SetBinError(binNum,abs(parVal))
+                parHisto.SetMinimum(0)
         except KeyError:
-            print "oh no"
+            continue
+            
         parHisto.SetMarkerStyle(8)
-        parHisto.SetMarkerColor(rt.kViolet)
-        parHisto.SetLineColor(rt.kAzure)
+        #parHisto.SetMarkerColor(rt.kViolet)
+        #parHisto.SetLineColor(rt.kAzure)
+        parHisto.SetMarkerColor(rt.kCyan+2)
+        parHisto.SetLineColor(rt.kCyan+2)
         parHisto.SetMarkerSize(1.2)
-        minMaxHisto.SetFillColor(rt.kGray)
-        minMaxHisto.SetFillStyle(1001)
-        minMaxHisto.SetLineColor(rt.kGray)
-        #minMaxHisto.SetLineWidth(2)
-        minMaxHisto.SetMarkerColor(rt.kGray)
-        #minMaxHisto.SetMarkerStyle(0)
-        #minMaxHisto.SetMarkerSize(1)
-        box = label.split("_")[-1]
-        sideband = label.split("_")[-2]
-        setAxis.SetBinLabel(binNum,"%s %s"%(box,sideband))
-        #setAxis.SetBinLabel(binNum,label.replace("_"," "))
-    return parHisto, minMaxHisto
+        setAxis.SetBinLabel(binNum,"%s %s"%(box,fit))
+    return parHisto
+
+def getBoxHisto(box,parFiles):
+    print box
+    numPars = len(parFiles[box,'Full'].keys())
+    boxHisto = rt.TH1D(box,box,2*numPars,0,2*numPars)
+    setAxis = boxHisto.GetXaxis()
+    print numPars
+    
+    binNum=0
+    
+    for label, parValErr in sorted(parFiles.iteritems(),key=box_sort_key):        
+        if label[0]!=box: continue
+        print label
+        box, fit = label
+
+        for parName in parValErr.keys():
+            parVal = parValErr[parName][0]
+            parErr = parValErr[parName][1]
+            parMin = parValErr[parName][2]
+            parMax = parValErr[parName][3]
+            binNum +=1
+            boxHisto.SetBinContent(binNum,parVal)
+            boxHisto.SetBinError(binNum,parErr) 
+            setAxis.SetBinLabel(binNum,"%s %s"%(parName, fit))
+        boxHisto.SetMarkerStyle(8)
+        boxHisto.SetMarkerColor(rt.kViolet)
+        boxHisto.SetLineColor(rt.kAzure)
+        boxHisto.SetMarkerSize(1.2)
+            
+    return boxHisto
 
 def setstyle():
     rt.gStyle.SetCanvasBorderMode(0)
@@ -102,14 +132,14 @@ def setstyle():
     rt.gStyle.SetPadTopMargin(0.075)
     rt.gStyle.SetPadRightMargin(0.17)
     rt.gStyle.SetPadBottomMargin(0.24)
-    rt.gStyle.SetPadLeftMargin(0.07)
+    rt.gStyle.SetPadLeftMargin(0.1)
     
     rt.gStyle.SetTitleFont(132,"xyz") 
     rt.gStyle.SetTitleFont(132," ")   
     rt.gStyle.SetTitleSize(0.06,"xyz")
     rt.gStyle.SetTitleSize(0.06," ")  
     rt.gStyle.SetLabelFont(132,"xyz")
-    rt.gStyle.SetLabelSize(0.05,"xyz")
+    rt.gStyle.SetLabelSize(0.065,"xyz")
     rt.gStyle.SetLabelColor(1,"xyz")
     rt.gStyle.SetTextFont(132)
     rt.gStyle.SetTextSize(0.08)
@@ -117,7 +147,7 @@ def setstyle():
     rt.gStyle.SetMarkerStyle(8)
     #rt.gStyle.SetHistLineWidth((rt.Width_t) 1.85)
     rt.gStyle.SetLineStyleString(2,"[12 12]")
-    #rt.gStyle.SetErrorX(0.001)
+    rt.gStyle.SetErrorX(0.2)
     rt.gStyle.SetOptTitle(1)
     rt.gStyle.SetOptStat(0)
     rt.gStyle.SetOptFit(11111111)
@@ -188,11 +218,12 @@ if __name__ == '__main__':
         if f.lower().endswith('.root'):
             decorator = f[:-5]
             
-            label = decorator.split('razor_output_')[-1]
-            if not labels.has_key(label):
-                labels[label] = f
+            fit = decorator.split("Fits")[0]
+            for box in boxes:
+                if not labels.has_key((box,fit)):
+                    labels[box,fit] = f
             
-        else:
+
             "File '%s' of unknown type. Looking for .root files only" % f
 
     parFiles = {}
@@ -200,17 +231,29 @@ if __name__ == '__main__':
         print label
         parFiles[label] = readFitResult(label, files)
 
-    label = "HT-HTMHT-Run2012ABCD_FULL_Jet"
-    parNameList = parFiles[label].keys()
-    for parName in parNameList:
-        parHisto,minMaxHisto = getHisto(parName,parFiles)
+    parNameSet = set([])
+    for label, files in labels.iteritems():
+        parNameSet = parNameSet.union(set(parFiles[label].keys()))
 
-        c = rt.TCanvas("c%s"%parName,"c%s"%parName,700,400)
-        c.SetLogy(0)
-        #if parName.find("b_") !=-1 or parName.find("n_")!=-1 or parName.find("Ntot_") !=-1:
-        #    c.SetLogy(1)
+        
+    c = rt.TCanvas("c","c",600,400)
+    c.SetLogy(0)
+    
+    # for box in boxes:
+    #     boxHisto = getBoxHisto(box,parFiles)
+    #     boxHisto.Draw('E1')
+    #     c.Print("%s/%s.pdf"%(options.outdir,box))
+
+
+    for parName in parNameSet:
+        parHisto = getParHisto(parName,parFiles)
+        tlines = []
         parHisto.Draw('E1')
-        #minMaxHisto.SetMaximum(2.5*parHisto.GetMaximum())
-        #minMaxHisto.Draw("e2same")
-        #parHisto.Draw('E1same')
+        rt.gPad.Update()
+
+        for i in xrange(2, parHisto.GetNbinsX()+1,2):
+            tlines.append(rt.TLine(i, rt.gPad.GetFrame().GetY1(), i, rt.gPad.GetFrame().GetY2()))
+        for tline in tlines:
+            tline.Draw("same")
         c.Print("%s/%s.pdf"%(options.outdir,parName))
+        
