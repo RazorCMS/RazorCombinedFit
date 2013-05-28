@@ -267,10 +267,11 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
                         double poimin = 0,  
                         double poimax = 1000, 
                         int ntoys=1000,
-                        bool useNumberCounting = false,
-                        const char * nuisPriorName = 0,
                         char *cls_name = "cls.png",
-                        char *bells_name = "bells.png"){
+                        char *bells_name = "bells.png",
+                        bool useNumberCounting = false,
+                        const char * nuisPriorName = 0)
+                        {
 
   gSystem->Load("libRazor");
 
