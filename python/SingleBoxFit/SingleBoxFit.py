@@ -655,7 +655,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # self.store(significance, dir=box)            
 
 
-    def limit_profile(self, inputFiles, nToys):
+    def limit_profile(self, inputFiles, massPoint):
         """Set a limit based on the model dependent method"""
         
         def mergeDatasets(datasets, cat, makeBinned = False):
@@ -1039,7 +1039,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,15,0.0,poi_max,self.options.toys])
+
+        massPoint = "CLs_" + self.options.massPoint + ".root"
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,15,0.0,poi_max,self.options.toys,massPoint])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         os.system('%s | tee %s' % (cmd,logfile_name))
                 

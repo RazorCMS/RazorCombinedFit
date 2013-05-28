@@ -9,7 +9,7 @@ class Marker(object):
 def defineParser():
     parser = OptionParser()
     parser.add_option('-b','--batch',dest="batch",action="store_true", default=True,
-                  help="Run in batch mode for plotting")    
+                  help="Run in batch mode for plotting")
     parser.add_option('-a','--analysis',dest="analysis",type="string",default="SingleBoxFit",
                   help="Name of the analysis to run")
     parser.add_option('-c','--config',dest="config",type="string",default=None,
@@ -26,18 +26,26 @@ def defineParser():
                   help="A tree containing randomized gaussian numbers for nuisance parameters")
     parser.add_option('--save-toys-from-fit',dest="save_toys_from_fit",type="string", default="none",
                   help="Save the toys as text files for future use. Sample from covariance matrix.")
+    parser.add_option('--massPoint', dest="massPoint", type="string", default="",
+                  help="The mass point for the Asymptotic calculator")
     parser.add_option('--scale-lumi',dest="scale_lumi",type="int", default=1,
                   help="[ONLY when saving toys] scale the toys statistics by a specificed lumi scale factor")
     parser.add_option('-s','--seed',dest="seed",type="int", default=0,
                   help="The random seed to start with")
     parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
                   help="An input file to read fit results and workspaces from")
+    parser.add_option('--signal-injection',dest="signal_injection", default=False,action='store_true',
+                  help="Run the signal injection fit")
+    parser.add_option('--splusb', dest="s_plus_b_fit", default=False,action='store_true',
+                  help="Run the signal plus background fit")
+    parser.add_option('--signal-file',dest="signalfile", default=None, metavar='FILE',
+                  help="An input signal file to read the histogram from")
     parser.add_option('--simultaneous',dest="simultaneous", default=False,action='store_true',
                   help="Run the simultaneous fit")
     parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',
                   help="Run the model-dependent limit setting code")
     parser.add_option('--study',dest="study", default=False,action='store_true',
-                  help="Run a simple RooMCStudy")    
+                  help="Run a simple RooMCStudy")
     parser.add_option('-e','--expected-limit',dest="expectedlimit", default=False,action='store_true',
                   help="Run the model-dependent bkg-only toy MC to compute the expected limit")
     parser.add_option('-m','--model-independent-limit',dest="model_independent_limit", default=False,action='store_true',
@@ -57,17 +65,17 @@ def defineParser():
     parser.add_option('--run-cls',dest="runCLS",action="store_true",default=False,
                   help="Run the 2012 profile style CLS code")
     parser.add_option('--binned',dest="binned", default=False, action='store_true',
-                  help="Run the binned fit too")        
+                  help="Run the binned fit too")
 
     return parser
 
 if __name__ == '__main__':
 
     parser = defineParser()
-    (options,args) = parser.parse_args()    
+    (options,args) = parser.parse_args()
     print 'Running analysis %s...' % options.analysis
     print '\t with the files %s' % ', '.join(args)
-    
+
 
     (options,args) = parser.parse_args()
 
@@ -78,18 +86,18 @@ if __name__ == '__main__':
         today = now.GetDate()
         clock = now.GetTime()
         seed = today+clock+pid+137
-        
+
     rt.RooRandom.randomGenerator().SetSeed(seed)
-    
+
     if options.config is None:
         import inspect, os
-    
+
         topDir = os.path.abspath(os.path.dirname(inspect.getsourcefile(Marker)))
-        options.config = os.path.join(topDir,'..','config','boxConfig.cfg')    
-    
+        options.config = os.path.join(topDir,'..','config','boxConfig.cfg')
+
     from RazorCombinedFit.Framework import Config
     cfg = Config.Config(options.config)
-    
+
     #from OneDFit import OneDFit
     from OneDFitnew import OneDFit
     from TwoDFit import TwoDFit
@@ -100,7 +108,7 @@ if __name__ == '__main__':
     if options.doBjet: analysis = "BJET"
     if options.doMultijet: analysis = "MULTIJET"
     if options.doTau: analysis = "TAU"
-    
+
     if options.analysis is not None:
         a = [OneDFit.OneDAnalysis(options.output, cfg),TwoDFit.TwoDAnalysis(options.output, cfg),
              DalglishFit.DalglishAnalysis(options.output, cfg), SingleBoxFit.SingleBoxAnalysis(options.output, cfg, analysis)]
@@ -113,15 +121,19 @@ if __name__ == '__main__':
                         aa.toystudy(args, options.toys)
                     else:
                         aa.runtoys(args, options.toys)
+                elif options.signal_injection:
+                    aa.signal_injection(args)
+                elif options.s_plus_b_fit:
+                    aa.s_plus_b_fit(args)
                 else:
                     aa.analysis(args)
                     if options.limit:
                         if not options.runCLS:
                             aa.limit(args, options.toys, options.nToyOffset)
                         else:
-                            aa.limit_profile(args,options.toys)
+                            aa.limit_profile(args, options.massPoint)
                 aa.final()
-        
+
     else:
-        parser.error("You need to specify an analysis. See --help")    
-    
+        parser.error("You need to specify an analysis. See --help")
+
