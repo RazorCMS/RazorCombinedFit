@@ -1,5 +1,5 @@
 import ROOT as rt
-import RazorCombinedFit
+# import RazorCombinedFit
 from RazorCombinedFit.Framework import Analysis
 import RootTools
 import math, os
@@ -21,22 +21,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
         """Refactor out the common box def for fitting and simple toys"""
         
         import RazorBox
-        import RazorBjetBox
         import RazorMultiJetBox
-        import RazorTauBox
         boxes = {}
 
         #start by setting all box configs the same
         for box, fileName in fileIndex.iteritems():
             print 'Configuring box %s' % box
-            if self.Analysis == "BJET": boxes[box] = RazorBjetBox.RazorBjetBox(box, self.config.getVariables(box, "variables"))
-            elif self.Analysis == "MULTIJET":
+            if self.Analysis == "MULTIJET":
                 try :
                     self.config.getVariables(box, "others_QCD")
                     boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
                 except TypeError :
                     boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"), True)
-            elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"))
             self.config.getVariablesRange(box,"variables" ,boxes[box].workspace)
             if self.Analysis != "MULTIJET":
@@ -481,8 +477,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             boxes[box].workspace.factory("expr::n2nd('@0 * pow( (1+@1), @2)', n2nd_TTj_value, n2nd_TTj_uncert, n2nd_TTj_prime)")
             
-            N_TTj = boxes[box].workspace.var("Ntot_TTj").setMax(1e9)
-            N_QCD = boxes[box].workspace.var("Ntot_QCD").setMax(1e9)
+            # N_TTj = boxes[box].workspace.var("Ntot_TTj").setMax(1e9)
+            # N_QCD = boxes[box].workspace.var("Ntot_QCD").setMax(1e9)
 
             #add a signal model to the workspace
             boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
@@ -692,8 +688,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             open_files.append(rootFile)
             wHisto = rootFile.Get('wHisto')
             btag  =  rootFile.Get('wHisto_btagerr_pe')
-            lepSF =  rootFile.Get('wHisto_lepSFerr_pe')
-            isr   =  rootFile.Get('wHisto_ISRerr_pe')
+            lepSF =  rootFile.Get('wHisto_leperr_pe')
+            isr   =  rootFile.Get('wHisto_isrerr_pe')
             jes   =  rootFile.Get('wHisto_JESerr_pe')
             pdf   =  rootFile.Get('wHisto_pdferr_pe')
             
@@ -826,7 +822,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #finally add the signal + background PDFs together to get the final PDF
             #everything is already extended so no additional coefficients
-            full_pdf = rt.RooAddPdf('SplusBPDF_%s' % box, 'SplusBPDF_%s' % box, rt.RooArgList(signal_pdf_extended,background_pdf))
+
+            SpBPdfList = rt.RooArgList(signal_pdf_extended)
+            if box not in boxes[box].zeros['TTj']:
+                SpBPdfList.add(workspace.pdf("ePDF1st_TTj_%s"%box))
+                SpBPdfList.add(workspace.pdf("ePDF2nd_TTj_%s"%box))
+            if box not in boxes[box].zeros['QCD']:
+                SpBPdfList.add(workspace.pdf("ePDF1st_QCD_%s"%box))
+                SpBPdfList.add(workspace.pdf("ePDF2nd_QCD_%s"%box))
+                
+            full_pdf = rt.RooAddPdf('SplusBPDF_%s' % box, 'SplusBPDF_%s' % box, SpBPdfList )
+            #full_pdf = rt.RooAddPdf('SplusBPDF_%s' % box, 'SplusBPDF_%s' % box, rt.RooArgList(signal_pdf_extended,background_pdf))
             RootTools.Utils.importToWS(workspace,full_pdf)
 
             #store the name of the final PDF            
@@ -938,16 +944,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #with 15 signal events, we *should* be able to set a limit
 
         #### this is useless now, perhaps we need to have some meaningful number of events to exclude
-        mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
-        print "signal mrMean = %f"%mrMean
-        if mrMean < 800:
-            eventsToExclude = 150
-        elif mrMean < 1000:
-            eventsToExclude = 100
-        elif mrMean < 1600:
-            eventsToExclude = 50
-        else:
-            eventsToExclude = 25
+        # mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
+        # print "signal mrMean = %f"%mrMean
+        # if mrMean < 800:
+        #     eventsToExclude = 150
+        # elif mrMean < 1000:
+        #     eventsToExclude = 100
+        # elif mrMean < 1600:
+        #     eventsToExclude = 50
+        # else:
+        #     eventsToExclude = 25
         ####
 
         while yield_at_xs[-1][0] < 20:
@@ -959,6 +965,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
         poi_max = yield_at_xs[-1][1]
         workspace.var('sigma').setVal(0.0)
+
+        #poi_max = 0.02
         print 'Estimated POI Max:',poi_max
 
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
@@ -1012,7 +1020,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             def quoteCintArgString(cintArg):
                 return '\\"%s\\"' % cintArg
     
-            import string, sys, os
+            import string, os
     
             # Arguments to the ROOT script needs to be a comma separated list
             # enclosed in (). Strings should be enclosed in escaped double quotes.
@@ -1026,7 +1034,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     arglist.append(arg)
             rootarg='('+string.join([str(s) for s in arglist],',')+')'
             macro = os.path.join(os.environ['RAZORFIT_BASE'],'macros/photons/StandardHypoTestInvDemo.C')
-            return 'root -l "%s%s"' % (macro,rootarg)
+            return 'root -l -b -q "%s%s"' % (macro,rootarg)
         
         calculator_type = 2 #asymtotic
         if self.options.toys:
