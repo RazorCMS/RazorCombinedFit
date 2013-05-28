@@ -274,6 +274,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
 
   gSystem->Load("libRazor");
 
+  std::cout << "loaded libRazor" << std::endl;
+
   output_name_cls = cls_name;
   output_name_bells = bells_name;
 
@@ -336,6 +338,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    // open file and check if input file exists
    TFile * file = TFile::Open(fileName); 
   
+   std::cout << "opened file" << std::endl;
+
    // if input file was specified but not found, quit
    if(!file && !TString(infile).IsNull()){
       cout <<"file " << fileName << " not found" << endl;
@@ -355,6 +359,7 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
       // now try to access the file again
       file = TFile::Open(fileName);
     
+      std::cout << "file is open" << std::endl;
    }
   
    if(!file){
@@ -366,6 +371,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
 
 
    HypoTestInvTool calc;
+
+  std::cout << "declare calc" << std::endl;
 
    // set parameters
    calc.SetParameter("PlotHypoTestResult", plotHypoTestResult);
@@ -391,10 +398,14 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    HypoTestInverterResult * r = 0;  
    std::cout << w << "\t" << fileName << std::endl;
    if (w != NULL) {
+
+     std::cout << "about to Run inverter" << std::endl;
       r = calc.RunInverter(w, modelSBName, modelBName,
                            dataName, calculatorType, testStatType, useCLs,
                            npoints, poimin, poimax,  
-                           ntoys, useNumberCounting, nuisPriorName );    
+                           ntoys, useNumberCounting, nuisPriorName );  
+
+      std::cout << "Inverter ran!" << std::endl; 
       if (!r) { 
          std::cerr << "Error running the HypoTestInverter - Exit " << std::endl;
          return;          
@@ -413,6 +424,8 @@ StandardHypoTestInvDemo(const char * infile = "ws_twobin.root",
    }		
   
    calc.AnalyzeResult( r, calculatorType, testStatType, useCLs, npoints, infile );
+
+   std::cout << "quitting ROOT" << std::endl;
    gROOT->ProcessLine(".q");
   
    return;
@@ -556,15 +569,17 @@ RooStats::HypoTestInvTool::RunInverter(RooWorkspace * w,
   
   
    RooAbsData * data = w->data(dataName); 
+   data->Print("V");
    if (!data) { 
       Error("StandardHypoTestDemo","Not existing data %s",dataName);
       return 0;
    }
    else 
       std::cout << "Using data set " << dataName << std::endl;
-  
+   
    if (mUseVectorStore) { 
-      RooAbsData::defaultStorageType = RooAbsData::Vector;
+     //RooAbsData::defaultStorageType = RooAbsData::Vector;;
+      RooAbsData::setDefaultStorageType(RooAbsData::Vector);
       data->convertToVectorStore() ;
    }
   
