@@ -417,7 +417,7 @@ if __name__ == '__main__':
         l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowbb#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))    
         l.DrawLatex(0.55,0.719,"%s #geq 1b-tag"%Box)
         l.SetTextColor(rt.kBlue+2)
-        l.DrawLatex(0.55,0.785,"Razor MultiJet")
+        l.DrawLatex(0.55,0.785,"Razor Inclusive")
         
 
     leg = rt.TLegend(0.55,0.45,0.9,0.67)
