@@ -91,7 +91,7 @@ def getStopMassPoints(box, neutralinopoint):
             625: (725.0, 750.0, 775.0, 800.0),
             650: (750.0, 775.0, 800.0),
             675: (775.0, 800.0),
-            700: (800.0)
+            700: (800.0,)
         }
     elif box == 'Ele':
         stopMassDict = {
@@ -122,7 +122,7 @@ def getStopMassPoints(box, neutralinopoint):
             625: (725.0, 750.0, 775.0, 800.0),
             650: (750.0, 775.0, 800.0),
             675: (775.0, 800.0),
-            700: (800.0)
+            700: (800.0,)
         }
     elif box == 'BJetHS':
         stopMassDict = {
@@ -153,7 +153,7 @@ def getStopMassPoints(box, neutralinopoint):
             625: (725.0, 750.0, 775.0, 800.0),
             650: (750.0, 775.0, 800.0),
             675: (775.0, 800.0),
-            700: (800.0)
+            700: (800.0,)
         }
     elif box == 'BJetLS':
         stopMassDict = {
@@ -184,7 +184,7 @@ def getStopMassPoints(box, neutralinopoint):
             625: (725.0, 750.0, 775.0, 800.0),
             650: (750.0, 775.0, 800.0),
             675: (775.0, 800.0),
-            700: (800.0)
+            700: (800.0,)
         }
     return stopMassDict[neutralinopoint]
 
