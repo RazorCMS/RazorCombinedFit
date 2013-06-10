@@ -7,7 +7,7 @@ from RazorCombinedFit.Framework import Config
 from array import *
 from pdfShit import *
 
-boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'Jet2b':7,'Jet1b':7,'TauTauJet':8,'MultiJet':9}
+boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[8,9]}
 lumi = 19.3
 
 def getBinning(box):
@@ -110,25 +110,38 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     #BTAGUP = "BTAG_NUM"
     #BTAGDOWN = "BTAG_NUM"
 
-    condition = '0.95*WISR*WLEP*WPU*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    boxCut = "(" + "||".join(["BOX_NUM==%i"%cut for cut in boxMap[box]]) + ")"
+    print boxCut
+    
+    jetReq = "(MR>0.)"
+    if box in ["MuMultiJet", "EleMultiJet"]:
+        #jetReq = "(NJET_NOMU>=4)"
+        jetReq = "(NJET>=4)"
+    elif box in ["MuJet", "EleJet"]:
+        #jetReq = "(NJET_NOMU<=3)"
+        jetReq = "(NJET<=3)"
+    boxCut = "(" + jetReq + "&&" + boxCut + ")"
+
+    print boxCut
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_JESerr_up','%s:RSQ_JESup:MR_JESup'%(BTAGNOM),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_JESerr_down','%s:RSQ_JESdown:MR_JESdown'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISR*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_btagerr_up','%s:RSQ:MR'%(BTAGUP),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_btagerr_down','%s:RSQ:MR'%(BTAGDOWN),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRUP*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISRUP*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_ISRerr_up','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRDOWN*WLEP*((BOX_NUM == %i) && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxMap[box],noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISRDOWN*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_ISRerr_down','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
     pdf_nom, pdf_pe = makePDFPlot(tree, nominal, condition, relative = True, BTAGNOM = BTAGNOM, histoFileName = histoFileName,outputFile = outputFile)
@@ -206,12 +219,12 @@ def convertTree2Dataset(tree, histoFileName, outputFile, outputBox, config, box,
     label = ""
 
     btagcutoff = 3
-    if box == "MuEle" or box == "MuMu" or box == "EleEle" or box=="TauTauJet":
+    if box in ["MuEle", "MuMu", "EleEle"]:
         btagcutoff = 1
 
-    if box == "Jet" or box == "MultiJet" or box == "TauTauJet" or box=="EleEle" or box=="EleTau" or box=="Ele" or box=="Jet2b" or box=='Jet1b':
+    if box in ["Jet", "MultiJet", "EleEle", "Jet2b", "Jet1b", "EleJet", "EleMultiJet"]:
         noiseCut = "abs(TMath::Min( abs(atan2(MET_y,MET_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_y,MET_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
-    elif box == "MuEle" or box == "MuMu" or box == "MuTau" or box == "Mu":
+    elif box in ["MuEle", "MuMu", "MuMultiJet","MuJet"]:
         noiseCut = "abs(TMath::Min( abs(atan2(MET_NOMU_y,MET_NOMU_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_NOMU_y,MET_NOMU_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
 
     jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom = getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,histoFileName,outputFile)
@@ -267,13 +280,12 @@ if __name__ == '__main__':
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.useWeight)
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.useWeight)
                         convertTree2Dataset(input.Get('EVENTS'), options.histoFileName,  decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.useWeight)
-                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.useWeight)
-                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.useWeight)
-                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.useWeight)
-                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuJet.root', cfg,'MuJet',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MuMultiJet.root', cfg,'MuMultiJet',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'EleJet.root', cfg,'EleJet',options.min,options.max,options.run,options.useWeight)
+                        convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'EleMultiJet.root', cfg,'EleMultiJet',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Jet1b.root', cfg,'Jet1b',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.useWeight)
-                    convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.useWeight)
                     convertTree2Dataset(input.Get('EVENTS'), options.histoFileName, decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.useWeight)
             
         else:
