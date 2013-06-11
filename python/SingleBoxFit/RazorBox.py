@@ -325,11 +325,11 @@ class RazorBox(Box.Box):
         [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1D(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'], data=data, fitmodel=fitmodel, frName=frName)]
         
-        [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
-        [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data, fitmodel=fitmodel, frName=frName)]
         
-        [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
-        [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
+        # [store.store(s, dir=box) for s in self.plot1D(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data, fitmodel=fitmodel, frName=frName)]
             
         # # the real plot 1d Histos:
             
@@ -340,19 +340,18 @@ class RazorBox(Box.Box):
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-
         if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet' or self.name=='Jet1b'):
             if not (self.name=='Jet2b'):
                 [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
                 [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
                 [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
                 [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b','LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
-                [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+                #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
+                #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq2b','LowMR2b','HighMR2b'],data=data,fitmodel=fitmodel)]
+            #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
+            #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq3b','LowMR3b','HighMR3b'],data=data,fitmodel=fitmodel)]
 
-        # [store.store(s, dir=box) for s in self.plot2DHisto(inputFile, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        #[store.store(s, dir=box) for s in self.plot2DHisto(inputFile, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         #[store.store(s, dir=box) for s in self.plot1DSlice(inputFile, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         #self.plot1DSlice(inputFile, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)
         
@@ -438,23 +437,23 @@ class RazorBox(Box.Box):
         data_cut.plotOn(frameMR)
         buff = 1e-12
         if ",".join(ranges).find("3b")!=-1 and ",".join(ranges).find("2b")!=-1:
-            fitlabel = "23b"
+            plotlabel = "23b"
             btagMin = 2+buff
             btagMax = 4-buff
         elif ",".join(ranges).find("3b")!=-1:
-            fitlabel = "3b"
+            plotlabel = "3b"
             btagMin = 3+buff
             btagMax = 4-buff
         elif ",".join(ranges).find("2b")!=-1:
-            fitlabel = "2b"
+            plotlabel = "2b"
             btagMin = 2+buff
             btagMax = 3-buff
         elif ",".join(ranges).find("1b")!=-1:
-            fitlabel = "1b"
+            plotlabel = "1b"
             btagMin = 1+buff
             btagMax = 2-buff
         else:
-            fitlabel = ""
+            plotlabel = ""
             btagMin = self.workspace.var("nBtag").getMin()
             btagMax = self.workspace.var("nBtag").getMax()
 
@@ -470,18 +469,18 @@ class RazorBox(Box.Box):
             rsqBins = getBinning(self.name, "Rsq", self.btag)
             
         
-        self.workspace.var("MR").setRange("VeryLowMR%s"%fitlabel,mrBins[0],mrBins[1])
-        self.workspace.var("Rsq").setRange("VeryLowMR%s"%fitlabel,rsqBins[1],rsqBins[-1])
-        self.workspace.var("nBtag").setRange("VeryLowMR%s"%fitlabel,btagMin,btagMax)
-        self.workspace.var("MR").setRange("NotVeryLowMR%s"%fitlabel,mrBins[1],mrBins[-1])
-        self.workspace.var("Rsq").setRange("NotVeryLowMR%s"%fitlabel,rsqBins[0],rsqBins[-1])
-        self.workspace.var("nBtag").setRange("NotVeryLowMR%s"%fitlabel,btagMin,btagMax)
-        self.workspace.var("MR").setRange("VeryLowRsq%s"%fitlabel,mrBins[1],mrBins[-1])
-        self.workspace.var("Rsq").setRange("VeryLowRsq%s"%fitlabel,rsqBins[0],rsqBins[1])
-        self.workspace.var("nBtag").setRange("VeryLowRsq%s"%fitlabel,btagMin,btagMax)
-        self.workspace.var("MR").setRange("NotVeryLowRsq%s"%fitlabel,mrBins[0],mrBins[-1])
-        self.workspace.var("Rsq").setRange("NotVeryLowRsq%s"%fitlabel,rsqBins[1],rsqBins[-1])
-        self.workspace.var("nBtag").setRange("NotVeryLowRsq%s"%fitlabel,btagMin,btagMax)
+        self.workspace.var("MR").setRange("VeryLowMR%s"%plotlabel,mrBins[0],mrBins[1])
+        self.workspace.var("Rsq").setRange("VeryLowMR%s"%plotlabel,rsqBins[1],rsqBins[-1])
+        self.workspace.var("nBtag").setRange("VeryLowMR%s"%plotlabel,btagMin,btagMax)
+        self.workspace.var("MR").setRange("NotVeryLowMR%s"%plotlabel,mrBins[1],mrBins[-1])
+        self.workspace.var("Rsq").setRange("NotVeryLowMR%s"%plotlabel,rsqBins[0],rsqBins[-1])
+        self.workspace.var("nBtag").setRange("NotVeryLowMR%s"%plotlabel,btagMin,btagMax)
+        self.workspace.var("MR").setRange("VeryLowRsq%s"%plotlabel,mrBins[1],mrBins[-1])
+        self.workspace.var("Rsq").setRange("VeryLowRsq%s"%plotlabel,rsqBins[0],rsqBins[1])
+        self.workspace.var("nBtag").setRange("VeryLowRsq%s"%plotlabel,btagMin,btagMax)
+        self.workspace.var("MR").setRange("NotVeryLowRsq%s"%plotlabel,mrBins[0],mrBins[-1])
+        self.workspace.var("Rsq").setRange("NotVeryLowRsq%s"%plotlabel,rsqBins[1],rsqBins[-1])
+        self.workspace.var("nBtag").setRange("NotVeryLowRsq%s"%plotlabel,btagMin,btagMax)
         
         if varname=="MR":
             self.workspace.var("MR").setRange("InterMR",mrBins[1],mrBins[2])
@@ -490,25 +489,25 @@ class RazorBox(Box.Box):
             self.workspace.var("MR").setRange("FinalMR",mrBins[2],mrBins[-1])
             self.workspace.var("Rsq").setRange("FinalMR",rsqBins[0],rsqBins[1])
             self.workspace.var("nBtag").setRange("FinalMR",btagMin,btagMax)
-            MRRanges = ["VeryLowMR%s"%fitlabel,"NotVeryLowMR%s"%fitlabel]
+            MRRanges = ["VeryLowMR%s"%plotlabel,"NotVeryLowMR%s"%plotlabel]
             if ranges==['LowRsq','LowMR']:
-                MRRanges = ["VeryLowMR%s"%fitlabel,"InterMR","FinalMR"]
+                MRRanges = ["VeryLowMR%s"%plotlabel,"InterMR","FinalMR"]
             if ranges==['HighMR']:
                 MRRanges=ranges 
         elif varname=="Rsq":
             self.workspace.var("MR").setRange("FinalRsq",mrBins[0],mrBins[-1])
             self.workspace.var("Rsq").setRange("FinalRsq",rsqBins[1],rsqBins[2])
             self.workspace.var("nBtag").setRange("FinalRsq",btagMin,btagMax)
-            MRRanges = ["VeryLowRsq%s"%fitlabel,"NotVeryLowRsq%s"%fitlabel]
+            MRRanges = ["VeryLowRsq%s"%plotlabel,"NotVeryLowRsq%s"%plotlabel]
             if ranges==['LowRsq','LowMR']:
-                MRRanges = ["VeryLowRsq%s"%fitlabel,"LowMR"]
+                MRRanges = ["VeryLowRsq%s"%plotlabel,"LowMR"]
             if ranges==['HighMR']:
                 MRRanges=ranges 
         elif varname=="nBtag":
             MRRanges = [",".join(ranges)]
             
 
-        frameMR.SetName(varname+"_rooplot_"+fitmodel+"_"+data.GetName()+"_"+fitlabel)
+        frameMR.SetName(varname+"_rooplot_"+fitmodel+"_"+data.GetName()+"_"+plotlabel)
         frameMR.SetTitle("")
         if varname=="MR":
             frameMR.SetXTitle("M_{R} [GeV]")
@@ -636,8 +635,15 @@ class RazorBox(Box.Box):
         text = pt.AddText("Razor %s Box #int L = %3.1f fb^{-1}" %(self.name,Lumi))
         pt.Draw()
     
+        fitregionLabel = '_'.join(self.fitregion.split(","))
+        if self.fitregion == "LowRsq,LowMR,HighMR": fitregionLabel = "FULL"
+        elif self.fitregion == "LowRsq,LowMR": fitregionLabel = "Sideband"
+        elif self.fitregion == "HighMR": fitregionLabel = "HighMR"
+        elif self.fitregion == "LowRsq1b,LowMR1b,HighMR1b": fitregionLabel = "1b"
+        elif self.fitregion == "LowRsq2b,LowMR2b,HighMR2b": fitregionLabel = "2b"
+        elif self.fitregion == "LowRsq3b,LowMR3b,HighMR3b": fitregionLabel = "3b"
         
-        d.Print("razor_rooplot_%s%s_%s_%s.pdf"%(varname,fitlabel,data.GetName(),self.name))
+        d.Print("razor_rooplot_%s_%s_%s_%s_%s.pdf"%(varname,fitregionLabel,plotlabel,data.GetName(),self.name))
         
         return [frameMR]
 
@@ -1134,7 +1140,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_TTj1b").setVal(0.)
         self.workspace.var("Ntot_TTj2b").setVal(0.)
         if N_Signal>1:
-            toyDataSignal = self.workspace.pdf(self.signalmodel).generate(self.workspace.set('variables'), int(50*(N_Signal)))
+            toyDataSignal = self.workspace.pdf(self.signalmodel).generate(self.workspace.set('variables'), int(100*(N_Signal)))
             beforeCutSignal = float(toyDataSignal.sumEntries())
             toyDataSignal = toyDataSignal.reduce(rangeCut)
             afterCutSignal = float(toyDataSignal.sumEntries())
@@ -1146,7 +1152,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_TTj1b").setVal(0.)
         self.workspace.var("Ntot_TTj2b").setVal(0.)
         if N_Vpj>1:
-            toyDataVpj = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(50*(N_Vpj)))
+            toyDataVpj = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(100*(N_Vpj)))
             beforeCutVpj = float(toyDataVpj.sumEntries())
             toyDataVpj = toyDataVpj.reduce(rangeCut)
             afterCutVpj = float(toyDataVpj.sumEntries())
@@ -1158,7 +1164,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
         self.workspace.var("Ntot_TTj2b").setVal(0.)
         if N_TTj1b>1 :
-            toyDataTTj1b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(50*(N_TTj1b)))
+            toyDataTTj1b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(100*(N_TTj1b)))
             beforeCutTTj1b = float(toyDataTTj1b.sumEntries())
             toyDataTTj1b = toyDataTTj1b.reduce(rangeCut)
             afterCutTTj1b = float(toyDataTTj1b.sumEntries())
@@ -1172,7 +1178,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_TTj1b").setVal(0.)
         self.workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
         if N_TTj2b>1 :
-            toyDataTTj2b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(50*(N_TTj2b)))
+            toyDataTTj2b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(100*(N_TTj2b)))
             beforeCutTTj2b = float(toyDataTTj2b.sumEntries())
             toyDataTTj2b = toyDataTTj2b.reduce(rangeCut)
             afterCutTTj2b = float(toyDataTTj2b.sumEntries())
@@ -1248,10 +1254,10 @@ class RazorBox(Box.Box):
         scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
         print "scaleFactor = %f"%scaleFactor
         
-        histoToySignal.Scale(0.02)
-        histoToyTTj2b.Scale(0.02)
-        histoToyVpj.Scale(0.02)
-        histoToyTTj1b.Scale(0.02)
+        histoToySignal.Scale(0.01)
+        histoToyTTj2b.Scale(0.01)
+        histoToyVpj.Scale(0.01)
+        histoToyTTj1b.Scale(0.01)
         SetErrors(histoToyTTj2b)
         SetErrors(histoToyVpj)
         SetErrors(histoToyTTj1b)
@@ -1296,14 +1302,13 @@ class RazorBox(Box.Box):
         rt.gStyle.SetNumberContours(ncontours)
 
         rt.gStyle.cd()
-
     
-        # Red = array('d',  [0.00, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00])
-        # Green = array('d',[0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
-        # Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
-        # Length =array('d',[0.00, 0.10, 0.25, 0.333, 0.5, 0.85, 1.00]) # colors get darker faster at 4sigma
-        # rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,999)
-        # rt.gStyle.SetNumberContours(999)
+        Red = array('d',  [0.00, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00])
+        Green = array('d',[0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
+        Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
+        Length =array('d',[0.00, 0.10, 0.25, 0.333, 0.5, 0.85, 1.00]) # colors get darker faster at 4sigma
+        rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,999)
+        rt.gStyle.SetNumberContours(999)
     
         histoDivide = histoData.Clone("histoDivide")
         histoDivide.SetMaximum(3.)
@@ -1312,17 +1317,14 @@ class RazorBox(Box.Box):
         #histoToySignal.Draw("colz")
 
         tlatexList = []
-        xBins = [405, 470, 600, 750, 1000, 1350, 1800, 3000]
-        yBins = [0.265, 0.34, 0.44, 0.56, 0.70, 1.0]
         for iBinX in range(1,histoToy.GetNbinsX()+1):
             for iBinY in range(1,histoToy.GetNbinsY()+1):
                 binCont = histoToy.GetBinContent(iBinX,iBinY)
                 datCont = histoData.GetBinContent(iBinX,iBinY)
                 if binCont>=1. or datCont>=1.:
-                    if iBinX==1 and iBinY==2:
-                        tlatex = rt.TLatex(xBins[iBinX-1]-15,yBins[iBinY-1],"#frac{%.0f}{%.0f}"%(datCont,binCont))
-                    else:
-                        tlatex = rt.TLatex(xBins[iBinX-1],yBins[iBinY-1],"#frac{%.0f}{%.0f}"%(datCont,binCont))
+                    xBin  = histoToy.GetXaxis().GetBinLowEdge(iBinX) + .25*histoToy.GetXaxis().GetBinWidth(iBinX)
+                    yBin = histoToy.GetYaxis().GetBinLowEdge(iBinY) + .3*histoToy.GetYaxis().GetBinWidth(iBinY)
+                    tlatex = rt.TLatex(xBin,yBin,"#frac{%.0f}{%.0f}"%(datCont,binCont))
                     tlatex.SetTextSize(0.05)
                     tlatex.SetTextFont(42)
                     tlatexList.append(tlatex)
@@ -1370,11 +1372,11 @@ class RazorBox(Box.Box):
             yLines[i-1].SetLineStyle(2)
             yLines[i-1].SetLineColor(rt.kGray)
 
-        yLines.append(rt.TLine(550, 0.3, 550, 1.5))
+        yLines.append(rt.TLine(x[2], y[1], x[2], y[-1]))
         yLines[-1].SetLineStyle(2)
         yLines[-1].SetLineWidth(2)
         yLines[-1].SetLineColor(rt.kGreen)
-        xLines.append(rt.TLine(550, 0.3, 4000, 0.3))
+        xLines.append(rt.TLine(x[2], y[1], x[-1], y[1]))
         xLines[-1].SetLineStyle(2)
         xLines[-1].SetLineWidth(2)
         xLines[-1].SetLineColor(rt.kGreen)
@@ -1392,11 +1394,11 @@ class RazorBox(Box.Box):
 
         fGrayGraphs = []
         fGray = rt.TGraph(5)
-        fGray.SetPoint(0,400,0.25)
-        fGray.SetPoint(1,400,0.3)
-        fGray.SetPoint(2,450,0.3)
-        fGray.SetPoint(3,450,0.25)
-        fGray.SetPoint(4,400,0.25)
+        fGray.SetPoint(0,x[0],y[0])
+        fGray.SetPoint(1,x[0],y[1])
+        fGray.SetPoint(2,x[1],y[1])
+        fGray.SetPoint(3,x[1],y[0])
+        fGray.SetPoint(4,x[0],y[0])
         fGray.SetFillColor(rt.kGray+1)
         fGrayGraphs.append(fGray)
             
@@ -1463,7 +1465,7 @@ class RazorBox(Box.Box):
         if self.workspace.function("Ntot_Signal") != None:
             N_Signal = self.workspace.function("Ntot_Signal").getVal()
 
-        toyData = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(50*(N_Signal+N_TTj1b+N_TTj2b+N_Vpj)))
+        toyData = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(100*(N_Signal+N_TTj1b+N_TTj2b+N_Vpj)))
         toyData = toyData.reduce(rangeCut)
 
         # variable binning for plots

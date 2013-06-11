@@ -1249,6 +1249,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
 
         workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
+        workspace.var('MR').setBins(7)
+        workspace.var('Rsq').setBins(5)
+        workspace.var('nBtag').setBins(3)
 
 
         #make a RooDataset with *all* of the data
@@ -1339,30 +1342,30 @@ class SingleBoxAnalysis(Analysis.Analysis):
         stop_xs = 0.0
         yield_at_xs = [(stop_xs,0.0)]
         #with 15 signal events, we *should* be able to set a limit
-        mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
-        print "signal mrMean = %f"%mrMean
-        if mrMean < 800:
-            eventsToExclude = 150
-        elif mrMean < 1000:
-            eventsToExclude = 100
-        elif mrMean < 1600:
-            eventsToExclude = 50
-        else:
-            eventsToExclude = 25
+        # mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
+        # print "signal mrMean = %f"%mrMean
+        # if mrMean < 800:
+        #     eventsToExclude = 150
+        # elif mrMean < 1000:
+        #     eventsToExclude = 100
+        # elif mrMean < 1600:
+        #     eventsToExclude = 50
+        # else:
+        #     eventsToExclude = 25
         
-        while yield_at_xs[-1][0] < eventsToExclude:
-            stop_xs += 1e-4
-            workspace.var('sigma').setVal(stop_xs)
-            signal_yield = 0
-            background_yield = 0
-            for box in fileIndex:
-                signal_yield += workspace.function('S_%s' % box).getVal()
-            yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
-        poi_max = yield_at_xs[-1][1]
-        print 'Estimated POI Max:',poi_max
+        # while yield_at_xs[-1][0] < eventsToExclude:
+        #     stop_xs += 1e-4
+        #     workspace.var('sigma').setVal(stop_xs)
+        #     signal_yield = 0
+        #     background_yield = 0
+        #     for box in fileIndex:
+        #         signal_yield += workspace.function('S_%s' % box).getVal()
+        #     yield_at_xs.append( (signal_yield, workspace.var('sigma').getVal()) )
+        # poi_max = yield_at_xs[-1][1]
+        # print 'Estimated POI Max:',poi_max
 
-        poi_min = 0.00
-        poi_max = 0.003
+        poi_min = 0.0
+        poi_max = 0.2
         print 'For now use :[%f, %f]'%(poi_min,poi_max)
         
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
@@ -1415,27 +1418,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
         pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
         pSbModel.SetSnapshot(pPoiAndNuisance)
-        
+        pPoiAndNuisance.Print("v")
         #del pNll, pProfile, pPoiAndNuisance
         del pPoiAndNuisance
 
 
-        #Begin Asimov dataset
-        
-        variables = rt.RooArgSet()
-        variables.add(workspace.cat('Boxes'))
-        variables.add(workspace.var('MR'))
-        variables.add(workspace.var('Rsq'))
-        variables.add(workspace.var('nBtag'))
-        
         #find a parameter point for generating pseudo-data
         #with the background-only data.
         #save the parameter point snapshot in the Workspace
         minBonly = evaluateNLL(pBModel.GetPdf(), pData, opt,fixSigma=True,sigmaVal=poiValueForBModel)
         
         for p in RootTools.RootIterator.RootIterator(workspace.set('global')):
-            print p.GetName()
+            print "%s = %f" % ( p.GetName(), p.getVal() )
             p.setVal(workspace.var(p.GetName().replace('nom_','')).getVal())
+            print "%s = %f" % ( p.GetName(), p.getVal() )
                      
         print '\nB only: %f' % minBonly
         print 'pBModel.GetNuisanceParameters() ='
@@ -1444,7 +1440,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pBModel.GetParametersOfInterest().Print("v")
         print 'pBModel.GetGlobalObservables() ='
         pBModel.GetGlobalObservables().Print("v")
-        pAsimov = pBModel.GetPdf().generate(variables,rt.RooFit.Extended(True))
+        
+        #Begin Asimov dataset
+        variables = rt.RooArgSet()
+        variables.add(workspace.cat('Boxes'))
+        variables.add(workspace.var('MR'))
+        variables.add(workspace.var('Rsq'))
+        variables.add(workspace.var('nBtag'))
+        pAsimov = simultaneous_product.generate(variables,rt.RooFit.Extended(True))
+        
 
         #save a snap-shot for background only
         pPoiAndNuisance = rt.RooArgSet()
@@ -1458,32 +1462,28 @@ class SingleBoxAnalysis(Analysis.Analysis):
         for p in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
             if p.GetName() in ['xBtag_prime','xJes_prime','xPdf_prime','xIsr_prime','eff_prime','lumi_prime']:
                 p.setConstant(False)
-                
-        #workspace.Print("v")
-
-        #pBModel.GetSnapshot().Print("v")
-        #pSbModel.GetSnapshot().Print("v")
 
         # import final stuff to workspace
         RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
         
         
-        nllsigma_A = evaluateNLL(pSbModel.GetPdf(), pAsimov, opt, fixSigma=True, sigmaVal=0.003)
-        nllsigmahat_A = evaluateNLL(pSbModel.GetPdf(), pAsimov, opt, fixSigma=False,sigmaVal=0.0)
+        nllsigma_A = evaluateNLL(simultaneous_product, pAsimov, opt, fixSigma=True, sigmaVal=0.1)
+        nllsigmahat_A = evaluateNLL(simultaneous_product, pAsimov, opt, fixSigma=False,sigmaVal=0.0)
         qmu_A = 2*(nllsigma_A-nllsigmahat_A)
+        print "sigmahat_A = ", workspace.var("sigma").getVal()
         
-        nllsigma = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=True,sigmaVal=0.003)
+        nllsigma = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=True,sigmaVal=0.1)
         nllsigmahat = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=False,sigmaVal=0.0)
         qmu = 2*(nllsigma-nllsigmahat)
         
-        print "sigma = 0.003"
+        print "sigma = 0.1"
         print "nllsigma_A = ", nllsigma_A
         print "nllsigmahat_A = ", nllsigmahat_A
-        print "qmu_A", qmu_A
+        print "qmu_A = ", qmu_A
         print "nllsigma = ", nllsigma
         print "nllsigmahat = ", nllsigmahat
-        print "qmu", qmu
+        print "qmu = ", qmu
 
         if (qmu_A > 0.):
             sqrtqmu_A = rt.TMath.Sqrt(qmu_A)
@@ -1543,7 +1543,42 @@ class SingleBoxAnalysis(Analysis.Analysis):
             calculator_type = 0
         cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
-        os.system('%s | tee %s' % (cmd,logfile_name))
+        
+        #os.system('%s | tee %s' % (cmd,logfile_name))
+
+        hc = rt.RooStats.AsymptoticCalculator(pData, pBModel, pSbModel, False)
+        hc.SetOneSided(True)
+        poiAlt =  pBModel.GetSnapshot()
+        globObs = pBModel.GetGlobalObservables()
+        tmp = rt.RooArgSet(poiAlt)
+        newAsimov = hc.MakeAsimovData( pData, pSbModel, poiAlt, globObs, tmp)
+        
+        poiAlt.Print("v")
+        globObs.Print("v")
+        newAsimov.Print("v")
+        pBModel.GetObservables().Print("v")
+
+        row = newAsimov.get()
+        row.Print("V")
+        
+        
+        # hc.SetPrintLevel(0)
+        # rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.NumIntegration)
+        # calc = rt.RooStats.HypoTestInverter(hc)
+        # calc.SetConfidenceLevel(0.95)
+        # calc.UseCLs(True)
+        # calc.SetVerbose(False)
+        # calc.SetFixedScan(3,poi_min,poi_max)
+
+        # r = calc.GetInterval()
+
+        # print "Exp", r.GetExpectedUpperLimit(0)
+        # print "Exp+1", r.GetExpectedUpperLimit(1)
+        # print "Exp-1", r.GetExpectedUpperLimit(-1)
+        # print "Obs", r.UpperLimit()
+
+        
+        
         #print "sigma error = %f"%workspace.var('sigma').getError()
         #print '%s | tee %s' % (cmd,logfile_name)
         
