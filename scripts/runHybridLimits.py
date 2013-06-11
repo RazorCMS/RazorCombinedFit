@@ -171,15 +171,19 @@ if __name__ == '__main__':
     queue = sys.argv[3]
     done  = sys.argv[4]
     t3 = False
+    mchi_lower = 0
+    mchi_upper = 2025
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
+    for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
+        if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
     
     nJobs = 12 # do 250 toys each job => 3000 toys
     
     print box, model, queue
 
     if model=="T1bbbb":
-        
         gchipairs = [(400, 50), (400, 200), (400, 300),
                      (450, 50), (450, 200), (450, 300), (450, 400),
                      (500, 50), (500, 200), (500, 300), (500, 400), (500, 450), (500, 500),
@@ -268,6 +272,7 @@ if __name__ == '__main__':
     totalJobs = 0
     missingFiles = 0
     for gluinopoint, neutralinopoint in gchipairs:
+        if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
         xsecRange = getXsecRange(box,model,neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
