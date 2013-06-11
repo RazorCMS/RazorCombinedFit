@@ -115,11 +115,9 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     
     jetReq = "(MR>0.)"
     if box in ["MuMultiJet", "EleMultiJet"]:
-        #jetReq = "(NJET_NOMU>=4)"
-        jetReq = "(NJET>=4)"
+        jetReq = "(NJET_NOMU>=4)"
     elif box in ["MuJet", "EleJet"]:
-        #jetReq = "(NJET_NOMU<=3)"
-        jetReq = "(NJET<=3)"
+        jetReq = "(NJET_NOMU<=3)"
     boxCut = "(" + jetReq + "&&" + boxCut + ")"
 
     print boxCut

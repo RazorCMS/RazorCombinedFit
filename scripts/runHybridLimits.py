@@ -12,7 +12,6 @@ from array import *
 
 
 def getXsecRange(box,model,neutralinoMass,gluinoMass):
-
     if model=="T1bbbb":
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         if mDelta < 400:
@@ -53,13 +52,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".sge"
     outputfile = open(outputname,'w')
     
-    label = ""
-
-    if box in ["Ele", "EleTau","EleEle","MuEle","MuMu","Mu","MuTau"]:
-       label = "MR300.0_R0.387298334621"
-    else:
-       label = "MR400.0_R0.5"
-        
+    label = "MR300.0_R0.387298334621"
 
     tagHypo = ""
     if hypo == "B":
@@ -88,15 +81,15 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("export NAME=\"%s\"\n"%model)
     outputfile.write("export LABEL=\"%s\"\n"%label)
     
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Background/FullFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
     outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
     
     nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     
     nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")
@@ -111,13 +104,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
 
-    label = ""
-
-    if box in ["Ele", "EleTau","EleEle","MuEle","MuMu","Mu","MuTau"]:
-       label = "MR300.0_R0.387298334621"
-    else:
-       label = "MR400.0_R0.5"
-        
+    label = "MR300.0_R0.387298334621"
     
     tagHypo = ""
     if hypo == "B":
@@ -132,32 +119,37 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
-    outputfile.write("scramv1 project CMSSW CMSSW_6_1_1\n")
-    outputfile.write("cd CMSSW_6_1_1/src\n")
-    outputfile.write("eval `scramv1 run -sh`\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
+    outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
+    outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
+    outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
+    outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
+    #outputfile.write("scramv1 project CMSSW CMSSW_6_1_1\n")
+    #outputfile.write("cd CMSSW_6_1_1/src\n")
+    #outputfile.write("eval `scramv1 run -sh`\n")
+    #outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
+    #outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -r woodson_110413 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
+    outputfile.write("cvs co -r woodson_110613 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("mkdir lib\n")
     outputfile.write("source setup.sh\n")
-    outputfile.write("make clean; make\n")
+    outputfile.write("make clean; make -j 4\n")
     
     outputfile.write("export NAME=\"%s\"\n"%model)
     outputfile.write("export LABEL=\"%s\"\n"%label)
     
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FullFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
         
     nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     
     nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FullFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root %s \n"%hybridDir)
+    #outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root %s \n"%hybridDir)
+    outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")
     
     outputfile.close
@@ -296,7 +288,7 @@ if __name__ == '__main__':
                     if output1 not in outFileList:
                         missingFiles+=1
                         runJob = True
-                    if not runJob: continue
+                        if not runJob: continue
                     if t3:
                         outputname,ffDir = writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
@@ -305,7 +297,7 @@ if __name__ == '__main__':
                         #queues = "all.q@compute-2-2.local,all.q@compute-2-4.local,all.q@compute-3-10.local,all.q@compute-3-11.local,all.q@compute-3-12.local,all.q@compute-3-2.local,all.q@compute-3-3.local,all.q@compute-3-4.local,all.q@compute-3-5.local,all.q@compute-3-6.local,all.q@compute-3-7.local,all.q@compute-3-8.local,all.q@compute-3-9.local"
                         queues = "all.q@compute-2-2.local"
                         os.system("echo qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
-                        #os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
+                        os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
                         outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
