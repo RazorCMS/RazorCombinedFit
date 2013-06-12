@@ -293,7 +293,7 @@ if __name__ == '__main__':
                     if output1 not in outFileList:
                         missingFiles+=1
                         runJob = True
-                        if not runJob: continue
+                    if not runJob: continue
                     if t3:
                         outputname,ffDir = writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
