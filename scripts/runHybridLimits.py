@@ -14,6 +14,7 @@ from array import *
 def getXsecRange(box,model,neutralinoMass,gluinoMass):
     if model=="T1bbbb":
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
+        print "mDelta = ", mDelta
         if mDelta < 400:
             xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
         elif mDelta < 800:
@@ -22,7 +23,8 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
         topMass = 175.
-        mDelta = math.sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/gluinoMass , 2) - pow(topMass,2))
+        mDelta = 2.*math.sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2))
+        print "mDelta = ", mDelta
         if mDelta < 300:
             xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
         elif mDelta < 400:
@@ -33,14 +35,38 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif model=="T1tttt":
         topMass = 175.
-        mDelta = math.sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2*topMass,2) )/gluinoMass , 2) - pow(2*topMass,2))
+        mDelta = 2.*math.sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*topMass,2) )/(2.*gluinoMass) , 2) - pow(2.*topMass,2))
+        print "mDelta = ", mDelta
         if mDelta < 700:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10.]
         elif mDelta < 800:
             xsecRange = [0.01, 0.05, 0.1, 0.5, 1.0]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1]
-          
+    elif model=="T6bbHH":
+        higgsMass = 125.
+        mDelta = 2*math.sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
+        print "mDelta = ", mDelta
+        if mDelta < 250:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    elif model=="T2bb":
+        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
+        print "mDelta = ", mDelta
+        if mDelta < 200:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        
     return xsecRange
 
     
@@ -123,11 +149,6 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
     outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
     outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
-    #outputfile.write("scramv1 project CMSSW CMSSW_6_1_1\n")
-    #outputfile.write("cd CMSSW_6_1_1/src\n")
-    #outputfile.write("eval `scramv1 run -sh`\n")
-    #outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
-    #outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
     outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
     outputfile.write("cvs co -r woodson_110613 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
     outputfile.write("cd RazorCombinedFit\n")
@@ -148,7 +169,6 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     nToyOffset = nToys*(2*t+1)
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
-    #outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")
     
@@ -248,7 +268,57 @@ if __name__ == '__main__':
                      (1300, 1), (1300, 125), (1300, 225), (1300, 325), (1300, 425), (1300, 525), (1300, 625), (1300, 725), (1300, 825), (1300, 925), (1300, 1025),
                      (1350, 1), (1350, 125), (1350, 225), (1350, 325), (1350, 425), (1350, 525), (1350, 625), (1350, 725), (1350, 825), (1350, 925), (1350, 1025), (1350, 1125),
                      (1400, 1)]
+        
+    if model=="T6bbHH":
+        gchipairs = [(325, 25),
+                     (350, 25), (350, 50),
+                     (375, 25), (375, 50), (375, 75),
+                     (400, 25), (400, 50), (400, 75), (400, 100),
+                     (425, 25), (425, 50), (425, 75), (425, 100), (425, 125),
+                     (450, 25), (450, 50), (450, 75), (450, 100), (450, 125), (450, 150),
+                     (475, 25), (475, 50), (475, 75), (475, 100), (475, 125), (475, 150), (475, 175),
+                     (500, 25), (500, 50), (500, 75), (500, 100), (500, 125), (500, 150), (500, 175), (500, 200),
+                     (525, 25), (525, 50), (525, 75), (525, 100), (525, 125), (525, 150), (525, 175), (525, 200), (525, 225),
+                     (550, 25), (550, 50), (550, 75), (550, 100), (550, 125), (550, 150), (550, 175), (550, 200), (550, 225), (550, 250),
+                     (575, 25), (575, 50), (575, 75), (575, 100), (575, 125), (575, 150), (575, 175), (575, 200), (575, 225), (575, 250), (575, 275),
+                     (600, 25), (600, 50), (600, 75), (600, 100), (600, 125), (600, 150), (600, 175), (600, 200), (600, 225), (600, 250), (600, 275), (600, 300),
+                     (625, 25), (625, 50), (625, 75), (625, 100), (625, 125), (625, 150), (625, 175), (625, 200), (625, 225), (625, 250), (625, 275), (625, 300), (625, 325),
+                     (650, 25), (650, 50), (650, 75), (650, 100), (650, 125), (650, 150), (650, 175), (650, 200), (650, 225), (650, 250), (650, 275), (650, 300), (650, 325), (650, 350),
+                     (675, 25), (675, 50), (675, 75), (675, 100), (675, 150), (675, 225), (675, 250), (675, 275), (675, 300), (675, 325), (675, 350), (675, 375),
+                     (700, 25), (700, 50), (700, 75), (700, 100), (700, 125), (700, 150), (700, 175), (700, 200), (700, 225), (700, 250), (700, 275), (700, 300), (700, 325), (700, 350), (700, 375), (700, 400)]
+        
     
+    if model=="T2bb":
+        gchipairs = [(100, 1), (100, 50),
+                     #(125, 1), (125, 50),
+                     (150, 1), (150, 50), (150, 100),
+                     #(175, 1), (175, 50), (175, 100),
+                     (200, 1), (200, 50), (200, 100), (200, 150),
+                     #(225, 1), (225, 50), (225, 100), (225, 150),
+                     (250, 1), (250, 50), (250, 100), (250, 150), (250, 200),
+                     #(275, 1), (275, 50), (275, 100), (275, 150), (275, 200),
+                     (300, 1), (300, 50), (300, 100), (300, 150), (300, 200), (300, 250),
+                     #(325, 1), (325, 50), (325, 100), (325, 150), (325, 200), (325, 250),
+                     (350, 1), (350, 50), (350, 100), (350, 150), (350, 200), (350, 250), (350, 300),
+                     #(375, 1), (375, 50), (375, 100), (375, 150), (375, 200), (375, 250), (375, 300),
+                     (400, 1), (400, 50), (400, 100), (400, 150), (400, 200), (400, 250), (400, 300), (400, 350),
+                     #(425, 1), (425, 50), (425, 100), (425, 150), (425, 200), (425, 250), (425, 300), (425, 350),
+                     (450, 1), (450, 50), (450, 100), (450, 150), (450, 200), (450, 250), (450, 300), (450, 350), (450, 400),
+                     #(475, 1), (475, 50), (475, 100), (475, 150), (475, 200), (475, 250), (475, 300), (475, 350), (475, 400),
+                     (500, 1), (500, 50), (500, 100), (500, 150), (500, 200), (500, 250), (500, 300), (500, 350), (500, 400), (500, 450),
+                     #(525, 1), (525, 50), (525, 100), (525, 150), (525, 200), (525, 250), (525, 300), (525, 350), (525, 400), (525, 450),
+                     (550, 1), (550, 50), (550, 100), (550, 150), (550, 200), (550, 250), (550, 300), (550, 350), (550, 400), (550, 450), (550, 500),
+                     #(575, 1), (575, 50), (575, 100), (575, 150), (575, 200), (575, 250), (575, 300), (575, 350), (575, 400), (575, 450), (575, 500),
+                     (600, 1), (600, 50), (600, 100), (600, 150), (600, 200), (600, 250), (600, 300), (600, 350), (600, 400), (600, 450), (600, 500), (600, 550),
+                     #(625, 1), (625, 50), (625, 100), (625, 150), (625, 200), (625, 250), (625, 300), (625, 350), (625, 400), (625, 450), (625, 500), (625, 550),
+                     (650, 1), (650, 50), (650, 100), (650, 150), (650, 200), (650, 250), (650, 300), (650, 350), (650, 400), (650, 450), (650, 500), (650, 550), (650, 600),
+                     #(675, 1), (675, 50), (675, 100), (675, 150), (675, 200), (675, 250), (675, 300), (675, 350), (675, 400), (675, 450), (675, 500), (675, 550), (675, 600),
+                     (700, 1), (700, 50), (700, 100), (700, 150), (700, 200), (700, 250), (700, 300), (700, 350), (700, 400), (700, 450), (700, 500), (700, 550), (700, 600), (700, 650),
+                     #(725, 1), (725, 50), (725, 100), (725, 150), (725, 200), (725, 250), (725, 300), (725, 350), (725, 400), (725, 450), (725, 500), (725, 550), (725, 600), (725, 650),
+                     (750, 1), (750, 50), (750, 100), (750, 150), (750, 200), (750, 250), (750, 300), (750, 350), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650), (750, 700)]
+                     #(775, 1), (775, 50), (775, 100), (775, 150), (775, 200), (775, 250), (775, 300), (775, 350), (775, 400), (775, 450), (775, 500), (775, 550), (775, 600), (775, 650), (775, 700)]
+
+        
     pwd = os.environ['PWD']
     
     submitDir = "submit"
