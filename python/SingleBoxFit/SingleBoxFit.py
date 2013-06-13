@@ -811,7 +811,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.var("Ntot_TTj2b").setMax(1e6)
             boxes[box].workspace.var("Ntot_Vpj").setMax(1e6)
 
-            if self.options.signal_xsec >= boxes[box].workspace.var("sigma").getMax():
+            if 10*self.options.signal_xsec >= boxes[box].workspace.var("sigma").getMax():
                 boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
                 boxes[box].workspace.Print("v")
                 boxes[box].workspace.var("sigma").Print("v")
@@ -849,47 +849,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
             myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
-            # if boxes[box].name=="Jet":
-            #     fr_jet = rt.TFile.Open(self.options.jet_input).Get("Jet/independentFR")
-            #     subsetConstraint = ["b_TTj1b", "b_Vpj", "n_TTj1b", "n_Vpj"] # Preserve the same order as in the covariance matrix!
-            #     subsetParams = rt.RooArgSet()
-            #     listParams = rt.RooArgList()
-            #     muParams = rt.RooArgList()
-            #     for param in subsetConstraint:
-            #         realPar = boxes[box].workspace.var(param)
-            #         clonePar = realPar.clone("%s_centralvalue"%param)
-            #         subsetParams.add(realPar)
-            #         listParams.add(realPar)
-            #         clonePar.setConstant(True)
-            #         muParams.add(clonePar)
-            #     mvaGauss = fr_jet.createHessePdf(subsetParams)
-            #     mvaGauss.SetName("constraint")
-            #     covMatrix = mvaGauss.covarianceMatrix()
-            #     covMatrix *= 16 # multiply covariance matrix by 16 to enlarge the error by 4
-            #     mvaGauss2xErr = rt.RooMultiVarGaussian("constraint2xErr","constraint2xErr",listParams,muParams,covMatrix)
-            #     boxes[box].importToWS(mvaGauss2xErr)
-            #     boxes[box].signalmodelconst = boxes[box].signalmodel+"Constrained"
-            #     boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,mvaGauss2xErr.GetName()))
-            # else:
-            #
-            if boxes[box].name=="Jeto":
-                fr_central.Print("v")
-                # # replace the n parameters by a log normal
-                #workspace.factory("expr::n_TTj1b_const('@0 * pow( (1+@1), @2)', n_TTj1b_%s_value, n_TTj1b_%s_uncert, n_TTj1b_%s_prime)" % (box,box,box,box) )
-                nttj1b = boxes[box].workspace.var('n_TTj1b')
-                m0 = rt.RooConstVar("n_TTj1b_value","n_TTj1b_value",nttj1b.getVal())
-                k = rt.RooConstVar("n_TTj1b_shape","n_TTj1b_shape",1.5)
-                nttj1b_const = rt.RooLognormal("n_TTj1b_Constraint","n_TTj1b_Constraint", nttj1b, m0, k)
-                nttj1b_const.Print("v")
-                print nttj1b_const.getVal()
-                nttj1b.setVal(-5.5)
-                print nttj1b_const.getVal()
-                boxes[box].importToWS(nttj1b_const)
-                boxes[box].signalmodelconst = boxes[box].signalmodel+"Constrained"
-                boxes[box].workspace.factory('PROD::%s(%s,%s)' % (boxes[box].signalmodelconst,boxes[box].signalmodel,nttj1b_const.GetName()))
-            else:
-                boxes[box].signalmodelconst = boxes[box].signalmodel
-                
             lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
             
             sDATA.var1 = boxes[box].workspace.var("sigma").getVal()
@@ -1106,6 +1065,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
         workspace = rt.RooWorkspace('newws')
+        workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
+        workspace.importClassCode(rt.RooBTagMult.Class())
+        workspace.importClassCode(rt.RooRazor3DSignal.Class())
         
         #create a RooCatagory with the name of each box in it
         workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
@@ -1249,10 +1211,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
 
         workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
-        workspace.var('MR').setBins(7)
-        workspace.var('Rsq').setBins(5)
+        workspace.var('MR').setBins(70)
+        workspace.var('Rsq').setBins(50)
         workspace.var('nBtag').setBins(3)
-
 
         #make a RooDataset with *all* of the data
         pData = mergeDatasets(datasets, workspace.cat('Boxes'), makeBinned = False)
@@ -1416,7 +1377,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #save a snap-shot for signal+background
         pPoiAndNuisance = rt.RooArgSet()
         pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
-        pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
+        #pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
         pSbModel.SetSnapshot(pPoiAndNuisance)
         pPoiAndNuisance.Print("v")
         #del pNll, pProfile, pPoiAndNuisance
@@ -1453,7 +1414,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #save a snap-shot for background only
         pPoiAndNuisance = rt.RooArgSet()
         pPoiAndNuisance.add(pBModel.GetParametersOfInterest())
-        pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
+        #pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
         pBModel.SetSnapshot(pPoiAndNuisance)
 
         #del pNll, pProfile, pPoiAndNuisance
@@ -1512,6 +1473,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         print "CLb = ", CLb
 
         #self.store(workspace, dir='CombinedLikelihood')
+
         
         #for some reason, it does not like it when we write everything to the same file
         workspace_name = '%s_CombinedLikelihood_workspace.root' % self.options.output.lower().replace('.root','')
@@ -1541,10 +1503,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
+        #cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),"",pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
-        
-        #os.system('%s | tee %s' % (cmd,logfile_name))
+        print cmd
+        sys.exit()
+        os.system('%s | tee %s' % (cmd,logfile_name))
 
         hc = rt.RooStats.AsymptoticCalculator(pData, pBModel, pSbModel, False)
         hc.SetOneSided(True)
@@ -1562,20 +1526,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
         row.Print("V")
         
         
-        # hc.SetPrintLevel(0)
-        # rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.NumIntegration)
-        # calc = rt.RooStats.HypoTestInverter(hc)
-        # calc.SetConfidenceLevel(0.95)
-        # calc.UseCLs(True)
-        # calc.SetVerbose(False)
-        # calc.SetFixedScan(3,poi_min,poi_max)
+        hc.SetPrintLevel(0)
+        rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.NumIntegration)
+        calc = rt.RooStats.HypoTestInverter(hc)
+        calc.SetConfidenceLevel(0.95)
+        calc.UseCLs(True)
+        calc.SetVerbose(False)
+        calc.SetFixedScan(3,poi_min,poi_max)
 
-        # r = calc.GetInterval()
+        r = calc.GetInterval()
 
-        # print "Exp", r.GetExpectedUpperLimit(0)
-        # print "Exp+1", r.GetExpectedUpperLimit(1)
-        # print "Exp-1", r.GetExpectedUpperLimit(-1)
-        # print "Obs", r.UpperLimit()
+        print "Exp", r.GetExpectedUpperLimit(0)
+        print "Exp+1", r.GetExpectedUpperLimit(1)
+        print "Exp-1", r.GetExpectedUpperLimit(-1)
+        print "Obs", r.UpperLimit()
 
         
         
@@ -1599,3 +1563,453 @@ class SingleBoxAnalysis(Analysis.Analysis):
 #            signal_yield += workspace.function('S_%s' % box).getVal()
 #        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
 #        self.store(result, dir='CombinedLikelihood')
+
+
+    def limit_simult(self, inputFiles, nToys, nToyOffset):
+        """Set a limit based on the model dependent method"""
+
+        
+        def mergeDatasets(datasets, cat, makeBinned = False):
+            """Take all of the RooDatasets and merge them into a new one with a RooCategory column"""
+            
+            keys = datasets.keys()
+            data = datasets[keys[0]]
+            args = data.get(0)
+            
+            argset = rt.RooArgSet()
+            for a in RootTools.RootIterator.RootIterator(args):
+                if a.GetName() in ['MR','Rsq','nBtag']:
+                    argset.add(a)
+        
+            args_tuple = ['RMRTree','RMRTree',argset,rt.RooFit.Index(cat),rt.RooFit.Import(keys[0],data)]
+            for k in keys[1:]:
+                args_tuple.append(rt.RooFit.Import(k,datasets[k]))
+        
+            a = tuple(args_tuple)
+            merged = rt.RooDataSet(*a)
+            if makeBinned:
+                return merged.binnedClone('RMRTree')
+            return merged
+        
+        open_files = []
+        def getSignalPdf(workspace, inputFile, box):
+            """Makes a signal PDF from the input histograms"""
+            
+            rootFile = rt.TFile.Open(inputFile)
+            open_files.append(rootFile)
+            wHisto = rootFile.Get('wHisto_pdferr_nom')
+            btag =  rootFile.Get('wHisto_btagerr_pe')
+            jes =  rootFile.Get('wHisto_JESerr_pe')
+            pdf =  rootFile.Get('wHisto_pdferr_pe')
+            isr =  rootFile.Get('wHisto_ISRerr_pe')
+            
+            def renameAndImport(histo):
+                #make a memory resident copy
+                newHisto = histo.Clone('%s_%s' % (histo.GetName(),box))
+                newHisto.SetDirectory(0)
+                RootTools.Utils.importToWS(workspace,newHisto)
+                return newHisto
+            
+            wHisto = renameAndImport(wHisto)
+            btag = renameAndImport(btag)
+            jes = renameAndImport(jes)
+            pdf = renameAndImport(pdf)
+            isr = renameAndImport(isr)
+            
+            #rootFile.Close()
+            
+            #set the per box eff value
+            workspace.factory('eff_value_%s[%f]' % (box,wHisto.Integral()) )
+            print 'eff_value for box %s is %f' % (box,workspace.var('eff_value_%s'%box).getVal())
+            
+            signal = rt.RooRazor3DSignal('SignalPDF_%s' % box,'Signal PDF for box %s' % box,
+                                         workspace.var('MR'),workspace.var('Rsq'),workspace.var('nBtag'),
+                                         workspace,
+                                         wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),isr.GetName(),
+                                         workspace.var('xJes_prime'),workspace.var('xPdf_prime'),workspace.var('xBtag_prime'),workspace.var('xIsr_prime'))
+            RootTools.Utils.importToWS(workspace,signal)
+            return signal
+        
+        def SetConstants(pWs, pMc):
+            #
+            # Fix all variables in the PDF except observables, POI and
+            # nuisance parameters. Note that global observables are fixed.
+            # If you need global observables floated, you have to set them
+            # to float separately.
+            #
+            pMc.SetWorkspace(pWs)
+
+            pPdf = pMc.GetPdf()
+            pVars = pPdf.getVariables()
+
+            #these are the things to float
+            pFloated = rt.RooArgSet(pMc.GetObservables())
+            pFloated.add(pMc.GetParametersOfInterest())
+            pFloated.add(pMc.GetNuisanceParameters())
+            pFloated.add(pWs.set('shape'))
+            
+            for var in RootTools.RootIterator.RootIterator(pVars):
+                pFloatedObj = pFloated.find(var.GetName())
+                if pFloatedObj is not None and pFloatedObj:
+                    var.setConstant(False)
+                else:
+                    var.setConstant(True)
+
+        
+        print 'Running the profile limit setting code'
+            
+        fileIndex = self.indexInputFiles(inputFiles)
+        boxes = self.getboxes(fileIndex)
+        
+        if self.options.input is None:
+            raise Exception('Limit setting code needs a fit result file as input. None given')
+        
+        workspace = rt.RooWorkspace('newws')
+        workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
+        workspace.importClassCode(rt.RooBTagMult.Class())
+        workspace.importClassCode(rt.RooRazor3DSignal.Class())
+        
+        #create a RooCatagory with the name of each box in it
+        workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
+        
+        #start by restoring all the workspaces etc
+        for box, fileName in fileIndex.iteritems():
+            wsName = '%s/Box%s_workspace' % (box,box)
+            print "Restoring the workspace from %s" % self.options.input
+            boxes[box].restoreWorkspace(self.options.input, wsName)
+            
+            #add nuisance parameters and variables if not already defined
+            boxes[box].defineSet("nuisance", self.config.getVariables(box, "nuisance_parameters"), workspace = workspace)
+            boxes[box].defineSet("shape", "", workspace = workspace)
+            boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = workspace)            
+            boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = workspace)            
+            boxes[box].defineSet("variables", self.config.getVariables(box, "variables"), workspace = workspace)
+
+            #add the log-normals for the lumi and efficiency (these are not in the signal PDF)
+            #these are treated as global scaling parameters. There is a box by box scaling coefficent
+            workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+            workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
+        
+        workspace.extendSet('variables','Boxes')
+
+                
+        pdf_names = {}
+        datasets = {}
+        
+        #start by restoring all the workspaces etc
+        box_primes = []
+        for box, fileName in fileIndex.iteritems():
+
+            #this is the background only PDF used in the fit - we take the version with *no penalty terms* 
+            background_pdf = boxes[box].getFitPDF(graphViz=None,name='fitmodel')
+            
+            #we import this into the workspace, but we rename things so that they don't clash
+            var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
+            
+            RootTools.Utils.importToWS(workspace,background_pdf,\
+                                        rt.RooFit.RenameAllNodes(box),\
+                                        rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
+            
+            #get the renamed PDF back from the workspace
+            background_pdf = workspace.pdf('%s_%s' % (background_pdf.GetName(),box))
+            
+            #build the signal PDF for this box
+            signal_pdf = getSignalPdf(workspace, fileName, box)
+            
+            # change upper limits of variables
+            workspace.var("Ntot_TTj1b_%s"%box).setMax(1e6)
+            workspace.var("Ntot_TTj2b_%s"%box).setMax(1e6)
+            workspace.var("Ntot_Vpj_%s"%box).setMax(1e6)
+
+            # set simult pdf ranges for each category (box)
+            if box in ["MultiJet","TauTauJet","Jet","Jet1b","Jet2b"]:
+                mrVals = [400., 450., 550., 4000.]
+                rsqVals = [0.25, 0.3, 1.5]
+            else:
+                mrVals = [300., 350., 450., 4000.]
+                rsqVals = [0.15, 0.2, 1.5]
+            workspace.var('MR').setRange('LowRsq_%s'%box,mrVals[1],mrVals[3])
+            workspace.var('Rsq').setRange('LowRsq_%s'%box,rsqVals[0],rsqVals[1])
+            workspace.var('MR').setRange('LowMR_%s'%box,mrVals[0],mrVals[2])
+            workspace.var('Rsq').setRange('LowMR_%s'%box,rsqVals[1],rsqVals[2])
+            workspace.var('MR').setRange('HighMR_%s'%box,mrVals[2],mrVals[3])
+            workspace.var('Rsq').setRange('HighMR_%s'%box,rsqVals[1],rsqVals[2])
+            
+            #now extend the signal PDF
+            #note that we scale the global effcienty and lumi by a fixed coefficient - so there is only one nuisance parameter
+            workspace.factory("expr::S_%s('@0*@1*@2*@3', lumi, sigma, eff_value_%s, eff)" % (box,box) )
+            signal_pdf_extended = workspace.factory("RooExtendPdf::%s_extended(%s,S_%s)" % (signal_pdf.GetName(),signal_pdf.GetName(),box) )
+            
+            #finally add the signal + background PDFs together to get the final PDF
+            #everything is already extended so no additional coefficients
+            
+            SpBPdfList = rt.RooArgList(signal_pdf_extended)
+            print "expected signal yield = ", workspace.function("S_%s"%box).getVal()
+            if box not in boxes[box].zeros['TTj1b']: SpBPdfList.add(workspace.pdf("ePDF_TTj1b_%s"%box))
+            if box not in boxes[box].zeros['TTj2b']: SpBPdfList.add(workspace.pdf("ePDF_TTj2b_%s"%box))
+            if box not in boxes[box].zeros['Vpj']: SpBPdfList.add(workspace.pdf("ePDF_Vpj_%s"%box))
+                
+            full_pdf = rt.RooAddPdf('SplusBPDF_%s' % box, 'SplusBPDF_%s' % box, SpBPdfList )
+            RootTools.Utils.importToWS(workspace,full_pdf)
+
+            #store the name of the final PDF            
+            pdf_names[box] = full_pdf.GetName()
+
+            #store the dataset from this box
+            datasets[box] = boxes[box].workspace.data('RMRTree')
+            
+            rangeCut = boxes[box].getVarRangeCutNamed(ranges=['LowRsq','LowMR','HighMR'])
+            print ''
+            print 'rangeCut', rangeCut
+            print ''
+        
+            datasets[box] = datasets[box].reduce(rangeCut)
+            
+            
+            #add shape parameters
+            [workspace.extendSet('shape',p.GetName()) for p in RootTools.RootIterator.RootIterator( background_pdf.getParameters(datasets[box]) ) if not p.isConstant()]
+            
+            #set the parameters constant
+            [p.setConstant(True) for p in RootTools.RootIterator.RootIterator( full_pdf.getParameters(datasets[box]) ) ]
+
+
+        print 'Starting to build the combined PDF'
+
+        workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
+
+        #make a RooDataset with *all* of the data
+        pData = mergeDatasets(datasets, workspace.cat('Boxes'), makeBinned = False)
+        print 'Merged dataset'
+        pData.Print('V')
+        RootTools.Utils.importToWS(workspace,pData)
+        
+        #we now combine the boxes into a RooSimultaneous. Only a few of the parameters are shared
+            
+        workspace.Print('V')
+        #Syntax: SIMUL::name(cat,a=pdf1,b=pdf2]   -- Create simultaneous p.d.f index category cat. Make pdf1 to state a, pdf2 to state b
+        sim_map = ['%s=%s' % (box,pdf_name) for box, pdf_name in pdf_names.iteritems()]
+        print 'SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map)
+        simultaneous = workspace.factory('SIMUL::CombinedLikelihood(Boxes,%s)' % ','.join(sim_map))
+        assert simultaneous and simultaneous is not None
+        
+        print 'Now adding the Gaussian penalties'
+
+        #multiply the likelihood by some gaussians
+        pdf_products = [simultaneous.GetName()]
+        
+        #used for the global observables
+        workspace.defineSet('global','')
+        for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+            #check that the number of box related nuisance parameters defined is the same as the number of boxes
+            if var.GetName() in box_primes:
+                box_primes.remove(var.GetName())
+                
+            #make a Gaussian for each nuisance parameter
+            workspace.factory('RooGaussian::%s_pdf(nom_%s[0,-5,5],%s,%s_sigma[1.])' % (var.GetName(),var.GetName(),var.GetName(),var.GetName()))
+            pdf_products.append('%s_pdf' % var.GetName())
+            
+            #keep track of the Gaussian means, as these are global observables
+            workspace.extendSet('global','nom_%s' % var.GetName())
+        
+        [workspace.extendSet('nuisance',p.GetName()) for p in RootTools.RootIterator.RootIterator( workspace.set('shape') )]
+      
+        
+        if box_primes:
+            raise Exception('There are nuisance parameters defined for boxes that we are not running on: %s' % str(box_primes))
+        del box_primes
+        
+        print 'Now multiplying the likelihood by the penalties'
+        
+        #multiply the various PDFs together
+        print 'PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products))        
+        simultaneous_product = workspace.factory('PROD::%s_penalties(%s)' % (simultaneous.GetName(),','.join(pdf_products)))
+        #store the name in case we need it later
+        #RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
+        simultaneous_product.graphVizTree('fullSplusBPDF.dot')
+
+
+
+        
+        def getFR(ds, pdf, workspace, opt, fixSigma=True, sigmaVal = 0.0):
+            workspace.var("sigma").setConstant(fixSigma)
+            if fixSigma: workspace.var("sigma").setVal(sigmaVal)
+            fr = pdf.fitTo(ds, opt)
+
+            return fr
+            
+        
+        def getLz(ds, pdf, workspace, opt):
+            #L(s,^th_s|x)
+            print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
+            covqualH0 = 0
+            fitAttempts = 0
+            while covqualH0!=3 and fitAttempts<1:
+                if self.options.expectedlimit==True or ds.GetName=="RMRTree":
+                    workspace.obj('BModel').LoadSnapshot()
+                else:
+                    workspace.obj('SbModel').LoadSnapshot()
+                frH0 = getFR(ds, pdf, workspace, opt, fixSigma = True, sigmaVal = 0.0)
+                frH0.Print("v")
+                statusH0 = frH0.status()
+                covqualH0 = frH0.covQual()
+                LH0x = frH0.minNll()
+                print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+                fitAttempts+=1
+
+            #L(^s,^th|x)
+            print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
+            covqualH1 = 0
+            fitAttempts = 0
+            while covqualH1!=3 and fitAttempts<1:
+                if self.options.expectedlimit==True or ds.GetName=="RMRTree":
+                    workspace.obj('BModel').LoadSnapshot()
+                else:
+                    workspace.obj('SbModel').LoadSnapshot()
+                frH1 = getFR(ds, pdf, workspace, opt, fixSigma = False)
+                frH1.Print("v")
+                statusH1 = frH1.status()
+                covqualH1 = frH1.covQual()
+                LH1x = frH1.minNll()
+                print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
+                fitAttempts+=1
+
+            if box.workspace.var("sigma")>self.options.signal_xsec:
+                print "INFO: ^sigma > sigma"
+                print " returning q = 0 as per LHC style CLs prescription"
+                LH1x = LH0x
+                
+            if math.isnan(LH1x):
+                print "WARNING: LH1DataSR is nan, most probably because there is no signal expected -> Signal PDF normalization is 0"
+                print "         Since this corresponds to no signal/bkg discrimination, returning q = 0"
+                LH1x = LH0x
+
+            Lz = LH0x-LH1x
+            print "**************************************************"
+            print "-log L(x = %s|s,^th_s) = %f" %(ds.GetName(),LH0x)
+            print "-log L(x = %s|^s,^th) = %f" %(ds.GetName(),LH1x)
+            print "q = -log L(x = %s|s,^th_s) + log L(x = %s|^s,^th) = %f" %(ds.GetName(),ds.GetName(),Lz)
+            print "MIGRAD/COVARIANCE MATRIX STATUS"
+            print "H0 fit status = %i"%statusH0
+            print "H0 cov. qual  = %i"%covqualH0
+            print "H1 fit status = %i"%statusH1
+            print "H1 cov. qual  = %i"%covqualH1
+            print "**************************************************"
+
+            return Lz, LH0x, LH1x, frH0, frH1
+        
+
+        #ths signal+background model
+        pSbModel = rt.RooStats.ModelConfig("SbModel")
+        pSbModel.SetWorkspace(workspace)
+        pSbModel.SetPdf(simultaneous_product)
+        pSbModel.SetParametersOfInterest(workspace.set('poi'))
+        pSbModel.SetNuisanceParameters(workspace.set('nuisance'))
+        pSbModel.SetGlobalObservables(workspace.set('global'))
+        pSbModel.SetObservables(workspace.set('variables'))
+        SetConstants(workspace, pSbModel)
+
+
+        #the background only model
+        poiValueForBModel = 0.0
+        pBModel = rt.RooStats.ModelConfig(pSbModel)
+        pBModel.SetName("BModel")
+        pBModel.SetWorkspace(workspace)
+        
+        
+        norm_region = 'LowRsq,LowMR,HighMR'
+        opt = rt.RooLinkedList()
+        opt.Add(rt.RooFit.Range(norm_region))
+        opt.Add(rt.RooFit.Extended(True))
+        #opt.Add(rt.RooFit.SplitRange())
+        opt.Add(rt.RooFit.Save())
+        opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+        opt.Add(rt.RooFit.Hesse(False))
+        opt.Add(rt.RooFit.Minos(False))
+        opt.Add(rt.RooFit.PrintLevel(-1))
+        opt.Add(rt.RooFit.PrintEvalErrors(10))
+
+        fr_B = getFR(pData,simultaneous_product,workspace,opt,fixSigma=True,sigmaVal=0.0)
+        pPoiAndNuisance = rt.RooArgSet()
+        pPoiAndNuisance.add(pBModel.GetParametersOfInterest())
+        pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
+        pBModel.SetSnapshot(pPoiAndNuisance)
+        del pPoiAndNuisance
+        
+        variables = rt.RooArgSet()
+        variables.add(workspace.cat('Boxes'))
+        variables.add(workspace.var('MR'))
+        variables.add(workspace.var('Rsq'))
+        variables.add(workspace.var('nBtag'))
+        
+        if self.options.expectedlimit == True:
+            genSpecB = simultaneous_product.prepareMultiGen(variables,rt.RooFit.Extended(True))
+        else:
+            fr_SpB = getFR(pData,simultaneous_product,workspace,opt,fixSigma=True,sigmaVal=self.options.signal_xsec)
+            pPoiAndNuisance = rt.RooArgSet()
+            pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
+            pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
+            pSbModel.SetSnapshot(pPoiAndNuisance)
+            del pPoiAndNuisance
+            genSpecSpB = simultaneous_product.prepareMultiGen(variables,rt.RooFit.Extended(True))
+            
+        
+        RootTools.Utils.importToWS(workspace,pSbModel)
+        RootTools.Utils.importToWS(workspace,pBModel)
+
+
+
+        print "get Lz for data"
+
+        myDataTree = rt.TTree("myDataTree", "myDataTree")
+        
+        # THIS IS CRAZY !!!!
+        rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
+        from ROOT import MyDataStruct
+
+        sDATA = MyDataStruct()
+        myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var1'),'var1/D')
+        myDataTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
+        myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
+        myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
+        myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
+        myDataTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var6'),'var6/D')
+        myDataTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var7'),'var7/I')
+        myDataTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var8'),'var8/I')
+        myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
+        myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
+
+
+        
+        lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(pData, simultaneous_product, workspace,opt)
+
+        sDATA.var1 = workspace.var("sigma").getVal()
+        sDATA.var2 = workspace.var("sigma").getError()
+        sDATA.var3 = -1
+        sDATA.var4 = lzDataSR
+        sDATA.var5 = LH0DataSR
+        sDATA.var6 = LH1DataSR
+        sDATA.var7 = frH0Data.status()
+        sDATA.var8 = frH0Data.covQual()
+        sDATA.var9 = frH1Data.status()
+        sDATA.var10 = frH1Data.covQual()
+
+        myDataTree.Fill()
+
+        myTree = rt.TTree("myTree", "myTree")
+        rt.gROOT.ProcessLine("struct MyStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
+        from ROOT import MyStruct
+        
+        boxNames = '_'.join(fileIndex.keys())
+                            
+        s = MyStruct()
+        myTree.Branch("sigma_%s"%boxNames, rt.AddressOf(s,'var1'),'var1/D')
+        myTree.Branch("sigma_err_%s"%boxNames, rt.AddressOf(s,'var2'),'var2/D')
+        myTree.Branch("iToy", rt.AddressOf(s,'var3'),'var3/I')
+        myTree.Branch("LzSR_%s"%boxNames, rt.AddressOf(s,'var4'),'var4/D')
+        myTree.Branch("LH0xSR_%s"%boxNames, rt.AddressOf(s,'var5'),'var5/D')
+        myTree.Branch("LH1xSR_%s"%boxNames, rt.AddressOf(s,'var6'),'var6/D')
+        myTree.Branch("H0status_%s"%boxNames, rt.AddressOf(s,'var7'),'var7/I')
+        myTree.Branch("H0covQual_%s"%boxNames, rt.AddressOf(s,'var8'),'var8/I')
+        myTree.Branch("H1status_%s"%boxNames, rt.AddressOf(s,'var9'),'var9/I')
+        myTree.Branch("H1covQual_%s"%boxNames, rt.AddressOf(s,'var10'),'var10/I')
+
