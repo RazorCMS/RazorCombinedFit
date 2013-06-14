@@ -232,8 +232,6 @@ if __name__ == '__main__':
                      (1225, 50), (1225, 200), (1225, 300), (1225, 400), (1225, 450), (1225, 500), (1225, 525), (1225, 550), (1225, 600), (1225, 625), (1225, 650), (1225, 700), (1225, 750), (1225, 800), (1225, 850),
                      (1325, 50), (1325, 200), (1325, 300), (1325, 400), (1325, 450), (1325, 500), (1325, 525), (1325, 550), (1325, 600), (1325, 625), (1325, 650), (1325, 700), (1325, 750), (1325, 800), (1325, 850),
                      (1375, 50), (1375, 200), (1375, 300), (1375, 400), (1375, 450), (1375, 500), (1375, 525), (1375, 550), (1375, 600), (1375, 625), (1375, 650), (1375, 700), (1375, 750), (1375, 800), (1375, 850)]
-
-        gchipairs = [(1225, 50)]
         
     if model=="T2tt":
         gchipairs = [(150, 50),
@@ -382,11 +380,11 @@ if __name__ == '__main__':
                         outputname,ffDir = writeBashScript(boxes,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
-                        #time.sleep(3)
-                        os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        time.sleep(3)
+                        #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                         #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
