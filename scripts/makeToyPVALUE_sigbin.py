@@ -532,6 +532,16 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
         yLines[i-1].SetLineStyle(2)
         yLines[i-1].SetLineColor(rt.kGray)
 
+
+    if dataFileName.find("Sideband")!=-1:
+        yLines.append(rt.TLine(x[2], y[1], x[2], y[-1]))
+        yLines[-1].SetLineStyle(2)
+        yLines[-1].SetLineWidth(2)
+        yLines[-1].SetLineColor(rt.kGreen)
+        xLines.append(rt.TLine(x[2], y[1], x[-1], y[1]))
+        xLines[-1].SetLineStyle(2)
+        xLines[-1].SetLineWidth(2)
+        xLines[-1].SetLineColor(rt.kGreen)
                       
     rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"c1\");")
     c1 = rt.TCanvas("c1","c1", 600, 400)

@@ -209,7 +209,7 @@ if __name__ == '__main__':
     directory      = sys.argv[4]
     box = Box.lower()
 
-    if model=="T1bbbb":
+    if model in ["T1bbbb","T1tttt"]:
         rootFile = rt.TFile.Open(directory+"/gluino.root")
         h_xsec = rootFile.Get("gluino")
     elif model=="T2tt":
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     h_limit = rt.TMultiGraph()
     if model=="T2tt":
         h_limit.SetTitle(" ;m_{#tilde{t}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
-    elif model=="T1bbbb":
+    elif model in ["T1bbbb","T1tttt"]:
         h_limit.SetTitle(" ;m_{#tilde{g}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
 
 
@@ -298,7 +298,19 @@ if __name__ == '__main__':
 
     #expectedLimit_minus2sigma[1] = 1.2*(expectedLimit[1] - (expectedLimit[0] - expectedLimit_minus2sigma[0]  + expectedLimit[2] - expectedLimit_minus2sigma[2] )/2)
     
-            
+    if model=="T1tttt":
+        j = 0
+        while j < len(observedLimit):
+            if (gluinoMassArray[j]==1350):
+                gluinoMassArray.pop(j)
+                gluinoMassArray_er.pop(j)
+                observedLimit.pop(j)
+                expectedLimit.pop(j)
+                expectedLimit_minus2sigma.pop(j)
+                expectedLimit_plus2sigma.pop(j)
+                expectedLimit_minus1sigma.pop(j)
+                expectedLimit_plus1sigma.pop(j)
+            j+=1
     
     nPoints = len(observedLimit)
     print nPoints
@@ -327,22 +339,30 @@ if __name__ == '__main__':
     gr_expectedLimit1sigma.SetFillColor(rt.kGreen-7)
     gr_expectedLimit1sigma.SetFillStyle(3001)
 
-    h_limit.SetMaximum(500)
-    h_limit.SetMinimum(1e-3)
-    
-    h_limit.Add(gr_expectedLimit2sigma)
+    #h_limit.Add(gr_expectedLimit2sigma)
     h_limit.Add(gr_expectedLimit1sigma)
     h_limit.Add(gr_observedLimit)
     h_limit.Add(xsec_gr)
     h_limit.Add(xsec_gr_nom)
-    h_limit.Draw("a3")
-    #if float(LSPmassStrip)==100.:
-    #    h_limit.GetXaxis().SetLimits(625,1625)
-    #elif float(LSPmassStrip)==0.:
-    #    h_limit.GetXaxis().SetLimits(425,1625)
-    #elif float(LSPmassStrip)==0.:
 
-    h_limit.GetXaxis().SetLimits(150,800)
+        
+    h_limit.Draw("a3")
+    if model=="T1bbbb":
+        h_limit.GetXaxis().SetLimits(400,1375)
+        h_limit.SetMaximum(10)
+        h_limit.SetMinimum(1e-4)
+    if model =="T1tttt":
+        h_limit.GetXaxis().SetLimits(400,1400)
+        h_limit.SetMaximum(10)
+        h_limit.SetMinimum(5e-4)
+    elif model=="T2tt":
+        h_limit.GetXaxis().SetLimits(250,800)
+        h_limit.SetMaximum(500)
+        h_limit.SetMinimum(1e-3)
+
+        
+    h_limit.Draw("a3")
+    
     gr_expectedLimit.Draw("c same")
     xsec_gr_nom.Draw("c same")
     gr_observedLimit.Draw("c SAME")
@@ -357,29 +377,38 @@ if __name__ == '__main__':
     l.DrawLatex(0.55,0.85,"#sqrt{s} = 8 TeV    #int L dt = 19.3 fb^{-1}")
 
     if model=="T1bbbb":
-        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowbb#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
+        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowb#bar{b}#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
     elif model=="T2tt":
         l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{t}#tilde{t};   #tilde{t}#rightarrow t#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
-          
-    l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:22])
-    l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[22:])
+    elif model=="T1tttt":
+        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowt#bar{t}#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
+
+    if model=="T1bbbb":
+        l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+"))
+    elif model=="T2tt":
+        l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:22])
+        l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[22:])
+    elif model=="T1tttt":
+        l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:24])
+        l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[24:])
     l.SetTextColor(rt.kBlue+2)
     l.DrawLatex(0.55,0.785,"Razor Inclusive")
 
-    leg = rt.TLegend(0.70,0.49,0.9,0.67)
+    if model =="T1bbbb":
+        leg = rt.TLegend(0.70,0.49,0.9,0.67)
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
+    elif model in ["T2tt","T1tttt"]:
+        leg = rt.TLegend(0.70,0.41,0.9,0.59)
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
+        
     leg.SetTextFont(132)
     leg.SetFillColor(rt.kWhite)
     leg.SetLineColor(rt.kWhite)
-    if model=="T1bbbb":
-        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
-    elif model =="T2tt":
-        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
-        
     leg.AddEntry(gr_observedLimit, "observed limit","l")
     leg.AddEntry(gr_expectedLimit, "expected limit","l")
     leg.AddEntry(gr_expectedLimit1sigma, "expected limit #pm 1 #sigma","f")
-    leg.AddEntry(gr_expectedLimit2sigma, "expected limit #pm 2 #sigma","f")
-    #leg.Draw("SAME")
+    #leg.AddEntry(gr_expectedLimit2sigma, "expected limit #pm 2 #sigma","f")
+    leg.Draw("SAME")
 
     c.SaveAs(directory+"/limits_LSPMass_"+re.sub('\.','_',LSPmassStrip)+"_"+box+".pdf")
 

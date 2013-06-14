@@ -163,7 +163,7 @@ RooStats::HypoTestInvTool::HypoTestInvTool() : mPlotHypoTestResult(true),
                                                mRebuild(false),
                                                mNWorkers(4),
                                                mNToyToRebuild(100),
-                                               mPrintLevel(0),
+                                               mPrintLevel(2),
                                                mInitialFit(-1),
                                                mRandomSeed(-1),
                                                mNToysRatio(2),
@@ -899,6 +899,7 @@ RooStats::HypoTestInvTool::RunInverter(RooWorkspace * w,
    } 
    else if (type == 2 || type == 3) { 
       if (testStatType == 3) ((AsymptoticCalculator*) hc)->SetOneSided(true);  
+      ((AsymptoticCalculator*) hc)->SetPrintLevel(3);
       if (testStatType != 2 && testStatType != 3)  
          Warning("StandardHypoTestInvDemo","Only the PL test statistic can be used with AsymptoticCalculator - use by default a two-sided PL");
    }

@@ -283,7 +283,6 @@ class RazorBox(Box.Box):
         
         # signalModel is the 2D pdf [normalized to one]
         # nSig is the integral of the histogram given as input
-        #signalModel, nSig = self.makeRooHistPdf(inputFile,modelName)
         signalModel, nSig = self.makeRooRazor3DSignal(inputFile,modelName)
         
         # compute the expected yield/(pb-1)
@@ -298,7 +297,6 @@ class RazorBox(Box.Box):
         
         SpBPdfList = rt.RooArgList(self.workspace.pdf("eBinPDF_Signal"))
         # prevent nan when there is no signal expected
-        #if not math.isnan(self.workspace.function("Ntot_%s"%modelName).getVal()): SpBPdfList.add(self.workspace.pdf("eBinPDF_Signal"))
         if self.workspace.var("Ntot_TTj1b").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF_TTj1b"))
         if self.workspace.var("Ntot_TTj2b").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF_TTj2b"))
         if self.workspace.var("Ntot_Vpj").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF_Vpj"))

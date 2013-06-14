@@ -6,7 +6,7 @@ import RootTools
 from RazorCombinedFit.Framework import Config
 
 #boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'Jet2b':7,'Jet1b':7,'TauTauJet':8,'MultiJet':9}
-boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[9]}
+boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[8,9]}
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -69,18 +69,24 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         noiseCut = "MR>0."
 
     #iterate over selected entries in the input tree
-    boxCut = "(" + "||".join(["(BOX_NUM==%i)"%cut for cut in boxMap[box]]) + ")"
+    boxCut = "(" + "||".join(["BOX_NUM==%i"%cut for cut in boxMap[box]]) + ")"
     print boxCut
 
     jetReq = "MR>0."
 
     if box in ["MuMultiJet", "EleMultiJet"]:
-        jetReq = "NJET_NOMU>=4"
+        if isMC:
+            jetReq = "NJET>=4"
+        else:
+            jetReq = "NJET_NOMU>=4"
     elif box in ["MuJet", "EleJet"]:
-        jetReq = "(NJET_NOMU<=3)"
+        if isMC:
+            jetReq = "NJET<=3"
+        else:
+            jetReq = "(NJET_NOMU<=3)"
         
     if not calo:
-        if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && &s && GOOD_PF && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
+        if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s) && GOOD_PF && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,jetReq),'entrylist')
         else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && %s && GOOD_PF && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
     else:
         tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && %s && GOOD_CALO && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
@@ -95,6 +101,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         if not calo:
             if tree.BTAG_NUM < btagmin: continue
             if box =="Jet1b" and tree.BTAG_NUM>=2: continue
+            if box =="Jet2b" and tree.BTAG_NUM<2: continue
                 #if box in ["MuJet","EleJet"]:
                 #if tree.BTAG_NUM==1 and tree.BTAG_NUM_CSV[2]==0: continue
                 #if tree.RSQ_PFTYPE1>0.7: print tree.BTAG_NUM, tree.BTAG_NUM_CSV[2], tree.RSQ_PFTYPE1
@@ -222,12 +229,12 @@ if __name__ == '__main__':
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuTau.root', cfg,'MuTau',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Mu.root', cfg,'Mu',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleTau.root', cfg,'EleTau',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Ele.root', cfg,'Ele',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuJet.root', cfg,'MuJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMultiJet.root', cfg,'MuMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleJet.root', cfg,'EleJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleMultiJet.root', cfg,'EleMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    #convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'TauTauJet.root', cfg,'TauTauJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)

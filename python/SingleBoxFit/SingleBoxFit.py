@@ -272,7 +272,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
                 
                 #make any plots required
-                boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
+                #boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
             else:
                 
                 wsName = '%s/Box%s_workspace' % (box,box)
@@ -605,7 +605,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
 
                 # make any plots required
-                boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
+                #boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
 
             
             #skip saving the workspace if the option is set
@@ -721,7 +721,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 reset(box, fr, fixSigma=True, random=(fitAttempts>0))
                 box.workspace.var("sigma").setVal(self.options.signal_xsec)
                 box.workspace.var("sigma").setConstant(True)
-                frH0 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH0 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
                 frH0.Print("v")
                 statusH0 = frH0.status()
                 covqualH0 = frH0.covQual()
@@ -750,7 +750,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         reset(box, fr, fixSigma=False, random=(fitAttempts>0))
                     box.workspace.var("sigma").setVal(self.options.signal_xsec)
                     box.workspace.var("sigma").setConstant(False)
-                frH1 = box.getFitPDF(name=box.signalmodelconst).fitTo(ds, opt)
+                frH1 = box.getFitPDF(name=box.signalmodel).fitTo(ds, opt)
                 frH1.Print("v")
                 statusH1 = frH1.status()
                 covqualH1 = frH1.covQual()
@@ -758,7 +758,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
                 fitAttempts+=1
 
-            if box.workspace.var("sigma")>self.options.signal_xsec:
+            if box.workspace.var("sigma").getVal()>=self.options.signal_xsec:
                 print "INFO: ^sigma > sigma"
                 print " returning q = 0 as per LHC style CLs prescription"
                 LH1x = LH0x
@@ -810,18 +810,21 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.var("Ntot_TTj1b").setMax(1e6)
             boxes[box].workspace.var("Ntot_TTj2b").setMax(1e6)
             boxes[box].workspace.var("Ntot_Vpj").setMax(1e6)
-
-            if 10*self.options.signal_xsec >= boxes[box].workspace.var("sigma").getMax():
-                boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
-                boxes[box].workspace.Print("v")
-                boxes[box].workspace.var("sigma").Print("v")
+            
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
 
+
+            # change upper limit of sigma
+            boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
+            boxes[box].workspace.var("sigma").Print("v")
+
+            
             print 'Variables for box %s' % box
             boxes[box].workspace.allVars().Print('V')
             print 'Workspace'
             boxes[box].workspace.Print('V')
+            
             fr_central = boxes[box].workspace.obj('independentFR')
             vars = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
@@ -849,7 +852,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
             myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
 
-            lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box],data, fr_central, Extend=True, norm_region=norm_region)
+            lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(boxes[box], data, fr_central, Extend=True, norm_region=norm_region)
             
             sDATA.var1 = boxes[box].workspace.var("sigma").getVal()
             sDATA.var2 = boxes[box].workspace.var("sigma").getError()
@@ -909,7 +912,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             for i in xrange(nToyOffset,nToyOffset+nToys):
                 print 'Setting limit %i experiment' % i
                 tot_toy = rt.RooDataSet()
-                if self.options.expectedlimit == False:
+                if not self.options.expectedlimit:
                     #generate a toy assuming signal + bkg model          
                     print "generate a toy assuming signal + bkg model"
                     nuisEntry = nuisElist.Next()
@@ -1065,6 +1068,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
         workspace = rt.RooWorkspace('newws')
+        workspace.addClassDeclImportDir('src/')
+        workspace.addClassImplImportDir('src/')
         workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
         workspace.importClassCode(rt.RooBTagMult.Class())
         workspace.importClassCode(rt.RooRazor3DSignal.Class())
@@ -1507,7 +1512,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),"",pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         print cmd
-        sys.exit()
+        
         os.system('%s | tee %s' % (cmd,logfile_name))
 
         hc = rt.RooStats.AsymptoticCalculator(pData, pBModel, pSbModel, False)
@@ -1665,6 +1670,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
         workspace = rt.RooWorkspace('newws')
+        workspace.addClassDeclImportDir('src/')
+        workspace.addClassImplImportDir('src/')
         workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
         workspace.importClassCode(rt.RooBTagMult.Class())
         workspace.importClassCode(rt.RooRazor3DSignal.Class())
@@ -1827,7 +1834,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
         simultaneous_product.graphVizTree('fullSplusBPDF.dot')
 
-
+        workspace.var("sigma").setMax(10.*self.options.signal_xsec)
 
         
         def getFR(ds, pdf, workspace, opt, fixSigma=True, sigmaVal = 0.0):
@@ -1848,7 +1855,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     workspace.obj('BModel').LoadSnapshot()
                 else:
                     workspace.obj('SbModel').LoadSnapshot()
-                frH0 = getFR(ds, pdf, workspace, opt, fixSigma = True, sigmaVal = 0.0)
+                frH0 = getFR(ds, pdf, workspace, opt, fixSigma = True, sigmaVal = self.options.signal_xsec)
                 frH0.Print("v")
                 statusH0 = frH0.status()
                 covqualH0 = frH0.covQual()
@@ -1873,7 +1880,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
                 fitAttempts+=1
 
-            if box.workspace.var("sigma")>self.options.signal_xsec:
+            if workspace.var("sigma").getVal()>=self.options.signal_xsec:
                 print "INFO: ^sigma > sigma"
                 print " returning q = 0 as per LHC style CLs prescription"
                 LH1x = LH0x
@@ -1915,10 +1922,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
         pBModel.SetName("BModel")
         pBModel.SetWorkspace(workspace)
         
-        
-        norm_region = 'LowRsq,LowMR,HighMR'
+        fit_region = 'LowRsq,LowMR,HighMR'
         opt = rt.RooLinkedList()
-        opt.Add(rt.RooFit.Range(norm_region))
+        opt.Add(rt.RooFit.Range(fit_region))
         opt.Add(rt.RooFit.Extended(True))
         #opt.Add(rt.RooFit.SplitRange())
         opt.Add(rt.RooFit.Save())
@@ -1941,7 +1947,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         variables.add(workspace.var('Rsq'))
         variables.add(workspace.var('nBtag'))
         
-        if self.options.expectedlimit == True:
+        if self.options.expectedlimit:
             genSpecB = simultaneous_product.prepareMultiGen(variables,rt.RooFit.Extended(True))
         else:
             fr_SpB = getFR(pData,simultaneous_product,workspace,opt,fixSigma=True,sigmaVal=self.options.signal_xsec)
@@ -1956,8 +1962,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
         RootTools.Utils.importToWS(workspace,pSbModel)
         RootTools.Utils.importToWS(workspace,pBModel)
 
-
-
         print "get Lz for data"
 
         myDataTree = rt.TTree("myDataTree", "myDataTree")
@@ -1966,21 +1970,21 @@ class SingleBoxAnalysis(Analysis.Analysis):
         rt.gROOT.ProcessLine("struct MyDataStruct{Double_t var1;Double_t var2;Int_t var3;Double_t var4;Double_t var5;Double_t var6;Int_t var7;Int_t var8;Int_t var9;Int_t var10;};")
         from ROOT import MyDataStruct
 
-        sDATA = MyDataStruct()
-        myDataTree.Branch("sigma_%s"%boxes[box].name, rt.AddressOf(sDATA,'var1'),'var1/D')
-        myDataTree.Branch("sigma_err_%s"%boxes[box].name, rt.AddressOf(sDATA,'var2'),'var2/D')
-        myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
-        myDataTree.Branch("LzSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var4'),'var4/D')
-        myDataTree.Branch("LH0xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var5'),'var5/D')
-        myDataTree.Branch("LH1xSR_%s"%boxes[box].name, rt.AddressOf(sDATA,'var6'),'var6/D')
-        myDataTree.Branch("H0status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var7'),'var7/I')
-        myDataTree.Branch("H0covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var8'),'var8/I')
-        myDataTree.Branch("H1status_%s"%boxes[box].name, rt.AddressOf(sDATA,'var9'),'var9/I')
-        myDataTree.Branch("H1covQual_%s"%boxes[box].name, rt.AddressOf(sDATA,'var10'),'var10/I')
-
-
+        boxNames = '_'.join(fileIndex.keys())
         
-        lzDataSR,LH0DataSR,LH1DataSR, frH0Data, frH1Data = getLz(pData, simultaneous_product, workspace,opt)
+        sDATA = MyDataStruct()
+        myDataTree.Branch("sigma_%s"%boxNames, rt.AddressOf(sDATA,'var1'),'var1/D')
+        myDataTree.Branch("sigma_err_%s"%boxNames, rt.AddressOf(sDATA,'var2'),'var2/D')
+        myDataTree.Branch("iToy", rt.AddressOf(sDATA,'var3'),'var3/I')
+        myDataTree.Branch("LzSR_%s"%boxNames, rt.AddressOf(sDATA,'var4'),'var4/D')
+        myDataTree.Branch("LH0xSR_%s"%boxNames, rt.AddressOf(sDATA,'var5'),'var5/D')
+        myDataTree.Branch("LH1xSR_%s"%boxNames, rt.AddressOf(sDATA,'var6'),'var6/D')
+        myDataTree.Branch("H0status_%s"%boxNames, rt.AddressOf(sDATA,'var7'),'var7/I')
+        myDataTree.Branch("H0covQual_%s"%boxNames, rt.AddressOf(sDATA,'var8'),'var8/I')
+        myDataTree.Branch("H1status_%s"%boxNames, rt.AddressOf(sDATA,'var9'),'var9/I')
+        myDataTree.Branch("H1covQual_%s"%boxNames, rt.AddressOf(sDATA,'var10'),'var10/I')
+        
+        lzDataSR, LH0DataSR, LH1DataSR, frH0Data, frH1Data = getLz(pData, simultaneous_product, workspace,opt)
 
         sDATA.var1 = workspace.var("sigma").getVal()
         sDATA.var2 = workspace.var("sigma").getError()
@@ -2012,4 +2016,73 @@ class SingleBoxAnalysis(Analysis.Analysis):
         myTree.Branch("H0covQual_%s"%boxNames, rt.AddressOf(s,'var8'),'var8/I')
         myTree.Branch("H1status_%s"%boxNames, rt.AddressOf(s,'var9'),'var9/I')
         myTree.Branch("H1covQual_%s"%boxNames, rt.AddressOf(s,'var10'),'var10/I')
+            
+                    
 
+        for i in xrange(nToyOffset,nToyOffset+nToys):
+            print 'Setting limit %i experiment' % i
+            tot_toy = rt.RooDataSet()
+            if not self.options.expectedlimit:
+                print "generate a toy assuming sig+bkg model"
+                print "before snapshot: sigma =", workspace.var('sigma').getVal()
+                print "before snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                print "before snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                print "before snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                print "before snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                print "before snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                pSbModel.LoadSnapshot()
+                print "after snapshot: sigma =", workspace.var('sigma').getVal()
+                print "after snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                print "after snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                print "after snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                print "after snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                print "after snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                tot_toy = simultaneous_product.generate(genSpecSpB)
+                print "SpB Expected = %f" %simultaneous_product.expectedEvents(variables)
+                print "SpB Yield = %f" %tot_toy.numEntries()
+                tot_toy.SetName("sigbkg")
+            else:                    
+                #generate a toy assuming only the bkg model
+                print "generate a toy assuming bkg model"
+                print "before snapshot: sigma =", workspace.var('sigma').getVal()
+                print "before snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                print "before snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                print "before snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                print "before snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                print "before snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                pBModel.LoadSnapshot()
+                print "after snapshot: sigma =", workspace.var('sigma').getVal()
+                print "after snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                print "after snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                print "after snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                print "after snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                print "after snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                tot_toy = simultaneous_product.generate(genSpecB)
+                print "B Expected = %f" %simultaneous_product.expectedEvents(variables)
+                print "B Yield = %f" %tot_toy.numEntries()
+                tot_toy.SetName("bkg")
+
+            print "%s entries = %i" %(tot_toy.GetName(),tot_toy.numEntries())
+            print "get Lz for toys"
+
+            LzSR, LH0xSR, LH1xSR, frH0, frH1 = getLz(tot_toy, simultaneous_product, workspace,opt)
+
+            s.var1 = workspace.var("sigma").getVal()
+            s.var2 = workspace.var("sigma").getError()
+            s.var3 = i
+            s.var4 = LzSR
+            s.var5 = LH0xSR
+            s.var6 = LH1xSR
+            s.var7 = frH0.status()
+            s.var8 = frH0.covQual()
+            s.var9 = frH1.status()
+            s.var10 = frH1.covQual()
+
+            myTree.Fill()
+
+        print "now storing tree"
+        self.store(myTree, dir=box)
+        self.store(myDataTree, dir=box)
+        print "now deleting objects"
+        del sDATA
+        del s

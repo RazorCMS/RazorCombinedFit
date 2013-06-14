@@ -130,8 +130,10 @@ if __name__ == '__main__':
                 elif options.signal_injection:
                     aa.signal_injection(args)
                 elif options.limit:
-                        if not options.runCLS:
+                        if not (options.runCLS or options.simultaneous):
                             aa.limit(args, options.toys, options.nToyOffset)
+                        elif options.simultaneous:
+                            aa.limit_simult(args, options.toys, options.nToyOffset)
                         else:
                             aa.analysis(args)
                             aa.limit_profile(args,options.toys)

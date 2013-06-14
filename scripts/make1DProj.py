@@ -448,8 +448,8 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
                 leg.AddEntry(hMRTTj1b,"1 b-tag","l")
             leg.AddEntry(hMRTTj2b,"#geq 2 b-tag","l")
 
-    if showSignal:
-        leg.AddEntry(hMRSignal,"Signal","fl")
+    #if showSignal:
+    #    leg.AddEntry(hMRSignal,"Signal","fl")
     leg.Draw("same")
 
     # plot labels
@@ -475,7 +475,16 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     elif datasetName=="DYJetsToLL":
         text = pt.AddText("Z(ll)+jets")
     else:
-        text = pt.AddText("Razor %s Box #int L = %3.1f fb^{-1}" %(Box,Lumi))
+        if Box=="MuMultiJet":
+            text = pt.AddText("Razor MuJet Box #int L = %3.1f fb^{-1}" %(Lumi))
+        elif Box=="MuJet":
+            text = pt.AddText("Razor Mu Box #int L = %3.1f fb^{-1}" %(Lumi))
+        elif Box=="EleMultiJet":
+            text = pt.AddText("Razor EleJet Box #int L = %3.1f fb^{-1}" %(Lumi))
+        elif Box=="EleJet":
+            text = pt.AddText("Razor Ele Box #int L = %3.1f fb^{-1}" %(Lumi))
+        else:
+            text = pt.AddText("Razor %s Box #int L = %3.1f fb^{-1}" %(Box,Lumi))
     pt.Draw()
     pad1.Draw()
     

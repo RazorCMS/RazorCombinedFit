@@ -6,18 +6,19 @@ from math import *
 import os
 from array import *
 
-def getLnQDataAll(boxes):
+def getLnQDataAll(boxes,boxDict):
+    print 'INFO: retreiving lnQ on Data'
     lnQDataBox = []
     for box in boxes:
-        fileName = getFileName("B",mg,mchi,xsec,box,model,directory)
-        lnQDataBox.append(max(0.,getLnQData(box, fileName)))
+        #fileName = getFileName("B",mg,mchi,xsec,box,model,directory)
+        fileName = boxDict[box][0]
+        lnQDataBox.append(getLnQData(box, fileName))
     lnQData = sum(lnQDataBox)
     return lnQData
     
 def getLnQData(box,fileName):
     dataTree = rt.TChain("myDataTree")
-    addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
-    print "adding to chain: %s"% addToChain
+    addToChain = fileName+"/"+box+"/myDataTree"
     dataTree.Add(addToChain)
 
     dataTree.Draw('>>elist','','entrylist')
@@ -45,57 +46,25 @@ def getLnQToys(box,fileName):
         lnQToys.append(eval('hypoTree.LzSR_%s'%box))
     return lnQToys
 
-def getMinMax(box,BfileName,SpBfileName,LzCut):
-    hypoTree = rt.TChain("myTree")
-    addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
-    hypoTree.Add(addToChain)
-    addToChain = SpBfileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
-    hypoTree.Add(addToChain)
-    addToChain = BfileName.replace("//","/")+"_*.root"+"/"+box+"/myDataTree"
-    hypoTree.Add(addToChain)
-    hypoTree.Draw("LzSR_%s"%box,LzCut)
-    
-    htemp = rt.gPad.GetPrimitive("htemp")
-    Xmin = htemp.GetXaxis().GetXmin()
-    Xmax = htemp.GetXaxis().GetXmax()
-    rms = htemp.GetRMS()
-    mean = htemp.GetMean()
-    
-    Xmin = 0
-    Xmax = mean+5*rms
-
-    # XmaxBin = htemp.GetXaxis().FindBin(Xmax)
-    # XmaxTest = Xmax
-    # XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
-    # while htemp.Integral(XmaxTestBin,XmaxBin)/htemp.Integral() < 0.005:
-    #     XmaxTest = Xmin + float(XmaxTest-Xmin)*0.95
-    #     XmaxTestBin = htemp.GetXaxis().FindBin(XmaxTest)
-    # Xmax = XmaxTest
-
-    return Xmin, Xmax
-
 def sortkey(fileName):
     toyStart = fileName.split("_")[-1].split("-")[0]
     return int(toyStart)
     
-def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
-    LzCut = ""
+def getDataSet(boxes,hypo,LzCut, boxDict,Xmin):
+    print "INFO: getting dataset hypo=%s"%hypo
     sumName = ""
     for box in boxes:
-        LzCut+="H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0.&&"%(box,box,box)
         sumName+="LzSR_%s+"%(box)
         
-    LzCut = LzCut[:-2]
     sumName = sumName[:-1]
-    #LzCut = "%s>0."%sumName
     
     lnQBox = []
     hypoDataSetBox = []
-    boxDict = {}
+    
     boxSet = {}
     for box in boxes:
         fileName = getFileName(hypo,mg,mchi,xsec,box,model,directory)
-        boxDict[box] = sorted(glob.glob(fileName.replace("//","/")+"_*.root"),key=sortkey)
+        #boxDict[box] = sorted(glob.glob(fileName.replace("//","/")+"_*.root"),key=sortkey)
         boxSet[box] = set([newFileName.replace(box,"box") for newFileName in boxDict[box]])
         
     totalSet = boxSet[box]
@@ -106,13 +75,17 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
     for box in boxes:
         boxDict[box] = sorted(list(boxSet[box]),key=sortkey)
         
-    
+    if all([not boxDict[box] for box in boxes]):
+        print "INFO: the overlap between boxes is empty, moving on to next point!"
+        return 0, 0, 0, 0
+        
     for box in boxes:
         hypoTreeBox = rt.TChain("myTree")
         for addToChain in boxDict[box]:
             addToChain+="/"+box+"/myTree"
             #print "adding to chain: %s"% addToChain
             hypoTreeBox.Add(addToChain)
+            #hypoTreeBox.Print("V")
         iToy = rt.RooRealVar("iToy","iToy",0.)
         h0covQual = rt.RooRealVar("H0covQual_%s"%box,"H0covQual_%s"%box,0.)
         h1covQual = rt.RooRealVar("H1covQual_%s"%box,"H1covQual_%s"%box,0.)
@@ -122,15 +95,15 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
         hypoSetBox.add(h0covQual)
         hypoSetBox.add(h1covQual)
         hypoSetBox.add(lnQBox[-1])
+        #hypoTreeBox.Print("V")
         hypoDataSetBox.append(rt.RooDataSet("hypoDataSet_%s"%box,"hypoDataSet_%s"%box,hypoTreeBox,hypoSetBox))
+        #hypoDataSetBox[-1].Print("v")
         #rt.gROOT.ProcessLine("myTree->Delete;")
         #rt.gROOT.ProcessLine("delete myTree;")
     hypoDataSet = hypoDataSetBox[0].Clone("hypoDataSet")
     hypoDataSet.SetTitle("hypoDataSet")
     for i in xrange(1,len(hypoDataSetBox)):
         hypoDataSet.merge(hypoDataSetBox[i])
-
-    
     
     hypoSet= rt.RooArgSet("hypoSet")
     hypoList = rt.RooArgList("hypoList")
@@ -139,79 +112,99 @@ def getFuncKDEAll(boxes,hypo,Xmin,Xmax):
         hypoList.add(lnQb)
         
     
-    lnQFunc = rt.RooFormulaVar("LzSR_%s"%('_'.join(boxes)),"LzSR_%s"%('_'.join(boxes)),sumName,hypoList)
+    lnQFunc = rt.RooFormulaVar("lnQ","LzSR_%s"%('_'.join(boxes)),sumName,hypoList)
     lnQ = hypoDataSet.addColumn(lnQFunc)
-
-    lnQ.setRange(Xmin,Xmax)
     
-    
-    rho = 1.0
     hypoDataSetCut = hypoDataSet.reduce(LzCut)
     
-    hypoDataSet.Print("v")
-    hypoDataSetCut.Print("v")
-    print "for mg=%.0f, mchi=%.0f, xsec=%.4f, hypo=%s"%(mg,mchi,xsec,hypo)
-    print "number of entries = %i"%(hypoDataSet.numEntries())
-    print "number of cut entries = %i"%(hypoDataSetCut.numEntries())
+    print "INFO: for mg=%.0f, mchi=%.0f, xsec=%.4f, hypo=%s"%(mg,mchi,xsec,hypo)
+    print "      number of entries =     %i"%(hypoDataSet.numEntries())
+    print "      number of cut entries = %i"%(hypoDataSetCut.numEntries())
+    lowest = array('d',[0])
+    highest = array('d',[0])
+    hypoDataSetCut.getRange(lnQ,lowest,highest)
+
+    XmaxTest = highest[0]
+    Xmax = highest[0]
     
+    totalEntries = float(hypoDataSetCut.numEntries())
+    if totalEntries==0:
+        print "INFO: the fit quality cut killed all entries, moving on to next point!"
+        return 0, 0, 0, 0
     
-    print LzCut
+    while float(hypoDataSetCut.sumEntries("lnQ>%f && lnQ<%f"%(XmaxTest,Xmax)))/totalEntries < 0.01:
+        XmaxTest = Xmin + float(XmaxTest-Xmin)*0.95
+    Xmax = XmaxTest
     
+    return lnQ, hypoDataSet, Xmax, totalEntries
+
+def getFunc(lnQ, hypo, hypoDataSet, LzCut, Xmin, Xmax, totalEntries):
+    print "INFO: getting KDE hypo=%s"%hypo
+
+    hypoDataSetCut = hypoDataSet.reduce(LzCut)
+    lnQ.setRange(Xmin,Xmax)
     hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
     hypoDataSetCut.fillHistogram(hypoHisto,rt.RooArgList(lnQ),LzCut)
     hypoHisto.SetDirectory(0)
-    hypoHisto.Scale(1./hypoHisto.GetMaximum())
 
-    
     hypoSumSet = rt.RooArgSet("hypoSumSet")
     hypoSumSet.add(lnQ)
     hypoSumList = rt.RooArgList("hypoSumList")
     hypoSumList.add(lnQ)
-    
-    hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ, hypoDataSetCut,rt.RooKeysPdf.NoMirror,rho)
-    hypoFunc = hypoPdf.asTF(hypoSumList,rt.RooArgList(),hypoSumSet)
 
-    
-    return lnQ, hypoPdf, hypoDataSet, hypoHisto, hypoFunc
+    Xmean = hypoHisto.GetMean()
+    Xrms = hypoHisto.GetRMS()
+    print "Xmean = ", Xmean
+    print "totalEntries = ", totalEntries
+    print "Xrms = ", Xrms
+    if Xrms < 10.0:
+        rho = 0.001
+    else:
+        rho = 0.01
 
-def getFuncKDE(box,fileName,LzCut,Xmin,Xmax):
-    hypoTree = rt.TChain("myTree")
-    addToChain = fileName.replace("//","/")+"_*.root"+"/"+box+"/myTree"
-    print "adding to chain: %s"% addToChain
-    hypoTree.Add(addToChain)
+    hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ, hypoDataSetCut,rt.RooKeysPdf.NoMirror, rho)
+    #hypoFunc = hypoPdf.asTF(hypoSumList,rt.RooArgList(),hypoSumSet)
+    hypoFunc = hypoPdf.asTF(hypoSumList,rt.RooArgList())
+    #frame = lnQ.frame()
+    #hypoDataSetCut.plotOn(frame)
+    #hypoPdf.plotOn(frame)
+    #d = rt.TCanvas("d","d",500,400)
+    #hypoHisto.Scale(hypoFunc.GetMaximum()/hypoHisto.GetMaximum())
+    #hypoHisto.Draw("")
+    #hypoFunc.Draw("same")
+    #frame.Draw()
+    #d.Print("hypoHisto.pdf")
     
-    hypoHisto = rt.TH1D("histo","histo",50,Xmin,Xmax)
-    hypoTree.Project(hypoHisto.GetName(),"LzSR_%s"%box,LzCut)
+    return hypoPdf, hypoHisto, hypoFunc
 
-    hypoHisto.SetDirectory(0)
-    hypoHisto.Scale(1./hypoHisto.Integral())
+def getQuantilesFromDataSet(dataset,quantiles,LzCut,Xmax):
+    totalEntries = float(dataset.sumEntries("%s"%LzCut)) 
+    Xvals = array('d',[])
+    for q in quantiles:
+        fraction = 0.
+        Xcut = 0.
+        n = 0
+        while abs(fraction-q) > 0.01:
+            if (n>20): break
+            n += 1
+            Xcut += copysign(1.0,q-fraction)*Xmax/pow(2.0,n)
+            cutEntries = float(dataset.sumEntries("%s&&lnQ<%f"%(LzCut,Xcut)))
+            fraction = cutEntries/totalEntries
+        Xvals.append(Xcut)
+    return Xvals
+        
     
-    lnQ = rt.RooRealVar("LzSR_%s"%box,"LzSR_%s"%box,Xmin,Xmax)
-    
-    hypoSet = rt.RooArgSet("hypoSet")
-    hypoSet.add(lnQ)
-    hypoList = rt.RooArgList("hypoList")
-    hypoList.add(lnQ)
-
-    hypoDataSet= rt.RooDataSet("hypoDataSet","hypoDataSet",hypoTree,hypoSet)
-    
-    rho = 1.0
-    hypoPdf = rt.RooKeysPdf("hypoPdf","hypoPdf",lnQ,hypoDataSet,rt.RooKeysPdf.NoMirror,rho)
-    hypoFunc = hypoPdf.asTF(hypoList,rt.RooArgList(),hypoSet)
-
-    return lnQ, hypoPdf, hypoDataSet, hypoHisto, hypoFunc
-
+def getOneSidedPValueFromDataSet(Xobs,boxes,LzCut,dataset):
+    totalEntries = float(dataset.sumEntries("%s"%LzCut))
+    cutEntries = float(dataset.sumEntries("%s&&lnQ>%f"%(LzCut,Xobs)))
+    return cutEntries/totalEntries
 
 def getOneSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
     #return getLeftSidedPValueFromKDE(Xobs,Xmin,Xmax,func)
     return getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func)
             
 def getRightSidedPValueFromKDE(Xobs,Xmin,Xmax,func):
-    print Xobs
-    print Xmax
-    print Xmin
-    #funcObs = func.Eval(Xobs)
-    pValKDE = 1
+    pValKDE = 1.0
     if func.Integral(Xmin,Xmax) != 0:
         pValKDE = func.Integral(Xobs,Xmax)/func.Integral(Xmin,Xmax)
     
@@ -286,11 +279,14 @@ def getFileName(hypo, mg, mchi, xsec, box, model, directory):
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
     xsecString = str(xsec).replace(".","p")
     fileName = "%s/%s_%s_%s_%s_%s_%s"%(directory,hybridLimit,model,modelPoint,box,xsecString,hypo)
-    print fileName
     return fileName
 
     
 def writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2):
+    outputFileName = "%s/xsecUL_mg_%s_mchi_%s_%s.root" %(directory, mg, mchi, '_'.join(boxes))
+    print "INFO: xsec UL values being written to %s"%outputFileName
+    fileOut = rt.TFile.Open(outputFileName, "recreate")
+    
     xsecTree = rt.TTree("xsecTree", "xsecTree")
     myStructCmd = "struct MyStruct{Double_t mg;Double_t mchi;"
     ixsecUL = 0
@@ -329,9 +325,7 @@ def writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExp
 
     xsecTree.Fill()
 
-    outputFileName = "%s/xsecUL_mg_%s_mchi_%s_%s.root" %(directory, mg, mchi, '_'.join(boxes))
-    print "xsec UL values being written to %s"%outputFileName
-    fileOut = rt.TFile.Open(outputFileName, "recreate")
+    fileOut.cd()
     xsecTree.Write()
     
     fileOut.Close()
@@ -344,8 +338,9 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     rootFile = rt.TFile.Open(rootFileName)
     clTree = rootFile.Get("clTree")
     
-    clTree.Draw('>>elist','mg==%f && mchi==%f'%(mg,mchi),'entrylist')
-
+    totalEntries = clTree.Draw('>>elist','mg==%f && mchi==%f'%(mg,mchi),'entrylist')
+    if totalEntries==long(0):
+        return 1e-4
     
     elist = rt.gDirectory.Get('elist')
     entry = -1
@@ -357,45 +352,19 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
         entry = elist.Next()
         if entry == -1: break
         clTree.GetEntry(entry)
-        xsecVals.append(clTree.xsec)
-        xsecList.append(clTree.xsec)
-        CLVals.append(eval('clTree.%s_%s'%(CL,box)))
-        clList.append(eval('clTree.%s_%s'%(CL,box)))
+        testxsecVal = clTree.xsec
+        testCLVal = eval('clTree.%s_%s'%(CL,box))
+        xsecVals.append(testxsecVal)
+        xsecList.append(testxsecVal)
+        if testCLVal==0:
+            testCLVal = 1e-4
+        CLVals.append(testCLVal)
+        clList.append(testCLVal)
         
-        
+    if not xsecVals:
+        print "INFO: no xsecVals! moving on to next point!"
+        return 1e-4
     
-    # removing points that are out of order
-    # i = 0
-    # while i<len(CLVals):
-    #     if CLVals[i]==0:
-    #         CLVals.pop(i)
-    #         xsecVals.pop(i)
-    #     i+=1
-     
-    print "number of xsec vals", len(xsecVals)
-    print xsecVals
-    print CLVals
-    
-    # i = 0
-    # j = 1
-    # poppedOne = True
-    # while len(CLVals) > 1 and poppedOne:
-    #     poppedOne = False
-    #     if CLVals[1]>=CLVals[0]:
-    #         CLVals.pop(0)
-    #         xsecVals.pop(0)
-    #         poppedOne = True
-    #     j+=1
-    
-    # i = 0
-    # while  i < len(CLVals):
-    #     j = i+1
-    #     while  j < len(CLVals):
-    #         if CLVals[j]>=CLVals[i]:
-    #             CLVals.pop(j)
-    #             xsecVals.pop(j)
-    #         j+=1
-    #     i+=1
 
     xsecList, clList = (list(q) for q in zip(*sorted(zip(xsecList, clList))))
 
@@ -421,9 +390,9 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     CLVals.reverse()
 
         
-    print "number of xsec vals", len(xsecVals)
-    print xsecVals
-    print CLVals
+    print "INFO: number of xsec vals", len(xsecVals)
+    print "      xsecVals =", xsecVals
+    print "      CLVals =", CLVals
     
 
     # now making array of erfc inv vals
@@ -466,7 +435,7 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     l.SetNDC()
     if model=="T2tt":
         l.DrawLatex(0.2,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
-    elif model=="T1bbbb":
+    elif model in ["T1bbbb","T1tttt"]:
         l.DrawLatex(0.2,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
     l.DrawLatex(0.25,0.8,"#sigma^{95%%CL} = %.4f pb"%(xsecUL))
     erfcTGraph.GetXaxis().SetTitle("Erfc(CL_{s})")
@@ -479,40 +448,66 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
 
     return xsecUL
     
-def getCLsAll(mg, mchi, xsec, boxes, model, directory):
+def getCLs(mg, mchi, xsec, boxes, model, directory, boxDictB, boxDictSpB):
+    print "INFO: now running mg = %i, mchi = %i, xsec = %f for boxes %s" % (mg, mchi, xsec, " & ".join(boxes))
     Xmin = 0
-    Xmax = 0
+    LzCut = ""
     for box in boxes:
-        LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
-        SpBFileName = getFileName("SpB",mg,mchi,xsec,box,model,directory)
-        BFileName = getFileName("B",mg,mchi,xsec,box,model,directory)
-        XminTEST, XmaxTEST = getMinMax(box,BFileName,SpBFileName,LzCut)
-        Xmax+= XmaxTEST
-        
+        myCut = "H0covQual_%s>=2&&H1covQual_%s>=2&&LzSR_%s>=0."%(box,box,box)
+        LzCut+="H0covQual_%s>=2&&H1covQual_%s>=2&&LzSR_%s>=0.&&"%(box,box,box)
+    LzCut = LzCut[:-2]
     
-    print SpBFileName
-    print BFileName
-    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDEAll(boxes,"SpB",Xmin,Xmax)
-    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDEAll(boxes,"B",Xmin,Xmax)
-
-    lnQData = getLnQDataAll(boxes)
+    lnQSpB, SpBDataSet, XmaxSpB, totalEntriesSpB = getDataSet(boxes,"SpB",LzCut,boxDictSpB, Xmin)
+    if not SpBDataSet:
+        return [],[]
+    lnQB, BDataSet, XmaxB, totalEntriesB = getDataSet(boxes,"B",LzCut,boxDictB, Xmin)
+    if not BDataSet:
+        return [],[]
     
-    CLb, BFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc)
-    CLsb, dummyFill, SpBFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc)
+    lnQData = getLnQDataAll(boxes, boxDictB)
+    
+    Xmax  = max([XmaxB, XmaxSpB, 1.1*lnQData])
+    
+    #SpBPdf, SpBHisto, SpBFunc = getFunc(lnQSpB, "SpB", SpBDataSet, LzCut, Xmin, Xmax, totalEntriesSpB)
+    #BPdf, BHisto, BFunc = getFunc(lnQB, "B", BDataSet, LzCut, Xmin, Xmax, totalEntriesB)
+    
+    #CLbKDE, BFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc)
+    #CLsbKDE, dummyFill, SpBFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc)
 
-    if CLb==0:
-        CLs = 1.0
-    else:
+    #CLb = CLbKDE
+    #CLsb = CLsbKDE
+    
+    CLbDS = getOneSidedPValueFromDataSet(lnQData,boxes,LzCut,BDataSet)
+    CLsbDS = getOneSidedPValueFromDataSet(lnQData,boxes,LzCut,SpBDataSet)
+
+    CLb = CLbDS
+    CLsb = CLsbDS
+    
+    CLs = 1.
+    if CLb > 0.:
         CLs = CLsb/CLb
 
-    lnQExp = array("d",[0.,0.,0.,0.,0.])
-    CLbExp = array("d",[0.023, 0.159,0.500,0.841,0.977])
-    BFunc.GetQuantiles(5,lnQExp,CLbExp)
-    # WE MUST REVERSE THE ORDER OF lnQExp IN LEP,
-    # otherwise we'll swap CLb <=> 1-CLb
-    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc)[0] for thislnQ in lnQExp]
-    CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
+    if CLsb==0: "WARNING: CLsb is zero!!!!"
+
+        
+    #CLbExp = array("d",[0.023,0.159,0.500,0.841,0.977])
+    CLbExp = array("d",[0.159,0.500,0.841])
+
+    #lnQExp = array("d",[0.,0.,0.,0.,0.])
+    #BFunc.GetQuantiles(5,lnQExp,CLbExp)
+
+    lnQExp = getQuantilesFromDataSet(BDataSet,CLbExp,LzCut,XmaxB)
     
+    #CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc)[0] for thislnQ in lnQExp]
+    #CLsExp = [max(thisCLsb/thisCLb,0.) for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
+    
+    CLsbExp = [ getOneSidedPValueFromDataSet(thislnQ,boxes,LzCut, SpBDataSet) for thislnQ in lnQExp]
+    CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
+    for myarray in [CLsExp,lnQExp]:
+        myarray.reverse()
+        myarray.append(0)
+        myarray.reverse()
+        myarray.append(0)
     
     print "###########################"
     print "Box           = %s"%('_'.join(boxes))
@@ -521,167 +516,72 @@ def getCLsAll(mg, mchi, xsec, boxes, model, directory):
     print "xsec          = %.4f pb-1"%xsec
     print "###########################"
     print "lnQ on Data   = %.3f"%lnQData
-    print "CLb           = %.3f"%CLb
-    print "CLs+b         = %.3f"%CLsb
-    print "CLs           = %.3f"%CLs
+    print "lnQ max B     = %.3f"%XmaxB
+    print "lnQ max S+B   = %.3f"%XmaxSpB
+    print "CLb           = %.5f"%CLb
+    print "CLs+b         = %.5f"%CLsb
+    print "CLs           = %.5f"%CLs
     print "###########################"
-    print "lnQExp+2sigma = %.3f"%lnQExp[0]
-    print "lnQExp+1sigma = %.3f"%lnQExp[1]
-    print "lnQExp        = %.3f"%lnQExp[2]
-    print "lnQExp-1sigma = %.3f"%lnQExp[3]
-    print "lnQExp-2sigma = %.3f"%lnQExp[4]
-    print "CLsExp+2sigma = %.3f"%CLsExp[0]
-    print "CLsExp+1sigma = %.3f"%CLsExp[1]
-    print "CLsExp        = %.3f"%CLsExp[2]
-    print "CLsExp-1sigma = %.3f"%CLsExp[3]
-    print "CLsExp-2sigma = %.3f"%CLsExp[4]
-    print "###########################"
-
-    c = rt.TCanvas("c","c",500,400)
-    #BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
-    BFunc.GetXaxis().SetTitle("q_{#sigma} = -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})")
-    BHisto.Scale(BFunc.GetMaximum()/BHisto.GetMaximum())
-    BFunc.SetLineColor(rt.kBlue)
-    BHisto.SetLineColor(rt.kBlue)
-    SpBHisto.Scale(SpBFunc.GetMaximum()/SpBHisto.GetMaximum())
-    SpBFunc.SetLineColor(rt.kRed)
-    SpBHisto.SetLineColor(rt.kRed)
-    BFunc.Draw("")
-    BHisto.Draw("histosame")
-    BFuncFill.Draw("fsame")
-    BFunc.Draw("same")
-    SpBHisto.Draw("histosame")
-    SpBFuncFill.Draw("fsame")
-    SpBFunc.Draw("same")
-    #for profile
-    c.SetLogy()
-    
-    hybridLimit = "Razor2013HybridLimit"
-    modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
-    xsecString = str(xsec).replace(".","p")
-    l = rt.TLatex()
-    l.SetTextAlign(12)
-    l.SetTextSize(0.05)
-    l.SetTextFont(42)
-    l.SetNDC()
-    l.DrawLatex(0.10,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,"All"))
-    l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
-    
-    line = rt.TLine(lnQData, 0, lnQData, BHisto.GetMaximum())
-    line.SetLineWidth(2)
-    line.Draw("same")
-    leg = rt.TLegend(0.55,0.49,0.8,0.67)
-    leg.SetFillColor(rt.kWhite)
-    leg.SetLineColor(rt.kWhite)
-    leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
-    leg.AddEntry(BFuncFill, "1-CL_{b}","f")
-    #leg.AddEntry(line, "#lambda on Data","l")
-    leg.AddEntry(line, "q_{#sigma} on Data","l")
-    leg.Draw("same")
-    c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,'_'.join(boxes)))
-    del c
-
-    return CLs, CLsExp
-
-def getCLs(mg, mchi, xsec, box, model, directory):
-    LzCut = "H0covQual_%s==3&&H1covQual_%s==3&&LzSR_%s>=0."%(box,box,box)
-    
-    SpBFileName = getFileName("SpB",mg,mchi,xsec,box,model,directory)
-    BFileName = getFileName("B",mg,mchi,xsec,box,model,directory)
-    
-    Xmin, Xmax = getMinMax(box,BFileName,SpBFileName,LzCut)
-
-    lnQSpB, SpBPdf, SpBDataSet, SpBHisto, SpBFunc = getFuncKDE(box,SpBFileName,LzCut,Xmin,Xmax)
-    lnQB,     BPdf,   BDataSet,   BHisto,   BFunc = getFuncKDE(box,BFileName,LzCut,Xmin,Xmax)
-
-    lnQData = getLnQData(box,BFileName)
-    # for Hybrid CLs
-    # CLb, dummyFill, BFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc)
-    # CLsb, SpBFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc)
-
-    CLb, BFuncFill, dummyFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, BFunc)
-    CLsb, dummyFill, SpBFuncFill = getOneSidedPValueFromKDE(lnQData,Xmin,Xmax, SpBFunc)
-    
-    if CLb==0:
-        CLs = 1.0
-    else:
-        CLs = CLsb/CLb
-
-    lnQExp = array("d",[0.,0.,0.,0.,0.])
-    CLbExp = array("d",[0.023, 0.159,0.500,0.841,0.977])
-    BFunc.GetQuantiles(5,lnQExp,CLbExp)
-    # WE MUST REVERSE THE ORDER OF lnQExp IN LEP,
-    # otherwise we'll swap CLb <=> 1-CLb
-    CLsbExp = [ getOneSidedPValueFromKDE(thislnQ,Xmin,Xmax, SpBFunc)[0] for thislnQ in lnQExp]
-    CLsExp = [thisCLsb/thisCLb for thisCLsb, thisCLb in zip(CLsbExp,CLbExp)]
-    
-    
-    print "###########################"
-    print "Box           = %s"%box
-    print "mg            = %.0f"%mg
-    print "mchi          = %.0f"%mchi
-    print "xsec          = %.4f pb-1"%xsec
-    print "###########################"
-    print "lnQ on Data   = %.3f"%lnQData
-    print "CLb           = %.3f"%CLb
-    print "CLs+b         = %.3f"%CLsb
-    print "CLs           = %.3f"%CLs
-    print "###########################"
-    print "lnQExp+2sigma = %.3f"%lnQExp[0]
-    print "lnQExp+1sigma = %.3f"%lnQExp[1]
-    print "lnQExp        = %.3f"%lnQExp[2]
-    print "lnQExp-1sigma = %.3f"%lnQExp[3]
-    print "lnQExp-2sigma = %.3f"%lnQExp[4]
-    print "CLsExp+2sigma = %.3f"%CLsExp[0]
-    print "CLsExp+1sigma = %.3f"%CLsExp[1]
-    print "CLsExp        = %.3f"%CLsExp[2]
-    print "CLsExp-1sigma = %.3f"%CLsExp[3]
-    print "CLsExp-2sigma = %.3f"%CLsExp[4]
+    print "lnQExp+2sigma = %.5f"%lnQExp[0]
+    print "lnQExp+1sigma = %.5f"%lnQExp[1]
+    print "lnQExp        = %.5f"%lnQExp[2]
+    print "lnQExp-1sigma = %.5f"%lnQExp[3]
+    print "lnQExp-2sigma = %.5f"%lnQExp[4]
+    print "CLsExp+2sigma = %.5f"%CLsExp[0]
+    print "CLsExp+1sigma = %.5f"%CLsExp[1]
+    print "CLsExp        = %.5f"%CLsExp[2]
+    print "CLsExp-1sigma = %.5f"%CLsExp[3]
+    print "CLsExp-2sigma = %.5f"%CLsExp[4]
     print "###########################"
 
-    c = rt.TCanvas("c","c",500,400)
-    #BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
-    BFunc.GetXaxis().SetTitle("q_{#sigma} = -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})")
-    BHisto.Scale(BFunc.GetMaximum()/BHisto.GetMaximum())
-    BFunc.SetLineColor(rt.kBlue)
-    BHisto.SetLineColor(rt.kBlue)
-    SpBHisto.Scale(SpBFunc.GetMaximum()/SpBHisto.GetMaximum())
-    SpBFunc.SetLineColor(rt.kRed)
-    SpBHisto.SetLineColor(rt.kRed)
-    BFunc.Draw("")
-    BHisto.Draw("histosame")
-    BFuncFill.Draw("fsame")
-    BFunc.Draw("same")
-    SpBHisto.Draw("histosame")
-    SpBFuncFill.Draw("fsame")
-    SpBFunc.Draw("same")
-    #for profile
-    c.SetLogy()
+    # c = rt.TCanvas("c","c",500,400)
+    # #BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
+    # maxFuncVal = 0.
+    # for hypoFunc in [BFunc, SpBFunc]:
+    #     if hypoFunc.GetMaximum()>maxFuncVal:
+    #         maxFunc = hypoFunc
+    #         maxFuncVal =  maxFunc.GetMaximum()
+    #     hypoFunc.GetXaxis().SetTitle("q_{#sigma} = -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})")
+    # BHisto.Scale(BFunc.GetMaximum()/BHisto.GetMaximum())
+    # BFunc.SetLineColor(rt.kBlue)
+    # BHisto.SetLineColor(rt.kBlue)
+    # SpBHisto.Scale(SpBFunc.GetMaximum()/SpBHisto.GetMaximum())
+    # SpBFunc.SetLineColor(rt.kRed)
+    # SpBHisto.SetLineColor(rt.kRed)
+    # maxFunc.Draw("")
+    # BHisto.Draw("histosame")
+    # BFuncFill.Draw("fsame")
+    # BFunc.Draw("same")
+    # SpBHisto.Draw("histosame")
+    # SpBFuncFill.Draw("fsame")
+    # SpBFunc.Draw("same")
+    # #for profile
+    # #c.SetLogy()
     
-    hybridLimit = "Razor2013HybridLimit"
-    modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
-    xsecString = str(xsec).replace(".","p")
-    l = rt.TLatex()
-    l.SetTextAlign(12)
-    l.SetTextSize(0.05)
-    l.SetTextFont(42)
-    l.SetNDC()
-    l.DrawLatex(0.10,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,box))
-    l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
+    # hybridLimit = "Razor2013HybridLimit"
+    # modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
+    # xsecString = str(xsec).replace(".","p")
+    # l = rt.TLatex()
+    # l.SetTextAlign(12)
+    # l.SetTextSize(0.05)
+    # l.SetTextFont(42)
+    # l.SetNDC()
+    # l.DrawLatex(0.10,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,"_".join(boxes)))
+    # l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
     
-    line = rt.TLine(lnQData, 0, lnQData, BHisto.GetMaximum())
-    line.SetLineWidth(2)
-    line.Draw("same")
-    leg = rt.TLegend(0.55,0.49,0.8,0.67)
-    leg.SetFillColor(rt.kWhite)
-    leg.SetLineColor(rt.kWhite)
-    leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
-    leg.AddEntry(BFuncFill, "1-CL_{b}","f")
-    #leg.AddEntry(line, "#lambda on Data","l")
-    leg.AddEntry(line, "q_{#sigma} on Data","l")
-    leg.Draw("same")
-    c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,box))
-    del c
+    # line = rt.TLine(lnQData, 0, lnQData, maxFuncVal)
+    # line.SetLineWidth(2)
+    # line.Draw("same")
+    # leg = rt.TLegend(0.55,0.49,0.8,0.67)
+    # leg.SetFillColor(rt.kWhite)
+    # leg.SetLineColor(rt.kWhite)
+    # leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
+    # leg.AddEntry(BFuncFill, "1-CL_{b}","f")
+    # #leg.AddEntry(line, "#lambda on Data","l")
+    # leg.AddEntry(line, "q_{#sigma} on Data","l")
+    # leg.Draw("same")
+    # c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,'_'.join(boxes)))
+    # del c
 
     return CLs, CLsExp
 
@@ -737,24 +637,20 @@ def writeCLTree(mg,mchi,xsec, box, model, directory, CLs, CLsExp):
 
 
 
+
 def getXsecRange(model,neutralinoMass,gluinoMass):
-    mDelta = (gluinoMass*gluinoMass - neutralinoMass*neutralinoMass)/gluinoMass
-    
     if model=="T1bbbb":
+        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         if mDelta < 400:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
         elif mDelta < 800:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
         else:
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
         topMass = 175.
-        mDelta = sqrt(max(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/gluinoMass , 2) - pow(topMass,2),0))
-        if gluinoMass < 2*topMass:
-            xsecRange = [0.5, 1., 5., 10., 50., 100., 500.]
-        elif mDelta < 200:
-            xsecRange = [0.5, 1., 5., 10., 50., 100., 500.]
-        elif mDelta < 300:
+        mDelta = sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/gluinoMass , 2) - pow(topMass,2))
+        if mDelta < 300:
             xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
         elif mDelta < 400:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
@@ -762,7 +658,16 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
             xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-
+    elif model=="T1tttt":
+        topMass = 175.
+        mDelta = sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2*topMass,2) )/gluinoMass , 2) - pow(2*topMass,2))
+        if mDelta < 700:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10.]
+        elif mDelta < 800:
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.0]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1]
+            #xsecRange = [0.005]
     return xsecRange
 
 if __name__ == '__main__':
@@ -771,59 +676,177 @@ if __name__ == '__main__':
     model = sys.argv[2]
     directory = sys.argv[3]
 
-    
-    if model=="T1bbbb":
-        gchipairs = [(1225, 50)]
-        
-    elif model=="T2tt":
-        gchipairs = [(200, 50), (250, 50), (300, 50), (350, 50), (400, 50), (450, 50),
-                     (500, 50), (550, 50), (600, 50), (650, 50), (700, 50), (750, 50), (800, 50)]
-                     #gchipairs = [(700, 50), (750, 50), (800, 50)]
+    #rt.RooMsgService.instance().Print()
+    rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.Eval)
+    rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.Integration)
+    #rt.RooMsgService.instance().Print()
     
 
-    
-    #boxes = ["MultiJet","TauTauJet","Jet"]
+    if model=="T1bbbb":
+        gchipairs = [(400, 50), (400, 200), (400, 300),
+                     (450, 50), (450, 200), (450, 300), (450, 400),
+                     (500, 50), (500, 200), (500, 300), (500, 400), (500, 450), 
+                     (550, 50), (550, 200), (550, 300), (550, 400), (550, 450), (550, 500),
+                     (600, 50), (600, 200), (600, 300), (600, 400), (600, 450), (600, 500), (600, 550),
+                     (650, 50), (650, 200), (650, 300), (650, 400), (650, 450), (650, 500), (650, 550), (650, 600),
+                     (700, 50), (700, 200), (700, 300), (700, 400), (700, 450), (700, 500), (700, 550), (700, 600), (700, 650),
+                     (750, 200), (750, 300), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650), (750, 700),
+                     (775, 50), (775, 200), (775, 300), (775, 400), (775, 450), (775, 500), (775, 525), (775, 550), (775, 600), (775, 625), (775, 650), (775, 700), (775, 750),
+                     (800, 550), (800, 600), (800, 650), (800, 700),
+                     (825, 50), (825, 200), (825, 300), (825, 400), (825, 450), (825, 500), (825, 525), (825, 550), (825, 600), (825, 625), (825, 650), (825, 700), (825, 750), (825, 800),
+                     (850, 550), (850, 600), (850, 650), (850, 700),
+                     (875, 50), (875, 200), (875, 300), (875, 400), (875, 450), (875, 500), (875, 525), (875, 550), (875, 600), (875, 625), (875, 650), (875, 700), (875, 750), (875, 800), (875, 850),
+                     (900, 550), (900, 600), (900, 650),
+                     (925, 50), (925, 200), (925, 300), (925, 400), (925, 450), (925, 500), (925, 525), (925, 550), (925, 600), (925, 625), (925, 650), (925, 700), (925, 750), (925, 800), (925, 850),
+                     (950, 525), (950, 550), (950, 600), (950, 625), (950, 650), (950, 700), (950, 750), (950, 800), (950, 850),
+                     (1000, 525), (1000, 550), (1000, 600), (1000, 625), (1000, 650), (1000, 700), (1000, 750), (1000, 800), (1000, 850),
+                     (1025, 50), (1025, 200), (1025, 300), (1025, 400), (1025, 450), (1025, 500), (1025, 525), (1025, 550), (1025, 600), (1025, 625), (1025, 650), (1025, 700), (1025, 750), (1025, 800), (1025, 850),
+                     (1050, 550), (1050, 600), (1050, 650), (1050, 700),
+                     (1075, 50), (1075, 200), (1075, 300), (1075, 400), (1075, 450), (1075, 500), (1075, 525), (1075, 550), (1075, 600), (1075, 625), (1075, 650), (1075, 700), (1075, 750), (1075, 800), (1075, 850),
+                     (1100, 550), (1100, 600), (1100, 650), (1100, 700),
+                     (1125, 50), (1125, 200), (1125, 300), (1125, 400), (1125, 450), (1125, 500), (1125, 525), (1125, 550), (1125, 600), (1125, 625), (1125, 650), (1125, 700), (1125, 750), (1125, 800), (1125, 850),
+                     (1150, 550), (1150, 600), (1150, 650), (1150, 700),
+                     (1225, 50), (1225, 200), (1225, 300), (1225, 400), (1225, 450), (1225, 500), (1225, 525), (1225, 550), (1225, 600), (1225, 625), (1225, 650), (1225, 700), (1225, 750), (1225, 800), (1225, 850),
+                     (1325, 50), (1325, 200), (1325, 300), (1325, 400), (1325, 450), (1325, 500), (1325, 525), (1325, 550), (1325, 600), (1325, 625), (1325, 650), (1325, 700), (1325, 750), (1325, 800), (1325, 850),
+                     (1375, 50), (1375, 200), (1375, 300), (1375, 400), (1375, 450), (1375, 500), (1375, 525), (1375, 550), (1375, 600), (1375, 625), (1375, 650), (1375, 700), (1375, 750), (1375, 800), (1375, 850)]
+        gchipairs = [(1225, 50)]
+    if model=="T2tt":
+        gchipairs = [(150, 50),
+                     (200, 50),
+                     (250, 50), (250, 150),
+                     (300, 50), (300, 150),
+                     (350, 50), (350, 150), (350, 250),
+                     (400, 50), (400, 150), (400, 250),
+                     (450, 50), (450, 150), (450, 250), (450, 350),
+                     (500, 50), (500, 150), (500, 250), (500, 350),
+                     (550, 50), (550, 150), (550, 250), (550, 350), (550, 450),
+                     (600, 50), (600, 150), (600, 250), (600, 350), (600, 450),
+                     (650, 50), (650, 150), (650, 250), (650, 350), (650, 450), (650, 550),
+                     (700, 50), (700, 150), (700, 250), (700, 350), (700, 450), (700, 550),
+                     (750, 50), (750, 150), (750, 250), (750, 350), (750, 450), (750, 550), (750, 650),
+                     (800, 50), (800, 150), (800, 250), (800, 350), (800, 450), (800, 550), (800, 650)]
+    if model=="T1tttt":
+        gchipairs = [(400, 1), (400, 25), (400, 125),
+                     (450, 1), (450, 25), (450, 125), (450, 225),
+                     (500, 1), (500, 25), (500, 125), (500, 225),
+                     (550, 1), (550, 25), (550, 125), (550, 225), (550, 325),
+                     (600, 1), (600, 25), (600, 125), (600, 225), (600, 325),
+                     (650, 1), (650, 25), (650, 125), (650, 225), (650, 325), (650, 425),
+                     (700, 1), (700, 25), (700, 125), (700, 225), (700, 325), (700, 425),
+                     (750, 1), (750, 25), (750, 125), (750, 225), (750, 325), (750, 425), (750, 525),
+                     (800, 1), (800, 525),
+                     (850, 1), (850, 525), (850, 625),
+                     (900, 1), (950, 1),
+                     (1000, 1), (1000, 525), (1000, 625), (1000, 725),
+                     (1050, 1), (1050, 525), (1050, 625), (1050, 725), (1050, 825),
+                     (1100, 1), (1100, 125), (1100, 225), (1100, 325), (1100, 425), (1100, 525), (1100, 625), (1100, 725), (1100, 825),
+                     (1150, 1), (1150, 125), (1150, 225), (1150, 325), (1150, 425), (1150, 525), (1150, 625), (1150, 725), (1150, 825), (1150, 925),
+                     (1200, 1), (1200, 125), (1200, 225), (1200, 325), (1200, 425), (1200, 525), (1200, 625), (1200, 725), (1200, 825), (1200, 925),
+                     (1250, 1), (1250, 125), (1250, 225), (1250, 325), (1250, 425), (1250, 525), (1250, 625), (1250, 725), (1250, 825), (1250, 925), (1250, 1025),
+                     (1300, 1), (1300, 125), (1300, 225), (1300, 325), (1300, 425), (1300, 525), (1300, 625), (1300, 725), (1300, 825), (1300, 925), (1300, 1025),
+                     (1350, 1), (1350, 125), (1350, 225), (1350, 325), (1350, 425), (1350, 525), (1350, 625), (1350, 725), (1350, 825), (1350, 925), (1350, 1025), (1350, 1125),
+                     (1400, 1)]
+    if model=="T6bbHH":
+        gchipairs = [(325, 25),
+                     (350, 25), (350, 50),
+                     (375, 25), (375, 50), (375, 75),
+                     (400, 25), (400, 50), (400, 75), (400, 100),
+                     (425, 25), (425, 50), (425, 75), (425, 100), (425, 125),
+                     (450, 25), (450, 50), (450, 75), (450, 100), (450, 125), (450, 150),
+                     (475, 25), (475, 50), (475, 75), (475, 100), (475, 125), (475, 150), (475, 175),
+                     (500, 25), (500, 50), (500, 75), (500, 100), (500, 125), (500, 150), (500, 175), (500, 200),
+                     (525, 25), (525, 50), (525, 75), (525, 100), (525, 125), (525, 150), (525, 175), (525, 200), (525, 225),
+                     (550, 25), (550, 50), (550, 75), (550, 100), (550, 125), (550, 150), (550, 175), (550, 200), (550, 225), (550, 250),
+                     (575, 25), (575, 50), (575, 75), (575, 100), (575, 125), (575, 150), (575, 175), (575, 200), (575, 225), (575, 250), (575, 275),
+                     (600, 25), (600, 50), (600, 75), (600, 100), (600, 125), (600, 150), (600, 175), (600, 200), (600, 225), (600, 250), (600, 275), (600, 300),
+                     (625, 25), (625, 50), (625, 75), (625, 100), (625, 125), (625, 150), (625, 175), (625, 200), (625, 225), (625, 250), (625, 275), (625, 300), (625, 325),
+                     (650, 25), (650, 50), (650, 75), (650, 100), (650, 125), (650, 150), (650, 175), (650, 200), (650, 225), (650, 250), (650, 275), (650, 300), (650, 325), (650, 350),
+                     (675, 25), (675, 50), (675, 75), (675, 100), (675, 150), (675, 225), (675, 250), (675, 275), (675, 300), (675, 325), (675, 350), (675, 375),
+                     (700, 25), (700, 50), (700, 75), (700, 100), (700, 125), (700, 150), (700, 175), (700, 200), (700, 225), (700, 250), (700, 275), (700, 300), (700, 325), (700, 350), (700, 375), (700, 400)]
+    if model=="T2bb":
+        gchipairs = [(100, 1), (100, 50),
+                     #(125, 1), (125, 50),
+                     (150, 1), (150, 50), (150, 100),
+                     #(175, 1), (175, 50), (175, 100),
+                     (200, 1), (200, 50), (200, 100), (200, 150),
+                     #(225, 1), (225, 50), (225, 100), (225, 150),
+                     (250, 1), (250, 50), (250, 100), (250, 150), (250, 200),
+                     #(275, 1), (275, 50), (275, 100), (275, 150), (275, 200),
+                     (300, 1), (300, 50), (300, 100), (300, 150), (300, 200), (300, 250),
+                     #(325, 1), (325, 50), (325, 100), (325, 150), (325, 200), (325, 250),
+                     (350, 1), (350, 50), (350, 100), (350, 150), (350, 200), (350, 250), (350, 300),
+                     #(375, 1), (375, 50), (375, 100), (375, 150), (375, 200), (375, 250), (375, 300),
+                     (400, 1), (400, 50), (400, 100), (400, 150), (400, 200), (400, 250), (400, 300), (400, 350),
+                     #(425, 1), (425, 50), (425, 100), (425, 150), (425, 200), (425, 250), (425, 300), (425, 350),
+                     (450, 1), (450, 50), (450, 100), (450, 150), (450, 200), (450, 250), (450, 300), (450, 350), (450, 400),
+                     #(475, 1), (475, 50), (475, 100), (475, 150), (475, 200), (475, 250), (475, 300), (475, 350), (475, 400),
+                     (500, 1), (500, 50), (500, 100), (500, 150), (500, 200), (500, 250), (500, 300), (500, 350), (500, 400), (500, 450),
+                     #(525, 1), (525, 50), (525, 100), (525, 150), (525, 200), (525, 250), (525, 300), (525, 350), (525, 400), (525, 450),
+                     (550, 1), (550, 50), (550, 100), (550, 150), (550, 200), (550, 250), (550, 300), (550, 350), (550, 400), (550, 450), (550, 500),
+                     #(575, 1), (575, 50), (575, 100), (575, 150), (575, 200), (575, 250), (575, 300), (575, 350), (575, 400), (575, 450), (575, 500),
+                     (600, 1), (600, 50), (600, 100), (600, 150), (600, 200), (600, 250), (600, 300), (600, 350), (600, 400), (600, 450), (600, 500), (600, 550),
+                     #(625, 1), (625, 50), (625, 100), (625, 150), (625, 200), (625, 250), (625, 300), (625, 350), (625, 400), (625, 450), (625, 500), (625, 550),
+                     (650, 1), (650, 50), (650, 100), (650, 150), (650, 200), (650, 250), (650, 300), (650, 350), (650, 400), (650, 450), (650, 500), (650, 550), (650, 600),
+                     #(675, 1), (675, 50), (675, 100), (675, 150), (675, 200), (675, 250), (675, 300), (675, 350), (675, 400), (675, 450), (675, 500), (675, 550), (675, 600),
+                     (700, 1), (700, 50), (700, 100), (700, 150), (700, 200), (700, 250), (700, 300), (700, 350), (700, 400), (700, 450), (700, 500), (700, 550), (700, 600), (700, 650),
+                     #(725, 1), (725, 50), (725, 100), (725, 150), (725, 200), (725, 250), (725, 300), (725, 350), (725, 400), (725, 450), (725, 500), (725, 550), (725, 600), (725, 650),
+                     (750, 1), (750, 50), (750, 100), (750, 150), (750, 200), (750, 250), (750, 300), (750, 350), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650), (750, 700)]
+                     #(775, 1), (775, 50), (775, 100), (775, 150), (775, 200), (775, 250), (775, 300), (775, 350), (775, 400), (775, 450), (775, 500), (775, 550), (775, 600), (775, 650), (775, 700)]
+
     boxes = boxInput.split("_")
         
-
-    doAll = (len(boxes)>1)
-    if not doAll:
-        box = boxes[0]
+    #gchipairs = reversed(gchipairs)
+    
+    doAll = (len(boxes)>0)
     
     rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
-    if not glob.glob(rootFileName):
+    print "INFO: is output CLs file %s present?"%rootFileName
+    calcCLsMode = (not glob.glob(rootFileName))
+    calcCLsMode = True
+    if calcCLsMode:
+        print "INFO: output CLs file not present: entering calculate CLs mode"
         outputFileNames = []
         for mg, mchi in gchipairs:
             xsecRange = getXsecRange(model,mchi,mg)
             for xsec in xsecRange:
-                if not doAll:
-                    if not glob.glob(getFileName("SpB",mg,mchi,xsec,box,model,directory)+"*"): continue
-                    if not glob.glob(getFileName("B",mg,mchi,xsec,box,model,directory)+"*"): continue
-                    CLs = []
-                    CLsExp = []
-                    CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, box, model, directory)
-                    CLs.append(CLsBox)
-                    CLsExp.append(CLsExpBox)
-                    outputFileNames.append(writeCLTree(mg, mchi, xsec, box, model, directory, CLs, CLsExp))
-                else:
-                    anyfilesNotFound = []
-                    for box in boxes:
-                        anyfilesNotFound.append(not glob.glob(getFileName("SpB",mg,mchi,xsec,box,model,directory)+"*") )
-                        anyfilesNotFound.append(not glob.glob(getFileName("B",mg,mchi,xsec,box,model,directory)+"*"))
-                    if any(anyfilesNotFound): continue
-                    xsecString = str(xsec).replace(".","p")
-                    #if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))): continue
-                    CLs = []
-                    CLsExp = []
-                    CLsBox,CLsExpBox  = getCLsAll(mg, mchi, xsec, boxes, model, directory)
-                    CLs.append(CLsBox)
-                    CLsExp.append(CLsExpBox)
-                    outputFileNames.append(writeCLTree(mg, mchi, xsec,'_'.join(boxes), model,directory, CLs, CLsExp))
+                print "INFO: now checking for output file"
+                print "      for mg = %i, mchi = %i, xsec = %f"%(mg, mchi, xsec)
+                print "      for boxes %s" % ("+".join(boxes))
+                xsecString = str(xsec).replace(".","p")
+                if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))):
+                    print "ERROR: output file is there! moving on to next point!"
+                    #continue
 
+                print "INFO: now checking for files missing "
+                print "      for mg = %i, mchi = %i, xsec = %f"%(mg, mchi, xsec)
+                print "      for boxes %s" % ("+".join(boxes))
+                anyfilesNotFound = []
+                SpBAllBoxList =  glob.glob(getFileName("SpB",mg,mchi,xsec,"*",model,directory)+"*")
+                BAllBoxList = glob.glob(getFileName("B",mg,mchi,xsec,"*",model,directory)+"*")
+                print "INFO: %i files found for B, %i files found for SpB" % (len(BAllBoxList), len(SpBAllBoxList))
+                boxDictSpB = {}
+                boxDictB = {}
+                for box in boxes:
+                    boxDictSpB[box] = sorted([fileName for fileName in SpBAllBoxList if fileName.find("_%s_"%box)!=-1],key=sortkey)
+                    boxDictB[box] = sorted([fileName for fileName in BAllBoxList if fileName.find("_%s_"%box)!=-1],key=sortkey)
+                    anyfilesNotFound.append(not boxDictSpB[box])
+                    anyfilesNotFound.append(not boxDictB[box])
+                if any(anyfilesNotFound):
+                    print "ERROR: at least one box missing all files! moving on to next point!"
+                    continue
+                CLs = []
+                CLsExp = []
+                CLsBox,CLsExpBox  = getCLs(mg, mchi, xsec, boxes, model, directory, boxDictB, boxDictSpB)
+                if CLsBox==[] and CLsExpBox==[]:
+                    continue
+                CLs.append(CLsBox)
+                CLsExp.append(CLsExpBox)
+                outputFileNames.append(writeCLTree(mg, mchi, xsec,'_'.join(boxes), model,directory, CLs, CLsExp))
         haddCmd = "hadd -f %s %s"%(rootFileName,' '.join(outputFileNames))
         print haddCmd
         os.system(haddCmd)
     else:
+        print "INFO: output CLs file present: entering calculate Xsec Upper Limit mode"
         outputFileNames = []
         for mg, mchi in gchipairs:
             xsecULObs = []
@@ -832,18 +855,28 @@ if __name__ == '__main__':
             xsecULExp = []
             xsecULExpMinus = []
             xsecULExpMinus2 = []
-            if doAll: box = '_'.join(boxes)
+            box = '_'.join(boxes)
             try:
-                xsecULObs.append(max(1e-4,getXsecUL("CLs", rootFileName, mg, mchi, box)))
-                xsecULExpPlus2.append(max(1e-4,getXsecUL("CLsExpPlus2", rootFileName, mg, mchi, box)))
-                xsecULExpPlus.append(max(1e-4,getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)))
-                xsecULExp.append(max(1e-4,getXsecUL("CLsExp", rootFileName, mg, mchi, box)))
-                xsecULExpMinus.append(max(1e-4,getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)))
-                xsecULExpMinus2.append(max(1e-4,getXsecUL("CLsExpMinus2", rootFileName, mg, mchi, box)))
-                outputFileNames.append(writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2))
-            except TypeError: continue
+                xsecULObsVal = getXsecUL("CLs", rootFileName, mg, mchi, box)
+                xsecULExpPlusVal = getXsecUL("CLsExpPlus", rootFileName, mg, mchi, box)
+                xsecULExpVal = getXsecUL("CLsExp", rootFileName, mg, mchi, box)
+                xsecULExpMinusVal = getXsecUL("CLsExpMinus", rootFileName, mg, mchi, box)
+                if xsecULObsVal==1e-4 and xsecULExpPlusVal==1e-4 and xsecULExpVal==1e-4 and xsecULExpMinusVal==1e-4:
+                    print "INFO: no cross section upper limits; moving to next point"
+                    continue
+                xsecULObs.append(max(1e-4,xsecULObsVal))
+                xsecULExpPlus2.append(1e-4)
+                xsecULExpPlus.append(max(1e-4,xsecULExpPlusVal))
+                xsecULExp.append(max(1e-4,xsecULExpVal))
+                xsecULExpMinus.append(max(1e-4,xsecULExpMinusVal))
+                xsecULExpMinus2.append(1e-4)
+                outputFileNameVal = writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2)
+                outputFileNames.append(outputFileNameVal)
+            except TypeError:
+                print "INFO: TypeError"
+                continue
         xsecFileName = "%s/xsecUL_%s.root"%(directory,'_'.join(boxes))
         haddCmd = "hadd -f %s %s"%(xsecFileName,' '.join(outputFileNames))
-        print haddCmd
+        print "INFO: now executing hadd on xsec trees: ", haddCmd
         os.system(haddCmd)
     

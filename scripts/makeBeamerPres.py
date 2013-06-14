@@ -5,7 +5,8 @@ import sys
 import os
 
 if __name__ == '__main__':
-    boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet1b","Jet2b","TauTauJet","MultiJet"]
+    #boxNames = ["MuEle","MuMu","EleEle","MuTau","Mu","EleTau","Ele","Jet1b","Jet2b","TauTauJet","MultiJet"]
+    boxNames = ["MuJet","MuMultiJet","EleJet","EleMultiJet","MultiJet"]
     #boxNames = ["Jet"]
     #datasetNames = ["TTJets","WJets","SMCocktail","MuHad-Run2012ABCD","ElectronHad-Run2012ABCD"]
     #datasetNames = ["TTJets","SMCocktail"]
