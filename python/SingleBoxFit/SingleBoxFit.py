@@ -516,7 +516,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
             
-            vars = boxes[box].workspace.set('variables')
+            variables = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
             fr_B = boxes[box].workspace.obj('independentFR')
             
@@ -548,9 +548,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
             #reset(boxes[box], fr_B, fixSigma = True)
-            tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
+            tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
                     
-            print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
+            print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
             tot_toy.SetName("sigbkg")
             
@@ -678,10 +678,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # fix signal nuisance parameters
             for p in RootTools.RootIterator.RootIterator(box.workspace.set('nuisance')):
                 p.setVal(0.)
-                box.fixParsExact(p.GetName(),True)
+                box.workspace.var(p.GetName()).setConstant(True)
                 
             # float poi or not
-            box.fixParsExact("sigma",fixSigma)
+            box.workspace.var("sigma").setConstant(fixSigma)
             
             return not zeroIntegral
             
@@ -826,7 +826,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.Print('V')
             
             fr_central = boxes[box].workspace.obj('independentFR')
-            vars = boxes[box].workspace.set('variables')
+            variables = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 
             #add in the other signal regions
@@ -896,16 +896,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             
             
-            if self.options.expectedlimit == True:
+            if self.options.expectedlimit:
                 # use the fr for B hypothesis to generate toys
                 fr_B = fr_central
                 BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
-                #genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+                reset(boxes[box], fr_B, fixSigma = True)
+                boxes[box].workspace.var('sigma').setVal(0.0)
+                genSpecB = BModel.prepareMultiGen(variables,rt.RooFit.Extended(True))
             else:
                 # use the fr for SpB hypothesis to generate toys
                 fr_SpB = frH0Data
                 SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
-                #genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+                reset(boxes[box], fr_SpB, fixSigma = True)
+                boxes[box].workspace.var('sigma').setVal(self.options.signal_xsec)
+                genSpecSpB = SpBModel.prepareMultiGen(variables,rt.RooFit.Extended(True))
             
                     
             
@@ -923,9 +927,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         varVal = eval('nuisTree.%s'%var.GetName())
                         var.setVal(varVal)
                         print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
-                    boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
-                    tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
-                    print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
+                    #tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
+                    tot_toy = SpBModel.generate(genSpecSpB)
+                    print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
                     print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
@@ -934,8 +938,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "generate a toy assuming bkg model"
                     reset(boxes[box], fr_B, fixSigma = True)
                     boxes[box].workspace.var("sigma").setVal(0.)
-                    tot_toy = BModel.generate(vars,rt.RooFit.Extended(True))
-                    print "B Expected = %f" %BModel.expectedEvents(vars)
+                    #tot_toy = BModel.generate(variables,rt.RooFit.Extended(True))
+                    tot_toy = BModel.generate(genSpecB)
+                    print "B Expected = %f" %BModel.expectedEvents(variables)
                     print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")
 
@@ -1097,24 +1102,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         
         workspace.extendSet('variables','Boxes')
 
-        
-        # # treating the n parameters as nuisances
-        #for box in fileIndex:
-        #     workspace.extendSet("nuisance", workspace.factory('n_TTj1b_%s_prime[0,-5.,5.]' % box).GetName())
-        #     workspace.extendSet("other", workspace.factory('n_TTj1b_%s_value[1.0]' % box).GetName())
-        #     workspace.extendSet("nuisance", workspace.factory('n_TTj2b_%s_prime[0,-5.,5.]' % box).GetName())
-        #     workspace.extendSet("other", workspace.factory('n_TTj2b_%s_value[1.0]' % box).GetName())
-        #     workspace.extendSet("nuisance", workspace.factory('n_Vpj_%s_prime[0,-5.,5.]' % box).GetName())
-        #     workspace.extendSet("other", workspace.factory('n_Vpj_%s_value[1.0]' % box).GetName())
-        #     if not workspace.var('n_TTj1b_%s_uncert' % box):
-        #         workspace.extendSet("other", workspace.factory('n_TTj1b_%s_uncert[0.1]' % box).GetName())
-        #     if not workspace.var('n_TTj2b_%s_uncert' % box):
-        #         workspace.extendSet("other", workspace.factory('n_TTj2b_%s_uncert[0.1]' % box).GetName())
-        #     if not workspace.var('n_Vpj_%s_uncert' % box):
-        #         workspace.extendSet("other", workspace.factory('n_Vpj_%s_uncert[0.1]' % box).GetName())
-        #    if not workspace.var("lumi_fraction_%s" % box):
-        #        workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
-                
+    
         pdf_names = {}
         datasets = {}
         
@@ -1125,21 +1113,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #this is the background only PDF used in the fit - we take the version with *no penalty terms* 
             background_pdf = boxes[box].getFitPDF(graphViz=None,name='fitmodel')
             
-            # # replace the n parameters by a log normal
-            # workspace.factory("expr::n_TTj1b_%s('@0 * pow( (1+@1), @2)', n_TTj1b_%s_value, n_TTj1b_%s_uncert, n_TTj1b_%s_prime)" % (box,box,box,box) )
-            # box_primes.append('n_TTj1b_%s_prime' % box)
-            # workspace.factory("expr::n_TTj2b_%s('@0 * pow( (1+@1), @2)', n_TTj2b_%s_value, n_TTj2b_%s_uncert, n_TTj2b_%s_prime)" % (box,box,box,box) )
-            # box_primes.append('n_TTj2b_%s_prime' % box)
-            # workspace.factory("expr::n_Vpj_%s('@0 * pow( (1+@1), @2)', n_Vpj_%s_value, n_Vpj_%s_uncert, n_Vpj_%s_prime)" % (box,box,box,box) )
-            # box_primes.append('n_Vpj_%s_prime' % box)
             
             #we import this into the workspace, but we rename things so that they don't clash
             var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
-            
-            # # append the new n parameter expressions
-            # var_names.append('n_TTj1b_%s' % box)
-            # var_names.append('n_TTj2b_%s' % box)
-            # var_names.append('n_Vpj_%s' % box)
             
             RootTools.Utils.importToWS(workspace,background_pdf,\
                                         rt.RooFit.RenameAllNodes(box),\
@@ -1169,10 +1145,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.var('Rsq').setRange('LowMR_%s'%box,rsqVals[1],rsqVals[2])
             workspace.var('MR').setRange('HighMR_%s'%box,mrVals[2],mrVals[3])
             workspace.var('Rsq').setRange('HighMR_%s'%box,rsqVals[1],rsqVals[2])
-            
-            #add a signal model to the workspace
-            #pdf_names[box] = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-            #full_pdf = boxes[box].getFitPDF(graphViz=None,name=pdf_names[box])
             
             #now extend the signal PDF
             #note that we scale the global effcienty and lumi by a fixed coefficient - so there is only one nuisance parameter
