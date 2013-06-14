@@ -70,7 +70,7 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
     return xsecRange
 
     
-def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
+def writeSgeScript(boxes,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 25 # toys per command
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
@@ -122,7 +122,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     
     return outputname,ffDir
     
-def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
+def writeBashScript(boxes,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
     nToys = 25 # toys per command
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
@@ -162,12 +162,13 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
-        
+    inputs = ["${NAME}_%s_${LABEL}_%s.root"%(massPoint,mybox) for mybox in boxes]
+    allinputs = " ".join(inputs)
     nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --simultaneous --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace %s -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --simultaneous --toy-offset %i -t %i\n"%(allinputs,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     
     nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --simultaneous --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace %s -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --simultaneous --toy-offset %i -t %i\n"%(allinputs,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")
@@ -180,13 +181,14 @@ if __name__ == '__main__':
         print "\nRun the script as follows:\n"
         print "python scripts/runHybridLimits.py Box Model Queue CompletedOutputTextFile"
         print "with:"
-        print "- Box = name of the Box (MuMu, MuEle, etc.)"
+        print "- Box = name of the Boxes (Jet2b_MultiJet)"
         print "- Model = T1bbbb, T1tttt, T2tt, etc. "
         print "- Queue = 1nh, 8nh, 1nd, etc."
         print "- CompletedOutputTextFile = text file containing all completed output files"
         print ""
         sys.exit()
     box = sys.argv[1]
+    boxes = box.split("_")
     model = sys.argv[2]
     queue = sys.argv[3]
     done  = sys.argv[4]
@@ -367,7 +369,7 @@ if __name__ == '__main__':
                         runJob = True
                     if not runJob: continue
                     if t3:
-                        outputname,ffDir = writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        outputname,ffDir = writeSgeScript(boxes,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
@@ -377,14 +379,14 @@ if __name__ == '__main__':
                         os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
-                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        outputname,ffDir = writeBashScript(boxes,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
-                        time.sleep(3)
-                        #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        #time.sleep(3)
+                        os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                         #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                        os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
