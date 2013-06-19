@@ -10,7 +10,7 @@ if __name__ == '__main__':
 	directory = sys.argv[2]
 
 	massPairDict = {}
-	for mLSP in range(25, 825, 25):
+	for mLSP in range(25, 725, 25):
 		
 		theDir = '%s/mLSP%s.0/'%(directory,str(mLSP))
 		proc = subprocess.Popen(["ls %s | grep %s"%(theDir, box)], stdout=subprocess.PIPE, shell=True)
