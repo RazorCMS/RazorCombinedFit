@@ -56,16 +56,13 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif model=="T2bb":
+            # Probably don't need the last entry of each xsec scan!!!
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         print "mDelta = ", mDelta
-        if mDelta < 200:
-            xsecRange = [0.05]
-        elif mDelta < 400:
-            xsecRange = [0.01]
-        elif mDelta < 500:
-            xsecRange = [0.001]
+        if mDelta < 150:
+            xsecRange = [500.]
         else:
-            xsecRange = [0.0005]
+            xsecRange = []
         
     return xsecRange
 
@@ -375,14 +372,14 @@ if __name__ == '__main__':
                         os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
-                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        #outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        #os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
-                        time.sleep(3)
+                        #time.sleep(3)
                         #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                         #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                        os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
