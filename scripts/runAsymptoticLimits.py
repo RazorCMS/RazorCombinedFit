@@ -5,37 +5,6 @@ import time, datetime
 
 def getXsecRange(box,gluinopoint):
 
-    # if gluinopoint == 150 :
-    #     return [0.01, 0.05, 0.07]
-    # elif gluinopoint ==175  :
-    #     return [0.01, 0.05, 0.07]
-    # elif gluinopoint == 200 :
-    #     return [0.01, 0.05, 0.07]
-    # elif gluinopoint == 225 :
-    #     return [0.01, 0.05, 0.1, 0.2]
-    # elif gluinopoint < 300 :
-    #     return [0.01, 0.05, 0.1, 0.5]
-    # elif gluinopoint <= 300 :
-    #     return [0.01, 0.05, 0.1, 0.5]
-    # elif gluinopoint < 400 :
-    #     return [0.01, 0.05, 0.1, 0.5]
-    # elif gluinopoint == 400 :
-    #     return [ 0.1, 0.5, 1.0]
-    # elif gluinopoint <= 500 :
-    #     return [0.01, 0.05, 0.1, 0.2, 0.3]
-    # elif gluinopoint == 525 :
-    #     return [0.01, 0.05, 0.1, 0.2]
-    # elif gluinopoint == 550 :
-    #     return [0.01, 0.05, 0.1, 0.2, 0.3]
-    # elif gluinopoint == 575 :
-    #     return [0.01, 0.05, 0.1, 0.2, 0.3]
-    # elif gluinopoint == 600 :
-    #     return [0.01, 0.05, 0.1, 0.2]
-    # elif gluinopoint == 625 :
-    #     return [ 0.01, 0.05, 0.1, 0.2]
-    # elif gluinopoint > 625 :
-    #     return [  0.01, 0.05, 0.1, 0.2]
-
     if gluinopoint == 150 :
       return [0.01, 0.05, 0.07]
     elif gluinopoint ==175  :
@@ -45,15 +14,20 @@ def getXsecRange(box,gluinopoint):
     elif gluinopoint == 225 :
         return [ 0.05, 0.1, 0.2, 0.5, 0.7, 1.0]
     elif gluinopoint == 250 :
-        return [ 0.05, 0.1, 0.5, 0.7, 1.0]
+        return [ 0.05, 0.1, 0.5, 0.7, 1.0, 0.3, 2.0 ] # Emm
+        #return [ 0.05, 0.1, 0.5, 0.7, 1.0]
     elif gluinopoint == 275 :
-        return [ 1.0 ]#0.05, 0.1, 0.5, 0.7, 1.0]
+        #return [ 1.0 ]
+        return [ 0.05, 0.1, 0.5, 0.7, 1.0] # Emm
     elif gluinopoint == 300 :
-        return [ 0.5, 0.7]# 0.05, 0.1, 0.5, 0.7]
+        #return [ 0.5, 0.7]
+        return [ 0.05, 0.1, 0.5, 0.7 ] # Emm
     elif gluinopoint == 325 :
-        return [  0.1, 0.5, 0.7, 1.0]
+        return [ 0.01, 0.05 ,0.1, 0.5, 0.7, 1.0 ] # added by Emmanuele
+        #return [  0.1, 0.5, 0.7, 1.0]
     elif gluinopoint == 350 :
-        return [  0.1, 0.5, 0.7, 1.0]
+        #return [  0.1, 0.5, 0.7, 1.0]
+        return [  0.01, 0.05, 0.2, 0.1, 0.5, 0.7, 1.0] # Emm
     elif gluinopoint == 375 :
         return [  0.1, 0.5, 0.7, 1.0]
     elif gluinopoint == 400 :
@@ -75,19 +49,24 @@ def getXsecRange(box,gluinopoint):
     elif gluinopoint == 600 :
         return [ 0.01, 0.05, 0.1, 0.2]
     elif gluinopoint == 625 :
-        return [ 0.01, 0.05, 0.1, 0.2]
+        #return [ 0.01, 0.05, 0.1, 0.2]
+        return [ 0.007, 0.02, 0.8, 0.01, 0.05, 0.1, 0.2] # Emm
     elif gluinopoint == 625 :
         return [  0.01, 0.05, 0.1, 0.2]
     elif gluinopoint == 650 :
         return [ 0.01, 0.05, 0.1]
     elif gluinopoint == 675 :
-        return [ 0.01, 0.05, 0.1]
+        #return [ 0.01, 0.05, 0.1]
+        return [ 0.008, 0.03, 0.3, 0.01, 0.05, 0.1 ]
     elif gluinopoint == 700 :
-        return [ 0.01, 0.03, 0.05, 0.1] 
+        #return [ 0.01, 0.03, 0.05, 0.1] 
+        return [ 0.008, 0.02, 0.08, 0.2, 0.3, 0.01, 0.03, 0.05, 0.1 ]
     elif gluinopoint == 725 :
-        return [ 0.01, 0.03, 0.05, 0.1]
+        #return [ 0.01, 0.03, 0.05, 0.1]
+        return [ 0.008, 0.02, 0.08, 0.2, 0.3, 0.01, 0.03, 0.05, 0.1 ]
     elif gluinopoint == 750 :
-        return [ 0.01, 0.03, 0.05, 0.1]
+        #return [ 0.01, 0.03, 0.05, 0.1]
+        return [ 0.008, 0.02, 0.08, 0.2, 0.3, 0.01, 0.03, 0.05, 0.1 ]
     elif gluinopoint == 775 :
         return [ 0.01, 0.03, 0.05, 0.1]
     elif gluinopoint == 800 :
@@ -97,9 +76,11 @@ def getXsecRange(box,gluinopoint):
     
 def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint):
     if box == 'Mu' or box == 'Ele':
-        name = "SMS-T2tt_mStop-Combo_mLSP_50.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.22360679775"
+        name = "SMS-T2tt_mStop-Combo_mLSP_" + str(neutralinopoint) + ".0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.22360679775"
+        #name = "SMS-T2tt_mStop-Combo_mLSP_200.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.22360679775"
     else : #assume bjetHS or bjetLS
-        name = "SMS-T2tt_mStop-Combo_mLSP_50.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR500.0_R0.22360679775"
+        name = "SMS-T2tt_mStop-Combo_mLSP_" + str(neutralinopoint) + ".0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR500.0_R0.22360679775"
+        #name = "SMS-T2tt_mStop-Combo_mLSP_200.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR500.0_R0.22360679775"
     
     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
@@ -137,7 +118,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint):
         outputfile.write("cp /afs/cern.ch/user/l/lucieg/public/Razor2012/350_0_05/FitRegion/Run2012ABCD_Fit_Mu-120313.root $PWD\n")
       
 
-    outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/Datasets/mLSP50/%s_%s_%s.root $PWD\n"%(name,massPoint,box))
+    outputfile.write("cp /afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/Datasets/mLSP%s/%s_%s_%s.root $PWD\n"%(neutralinopoint,name,massPoint,box))
                 
     if box == 'BJetHS':
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Full_Search-280113.root -l --run-cls --nosave-workspace -o ${NAME}_%s_%s_%s.root %s_%s_BJetHS.root --xsec %f --multijet --massPoint %s_%s\n"%(massPoint,box,xsecstring,name,massPoint,xsecpoint,massPoint,xsecstring))
@@ -164,15 +145,24 @@ if __name__ == '__main__':
     timestamp = str(datetime.date.today())
     print box
     
-    gluinopoints = [150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800]
-    neutralinopoints = [50]
+    #gluinopoints = [150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800] # for mLSP = 50
+    gluinopoints = [200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800] # for mLSP = 100
+    #gluinopoints = [250, 275, 300, 325, 350, 600, 625, 675, 700, 725, 750] # for mLSP = 150
+    #gluinopoints = [300, 325, 350, 600, 625, 675, 700, 725, 750] # for mLSP = 200
+    #gluinopoints = [400, 425, 450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800] # for mLSP = 300    
+    #gluinopoints = [450, 475, 500, 525, 550, 575, 600, 625, 650, 675, 700, 725, 750, 775, 800] # for mLSP = 350
+    #neutralinopoints = [50]
+    neutralinopoint = int(sys.argv[2])
 
-    queue = "1nd"
-    
+    if box == 'BJetLS':
+        queue = "1nd"
+    else:
+        queue = '1nh'
+
     pwd = os.environ['PWD']
 
     submitDir = "submit"
-    outputDir = "output"+timestamp+"_"+box
+    outputDir = "output" + timestamp + "_mLSP_" + str(neutralinopoint) + "_" + box
     logDir = outputDir + "/logs"
 
     os.system("mkdir -p %s"%(submitDir))
@@ -180,14 +170,13 @@ if __name__ == '__main__':
     os.system("ln -s /afs/cern.ch/work/s/salvati/private/"+outputDir)
     os.system("mkdir -p /afs/cern.ch/work/s/salvati/private/"+logDir)
     
-    for neutralinopoint in neutralinopoints:
-        for gluinopoint in gluinopoints:
-            massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
-            xsecRange = getXsecRange(box,gluinopoint)
-            for xsecpoint in xsecRange:
-                print "Now scanning xsec = %f"%xsecpoint
-                outputname,log = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint)
-                time.sleep(3)
-                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+log+" source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+log+" source "+pwd+"/"+outputname)
-                        
+    #for neutralinopoint in neutralinopoints:
+    for gluinopoint in gluinopoints:
+        massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
+        xsecRange = getXsecRange(box,gluinopoint)
+        for xsecpoint in xsecRange:
+            print "Now scanning xsec = %f"%xsecpoint
+            outputname,log = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint)
+            time.sleep(3)
+            os.system("echo bsub -q "+queue+" -o "+pwd+"/"+log+" source "+pwd+"/"+outputname)
+            os.system("bsub -q "+queue+" -o "+pwd+"/"+log+" source "+pwd+"/"+outputname)
