@@ -60,9 +60,15 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         print "mDelta = ", mDelta
         if mDelta < 150:
-            xsecRange = [500.]
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500.]
+        elif mDelta < 200:
+            xsecRange = [0.05,0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.01,0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.001,0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
-            xsecRange = []
+            xsecRange = [0.0005,0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
         
     return xsecRange
 
