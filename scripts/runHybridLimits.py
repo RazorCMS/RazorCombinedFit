@@ -2,63 +2,7 @@
 import os.path
 import sys
 import datetime, time
-
-def getXsecRange(box,neutralinopoint,gluinopoint):
-
-    if gluinopoint <= 150 :
-        return [0.01, 0.05, 0.07, 1.0, 2.0]
-    elif gluinopoint ==175 :
-        return [0.01, 0.05, 0.07, 1.0, 1.5]
-    elif gluinopoint == 200 :
-        return [0.01, 0.05, 0.07, 0.5, 0.7, 1.0, 1.5]
-    elif gluinopoint == 225 :
-        return [ 0.05, 0.1, 0.2, 0.5, 0.7, 1.0, 1.5]
-    elif gluinopoint == 250 :
-        return [ 0.05, 0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 275 :
-        return [ 0.05, 0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 300 :
-        return [ 0.05, 0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 325 :
-        return [  0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 350 :
-        return [  0.05, 0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 375 :
-        return [ 0.05, 0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 400 :
-        return [ 0.05, 0.1, 0.5, 0.7, 1.0]
-    elif gluinopoint == 425 :
-        return [ 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0]
-    elif gluinopoint == 450 :
-        return [ 0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0]
-    elif gluinopoint == 475 :
-        return [ 0.01, 0.1, 0.2, 0.3, 0.5]
-    elif gluinopoint == 500 :
-        return [ 0.01, 0.05, 0.1, 0.2, 0.3]
-    elif gluinopoint == 525 :
-        return [0.01, 0.05, 0.1, 0.2]
-    elif gluinopoint == 550 :
-        return [ 0.01, 0.05, 0.1, 0.2, 0.3]
-    elif gluinopoint == 575 :
-        return [ 0.01, 0.05, 0.1, 0.2, 0.3]
-    elif gluinopoint == 600 :
-        return [ 0.005, 0.01, 0.05, 0.1, 0.2]
-    elif gluinopoint == 625 :
-        return [ 0.005, 0.01, 0.05, 0.1, 0.2]
-    elif gluinopoint == 650 :
-        return [ 0.005, 0.01, 0.05, 0.1]
-    elif gluinopoint == 675 :
-        return [ 0.005, 0.01, 0.05, 0.1]
-    elif gluinopoint == 700 :
-        return [ 0.005, 0.01, 0.03, 0.05, 0.1] 
-    elif gluinopoint == 725 :
-        return [ 0.005, 0.01, 0.03, 0.05, 0.1]
-    elif gluinopoint == 750 :
-        return [ 0.005, 0.01, 0.03, 0.05, 0.1]
-    elif gluinopoint == 775 :
-        return [ 0.005, 0.01, 0.03, 0.05, 0.1]
-    elif gluinopoint == 800 :
-        return [ 0.005, 0.01, 0.03, 0.05, 0.1]
+from getXsecRange import getXsecRange
 
 def getStopMassPoints(neutralinopoint):
 
@@ -183,7 +127,6 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t, outputDir)
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Mu-120313.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
         
 
-    # the output directory must be changed
     outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root %s/\n" %outputDir)
     outputfile.write("rm -rf $WD\n")
     
@@ -192,17 +135,18 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t, outputDir)
     return outputname,ffDir
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         print "\nRun the script as follows:\n"
         print "python scripts/runHybridLimits.py Box mLSP OutputTextFile"
         print "with:"
         print "- Box = name of the Box (BJetHS, Mu, etc.)"
         print "- mLSP = LSP mass integer (25, 50, etc.)"
+        print "- CompletedOutputTextFile = text file containing all completed output files"
         print ""
         sys.exit()
     box = sys.argv[1]
     neutralinopoint = int(sys.argv[2])
-   # done = sys.argv[3]
+    done = sys.argv[3]
 
     nJobs = 50
     nToys = 30 # do 60=30+30 toys each job => 3000 toys
@@ -215,7 +159,8 @@ if __name__ == '__main__':
     pwd = os.environ['PWD']
 
     submitDir = "submit"
-    outputDir = "/afs/cern.ch/work/l/lucieg/private/workspace/RazorStops/ScanHybrid_" + box + "_" + str(neutralinopoint)
+    # the output directory must be changed
+    outputDir = "/afs/cern.ch/work/s/salvati/private/workspace/RazorStops/ScanHybrid_" + box + "_" + str(neutralinopoint)
     print outputDir
    
     os.system("mkdir -p %s"%(submitDir))
@@ -224,19 +169,50 @@ if __name__ == '__main__':
 
     hypotheses = ["B","SpB"]
 
+    os.system("touch %s" %done)
+    doneFile = open(done)
+    outFileList = [outFile.replace(".root\n","") for outFile in doneFile.readlines()]
+
+    # dictionary of src file to output file names
+    srcDict = {}
+    for i in xrange(0,50):
+        srcDict[i] = ["%i-%i"%(2*i*nToys,(2*i+1)*nToys-1), "%i-%i"%((2*i+1)*nToys, (2*i+2)*nToys-1)]
+
+    totalJobs = 0
+    missingFiles = 0
+
     for gluinopoint in gluinopoints:
         gluinopoint = float(gluinopoint)
-        xsecRange = getXsecRange(box,neutralinopoint,gluinopoint)
+        xsecRange = getXsecRange(neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
                     massPoint = "%.1f_%.1f"%(gluinopoint, neutralinopoint)
 
+                    fileNameToCheck = outputDir + "/Razor2012HybridLimit_T2tt_" + massPoint + "_" + box + "_" + str(xsecpoint).replace(".","p")  + "_" + hypo + "_" + str(t)
+                    output0 = fileNameToCheck.replace("B_%i"%t, "B_%s"%srcDict[t][0])
+                    output1 = fileNameToCheck.replace("B_%i"%t, "B_%s"%srcDict[t][1])
+                    
+                    runJob = False
+                    if output0 not in outFileList:
+                        missingFiles += 1
+                        print output0
+                        runJob = True
+                    if output1 not in outFileList:
+                        missingFiles += 1
+                        runJob = True
+                        print output1
+
+                    if not runJob: continue
+
                     print "Now scanning xsec = %f"%xsecpoint
                     outputname,ffDir = writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t,outputDir)
                     os.system("mkdir -p %s" %ffDir)
+                    totalJobs += 1
                     time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o " + ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                     os.system("bsub -q "+queue+" -o " + ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                         
-  
+    print "Missing files = ", missingFiles
+    print "Total jobs = ", totalJobs
+
