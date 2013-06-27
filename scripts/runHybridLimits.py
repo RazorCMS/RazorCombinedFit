@@ -49,12 +49,12 @@ def getXsecRange(box,model,neutralinoMass,gluinoMass):
         higgsMass = 125.
         mDelta = 2*math.sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
         print "mDelta = ", mDelta
-        if mDelta < 250:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
-        elif mDelta < 400:
+        if mDelta < 200:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 400:
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5., 10.]
         elif mDelta < 500:
-            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif model=="T2bb":
@@ -198,13 +198,20 @@ if __name__ == '__main__':
     t3 = False
     mchi_lower = 0
     mchi_upper = 2025
+    mg_lower = 0
+    mg_upper = 2025
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
+        if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
+        if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
     
-    nJobs = 12 # do 250 toys each job => 3000 toys
+    if model=="T6bbHH":
+        nJobs = 36 # do 250 toys each job => 9000 toys
+    else:
+        nJobs = 12 # do 250 toys each job => 3000 toys
     
     print box, model, queue
 
@@ -384,6 +391,7 @@ if __name__ == '__main__':
     missingFiles = 0
     for gluinopoint, neutralinopoint in gchipairs:
         if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
+        if gluinopoint < mg_lower or gluinopoint >= mg_upper: continue
         xsecRange = getXsecRange(box,model,neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
