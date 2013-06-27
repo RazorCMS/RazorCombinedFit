@@ -778,7 +778,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
         
-        workspace.extendSet('variables','Boxes')
+        # workspace.extendSet('variables','Boxes')
         
         for box in fileIndex:
             workspace.extendSet("nuisance", workspace.factory('n2nd_TTj_%s_prime[0,-5.,5.]' % box).GetName())
@@ -944,19 +944,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #with 15 signal events, we *should* be able to set a limit
 
         #### this is useless now, perhaps we need to have some meaningful number of events to exclude
-        # mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
-        # print "signal mrMean = %f"%mrMean
-        # if mrMean < 800:
-        #     eventsToExclude = 150
-        # elif mrMean < 1000:
-        #     eventsToExclude = 100
-        # elif mrMean < 1600:
-        #     eventsToExclude = 50
-        # else:
-        #     eventsToExclude = 25
+        mrMean = signal_pdf.mean(workspace.var('MR')).getVal()
+        print "signal mrMean = %f"%mrMean
+        if mrMean < 800:
+            eventsToExclude = 150
+        elif mrMean < 1000:
+            eventsToExclude = 100
+        elif mrMean < 1600:
+            eventsToExclude = 50
+        else:
+            eventsToExclude = 25
         ####
 
-        while yield_at_xs[-1][0] < 20:
+        while yield_at_xs[-1][0] < eventsToExclude:
             stop_xs += 1e-4
             workspace.var('sigma').setVal(stop_xs)
             signal_yield = 0
