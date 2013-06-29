@@ -536,7 +536,7 @@ def getCLs(mg, mchi, xsec, boxes, model, directory, boxDictB, boxDictSpB):
 
     c = rt.TCanvas("c","c",500,400)
     lnQ = rt.RooRealVar("lnQ","q_{#sigma}= -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})", Xmin, Xmin,Xmax)
-    frame = lnQ.frame(rt.RooFit.Name("frame"), rt.RooFit.Title("m_{#tilde{g}} = %.0f GeV, m_{#tilde{#chi}} = %.0f GeV, #sigma = %.4f pb, CL_{s} = %.4f"%(mg,mchi,xsec,CLs)))
+    frame = lnQ.frame(rt.RooFit.Name("frame"), rt.RooFit.Title("m_{#tilde{g}} = %.0f GeV, m_{#tilde{#chi}} = %.0f GeV, #sigma = %.4f pb, CL_{s} = #frac{%.4f}{%.4f} = %.4f"%(mg,mchi,xsec,CLsb,CLb,CLs)))
     BDataSet.plotOn(frame, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.MarkerSize(0.75), rt.RooFit.MarkerColor(rt.kBlue), rt.RooFit.Rescale(1./BDataSet.numEntries()))
     SpBDataSet.plotOn(frame, rt.RooFit.LineColor(rt.kRed), rt.RooFit.MarkerSize(0.75),  rt.RooFit.MarkerColor(rt.kRed), rt.RooFit.Rescale(1./SpBDataSet.numEntries()))
     # #BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
