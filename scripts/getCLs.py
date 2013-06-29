@@ -25,7 +25,7 @@ def getLnQData(box,fileName):
     elist = rt.gDirectory.Get('elist')
     entry = elist.Next()
     dataTree.GetEntry(entry)
-    lnQData = eval('dataTree.LzSR_%s'%box)
+    lnQData = 2*eval('dataTree.LzSR_%s'%box)
     return max(0.,lnQData)
 
 
@@ -52,11 +52,11 @@ def sortkey(fileName):
     
 def getDataSet(boxes,hypo,LzCut, boxDict,Xmin):
     print "INFO: getting dataset hypo=%s"%hypo
-    sumName = ""
+    sumName = "2*("
     for box in boxes:
         sumName+="LzSR_%s+"%(box)
         
-    sumName = sumName[:-1]
+    sumName = sumName[:-1]+")"
     
     lnQBox = []
     hypoDataSetBox = []
@@ -534,13 +534,17 @@ def getCLs(mg, mchi, xsec, boxes, model, directory, boxDictB, boxDictSpB):
     print "CLsExp-2sigma = %.5f"%CLsExp[4]
     print "###########################"
 
-    # c = rt.TCanvas("c","c",500,400)
+    c = rt.TCanvas("c","c",500,400)
+    lnQ = rt.RooRealVar("lnQ","q_{#sigma}= -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})", Xmin, Xmin,Xmax)
+    frame = lnQ.frame(rt.RooFit.Name("frame"), rt.RooFit.Title("m_{#tilde{g}} = %.0f GeV, m_{#tilde{#chi}} = %.0f GeV, #sigma = %.4f pb, CL_{s} = %.4f"%(mg,mchi,xsec,CLs)))
+    BDataSet.plotOn(frame, rt.RooFit.LineColor(rt.kBlue), rt.RooFit.MarkerSize(0.75), rt.RooFit.MarkerColor(rt.kBlue), rt.RooFit.Rescale(1./BDataSet.numEntries()))
+    SpBDataSet.plotOn(frame, rt.RooFit.LineColor(rt.kRed), rt.RooFit.MarkerSize(0.75),  rt.RooFit.MarkerColor(rt.kRed), rt.RooFit.Rescale(1./SpBDataSet.numEntries()))
     # #BFunc.GetXaxis().SetTitle("#lambda = log(L_{s+b}/L_{b})")
-    # maxFuncVal = 0.
-    # for hypoFunc in [BFunc, SpBFunc]:
-    #     if hypoFunc.GetMaximum()>maxFuncVal:
+    
+    #for hypoFunc in [BFunc, SpBFunc]:
+    #     if hypoFunc.GetMaximum()>maxVal:
     #         maxFunc = hypoFunc
-    #         maxFuncVal =  maxFunc.GetMaximum()
+    #         maxVal =  maxFunc.GetMaximum()
     #     hypoFunc.GetXaxis().SetTitle("q_{#sigma} = -2log(L_{s+b}(#sigma,#hat{#theta}_{#sigma}) / L_{s+b}(#hat{#sigma},#hat{#theta})")
     # BHisto.Scale(BFunc.GetMaximum()/BHisto.GetMaximum())
     # BFunc.SetLineColor(rt.kBlue)
@@ -556,32 +560,59 @@ def getCLs(mg, mchi, xsec, boxes, model, directory, boxDictB, boxDictSpB):
     # SpBFuncFill.Draw("fsame")
     # SpBFunc.Draw("same")
     # #for profile
-    # #c.SetLogy()
+    c.SetLogy()
+    frame.SetMaximum(1.)
+    maxVal = 1.
     
-    # hybridLimit = "Razor2013HybridLimit"
-    # modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
-    # xsecString = str(xsec).replace(".","p")
-    # l = rt.TLatex()
-    # l.SetTextAlign(12)
-    # l.SetTextSize(0.05)
-    # l.SetTextFont(42)
-    # l.SetNDC()
-    # l.DrawLatex(0.10,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,"_".join(boxes)))
-    # l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
+    hybridLimit = "Razor2013HybridLimit"
+    modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
+    xsecString = str(xsec).replace(".","p")
+    #l = rt.TLatex()
+    #l.SetTextAlign(12)
+    #l.SetTextSize(0.05)
+    #l.SetTextFont(42)
+    #l.SetNDC()
+    #l.DrawLatex(0.10,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; #sigma = %.4f pb; %s Box"%(mg,mchi,xsec,"_".join(boxes)))
+    #l.DrawLatex(0.55,0.8,"CL_{s} = %.4f"%(CLs))
+
+    frame.Draw()
+    line = rt.TLine(lnQData, 0, lnQData, maxVal)
+    line.SetLineWidth(2)
+    line.Draw("same")
+
+    expline = []
+    for i in xrange(1,4):
+        expline.append(rt.TLine(lnQExp[i],0,lnQExp[i],maxVal))
+        expline[i-1].SetLineWidth(2)
+        expline[i-1].Draw("same")
+        expline[i-1].SetLineColor(rt.kBlue)
     
-    # line = rt.TLine(lnQData, 0, lnQData, maxFuncVal)
-    # line.SetLineWidth(2)
-    # line.Draw("same")
-    # leg = rt.TLegend(0.55,0.49,0.8,0.67)
-    # leg.SetFillColor(rt.kWhite)
-    # leg.SetLineColor(rt.kWhite)
-    # leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
-    # leg.AddEntry(BFuncFill, "1-CL_{b}","f")
+    rt.gStyle.SetErrorX(0.25)
+    leg = rt.TLegend(0.65,0.7,0.9,0.9)
+    leg.SetFillColor(rt.kWhite)
+    leg.SetLineColor(rt.kWhite)
+    SpBHist = rt.TH1D("SpBHist","SpBHist",1, 0, 1)
+    SpBHist.SetMarkerStyle(20)
+    SpBHist.SetMarkerSize(0.75)
+    SpBHist.SetMarkerColor(rt.kRed)
+    SpBHist.SetLineColor(rt.kRed)
+    BHist = rt.TH1D("BHist","BHist",1, 0, 1)
+    BHist.SetMarkerStyle(20)
+    BHist.SetMarkerSize(0.75)
+    BHist.SetMarkerColor(rt.kBlue)
+    BHist.SetLineColor(rt.kBlue)
+    
+    leg.AddEntry(SpBHist, "S+B toys","pe")
+    leg.AddEntry(BHist, "B-only toys","pe")
+    #leg.AddEntry(SpBFuncFill, "CL_{s+b}","f")
+    #leg.AddEntry(BFuncFill, "1-CL_{b}","f")
     # #leg.AddEntry(line, "#lambda on Data","l")
-    # leg.AddEntry(line, "q_{#sigma} on Data","l")
-    # leg.Draw("same")
-    # c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,'_'.join(boxes)))
-    # del c
+    leg.AddEntry(line, "q_{#sigma} on Data","l")
+    leg.AddEntry(expline[0], "q_{#sigma} Expected#pm1#sigma","l")
+            
+    leg.Draw("same")
+    c.Print("%s/lnQ_%s_%s_%s_%s.pdf"%(directory,model,modelPoint,xsecString,'_'.join(boxes)))
+    del c
 
     return CLs, CLsExp
 
@@ -638,9 +669,13 @@ def writeCLTree(mg,mchi,xsec, box, model, directory, CLs, CLsExp):
 
 
 
+
 def getXsecRange(model,neutralinoMass,gluinoMass):
     if model=="T1bbbb":
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
+        print "mDelta = ", mDelta
+        if mDelta < 150:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
         if mDelta < 400:
             xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
         elif mDelta < 800:
@@ -649,7 +684,8 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
             xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
     elif model=="T2tt":
         topMass = 175.
-        mDelta = sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/gluinoMass , 2) - pow(topMass,2))
+        mDelta = 2.*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2))
+        print "mDelta = ", mDelta
         if mDelta < 300:
             xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
         elif mDelta < 400:
@@ -660,15 +696,43 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif model=="T1tttt":
         topMass = 175.
-        mDelta = sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2*topMass,2) )/gluinoMass , 2) - pow(2*topMass,2))
+        mDelta = 2.*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*topMass,2) )/(2.*gluinoMass) , 2) - pow(2.*topMass,2))
+        print "mDelta = ", mDelta
         if mDelta < 700:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10.]
         elif mDelta < 800:
             xsecRange = [0.01, 0.05, 0.1, 0.5, 1.0]
         else:
             xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1]
-            #xsecRange = [0.005]
+    elif model=="T6bbHH":
+        higgsMass = 125.
+        mDelta = 2*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
+        print "mDelta = ", mDelta
+        if mDelta < 250:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    elif model=="T2bb":
+            # Probably don't need the last entry of each xsec scan!!!
+        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
+        print "mDelta = ", mDelta
+        if mDelta < 150:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500., 1000., 5000.]
+        elif mDelta < 200:
+            xsecRange = [0.05,0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.01,0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.001,0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.0005,0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        
     return xsecRange
+
 
 if __name__ == '__main__':
 
@@ -680,8 +744,8 @@ if __name__ == '__main__':
     rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.Eval)
     rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.Integration)
     #rt.RooMsgService.instance().Print()
-    
 
+    
     if model=="T1bbbb":
         gchipairs = [(400, 50), (400, 200), (400, 300),
                      (450, 50), (450, 200), (450, 300), (450, 400),
@@ -694,22 +758,24 @@ if __name__ == '__main__':
                      (775, 50), (775, 200), (775, 300), (775, 400), (775, 450), (775, 500), (775, 525), (775, 550), (775, 600), (775, 625), (775, 650), (775, 700), (775, 750),
                      (800, 550), (800, 600), (800, 650), (800, 700),
                      (825, 50), (825, 200), (825, 300), (825, 400), (825, 450), (825, 500), (825, 525), (825, 550), (825, 600), (825, 625), (825, 650), (825, 700), (825, 750), (825, 800),
-                     (850, 550), (850, 600), (850, 650), (850, 700),
+                     (850, 550), (850, 600), (850, 650), (850, 700), 
                      (875, 50), (875, 200), (875, 300), (875, 400), (875, 450), (875, 500), (875, 525), (875, 550), (875, 600), (875, 625), (875, 650), (875, 700), (875, 750), (875, 800), (875, 850),
                      (900, 550), (900, 600), (900, 650),
-                     (925, 50), (925, 200), (925, 300), (925, 400), (925, 450), (925, 500), (925, 525), (925, 550), (925, 600), (925, 625), (925, 650), (925, 700), (925, 750), (925, 800), (925, 850),
-                     (950, 525), (950, 550), (950, 600), (950, 625), (950, 650), (950, 700), (950, 750), (950, 800), (950, 850),
-                     (1000, 525), (1000, 550), (1000, 600), (1000, 625), (1000, 650), (1000, 700), (1000, 750), (1000, 800), (1000, 850),
-                     (1025, 50), (1025, 200), (1025, 300), (1025, 400), (1025, 450), (1025, 500), (1025, 525), (1025, 550), (1025, 600), (1025, 625), (1025, 650), (1025, 700), (1025, 750), (1025, 800), (1025, 850),
-                     (1050, 550), (1050, 600), (1050, 650), (1050, 700),
-                     (1075, 50), (1075, 200), (1075, 300), (1075, 400), (1075, 450), (1075, 500), (1075, 525), (1075, 550), (1075, 600), (1075, 625), (1075, 650), (1075, 700), (1075, 750), (1075, 800), (1075, 850),
-                     (1100, 550), (1100, 600), (1100, 650), (1100, 700),
-                     (1125, 50), (1125, 200), (1125, 300), (1125, 400), (1125, 450), (1125, 500), (1125, 525), (1125, 550), (1125, 600), (1125, 625), (1125, 650), (1125, 700), (1125, 750), (1125, 800), (1125, 850),
-                     (1150, 550), (1150, 600), (1150, 650), (1150, 700),
-                     (1225, 50), (1225, 200), (1225, 300), (1225, 400), (1225, 450), (1225, 500), (1225, 525), (1225, 550), (1225, 600), (1225, 625), (1225, 650), (1225, 700), (1225, 750), (1225, 800), (1225, 850),
-                     (1325, 50), (1325, 200), (1325, 300), (1325, 400), (1325, 450), (1325, 500), (1325, 525), (1325, 550), (1325, 600), (1325, 625), (1325, 650), (1325, 700), (1325, 750), (1325, 800), (1325, 850),
-                     (1375, 50), (1375, 200), (1375, 300), (1375, 400), (1375, 450), (1375, 500), (1375, 525), (1375, 550), (1375, 600), (1375, 625), (1375, 650), (1375, 700), (1375, 750), (1375, 800), (1375, 850)]
-        gchipairs = [(1225, 50)]
+                     (925, 50), (925, 200), (925, 300), (925, 400), (925, 450), (925, 500), (925, 525), (925, 550), (925, 600), (925, 625), (925, 650), (925, 700), (925, 750), (925, 800), (925, 850), (925, 875), (925, 900),
+                     (950, 525), (950, 550), (950, 600), (950, 625), (950, 650), (950, 700), (950, 750), (950, 800), (950, 850), (950, 900), (950, 925),
+                     (1000, 525), (1000, 550), (1000, 600), (1000, 625), (1000, 650), (1000, 700), (1000, 750), (1000, 800), (1000, 850),  (1000, 900), (1000, 950), (1000, 975),
+                     (1025, 50), (1025, 200), (1025, 300), (1025, 400), (1025, 450), (1025, 500), (1025, 525), (1025, 550), (1025, 600), (1025, 625), (1025, 650), (1025, 700), (1025, 750), (1025, 800), (1025, 850), (1025, 900), (1025, 950), (1025, 1000),
+                     (1050, 550), (1050, 600), (1050, 650), (1050, 700), (1050, 750), (1050, 800), (1050, 825), (1050, 850), (1050, 900), (1050, 950), (1050, 1000), (1050, 1025),
+                     (1075, 50), (1075, 200), (1075, 300), (1075, 400), (1075, 450), (1075, 500), (1075, 525), (1075, 550), (1075, 600), (1075, 625), (1075, 650), (1075, 700), (1075, 750), (1075, 800), (1075, 850), (1075, 900), (1075, 950),  (1075, 1000),  (1075, 1050),
+                     (1100, 550), (1100, 600), (1100, 650), (1100, 700), (1100, 750), (1100, 800), (1100, 850), (1100, 900), (1100, 950), (1100, 1000), (1100, 1050), (1100, 1075),
+                     (1125, 50), (1125, 200), (1125, 300), (1125, 400), (1125, 450), (1125, 500), (1125, 525), (1125, 550), (1125, 600), (1125, 625), (1125, 650), (1125, 700), (1125, 750), (1125, 800), (1125, 850), (1125, 900), (1125, 950), (1125, 1000), (1125, 1050), (1125, 1100),
+                     (1150, 550), (1150, 600), (1150, 650), (1150, 700), (1150, 750), (1150, 800), (1150, 850),
+                     (1225, 50), (1225, 200), (1225, 300), (1225, 400), (1225, 450), (1225, 500), (1225, 525), (1225, 550), (1225, 600), (1225, 625), (1225, 650), (1225, 700), (1225, 750), (1225, 800), (1225, 850), (1225, 900), (1225, 950), (1225, 1000), (1225, 1050), (1225, 1100), (1225, 1150), (1225, 1200), 
+                     (1275, 900), (1275, 950), (1275, 1000), (1275, 1050), (1275, 1100), (1275, 1150), (1275, 1200), (1275, 1250),
+                     (1325, 50), (1325, 200), (1325, 300), (1325, 400), (1325, 450), (1325, 500), (1325, 525), (1325, 550), (1325, 600), (1325, 625), (1325, 650), (1325, 700), (1325, 750), (1325, 800), (1325, 850), (1325, 900), (1325, 950), (1325, 1000), (1325, 1050), (1325, 1100), (1325, 1150), (1325, 1200), (1325, 1250), (1325, 1300),
+                     (1375, 50), (1375, 200), (1375, 300), (1375, 400), (1375, 450), (1375, 500), (1375, 525), (1375, 550), (1375, 600), (1375, 625), (1375, 650), (1375, 700), (1375, 750), (1375, 800), (1375, 850), (1375, 900), (1375, 950), (1375, 1000), (1375, 1050), (1375, 1100), (1375, 1150), (1375, 1200), (1375, 1250), (1375, 1300), (1375, 1350)]
+
+                     
     if model=="T2tt":
         gchipairs = [(150, 50),
                      (200, 50),
@@ -725,6 +791,7 @@ if __name__ == '__main__':
                      (700, 50), (700, 150), (700, 250), (700, 350), (700, 450), (700, 550),
                      (750, 50), (750, 150), (750, 250), (750, 350), (750, 450), (750, 550), (750, 650),
                      (800, 50), (800, 150), (800, 250), (800, 350), (800, 450), (800, 550), (800, 650)]
+        
     if model=="T1tttt":
         gchipairs = [(400, 1), (400, 25), (400, 125),
                      (450, 1), (450, 25), (450, 125), (450, 225),
@@ -746,6 +813,7 @@ if __name__ == '__main__':
                      (1300, 1), (1300, 125), (1300, 225), (1300, 325), (1300, 425), (1300, 525), (1300, 625), (1300, 725), (1300, 825), (1300, 925), (1300, 1025),
                      (1350, 1), (1350, 125), (1350, 225), (1350, 325), (1350, 425), (1350, 525), (1350, 625), (1350, 725), (1350, 825), (1350, 925), (1350, 1025), (1350, 1125),
                      (1400, 1)]
+        
     if model=="T6bbHH":
         gchipairs = [(325, 25),
                      (350, 25), (350, 50),
@@ -763,6 +831,8 @@ if __name__ == '__main__':
                      (650, 25), (650, 50), (650, 75), (650, 100), (650, 125), (650, 150), (650, 175), (650, 200), (650, 225), (650, 250), (650, 275), (650, 300), (650, 325), (650, 350),
                      (675, 25), (675, 50), (675, 75), (675, 100), (675, 150), (675, 225), (675, 250), (675, 275), (675, 300), (675, 325), (675, 350), (675, 375),
                      (700, 25), (700, 50), (700, 75), (700, 100), (700, 125), (700, 150), (700, 175), (700, 200), (700, 225), (700, 250), (700, 275), (700, 300), (700, 325), (700, 350), (700, 375), (700, 400)]
+        
+    
     if model=="T2bb":
         gchipairs = [(100, 1), (100, 50),
                      #(125, 1), (125, 50),
@@ -790,19 +860,20 @@ if __name__ == '__main__':
                      #(675, 1), (675, 50), (675, 100), (675, 150), (675, 200), (675, 250), (675, 300), (675, 350), (675, 400), (675, 450), (675, 500), (675, 550), (675, 600),
                      (700, 1), (700, 50), (700, 100), (700, 150), (700, 200), (700, 250), (700, 300), (700, 350), (700, 400), (700, 450), (700, 500), (700, 550), (700, 600), (700, 650),
                      #(725, 1), (725, 50), (725, 100), (725, 150), (725, 200), (725, 250), (725, 300), (725, 350), (725, 400), (725, 450), (725, 500), (725, 550), (725, 600), (725, 650),
-                     (750, 1), (750, 50), (750, 100), (750, 150), (750, 200), (750, 250), (750, 300), (750, 350), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650), (750, 700)]
-                     #(775, 1), (775, 50), (775, 100), (775, 150), (775, 200), (775, 250), (775, 300), (775, 350), (775, 400), (775, 450), (775, 500), (775, 550), (775, 600), (775, 650), (775, 700)]
+                     (750, 1), (750, 50), (750, 100), (750, 150), (750, 200), (750, 250), (750, 300), (750, 350), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650), (750, 700),
+                     (775, 1), (775, 50), (775, 100), (775, 150), (775, 200), (775, 250), (775, 300), (775, 350), (775, 400), (775, 450), (775, 500), (775, 550), (775, 600), (775, 650), (775, 700), (775, 725)]
 
+        
     boxes = boxInput.split("_")
         
-    #gchipairs = reversed(gchipairs)
+    gchipairs = reversed(gchipairs)
     
     doAll = (len(boxes)>0)
     
     rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
     print "INFO: is output CLs file %s present?"%rootFileName
     calcCLsMode = (not glob.glob(rootFileName))
-    calcCLsMode = True
+    
     if calcCLsMode:
         print "INFO: output CLs file not present: entering calculate CLs mode"
         outputFileNames = []
@@ -815,7 +886,7 @@ if __name__ == '__main__':
                 xsecString = str(xsec).replace(".","p")
                 if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))):
                     print "ERROR: output file is there! moving on to next point!"
-                    #continue
+                    continue
 
                 print "INFO: now checking for files missing "
                 print "      for mg = %i, mchi = %i, xsec = %f"%(mg, mchi, xsec)
