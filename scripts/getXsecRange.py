@@ -1,30 +1,28 @@
 def getXsecRange(neutralinopoint,gluinopoint):
 
-	# if neutralinopoint > 50:
-	if gluinopoint <= 150 :
-		return [0.1, 1.0, 10.0, 100.0]
-	elif gluinopoint == 175:
-		return [0.1, 1.0, 10.0, 50.0]
-	elif gluinopoint == 200:
-		return [0.1, 1.0, 10.0, 30.0]
-	elif gluinopoint <= 325:
-		return [0.05, 0.1, 1.0, 10.0]
-	elif gluinopoint <= 400:
-		return [0.01, 0.05, 0.5, 5.0]
-	elif gluinopoint <= 450:
-		return [0.005, 0.01, 0.1, 3.0]
-	elif gluinopoint <= 500:
-		return [0.005, 0.01, 0.1, 1.0]
-	elif gluinopoint <= 575:
-		return [0.001, 0.005, 0.1, 0.5]
-	elif gluinopoint <= 625:
-		return [0.001, 0.003, 0.05, 0.1, 0.5] # added for leptons
-	elif gluinopoint <= 775:
-		return [0.001, 0.003, 0.02, 0.08, 0.1] # added for leptons
-	elif gluinopoint == 800:
-		return [0.0005, 0.001, 0.008, 0.08, 0.1] # added for leptons
-	else:
-		return [0.0005, 0.001, 0.008, 0.08, 0.1] # added for leptons
+#	if neutralinopoint > 50:
+       if gluinopoint <= 150 :
+	       return [0.1, 1.0, 10.0, 70.0]
+       elif gluinopoint == 175:
+	       return [0.1, 1.0, 10.0, 30.0]
+       elif gluinopoint == 200:
+	       return [0.1, 1.0, 10.0, 20.0]
+       elif gluinopoint <= 325:
+	       return [0.05, 0.1, 1.0, 5.0, 8.0, 10.0] 
+       elif gluinopoint <= 400:
+	       return [0.01, 0.05, 0.5, 1.0, 2.0]
+       elif gluinopoint <= 450:
+	       return [0.005, 0.01, 0.1, 1.0, 2.0]
+       elif gluinopoint <= 500:
+	       return [0.005, 0.01, 0.1, 0.5, 1.0]
+       elif gluinopoint <= 575:
+	       return [0.001, 0.005, 0.1, 0.5, 0.8]
+       elif gluinopoint <= 625:
+	       return [0.001, 0.003, 0.05, 0.1, 0.3] 
+       elif gluinopoint <= 775:
+	       return [0.001, 0.003, 0.02, 0.08, 0.1, 0.2, 0.3] 
+       elif gluinopoint == 800:
+	       return [ 0.0005, 0.001, 0.008, 0.08, 0.1, 0.5] 
 
 	# else:
 	#     if gluinopoint <= 150 :
@@ -80,4 +78,4 @@ def getXsecRange(neutralinopoint,gluinopoint):
 	#     elif gluinopoint == 775 :
 	#         return [ 0.005, 0.01, 0.03, 0.05, 0.1]
 	#     elif gluinopoint == 800 :
-	#         return [ 0.005, 0.01, 0.03, 0.05, 0.1]
+	#         return [ 0.005, 0.01, 0.03, 0.05, 0.1]>>>>>>> 1.1.2.2
