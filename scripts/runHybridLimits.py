@@ -10,217 +10,7 @@ import time
 from math import *
 from array import *
 
-
-def getXsecRange(box,model,neutralinoMass,gluinoMass):
-    if model=="T1bbbb":
-        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
-        print "mDelta = ", mDelta
-        if mDelta < 150:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        elif mDelta < 400:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
-        elif mDelta < 800:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-        else:
-            xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
-    elif model=="T2tt":
-        topMass = 175.
-        mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2)
-        mDeltaSq2 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(100.,2) )/(2.*gluinoMass) , 2) - pow(100.,2)
-        mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
-        print "mDelta = ", mDelta
-        if mDelta < 250:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
-        elif mDelta < 400:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        elif mDelta < 500:
-            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
-        else:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    elif model=="T1tttt":
-        topMass = 175.
-        mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*topMass,2) )/(2.*gluinoMass) , 2) - pow(2.*topMass,2)
-        mDeltaSq2 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(200.,2) )/(2.*gluinoMass) , 2) - pow(200.,2)
-        mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
-        print "mDelta = ", mDelta
-        if mDelta < 400:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100.]
-        elif mDelta < 700:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
-        elif mDelta < 1000:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
-        else:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1]
-    elif model=="T6bbHH":
-        higgsMass = 125.
-        mDelta = 2*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
-        print "mDelta = ", mDelta
-        if mDelta < 200:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        elif mDelta < 400:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5., 10.]
-        elif mDelta < 500:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
-        else:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    elif model=="T2bb":
-            # Probably don't need the last entry of each xsec scan!!!
-        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
-        print "mDelta = ", mDelta
-        if mDelta < 150:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500., 1000., 5000., 1.e4, 5.e4 ]
-        elif mDelta < 200:
-            xsecRange = [0.05,0.1, 0.5, 1., 5., 10., 50., 100.]
-        elif mDelta < 400:
-            xsecRange = [0.01,0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        elif mDelta < 500:
-            xsecRange = [0.001,0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
-        else:
-            xsecRange = [0.0005,0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-        
-    return xsecRange
-
-    
-def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 125 # toys per command
-    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
-    # prepare the script to run
-    xsecstring = str(xsecpoint).replace(".","p")
-    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".sge"
-    outputfile = open(outputname,'w')
-    
-    label = "MR300.0_R0.387298334621"
-
-    tagHypo = ""
-    if hypo == "B":
-        tagHypo = "-e"
-        
-    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
-    user = os.environ['USER']
-    
-    hybridDir = "/home/%s/work/RAZORLIMITS/Hybrid/"%(user)
-    
-    
-    outputfile.write('#$ -S /bin/sh\n')
-    outputfile.write('#$ -cwd\n')
-    outputfile.write("export WD=/wntmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
-    outputfile.write("mkdir -p $WD\n")
-    outputfile.write("cd $WD\n")
-    
-    outputfile.write("source /home/jduarte/.bashrc\n")
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/RazorCombinedFit.tar.gz .\n")
-    outputfile.write("tar -xvzf RazorCombinedFit.tar.gz\n")
-    outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("mkdir lib\n")
-    outputfile.write("source setup.sh\n")
-    outputfile.write("make clean; make\n")
-    
-    outputfile.write("export NAME=\"%s\"\n"%model)
-    outputfile.write("export LABEL=\"%s\"\n"%label)
-    
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
-    
-    nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-    
-    nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
-    outputfile.write("cd; rm -rf $WD\n")
-    
-    return outputname,ffDir
-    
-def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 125 # toys per command
-    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
-    # prepare the script to run
-    xsecstring = str(xsecpoint).replace(".","p")
-    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
-    outputfile = open(outputname,'w')
-
-    label = "MR300.0_R0.387298334621"
-    
-    tagHypo = ""
-    if hypo == "B":
-        tagHypo = "-e"
-        
-    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
-    user = os.environ['USER']
-    
-    hybridDir = "/afs/cern.ch/work/%s/%s/RAZORLIMITS/Hybrid/"%(user[0],user)
-    
-    outputfile.write('#!/usr/bin/env bash -x\n')
-    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
-    outputfile.write("mkdir -p $WD\n")
-    outputfile.write("cd $WD\n")
-    outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
-    outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
-    outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
-    outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
-    outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -r woodson_110613 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
-    outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("mkdir lib\n")
-    outputfile.write("source setup.sh\n")
-    outputfile.write("make clean; make -j 4\n")
-    
-    outputfile.write("export NAME=\"%s\"\n"%model)
-    outputfile.write("export LABEL=\"%s\"\n"%label)
-    
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
-        
-    nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-    
-    nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
-
-    outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
-    outputfile.write("cd; rm -rf $WD\n")
-    
-    outputfile.close
-
-    return outputname,ffDir
-if __name__ == '__main__':
-    if len(sys.argv) < 5:
-        print "\nRun the script as follows:\n"
-        print "python scripts/runHybridLimits.py Box Model Queue CompletedOutputTextFile"
-        print "with:"
-        print "- Box = name of the Box (MuMu, MuEle, etc.)"
-        print "- Model = T1bbbb, T1tttt, T2tt, etc. "
-        print "- Queue = 1nh, 8nh, 1nd, etc."
-        print "- CompletedOutputTextFile = text file containing all completed output files"
-        print ""
-        sys.exit()
-    box = sys.argv[1]
-    model = sys.argv[2]
-    queue = sys.argv[3]
-    done  = sys.argv[4]
-    t3 = False
-    mchi_lower = 0
-    mchi_upper = 2025
-    mg_lower = 0
-    mg_upper = 2025
-    for i in xrange(5,len(sys.argv)):
-        if sys.argv[i].find("--t3")!=-1: t3 = True
-    for i in xrange(5,len(sys.argv)):
-        if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
-        if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
-        if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
-        if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
-    
-    if model=="T6bbHH":
-        nJobs = 36 # do 250 toys each job => 9000 toys
-    else:
-        nJobs = 12 # do 250 toys each job => 3000 toys
-    
-    print box, model, queue
-
+def getGChiPairs(model):
     if model=="T1bbbb":
         gchipairs = [(400, 50), (400, 200), (400, 300),
                      (450, 50), (450, 200), (450, 300), (450, 400),
@@ -441,6 +231,220 @@ if __name__ == '__main__':
                      (750, 1), (750, 50), (750, 100), (750, 150), (750, 200), (750, 250), (750, 300), (750, 350), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650), (750, 700),
                      (775, 1), (775, 50), (775, 100), (775, 150), (775, 200), (775, 250), (775, 300), (775, 350), (775, 400), (775, 450), (775, 500), (775, 550), (775, 600), (775, 650), (775, 700), (775, 725)]
         
+    return gchipairs
+
+def getXsecRange(model,neutralinoMass,gluinoMass):
+    if model=="T1bbbb":
+        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
+        print "mDelta = ", mDelta
+        if mDelta < 150:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 400:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
+        elif mDelta < 800:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        else:
+            xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
+    elif model=="T2tt":
+        topMass = 175.
+        mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2)
+        mDeltaSq2 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(100.,2) )/(2.*gluinoMass) , 2) - pow(100.,2)
+        mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
+        print "mDelta = ", mDelta
+        if mDelta < 250:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    elif model=="T1tttt":
+        topMass = 175.
+        mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*topMass,2) )/(2.*gluinoMass) , 2) - pow(2.*topMass,2)
+        mDeltaSq2 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(200.,2) )/(2.*gluinoMass) , 2) - pow(200.,2)
+        mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
+        print "mDelta = ", mDelta
+        if mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 700:
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
+        elif mDelta < 1000:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1]
+    elif model=="T6bbHH":
+        higgsMass = 125.
+        mDelta = 2*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
+        print "mDelta = ", mDelta
+        if mDelta < 200:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 400:
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5., 10.]
+        elif mDelta < 500:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+    elif model=="T2bb":
+            # Probably don't need the last entry of each xsec scan!!!
+        mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
+        print "mDelta = ", mDelta
+        if mDelta < 150:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500., 1000., 5000., 1.e4, 5.e4 ]
+        elif mDelta < 200:
+            xsecRange = [0.05,0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.01,0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.001,0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+        else:
+            xsecRange = [0.0005,0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+        
+    return xsecRange
+
+    
+def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
+    nToys = 125 # toys per command
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+    # prepare the script to run
+    xsecstring = str(xsecpoint).replace(".","p")
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".sge"
+    outputfile = open(outputname,'w')
+    
+    label = "MR300.0_R0.387298334621"
+
+    tagHypo = ""
+    if hypo == "B":
+        tagHypo = "-e"
+        
+    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
+    user = os.environ['USER']
+    
+    hybridDir = "/home/%s/work/RAZORLIMITS/Hybrid/"%(user)
+    
+    
+    outputfile.write('#$ -S /bin/sh\n')
+    outputfile.write('#$ -cwd\n')
+    outputfile.write("export WD=/wntmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("mkdir -p $WD\n")
+    outputfile.write("cd $WD\n")
+    
+    outputfile.write("source /home/jduarte/.bashrc\n")
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/RazorCombinedFit.tar.gz .\n")
+    outputfile.write("tar -xvzf RazorCombinedFit.tar.gz\n")
+    outputfile.write("cd RazorCombinedFit\n")
+    outputfile.write("mkdir lib\n")
+    outputfile.write("source setup.sh\n")
+    outputfile.write("make clean; make\n")
+    
+    outputfile.write("export NAME=\"%s\"\n"%model)
+    outputfile.write("export LABEL=\"%s\"\n"%label)
+    
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
+    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
+    
+    nToyOffset = nToys*(2*t)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    
+    nToyOffset = nToys*(2*t+1)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+
+    outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
+    outputfile.write("cd; rm -rf $WD\n")
+    
+    return outputname,ffDir
+    
+def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
+    nToys = 125 # toys per command
+    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+    # prepare the script to run
+    xsecstring = str(xsecpoint).replace(".","p")
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
+    outputfile = open(outputname,'w')
+
+    label = "MR300.0_R0.387298334621"
+    
+    tagHypo = ""
+    if hypo == "B":
+        tagHypo = "-e"
+        
+    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
+    user = os.environ['USER']
+    
+    hybridDir = "/afs/cern.ch/work/%s/%s/RAZORLIMITS/Hybrid/"%(user[0],user)
+    
+    outputfile.write('#!/usr/bin/env bash -x\n')
+    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("mkdir -p $WD\n")
+    outputfile.write("cd $WD\n")
+    outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
+    outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
+    outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
+    outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
+    outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
+    outputfile.write("cvs co -r woodson_110613 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
+    outputfile.write("cd RazorCombinedFit\n")
+    outputfile.write("mkdir lib\n")
+    outputfile.write("source setup.sh\n")
+    outputfile.write("make clean; make -j 4\n")
+    
+    outputfile.write("export NAME=\"%s\"\n"%model)
+    outputfile.write("export LABEL=\"%s\"\n"%label)
+    
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
+    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
+        
+    nToyOffset = nToys*(2*t)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    
+    nToyOffset = nToys*(2*t+1)
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+
+    outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
+    outputfile.write("cd; rm -rf $WD\n")
+    
+    outputfile.close
+
+    return outputname,ffDir
+if __name__ == '__main__':
+    if len(sys.argv) < 5:
+        print "\nRun the script as follows:\n"
+        print "python scripts/runHybridLimits.py Box Model Queue CompletedOutputTextFile"
+        print "with:"
+        print "- Box = name of the Box (MuMu, MuEle, etc.)"
+        print "- Model = T1bbbb, T1tttt, T2tt, etc. "
+        print "- Queue = 1nh, 8nh, 1nd, etc."
+        print "- CompletedOutputTextFile = text file containing all completed output files"
+        print ""
+        sys.exit()
+    box = sys.argv[1]
+    model = sys.argv[2]
+    queue = sys.argv[3]
+    done  = sys.argv[4]
+    t3 = False
+    mchi_lower = 0
+    mchi_upper = 2025
+    mg_lower = 0
+    mg_upper = 2025
+    for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--t3")!=-1: t3 = True
+    for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
+        if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
+        if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
+        if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
+    
+    if model=="T6bbHH":
+        nJobs = 36 # do 250 toys each job => 9000 toys
+    else:
+        nJobs = 12 # do 250 toys each job => 3000 toys
+    
+    print box, model, queue
+
+    gchipairs = getGChiPairs(model)
+    
     pwd = os.environ['PWD']
     
     submitDir = "submit"
@@ -466,7 +470,7 @@ if __name__ == '__main__':
     for gluinopoint, neutralinopoint in gchipairs:
         if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
         if gluinopoint < mg_lower or gluinopoint >= mg_upper: continue
-        xsecRange = getXsecRange(box,model,neutralinopoint,gluinopoint)
+        xsecRange = getXsecRange(model,neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
             for hypo in hypotheses:
