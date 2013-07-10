@@ -1,4 +1,49 @@
-Installation HOWTO
+---- New Instructions for git ---
+
+You need a git username, and your public key should be added to git. See http://cms-sw.github.io/cmssw/faq.html
+
+Then you should do
+
+git config --global user.name <First Name> <Last Name>
+git config --global user.email <Your-Email-Address>
+git config --global user.github <Your-Just-Created-GitHub-Account>
+
+MacOS:
+
+Make sure ROOT is installed, and ROOTSYS is set. You will need pyROOT to be working. I.e. python -c "import ROOT" must not return an error
+
+Then do the following:
+
+git clone git://github.com/RazorCMS/RazorCombinedFit.git
+(git clone -b wreece_101212_2011_style_fits git://github.com/RazorCMS/RazorCombinedFit.git)
+cd RazorCombinedFit
+source setup.sh
+make -j 4
+
+Lxplus:
+
+In this case, we use the CMSSW ROOT. In this case, do the following:
+
+cmsrel CMSSW_6_2_0_pre7
+cd CMSSW_6_2_0_pre7/src
+eval `scram runtime -sh`
+git clone git://github.com/RazorCMS/RazorCombinedFit.git
+(git clone -b wreece_101212_2011_style_fits git://github.com/RazorCMS/RazorCombinedFit.git)
+cd RazorCombinedFit
+source setup.sh
+make -j 4
+
+To add a new file:
+git add file
+
+To commit changes to file1 and file2:
+git commit -m "mandatory comment" file1 file2 ...
+
+To push changes to github:
+git push git@github.com:RazorCMS/RazorCombinedFit.git
+
+
+---- Old Instructions for CVS --
 
 MacOS:
 
