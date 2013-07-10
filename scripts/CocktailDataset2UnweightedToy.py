@@ -161,7 +161,7 @@ if __name__ == '__main__':
     clock = now.GetTime()
     seed = today+clock+pid+137
     seed = 314159
-    #seed = 1988
+    seed = 1988
     #rt.RooRandom.randomGenerator().SetSeed(seed)
     
     for box, files in boxes.iteritems():
