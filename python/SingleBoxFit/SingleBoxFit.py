@@ -259,9 +259,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
 
-                #boxes[box].fixPars('R0_')
-                #boxes[box].fixPars('b_')
-                #boxes[box].fixPars('n_')
+                
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
                 
                 self.store(fr, name = 'independentFR', dir=box)
@@ -315,7 +313,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
     
     def signal_injection(self, inputFiles):
         """Run signal injection fit"""
-
+        print "Run signal injection fit"
         fileIndex = self.indexInputFiles(inputFiles)
         boxes = self.getboxes(fileIndex)
         
@@ -547,9 +545,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # get the signal+background toy (no nuisnaces)
             SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
-            #reset(boxes[box], fr_B, fixSigma = True)
+            N_TTj1b = boxes[box].workspace.var("Ntot_TTj1b").getVal()
+            N_TTj2b = boxes[box].workspace.var("Ntot_TTj2b").getVal()
+            boxes[box].workspace.var("Ntot_TTj1b").setVal(0)
+            boxes[box].workspace.var("Ntot_TTj2b").setVal(0)
             tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
-                    
+                                
+            boxes[box].workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
+            boxes[box].workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
+            #tot_toy.append(data)
+            tot_toy = data
             print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
             tot_toy.SetName("sigbkg")
@@ -582,8 +587,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
 
                 # define the fit range
-
                 fit_range = boxes[box].fitregion
+                #fit_range = 'LowMR'
 
                 opt = rt.RooLinkedList()
                 opt.Add(rt.RooFit.Range(fit_range))
@@ -592,12 +597,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 opt.Add(rt.RooFit.Hesse(True))
                 opt.Add(rt.RooFit.Minos(False))
                 opt.Add(rt.RooFit.PrintLevel(-1))
-                opt.Add(rt.RooFit.PrintEvalErrors(10))
-                opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+                opt.Add(rt.RooFit.PrintEvalErrors(0))
+                #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
                 fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+                #fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(data, opt)
                 fr.SetName('independentFRsigbkg')
                 fr.Print("v")
+                    
                 boxes[box].importToWS(fr)
                 RootTools.Utils.importToWS(workspace,fr)
 
@@ -605,7 +612,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
 
                 # make any plots required
-                #boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
+                workspace.var('sigma').setVal(0.)
+                #reset(boxes[box], fr_B, fixSigma = True)
+                #boxes[box].plot(fileName, self, box, data=data, fitmodel=boxes[box].fitmodel, frName='independentFR')
+                boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
 
             
             #skip saving the workspace if the option is set
@@ -709,7 +719,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             opt.Add(rt.RooFit.Hesse(False))
             opt.Add(rt.RooFit.Minos(False))
             opt.Add(rt.RooFit.PrintLevel(-1))
-            opt.Add(rt.RooFit.PrintEvalErrors(10))
+            opt.Add(rt.RooFit.PrintEvalErrors(0))
             #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
 
@@ -717,7 +727,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
             covqualH0 = 0
             fitAttempts = 0
-            while covqualH0!=3 and fitAttempts<5:
+            while covqualH0!=3 and fitAttempts<3:
                 reset(box, fr, fixSigma=True, random=(fitAttempts>0))
                 box.workspace.var("sigma").setVal(self.options.signal_xsec)
                 box.workspace.var("sigma").setConstant(True)
@@ -734,7 +744,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
             covqualH1 = 0
             fitAttempts = 0
-            while covqualH1!=3 and fitAttempts<5:
+            while covqualH1!=3 and fitAttempts<3:
                 if self.options.expectedlimit==True or ds.GetName=="RMRTree":
                     #this means we're doing background-only toys or data
                     #so we should reset to nominal fit pars
@@ -889,12 +899,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             nuisTree = nuisFile.Get("nuisTree")
             nuisTree.Draw('>>nuisElist','nToy>=%i'%nToyOffset,'entrylist')
             nuisElist = rt.gDirectory.Get('nuisElist')
-        
-            #prepare MultiGen
-            #BEWARE: ROOT 5.34.01 - 5.34.03 has a bug that
-            #wraps poisson TWICE around expectedEvents
-
-            
             
             if self.options.expectedlimit:
                 # use the fr for B hypothesis to generate toys
@@ -1073,11 +1077,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
         workspace = rt.RooWorkspace('newws')
-        workspace.addClassDeclImportDir('src/')
-        workspace.addClassImplImportDir('src/')
-        workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
-        workspace.importClassCode(rt.RooBTagMult.Class())
-        workspace.importClassCode(rt.RooRazor3DSignal.Class())
+        #workspace.addClassDeclImportDir('src/')
+        #workspace.addClassImplImportDir('src/')
+        #workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
+        #workspace.importClassCode(rt.RooBTagMult.Class())
+        #workspace.importClassCode(rt.RooRazor3DSignal.Class())
         
         #create a RooCatagory with the name of each box in it
         workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
@@ -1100,9 +1104,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
         
-        workspace.extendSet('variables','Boxes')
+        #workspace.extendSet('variables','Boxes')
 
-    
+        workspace.var("sigma").setMax(self.options.signal_xsec)
+        
         pdf_names = {}
         datasets = {}
         
@@ -1174,7 +1179,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print 'rangeCut', rangeCut
             print ''
         
-            #datasets[box] = datasets[box].reduce(rangeCut)
+            datasets[box] = datasets[box].reduce(rangeCut)
             
             
             #add shape parameters
@@ -1188,8 +1193,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
 
         workspace.cat('Boxes').setRange('FULL',','.join(fileIndex.keys()))
-        workspace.var('MR').setBins(70)
-        workspace.var('Rsq').setBins(50)
+        
+        workspace.var('MR').setBins( int((workspace.var('MR').getMax()-workspace.var('MR').getMin())/50.) )
+        workspace.var('Rsq').setBins( int((workspace.var('Rsq').getMax()-workspace.var('Rsq').getMin())/0.025) )
         workspace.var('nBtag').setBins(3)
 
         #make a RooDataset with *all* of the data
@@ -1268,6 +1274,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
 
         #the background only model
+        # MAYBE DO THE FIT HERE FIRST! - JAVIER
         poiValueForBModel = 0.0
         pBModel = rt.RooStats.ModelConfig(pSbModel)
         pBModel.SetName("BModel")
@@ -1303,17 +1310,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
         # print 'Estimated POI Max:',poi_max
 
         poi_min = 0.0
-        poi_max = 0.2
+        poi_max = self.options.signal_xsec
         print 'For now use :[%f, %f]'%(poi_min,poi_max)
         
         #see e.g. http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/SusyAnalysis/RooStatsTemplate/roostats_twobin.C?view=co
-
-        
-        opt = rt.RooLinkedList()
-        #opt.Add(rt.RooFit.Range('LowRsq,LowMR,HighMR'))
-        #opt.Add(rt.RooFit.SplitRange(True))
-        opt.Add(rt.RooFit.Extended(True))
-        #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
 
             
@@ -1342,7 +1342,24 @@ class SingleBoxAnalysis(Analysis.Analysis):
             val = result.minNll()
             del minim
             return val
+
+
+
+
+        allParams = pSbModel.GetPdf().getParameters(pData)
+        rt.RooStats.RemoveConstantParameters(allParams)
+        condObs = rt.RooArgSet()
+
         
+        opt = rt.RooLinkedList()
+        opt.Add(rt.RooFit.Range('LowRsq,LowMR,HighMR'))
+        #opt.Add(rt.RooFit.SplitRange(True))
+        opt.Add(rt.RooFit.Extended(True))
+        #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+        opt.Add(rt.RooFit.Constrain(allParams))
+        opt.Add(rt.RooFit.CloneData(rt.kFALSE))
+        opt.Add(rt.RooFit.ConditionalObservables(condObs))
+
         #find global maximum with the signal+background model
         #with conditional MLEs for nuisance parameters
         #and save the parameter point snapshot in the Workspace
@@ -1354,7 +1371,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #save a snap-shot for signal+background
         pPoiAndNuisance = rt.RooArgSet()
         pPoiAndNuisance.add(pSbModel.GetParametersOfInterest())
-        #pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
+        pPoiAndNuisance.add(pSbModel.GetNuisanceParameters())
         pSbModel.SetSnapshot(pPoiAndNuisance)
         pPoiAndNuisance.Print("v")
         #del pNll, pProfile, pPoiAndNuisance
@@ -1379,19 +1396,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
         print 'pBModel.GetGlobalObservables() ='
         pBModel.GetGlobalObservables().Print("v")
         
-        #Begin Asimov dataset
-        variables = rt.RooArgSet()
-        variables.add(workspace.cat('Boxes'))
-        variables.add(workspace.var('MR'))
-        variables.add(workspace.var('Rsq'))
-        variables.add(workspace.var('nBtag'))
-        pAsimov = simultaneous_product.generate(variables,rt.RooFit.Extended(True))
-        
 
         #save a snap-shot for background only
         pPoiAndNuisance = rt.RooArgSet()
         pPoiAndNuisance.add(pBModel.GetParametersOfInterest())
-        #pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
+        pPoiAndNuisance.add(pBModel.GetNuisanceParameters())
         pBModel.SetSnapshot(pPoiAndNuisance)
 
         #del pNll, pProfile, pPoiAndNuisance
@@ -1406,49 +1415,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
         RootTools.Utils.importToWS(workspace,pBModel)
         
         
-        nllsigma_A = evaluateNLL(simultaneous_product, pAsimov, opt, fixSigma=True, sigmaVal=0.1)
-        nllsigmahat_A = evaluateNLL(simultaneous_product, pAsimov, opt, fixSigma=False,sigmaVal=0.0)
-        qmu_A = 2*(nllsigma_A-nllsigmahat_A)
-        print "sigmahat_A = ", workspace.var("sigma").getVal()
-        
-        nllsigma = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=True,sigmaVal=0.1)
-        nllsigmahat = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=False,sigmaVal=0.0)
-        qmu = 2*(nllsigma-nllsigmahat)
-        
-        print "sigma = 0.1"
-        print "nllsigma_A = ", nllsigma_A
-        print "nllsigmahat_A = ", nllsigmahat_A
-        print "qmu_A = ", qmu_A
-        print "nllsigma = ", nllsigma
-        print "nllsigmahat = ", nllsigmahat
-        print "qmu = ", qmu
-
-        if (qmu_A > 0.):
-            sqrtqmu_A = rt.TMath.Sqrt(qmu_A)
-        else:
-            qmu_A = 0.
-            sqrtqmu_A = 0.
-            
-        if (qmu > 0.):
-            sqrtqmu = rt.TMath.Sqrt(qmu)
-        else:
-            qmu = 0.
-            sqrtqmu = 0.
-        
-        CLsb = rt.Math.normal_cdf_c( sqrtqmu, 1.)
-        CLb = rt.Math.normal_cdf( sqrtqmu_A - sqrtqmu, 1.)
-
-        if (qmu > qmu_A):
-            CLsb = rt.Math.normal_cdf_c( (qmu + qmu_A)/(2 * sqrtqmu_A), 1.)
-            CLb = rt.Math.normal_cdf_c( (qmu - qmu_A)/(2 * sqrtqmu_A), 1.)
-            
-        CLs = 1.0
-        if (CLb > 0.):
-            CLs = CLsb/CLb
-        print "CLs = ", CLs
-        print "CLsplusb = ", CLsb
-        print "CLb = ", CLb
-
         #self.store(workspace, dir='CombinedLikelihood')
 
         
@@ -1480,66 +1446,103 @@ class SingleBoxAnalysis(Analysis.Analysis):
         calculator_type = 2 #asymtotic
         if self.options.toys:
             calculator_type = 0
-        #cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
-        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),"",pData.GetName(),calculator_type,3,True,3,poi_min,poi_max,self.options.toys])
+        cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),calculator_type,3,True,10,poi_min,poi_max,self.options.toys])
+        #cmd = runLimitSettingMacro([workspace_name,workspace.GetName(),pSbModel.GetName(),"",pData.GetName(),calculator_type,3,True,10,poi_min,poi_max,self.options.toys])
         logfile_name = '%s_CombinedLikelihood_workspace.log' % self.options.output.lower().replace('.root','')
         print cmd
         
-        os.system('%s | tee %s' % (cmd,logfile_name))
+        #os.system('%s | tee %s' % (cmd,logfile_name))
 
-        hc = rt.RooStats.AsymptoticCalculator(pData, pBModel, pSbModel, False)
-        hc.SetOneSided(True)
         poiAlt =  pBModel.GetSnapshot()
         globObs = pBModel.GetGlobalObservables()
         tmp = rt.RooArgSet(poiAlt)
-        newAsimov = hc.MakeAsimovData( pData, pSbModel, poiAlt, globObs, tmp)
+        hc = rt.RooStats.AsymptoticCalculator(pData, pBModel, pSbModel, False)
+        hc.SetOneSided(True)
+        #pAsimov = hc.MakeAsimovData( pData, pSbModel, poiAlt, globObs, tmp)
+
+        poiAlt.Print("v")
+        pAsimov = hc.MakeAsimovData( pBModel, poiAlt, globObs)
         
         poiAlt.Print("v")
         globObs.Print("v")
-        newAsimov.Print("v")
+        pAsimov.Print("v")
+        print "Asimov data weighted entries = %f"%pAsimov.sumEntries()
+        pAsimov.reduce(rangeCut)
+        print "Asimov data weighted entries = %f"%pAsimov.sumEntries()
+        pAsimov.Print("v")
+        
         pBModel.GetObservables().Print("v")
+        pBModel.GetGlobalObservables().Print("v")
+        
+        #row = newAsimov.get()
+        #row.Print("V")
+        
+        #hc.SetPrintLevel(0)
+        #rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.NumIntegration)
+        #calc = rt.RooStats.HypoTestInverter(hc)
+        #calc.SetConfidenceLevel(0.95)
+        #calc.UseCLs(True)
+        #calc.SetVerbose(False)
+        #calc.SetFixedScan(3,poi_min,poi_max)
 
-        row = newAsimov.get()
-        row.Print("V")
-        
-        
-        hc.SetPrintLevel(0)
-        rt.RooMsgService.instance().getStream(1).removeTopic(rt.RooFit.NumIntegration)
-        calc = rt.RooStats.HypoTestInverter(hc)
-        calc.SetConfidenceLevel(0.95)
-        calc.UseCLs(True)
-        calc.SetVerbose(False)
-        calc.SetFixedScan(3,poi_min,poi_max)
+        #r = calc.GetInterval()
 
-        r = calc.GetInterval()
+        #print "Exp", r.GetExpectedUpperLimit(0)
+        #print "Exp+1", r.GetExpectedUpperLimit(1)
+        #print "Exp-1", r.GetExpectedUpperLimit(-1)
+        #print "Obs", r.UpperLimit()
 
-        print "Exp", r.GetExpectedUpperLimit(0)
-        print "Exp+1", r.GetExpectedUpperLimit(1)
-        print "Exp-1", r.GetExpectedUpperLimit(-1)
-        print "Obs", r.UpperLimit()
+        pSbModel.LoadSnapshot()
+        nllsigma_A = evaluateNLL(pSbModel.GetPdf(), pAsimov, opt, fixSigma=True, sigmaVal=self.options.signal_xsec)
+        pBModel.LoadSnapshot()
+        nllsigmahat_A = evaluateNLL(pSbModel.GetPdf(), pAsimov, opt, fixSigma=False,sigmaVal=0.0)
+        qmu_A = 2*(nllsigma_A-nllsigmahat_A)
+        sigmahat_A = workspace.var("sigma").getVal()
+        
+        pSbModel.LoadSnapshot()
+        nllsigma = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=True,sigmaVal=self.options.signal_xsec)
+        pBModel.LoadSnapshot()
+        nllsigmahat = evaluateNLL(pSbModel.GetPdf(), pData, opt, fixSigma=False,sigmaVal=0.0)
+        sigmahat = workspace.var("sigma").getVal()
+        
+        qmu = 2*(nllsigma-nllsigmahat)
+        
+        print "sigma = %f"%self.options.signal_xsec
+        print "nllsigma_A = ", nllsigma_A
+        print "nllsigmahat_A = ", nllsigmahat_A
+        print "sigmahat_A = %f"%sigmahat_A 
+        print "qmu_A = ", qmu_A
+        print "nllsigma = ", nllsigma
+        print "nllsigmahat = ", nllsigmahat
+        print "sigmahat = %f"%sigmahat
+        print "qmu = ", qmu
 
+        if (qmu_A > 0.):
+            sqrtqmu_A = rt.TMath.Sqrt(qmu_A)
+        else:
+            qmu_A = 0.
+            sqrtqmu_A = 0.
+            
+        if (qmu > 0.):
+            sqrtqmu = rt.TMath.Sqrt(qmu)
+        else:
+            qmu = 0.
+            sqrtqmu = 0.
         
-        
-        #print "sigma error = %f"%workspace.var('sigma').getError()
-        #print '%s | tee %s' % (cmd,logfile_name)
-        
-#        from ROOT import StandardHypoTestInvDemo
-#        #StandardHypoTestInvDemo("fileName","workspace name","S+B modelconfig name","B model name","data set name",calculator type, test statistic type, use CLS, 
-#        #                                number of points, xmin, xmax, number of toys, use number counting)
-#        calculator_type = 2 #asymtotic
-#        if self.options.toys:
-#            calculator_type = 0
-#        print 'StandardHypoTestInvDemo("%s","%s","%s","%s","%s",2,3,0.0,%f)'\
-#                                            % (workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),poi_max)
-#        result = StandardHypoTestInvDemo(workspace_name,workspace.GetName(),pSbModel.GetName(),pBModel.GetName(),pData.GetName(),
-#                                        2,3,True,15,0.0,poi_max,self.options.toys)
-#        #set to the median expected limit
-#        workspace.var('sigma').setVal(result.GetExpectedUpperLimit(0))
-#        signal_yield = 0.
-#        for box in fileIndex:
-#            signal_yield += workspace.function('S_%s' % box).getVal()
-#        print 'Signal yield at median expected limit (%f): %f' % ( workspace.var('sigma').getVal(),signal_yield )
-#        self.store(result, dir='CombinedLikelihood')
+        CLsb = rt.Math.normal_cdf_c( sqrtqmu, 1.)
+        CLb = rt.Math.normal_cdf( sqrtqmu_A - sqrtqmu, 1.)
+
+        if (qmu > qmu_A):
+            CLsb = rt.Math.normal_cdf_c( (qmu + qmu_A)/(2 * sqrtqmu_A), 1.)
+            CLb = rt.Math.normal_cdf_c( (qmu - qmu_A)/(2 * sqrtqmu_A), 1.)
+            
+        CLs = 1.0
+        if (CLb > 0.):
+            CLs = CLsb/CLb
+            
+        print "CLs = ", CLs
+        print "CLsplusb = ", CLsb
+        print "CLb = ", CLb
 
 
     def limit_simult(self, inputFiles, nToys, nToyOffset):
@@ -1642,11 +1645,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             raise Exception('Limit setting code needs a fit result file as input. None given')
         
         workspace = rt.RooWorkspace('newws')
-        workspace.addClassDeclImportDir('src/')
-        workspace.addClassImplImportDir('src/')
-        workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
-        workspace.importClassCode(rt.RooBTagMult.Class())
-        workspace.importClassCode(rt.RooRazor3DSignal.Class())
+        #workspace.addClassDeclImportDir('src/')
+        #workspace.addClassImplImportDir('src/')
+        #workspace.importClassCode(rt.RooRazor2DTail_SYS.Class())
+        #workspace.importClassCode(rt.RooBTagMult.Class())
+        #workspace.importClassCode(rt.RooRazor3DSignal.Class())
         
         #create a RooCatagory with the name of each box in it
         workspace.factory('Boxes[%s]' % ','.join(fileIndex.keys()))
@@ -1669,7 +1672,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
         
-        workspace.extendSet('variables','Boxes')
+        #workspace.extendSet('variables','Boxes')
 
                 
         pdf_names = {}
@@ -1745,6 +1748,11 @@ class SingleBoxAnalysis(Analysis.Analysis):
             datasets[box] = datasets[box].reduce(rangeCut)
             
             
+            # fix signal nuisance parameters
+            for p in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+                p.setVal(0.)
+                workspace.var(p.GetName()).setConstant(True)
+                
             #add shape parameters
             [workspace.extendSet('shape',p.GetName()) for p in RootTools.RootIterator.RootIterator( background_pdf.getParameters(datasets[box]) ) if not p.isConstant()]
             
@@ -1790,9 +1798,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #keep track of the Gaussian means, as these are global observables
             workspace.extendSet('global','nom_%s' % var.GetName())
         
-        [workspace.extendSet('nuisance',p.GetName()) for p in RootTools.RootIterator.RootIterator( workspace.set('shape') )]
-      
-        
         if box_primes:
             raise Exception('There are nuisance parameters defined for boxes that we are not running on: %s' % str(box_primes))
         del box_primes
@@ -1809,6 +1814,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
         workspace.var("sigma").setMax(10.*self.options.signal_xsec)
 
         
+        for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+            # set signal nuisances constant
+            if var.GetName().find("_prime")!=-1:
+                var.setConstant(True)
+
+        
         def getFR(ds, pdf, workspace, opt, fixSigma=True, sigmaVal = 0.0):
             workspace.var("sigma").setConstant(fixSigma)
             if fixSigma: workspace.var("sigma").setVal(sigmaVal)
@@ -1822,11 +1833,17 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
             covqualH0 = 0
             fitAttempts = 0
+            
             while covqualH0!=3 and fitAttempts<1:
                 if self.options.expectedlimit==True or ds.GetName=="RMRTree":
                     workspace.obj('BModel').LoadSnapshot()
                 else:
                     workspace.obj('SbModel').LoadSnapshot()
+                    
+                for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+                    if var.GetName().find("_prime")!=-1:
+                        var.setVal(0.)
+                        var.setConstant(True)
                 frH0 = getFR(ds, pdf, workspace, opt, fixSigma = True, sigmaVal = self.options.signal_xsec)
                 frH0.Print("v")
                 statusH0 = frH0.status()
@@ -1904,8 +1921,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
         opt.Add(rt.RooFit.Hesse(False))
         opt.Add(rt.RooFit.Minos(False))
         opt.Add(rt.RooFit.PrintLevel(-1))
-        opt.Add(rt.RooFit.PrintEvalErrors(10))
+        opt.Add(rt.RooFit.PrintEvalErrors(0))
 
+        # set signal nuisance parameters constant
+        for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+            if var.GetName().find("_prime")!=-1:
+                var.setVal(0.)
+                var.setConstant(True)
         fr_B = getFR(pData,simultaneous_product,workspace,opt,fixSigma=True,sigmaVal=0.0)
         pPoiAndNuisance = rt.RooArgSet()
         pPoiAndNuisance.add(pBModel.GetParametersOfInterest())
@@ -1991,24 +2013,37 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
                     
 
+        nuisFile = rt.TFile.Open(self.options.nuisanceFile,"read")
+        nuisTree = nuisFile.Get("nuisTree")
+        nuisTree.Draw('>>nuisElist','nToy>=%i'%nToyOffset,'entrylist')
+        nuisElist = rt.gDirectory.Get('nuisElist')
+        
         for i in xrange(nToyOffset,nToyOffset+nToys):
             print 'Setting limit %i experiment' % i
             tot_toy = rt.RooDataSet()
             if not self.options.expectedlimit:
                 print "generate a toy assuming sig+bkg model"
                 print "before snapshot: sigma =", workspace.var('sigma').getVal()
-                print "before snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
-                print "before snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
-                print "before snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
-                print "before snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
-                print "before snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                #print "before snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                #print "before snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                #print "before snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                #print "before snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                #print "before snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
                 pSbModel.LoadSnapshot()
+                nuisEntry = nuisElist.Next()
+                nuisTree.GetEntry(nuisEntry)
+                for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
+                    # for each nuisance, grab gaussian distributed variables from ROOT tree
+                    if var.GetName().find("_prime")!=-1:
+                        varVal = eval('nuisTree.%s'%var.GetName())
+                        var.setVal(varVal)
+                        print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
                 print "after snapshot: sigma =", workspace.var('sigma').getVal()
-                print "after snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
-                print "after snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
-                print "after snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
-                print "after snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
-                print "after snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                #print "after snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                #print "after snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                #print "after snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                #print "after snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                #print "after snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
                 tot_toy = simultaneous_product.generate(genSpecSpB)
                 print "SpB Expected = %f" %simultaneous_product.expectedEvents(variables)
                 print "SpB Yield = %f" %tot_toy.numEntries()
@@ -2017,18 +2052,18 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 #generate a toy assuming only the bkg model
                 print "generate a toy assuming bkg model"
                 print "before snapshot: sigma =", workspace.var('sigma').getVal()
-                print "before snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
-                print "before snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
-                print "before snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
-                print "before snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
-                print "before snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                #print "before snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                #print "before snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                #print "before snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                #print "before snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                #print "before snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
                 pBModel.LoadSnapshot()
                 print "after snapshot: sigma =", workspace.var('sigma').getVal()
-                print "after snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
-                print "after snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
-                print "after snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
-                print "after snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
-                print "after snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
+                #print "after snapshot: S_Jet2b =", workspace.function('S_Jet2b').getVal()
+                #print "after snapshot: S_MultiJet =", workspace.function('S_MultiJet').getVal()
+                #print "after snapshot: Ntot_TTj2b_Jet2b =", workspace.var('Ntot_TTj2b_Jet2b').getVal()
+                #print "after snapshot: Ntot_TTj1b_MultiJet =", workspace.var('Ntot_TTj1b_MultiJet').getVal()
+                #print "after snapshot: Ntot_TTj2b_MultiJet =", workspace.var('Ntot_TTj2b_MultiJet').getVal()
                 tot_toy = simultaneous_product.generate(genSpecB)
                 print "B Expected = %f" %simultaneous_product.expectedEvents(variables)
                 print "B Yield = %f" %tot_toy.numEntries()

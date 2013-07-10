@@ -233,8 +233,8 @@ if __name__ == '__main__':
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMultiJet.root', cfg,'MuMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleJet.root', cfg,'EleJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleMultiJet.root', cfg,'EleMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    #convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2DataseGt(input.Get('EVENTS'), decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    #convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                     convertTree2Dataset(input.Get('EVENTS'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
             else:
                 printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)

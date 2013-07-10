@@ -212,7 +212,7 @@ if __name__ == '__main__':
     if model in ["T1bbbb","T1tttt"]:
         rootFile = rt.TFile.Open(directory+"/gluino.root")
         h_xsec = rootFile.Get("gluino")
-    elif model=="T2tt":
+    elif model in ["T2tt", "T2bb", "T6bbHH"]:
         rootFile = rt.TFile.Open(directory+"/stop.root")
         h_xsec = rootFile.Get("stop")
 
@@ -273,6 +273,10 @@ if __name__ == '__main__':
         h_limit.SetTitle(" ;m_{#tilde{t}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
     elif model in ["T1bbbb","T1tttt"]:
         h_limit.SetTitle(" ;m_{#tilde{g}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
+    elif model in ["T2bb"]:
+        h_limit.SetTitle(" ;m_{#tilde{b}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
+    elif model in ["T6bbHH"]:
+        h_limit.SetTitle(" ;m_{#tilde{b}} [GeV];95% CL upper limit on #sigma #times BR [pb]")
 
 
     gluinoMassArray, gluinoMassArray_er, observedLimit, observedLimit_er, expectedLimit, expectedLimit_minus1sigma, expectedLimit_plus1sigma, expectedLimit_minus2sigma, expectedLimit_plus2sigma = getHybridCLsArrays(directory, LSPmassStrip, Box)
@@ -359,6 +363,14 @@ if __name__ == '__main__':
         h_limit.GetXaxis().SetLimits(250,800)
         h_limit.SetMaximum(500)
         h_limit.SetMinimum(1e-3)
+    elif model=="T2bb":
+        h_limit.GetXaxis().SetLimits(100,750)
+        h_limit.SetMaximum(5e4)
+        h_limit.SetMinimum(5e-4)
+    elif model=="T6bbHH":
+        h_limit.GetXaxis().SetLimits(300,750)
+        h_limit.SetMaximum(50)
+        h_limit.SetMinimum(5e-4)
 
         
     h_limit.Draw("a3")
@@ -382,10 +394,20 @@ if __name__ == '__main__':
         l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{t}#tilde{t};   #tilde{t}#rightarrow t#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
     elif model=="T1tttt":
         l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{g}#tilde{g};   #tilde{g}#rightarrowt#bar{t}#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
+    elif model=="T2bb":
+        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{b}#tilde{b};   #tilde{b}#rightarrow b#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
+    elif model=="T6bbHH":
+        l.DrawLatex(0.34,0.955,"pp#rightarrow#tilde{b}#tilde{b};   #tilde{b}#rightarrow bH(b#bar{b})#tilde{#chi}^{0};   m_{#tilde{#chi}} = %.0f GeV"%float(LSPmassStrip))
 
     if model=="T1bbbb":
         l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+"))
     elif model=="T2tt":
+        l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:22])
+        l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[22:])
+    elif model=="T2bb":
+        l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:22])
+        l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[22:])
+    elif model=="T6bbHH":
         l.DrawLatex(0.55,0.719,"%s"%Box.replace("_","+")[0:22])
         l.DrawLatex(0.55,0.659,"%s"%Box.replace("_","+")[22:])
     elif model=="T1tttt":
@@ -397,9 +419,18 @@ if __name__ == '__main__':
     if model =="T1bbbb":
         leg = rt.TLegend(0.70,0.49,0.9,0.67)
         leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
-    elif model in ["T2tt","T1tttt"]:
+    elif model in ["T1tttt"]:
         leg = rt.TLegend(0.70,0.41,0.9,0.59)
         leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{g}#tilde{g})","lf")
+    elif model in ["T2tt"]:
+        leg = rt.TLegend(0.70,0.41,0.9,0.59)
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{t}#tilde{t})","lf")
+    elif model in ["T2bb"]:
+        leg = rt.TLegend(0.70,0.49,0.9,0.67)
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{b}#tilde{b})","lf")
+    elif model in ["T6bbHH"]:
+        leg = rt.TLegend(0.70,0.49,0.9,0.67)
+        leg.AddEntry(xsec_gr, "#sigma_{NLO+NLL} (#tilde{b}#tilde{b})","lf")
         
     leg.SetTextFont(132)
     leg.SetFillColor(rt.kWhite)

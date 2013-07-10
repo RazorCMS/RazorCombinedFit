@@ -21,10 +21,11 @@ def interpolate2D(hist,epsilon=1,smooth=0):
                 x.append(hist.GetXaxis().GetBinLowEdge(i))
                 y.append(hist.GetYaxis().GetBinLowEdge(j))
                 z.append(rt.TMath.Log(hist.GetBinContent(i,j)))
+                #z.append(hist.GetBinContent(i,j))
 
-    mgMin = hist.GetXaxis().GetBinLowEdge(0)
+    mgMin = hist.GetXaxis().GetBinLowEdge(1)
     mgMax = hist.GetXaxis().GetBinUpEdge(hist.GetNbinsX())
-    mchiMin = hist.GetYaxis().GetBinLowEdge(0)
+    mchiMin = hist.GetYaxis().GetBinLowEdge(1)
     mchiMax = hist.GetYaxis().GetBinUpEdge(hist.GetNbinsY())
     
     myX = np.linspace(mgMin, mgMax,int((mgMax-mgMin)/binWidth+1))
@@ -38,8 +39,8 @@ def interpolate2D(hist,epsilon=1,smooth=0):
         for j in range(1, hist.GetNbinsY()+1):
             xLow = hist.GetXaxis().GetBinLowEdge(i)
             yLow = hist.GetYaxis().GetBinLowEdge(j)
-            if yLow >= xLow: continue
-            hist.SetBinContent(i,j,rt.TMath.Exp(myZI[j-1][i-1]))
+            if xLow >= yLow+diagonalOffset:
+                hist.SetBinContent(i,j,rt.TMath.Exp(myZI[j-1][i-1]))
     return hist
     
 def set_palette(name="default", ncontours=255):
@@ -141,7 +142,7 @@ def getLogHist(hist):
     logHist = hist.Clone("log"+hist.GetName())
     for i in xrange(1,hist.GetNbinsX()+1):
         for j in xrange(1,hist.GetNbinsY()+1):
-            if hist.GetBinContent(i,j) != 0.: logHist.SetBinContent(i,j,rt.TMath.Log(hist.GetBinContent(i,j)))
+            if hist.GetBinContent(i,j) > 0.: logHist.SetBinContent(i,j,rt.TMath.Log(hist.GetBinContent(i,j)))
     return logHist
 
 def getExpHist(logHist):
@@ -156,6 +157,8 @@ if __name__ == '__main__':
     model = sys.argv[2]
     directory = sys.argv[3]
     #set_palette("blue",2)
+
+    
     set_palette("rainbow",999)
     rt.gStyle.SetOptStat(0)
     rt.gROOT.ProcessLine(".L macros/swissCrossInterpolate.h+")
@@ -166,18 +169,26 @@ if __name__ == '__main__':
 
     if model=="T1bbbb":
         mgMin = 400
-        mgMax = 1400
+        mgMax = 1425
         mchiMin = 0
         mchiMax = 1400
         binWidth = 25.
-        nRebins = 2
+        nRebins = 0
+        xsecMin = 1.e-3
+        xsecMax = 1.
+        diagonalOffset = 25
+        smooth = 50
     elif model=="T1tttt":
         mgMin = 400
-        mgMax = 1400
+        mgMax = 1425
         mchiMin = 0
         mchiMax = 1200
         binWidth = 25.
-        nRebins = 2
+        nRebins = 0
+        xsecMin = 1.e-3
+        xsecMax = 10.
+        diagonalOffset = 200.
+        smooth = 50
     elif model=="T2tt":
         mgMin = 150
         mgMax = 800
@@ -185,20 +196,32 @@ if __name__ == '__main__':
         mchiMax = 700
         binWidth = 25.
         nRebins = 2
+        xsecMin = 1.e-3
+        xsecMax = 10.
+        diagonalOffset = 400.
+        smooth = 50
     elif model=="T2bb":
         mgMin = 100
-        mgMax = 800
+        mgMax = 825
         mchiMin = 0
-        mchiMax = 775
+        mchiMax = 800
         binWidth = 25.
-        nRebins = 2
+        nRebins = 0
+        xsecMin = 1.e-3
+        xsecMax = 10.
+        diagonalOffset = 25
+        smooth = 50
     elif model=="T6bbHH":
-        mgMin = 325
-        mgMax = 725
+        mgMin = 300
+        mgMax = 750
         mchiMin = 0
         mchiMax = 425
         binWidth = 25.
-        nRebins = 2
+        nRebins = 0
+        xsecMin = 9.e-3
+        xsecMax = 1.
+        diagonalOffset = 325.
+        smooth = 50
     
     xsecTree = xsecFile.Get("xsecTree")
     xsecGluino =  rt.TH2D("xsecGluino","xsecGluino",int((mgMax-mgMin)/binWidth),mgMin, mgMax,int((mchiMax-mchiMin)/binWidth), mchiMin, mchiMax)
@@ -222,15 +245,36 @@ if __name__ == '__main__':
         xsecUL[clsType] = rt.TH2D("xsecUL_%s"%clsType,"xsecUL_%s"%clsType,int((mgMax-mgMin)/binWidth),mgMin, mgMax,int((mchiMax-mchiMin)/binWidth), mchiMin, mchiMax)
         xsecTree.Project("xsecUL_%s"%clsType,"mchi:mg",whichCLsVar[clsType])
 
+        # Change xsecUL for T2bb for (mg,mchi) = (100,50), (100,1):
+        if model=="T2bb":
+            if clsType.find("Plus"):
+                xsecUL[clsType].SetBinContent(1,1,1.e4)
+                xsecUL[clsType].SetBinContent(1,3,1.e4)
+            elif clsType.find("Minus"):
+                xsecUL[clsType].SetBinContent(1,1,3.e4)
+                xsecUL[clsType].SetBinContent(1,3,3.e4)
+            else:
+                xsecUL[clsType].SetBinContent(1,1,2.e4)
+                xsecUL[clsType].SetBinContent(1,3,2.e4)
+        if model=="T6bbHH":
+            xsecUL[clsType].SetBinContent(5,1,xsecUL[clsType].GetBinContent(6,2))
+            xsecUL[clsType].SetBinContent(4,1,xsecUL[clsType].GetBinContent(5,2))
+            xsecUL[clsType].SetBinContent(3,1,xsecUL[clsType].GetBinContent(4,2))
+            xsecUL[clsType].SetBinContent(2,1,xsecUL[clsType].GetBinContent(3,2))
+            xsecUL[clsType].SetBinContent(1,1,xsecUL[clsType].GetBinContent(2,2))
+            
         print "INFO: doing interpolation for %s"%(clsType)
 
         # do swiss cross average in log domain
-        logXsecUL[clsType] = getLogHist(xsecUL[clsType])
-        logXsecUL[clsType] = rt.swissCrossInterpolate(logXsecUL[clsType],"NE")
-        rebinXsecUL[clsType] = getExpHist(logXsecUL[clsType])
+        #logXsecUL[clsType] = getLogHist(xsecUL[clsType])
+        #logXsecUL[clsType] = rt.swissCrossInterpolate(logXsecUL[clsType],"NE")
+        #rebinXsecUL[clsType] = getExpHist(logXsecUL[clsType])
+        
+        # do swiss cross average in real domain
+        rebinXsecUL[clsType] = rt.swissCrossInterpolate(xsecUL[clsType],"NE")
 
         # do scipy multi-quadratic interpolation in log domain
-        rebinXsecUL[clsType] = interpolate2D(rebinXsecUL[clsType],epsilon=1,smooth=50)
+        rebinXsecUL[clsType] = interpolate2D(rebinXsecUL[clsType],epsilon=1,smooth=smooth)
 
         # do swiss cross rebin + average in real domain (should be log??)
         for i in xrange(0,nRebins):
@@ -238,7 +282,7 @@ if __name__ == '__main__':
 
         # only for display purposes of underlying heat map: do swiss cross average then scipy interpolation 
         xsecUL[clsType] = rt.swissCrossInterpolate(xsecUL[clsType],"NE")
-        xsecUL[clsType] = interpolate2D(xsecUL[clsType], epsilon=1,smooth=500)
+        xsecUL[clsType] = interpolate2D(xsecUL[clsType], epsilon=1,smooth=smooth)
        
         
     if model in ["T2bb","T2tt","T6bbHH"]:
@@ -257,12 +301,12 @@ if __name__ == '__main__':
     
     
     for i in xrange(1,xsecGluino.GetNbinsX()+1):
-        x = xsecGluino.GetXaxis().GetBinLowEdge(i)
-        xsecVal =  gluinoHist.GetBinContent(gluinoHist.FindBin(x))
-        xsecErr =  gluinoHist.GetBinError(gluinoHist.FindBin(x))
+        xLow = xsecGluino.GetXaxis().GetBinLowEdge(i)
+        xsecVal =  gluinoHist.GetBinContent(gluinoHist.FindBin(xLow))
+        xsecErr =  gluinoHist.GetBinError(gluinoHist.FindBin(xLow))
         for j in xrange(1,xsecGluino.GetNbinsY()+1):
-            y = xsecGluino.GetYaxis().GetBinLowEdge(j)
-            if x > y+binWidth and x <= mgMax-binWidth:
+            yLow = xsecGluino.GetYaxis().GetBinLowEdge(j)
+            if xLow >= yLow+diagonalOffset and xLow <= mgMax-binWidth:
                 xsecGluino.SetBinContent(i,j,xsecVal)
                 xsecGluinoPlus.SetBinContent(i,j,xsecVal+xsecErr)
                 xsecGluinoMinus.SetBinContent(i,j,xsecVal-xsecErr)
@@ -289,8 +333,14 @@ if __name__ == '__main__':
         contours = array('d',[0.0])
         subXsecUL[clsType].SetContour(1,contours)
         
-        xsecUL[clsType].SetMinimum(5.e-4)
-        xsecUL[clsType].SetMaximum(5.)
+        xsecUL[clsType].SetMinimum(xsecMin)
+        xsecUL[clsType].SetMaximum(xsecMax)
+        rebinXsecUL[clsType].SetMinimum(xsecMin)
+        rebinXsecUL[clsType].SetMaximum(xsecMax)
+        subXsecUL[clsType].SetMaximum(1.)
+        subXsecUL[clsType].SetMinimum(-1.)
+
+        
         # fGrayGraphs = []
         # for iBinX in range(1,subXsecUL[clsType].GetNbinsX()+1):
         #     for iBinY in range(1,subXsecUL[clsType].GetNbinsY()+1):
@@ -315,15 +365,34 @@ if __name__ == '__main__':
         c.SetLogz(0)
         subXsecUL[clsType].Draw("CONT Z LIST")
         c.Update()
-        xsecUL[clsType].Draw("COLZ")
+        
         conts = rt.gROOT.GetListOfSpecials().FindObject("contours")
+
+        
+        xsecUL[clsType].Draw("COLZ")
+        #for testing:
+        #rebinXsecUL[clsType].Draw("COLZ")
+        #subXsecUL[clsType].Draw("COLZ")
         
         contour0 = conts.At(0)
         curv = contour0.First()
         curv.SetLineWidth(3)
         curv.SetLineColor(rt.kBlack)
         curv.Draw("lsame")
-        contourFinal[clsType] = curv.Clone(clsType+"Final")
+        finalcurv = curv.Clone()
+        maxN = curv.GetN()
+        
+        for i in xrange(1, contour0.GetSize()):
+            curv = contour0.After(curv)
+            curv.SetLineWidth(3)
+            curv.SetLineColor(rt.kBlack)
+            curv.Draw("lsame")
+            if curv.GetN()>maxN:
+                maxN = curv.GetN()
+                finalcurv = curv.Clone()
+
+        
+        contourFinal[clsType] = finalcurv.Clone(clsType+"Final")
         
         #for fGray in fGrayGraphs: fGray.Draw("F")
         
