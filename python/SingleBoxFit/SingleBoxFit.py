@@ -727,7 +727,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
             covqualH0 = 0
             fitAttempts = 0
-            while covqualH0!=3 and fitAttempts<3:
+            while covqualH0<2 and fitAttempts<3:
                 reset(box, fr, fixSigma=True, random=(fitAttempts>0))
                 box.workspace.var("sigma").setVal(self.options.signal_xsec)
                 box.workspace.var("sigma").setConstant(True)
@@ -744,7 +744,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
             covqualH1 = 0
             fitAttempts = 0
-            while covqualH1!=3 and fitAttempts<3:
+            while covqualH1<2 and fitAttempts<3:
                 if self.options.expectedlimit==True or ds.GetName=="RMRTree":
                     #this means we're doing background-only toys or data
                     #so we should reset to nominal fit pars
