@@ -252,7 +252,7 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
         print "mDelta = ", mDelta
         if mDelta < 250:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
         elif mDelta < 400:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
         elif mDelta < 500:
@@ -382,10 +382,9 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
     outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
     outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
-    outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -r woodson_090713 -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
+    outputfile.write("git clone -b woodson_090713 clone git://github.com/RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("mkdir lib\n")
+    outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make clean; make -j 4\n")
     
@@ -506,10 +505,10 @@ if __name__ == '__main__':
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
-                        #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                        os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        #os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
+                        #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
