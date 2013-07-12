@@ -376,8 +376,8 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     
     outputfile.write('#!/usr/bin/env bash -x\n')
     outputfile.write("export TWD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
-    outputfile.write("export TWD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $TWD\n")
+    outputfile.write("cd $TWD\n")
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
     outputfile.write("scram project CMSSW_6_2_0_pre8\n")
     outputfile.write("cd CMSSW_6_2_0_pre8/src\n")
