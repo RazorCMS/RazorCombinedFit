@@ -6,7 +6,7 @@ def getCrossSections():
     
     #the QCD cross-section is basically a junk value
     return {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
-                               'TTj':157.5,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
+                               'TTj':234.,'Zll':3048/3.,'Znn':2*3048,'Wln':31314/3.,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173,
                                'QCD':26456
                                }
@@ -23,8 +23,8 @@ class Box(object):
 
         #the SM cross-sections from Chris - NB for W and Z we take the per-flavour cross-sections            
         self.cross_sections = getCrossSections()
-        for name, value in self.cross_sections.iteritems():
-            self.workspace.factory('%s[%f]' % (name, value) )
+        #for name, value in self.cross_sections.iteritems():
+        #    self.workspace.factory('%s[%f]' % (name, value) )
             
         self.fitmodel = 'fitmodel'
         self.signalmodel = self.fitmodel
