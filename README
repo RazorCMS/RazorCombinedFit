@@ -24,8 +24,8 @@ Lxplus:
 
 In this case, we use the CMSSW ROOT. In this case, do the following:
 
-cmsrel CMSSW_6_2_0_pre8
-cd CMSSW_6_2_0_pre8/src
+cmsrel CMSSW_6_2_0
+cd CMSSW_6_2_0/src
 eval `scram runtime -sh`
 git clone git@github.com:RazorCMS/RazorCombinedFit.git
 (git clone -b wreece_101212_2011_style_fits git@github.com:RazorCMS/RazorCombinedFit.git)
