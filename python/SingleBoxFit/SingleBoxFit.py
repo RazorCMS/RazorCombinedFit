@@ -26,6 +26,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         import RazorMultiJetBox
         #import RazorBoostBox
         import RazorTauBox
+        import RazorMultiBBox
         boxes = {}
 
         #start by setting all box configs the same
@@ -36,6 +37,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             elif self.Analysis == "MULTIJET": boxes[box] = RazorMultiJetBox.RazorMultiJetBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "BOOST": boxes[box] = RazorBoostBox.RazorBoostBox(box, self.config.getVariables(box, "variables"))
             elif self.Analysis == "TAU": boxes[box] = RazorTauBox.RazorTauBox(box, self.config.getVariables(box, "variables"))
+            elif self.Analysis == "MULTIB": boxes[box] = RazorMultiBBox.RazorMultiBBox(box, self.config.getVariables(box, "variables"))
             else: boxes[box] = RazorBox.RazorBox(box, self.config.getVariables(box, "variables"),self.options.fitMode,self.options.btag,self.options.fitregion)
 
             print 'box:', box
@@ -65,6 +67,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 
                 boxes[box].defineFunctions(self.config.getVariables(box,"functions"))
                 
+            elif self.Analysis=="MULTIB":
+                boxes[box].defineSet("pdfpars_TTj", self.config.getVariables(box, "pdf_TTj"))
+                boxes[box].defineSet("otherpars_TTj", self.config.getVariables(box, "others_TTj"))
             else:
                 if self.Analysis != "MULTIJET" and self.Analysis != "BOOST":
                     # Vpj
@@ -259,6 +264,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     fit_range = "fR1,fR2,fR3,fR4,fR5"
                 print 'Using the fit range: %s' % fit_range
 
+
+                #boxes[box].fixPars('TTj')
+                #boxes[box].fixPars('S1_TTj',False)
                 
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
                 
@@ -270,7 +278,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
                 
                 #make any plots required
-                #boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
+                boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
             else:
                 
                 wsName = '%s/Box%s_workspace' % (box,box)
@@ -549,12 +557,13 @@ class SingleBoxAnalysis(Analysis.Analysis):
             N_TTj2b = boxes[box].workspace.var("Ntot_TTj2b").getVal()
             boxes[box].workspace.var("Ntot_TTj1b").setVal(0)
             boxes[box].workspace.var("Ntot_TTj2b").setVal(0)
-            tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
+            sig_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
                                 
             boxes[box].workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
             boxes[box].workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
-            #tot_toy.append(data)
-            tot_toy = data
+            tot_toy = data.Clone()
+            #tot_toy.append(sig_toy)
+            
             print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
             tot_toy.SetName("sigbkg")

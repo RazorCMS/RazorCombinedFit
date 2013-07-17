@@ -52,6 +52,8 @@ def defineParser():
                   help="Run the RazorB analysis")
     parser.add_option('--multijet',dest="doMultijet", default=False, action='store_true',
                   help="Run the Razor MultiJet analysis")
+    parser.add_option('--multib',dest="doMultiB", default=False, action='store_true',
+                  help="Run the Razor MultiB analysis")
     parser.add_option('--boost',dest="doBoost", default=False, action='store_true',
                   help="Run the Razor Boost analysis")
     parser.add_option('--tau',dest="doTau", default=False, action='store_true',
@@ -110,6 +112,7 @@ if __name__ == '__main__':
     if options.doMultijet: analysis = "MULTIJET"
     if options.doBoost: analysis = "BOOST"
     if options.doTau: analysis = "TAU"
+    if options.doMultiB: analysis = "MULTIB"
 
     print options
     print args
