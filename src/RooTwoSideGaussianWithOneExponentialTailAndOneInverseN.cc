@@ -22,9 +22,7 @@ RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::RooTwoSideGaussianWithOn
    S1("S1", "Exponent of first tail term", this, _s1),
    S2("S2", "Exponent of second tail term", this, _s2),
    N("N", "Inverse Exponent of second tail term", this, _n),
- //S3("S3", "Exponent of the tail", this, _s3),
    F1("F1", "Fraction", this, _f1)
- //F2("F2", "Fraction", this, _f2)
 {
 }
 //---------------------------------------------------------------------------
@@ -40,7 +38,6 @@ Double_t RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::evaluate() cons
 {
 
   double value = 0.;
-  //double XC = (S1 + F1 * S2 + F2 * S3) / (1 + F1 + F2) * SigmaR * SigmaR + X0;
   double XC = S1 / (1 + F1) * SigmaR * SigmaR + X0;
   if (X < X0)   // Left-hand side, normal gaussian
     value = exp(-((X - X0) * (X - X0)) / (2 * SigmaL * SigmaL));
@@ -49,9 +46,8 @@ Double_t RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::evaluate() cons
   else   // fun: X > XC > X0
     {
       double A = exp(-((XC - X0) * (XC - X0)) / (2 * SigmaR * SigmaR)) / (1 + F1);
-      value = A * (exp(-S1 * (X - XC)) + F1 * exp(-S2 * pow((X - XC), (1 / N)));
+      value = A * (exp(-S1 * (X - XC)) + F1 * exp(-S2 * pow((X - XC), (1.0 / N))));
     }
-
    return value;
 }
 //---------------------------------------------------------------------------

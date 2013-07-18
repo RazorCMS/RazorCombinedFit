@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------
-#ifndef RooTwoSideGaussianWithOneExponentialTailAndOneInverseN
-#define RooTwoSideGaussianWithOneExponentialTailAndOneInverseN
+#ifndef ROO_TwoSideGaussianWithOneExponentialTailAndOneInverseN
+#define ROO_TwoSideGaussianWithOneExponentialTailAndOneInverseN
 //---------------------------------------------------------------------------
 #include "RooAbsPdf.h"
 #include "RooRealProxy.h"
