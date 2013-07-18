@@ -14,7 +14,6 @@ class RazorMultiBBox(RazorBox.RazorBox):
         
         # TTJets DEFAULT
         self.zeros = {'TTj':[]} 
-
         self.cut = 'MDR >= 0.0' 
         self.fitregion = fitregion
         self.fitMode = fitMode
@@ -49,7 +48,7 @@ class RazorMultiBBox(RazorBox.RazorBox):
                                
     def plot(self, inputFile, store, box, data=None, fitmodel="none", frName="none"):
         self.setstyle()
-        [store.store(s, dir=box) for s in self.plot1D(inputFile, "MDR", nbins=100, ranges=['FULL'], data=data, fitmodel=fitmodel, frName=frName )]
+        [store.store(s, dir=box) for s in self.plot1D(inputFile, "MDR", nbins=70, ranges=['FULL'], data=data, fitmodel=fitmodel, frName=frName )]
         
     def plot1D(self, inputFile, varname, nbins=100, ranges=None, data=None, fitmodel="none", frName="none"):
         rangeCut = self.getVarRangeCutNamed(ranges=ranges)
@@ -70,6 +69,7 @@ class RazorMultiBBox(RazorBox.RazorBox):
             frName = "independentFR"
 
 
+        self.workspace.var(varname).setBins(int(nbins))
         frame = self.workspace.var(varname).frame(rt.RooFit.Range(xmin,xmax),rt.RooFit.Bins(int(nbins)))
 
 
@@ -99,15 +99,17 @@ class RazorMultiBBox(RazorBox.RazorBox):
 
         # plot the data
         data_cut = data.reduce(rangeCut)
-        data_cut.plotOn(frame,rt.RooFit.Name("Data"))
+        data_cut.plotOn(frame,rt.RooFit.Name("Data") )
         
         # PLOT TOTAL ERROR
-        [self.workspace.pdf(fitmodel).plotOn(frame,rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,1,True)) for myrange  in ranges]
+        [self.workspace.pdf(fitmodel).plotOn(frame,rt.RooFit.LineColor(rt.kBlue-10), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,2,True),rt.RooFit.Name("twoSigma")) for myrange  in ranges]
+        [self.workspace.pdf(fitmodel).plotOn(frame,rt.RooFit.LineColor(rt.kBlue-9), rt.RooFit.FillColor(rt.kBlue-9),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,1,True),rt.RooFit.Name("oneSigma")) for myrange  in ranges]
         # PLOT THE TOTAL NOMINAL
-        [self.workspace.pdf(fitmodel).plotOn(frame, rt.RooFit.Name("Total"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange)) for myrange in ranges]
+        [self.workspace.pdf(fitmodel).plotOn(frame, rt.RooFit.Name("Totalpm1sigma"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-9),rt.RooFit.Range(myrange)) for myrange in ranges]
+        [self.workspace.pdf(fitmodel).plotOn(frame, rt.RooFit.Name("Totalpm2sigma"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange)) for myrange in ranges]
 
         # plot the data again
-        data_cut.plotOn(frame,rt.RooFit.Name("Data"))
+        data_cut.plotOn(frame,rt.RooFit.Name("Data") )
 
         d = rt.TCanvas("d","d",600,500)
         
@@ -137,13 +139,14 @@ class RazorMultiBBox(RazorBox.RazorBox):
 
         
         # legend
-        leg = rt.TLegend(0.7,0.72,0.93,0.93)
+        leg = rt.TLegend(0.7,0.65,0.93,0.93)
         leg.SetFillColor(0)
         leg.SetTextFont(42)
         leg.SetLineColor(0)
 
         leg.AddEntry("Data","Data","pe")
-        leg.AddEntry("Total","Total Bkgd","lf")
+        leg.AddEntry("Totalpm1sigma","Total Bkgd #pm 1#sigma","lf")
+        leg.AddEntry("Totalpm2sigma","Total Bkgd #pm 2#sigma","lf")
         leg.Draw()
         
         pt = rt.TPaveText(0.25,0.75,0.6,0.87,"ndc")
@@ -170,6 +173,9 @@ class RazorMultiBBox(RazorBox.RazorBox):
         d.cd()
         pad2.Draw()
         pad2.cd()
+
+        
+        rt.gPad.SetLogy(0)
         
         toy = self.workspace.pdf(fitmodel).generate(rt.RooArgSet(self.workspace.var("MDR")),50*data_cut.numEntries())
 
@@ -187,36 +193,63 @@ class RazorMultiBBox(RazorBox.RazorBox):
                 histData.SetBinError(i, histData.GetBinError(i)/histToy.GetBinContent(i))
                 histToy.SetBinError(i, 1./sqrt(histToy.GetBinContent(i)))
                 histToy.SetBinContent(i, 1.)
+
+                
+        histToy.SetMarkerStyle(1)
+        histToy.SetLineWidth(1)
+        histToy.SetLineColor(rt.kBlue-9)
+        histToy.SetFillColor(rt.kBlue-9)
+        histToy.SetMarkerColor(rt.kBlue-9)
                 
         
         histData.SetMarkerStyle(20)
-        histData.SetLineWidth(2)
-        histData.SetMinimum(0.)
-        histData.SetMaximum(3.5)
-        histData.GetXaxis().SetTitleOffset(0.97)
-        histData.GetXaxis().SetLabelOffset(0.02)
-        histData.GetXaxis().SetTitleSize(0.2)
-        histData.GetXaxis().SetLabelSize(0.17)
-        if varname == "MDR":
-            histData.GetXaxis().SetTitle("M_{#Delta}^{R} [TeV]")
-        histData.GetYaxis().SetNdivisions(504,rt.kTRUE)
-        histData.GetYaxis().SetTitleOffset(0.25)
-        histData.GetYaxis().SetTitleSize(0.2)
-        histData.GetYaxis().SetLabelSize(0.17)
-        histData.GetYaxis().SetTitle("Data/Bkgd")
-        histData.GetXaxis().SetTicks("+")
-        histData.GetXaxis().SetTickLength(0.07)
+        histData.SetLineWidth(1)
+        histData.SetLineColor(rt.kBlack)
+        
+        curve1 = frame.getCurve("oneSigma").Clone("newcurve1")
+        curve2 = frame.getCurve("twoSigma").Clone("newcurve2")
+        nom = frame.getCurve("Totalpm1sigma").Clone("newnom")
+
+        for curve in [curve1,curve2]:
+            for i in range(0,curve.GetN()):
+                x = array('d',[0])
+                y = array('d',[0])
+                curve.GetPoint(i, x, y)
+                if nom.Eval(x[0])>0.:
+                    curve.SetPoint(i, x[0], y[0]/nom.Eval(x[0]))
+
+        for j in range(0,nom.GetN()):
+            nomx = array('d',[0])
+            nomy = array('d',[0])
+            nom.GetPoint(j, nomx, nomy)
+            nom.SetPoint(j, nomx[0], 1.)
+
 
         
-        histToy.SetLineWidth(2)
-        histToy.SetLineColor(rt.kBlue-10)
-        histToy.SetFillColor(rt.kBlue-10)
-        histToy.SetMarkerColor(rt.kBlue-10)
-        histData.Draw("pe")
-        histToy.Draw("e2same")
-        histData.Draw("pesame")
+        for obj in [curve1, curve2, nom, histData]:
+            obj.SetMinimum(0.)
+            obj.SetMaximum(3.5)
+            obj.GetXaxis().SetTitleOffset(0.97)
+            obj.GetXaxis().SetLabelOffset(0.02)
+            obj.GetXaxis().SetTitleSize(0.2)
+            obj.GetXaxis().SetLabelSize(0.17)
+            if varname == "MDR":
+                obj.GetXaxis().SetTitle("M_{#Delta}^{R} [TeV]")
+            obj.GetYaxis().SetNdivisions(504,rt.kTRUE)
+            obj.GetYaxis().SetTitleOffset(0.27)
+            obj.GetYaxis().SetTitleSize(0.2)
+            obj.GetYaxis().SetLabelSize(0.17)
+            obj.GetYaxis().SetTitle("Data/Bkgd")
+            obj.GetXaxis().SetTicks("+")
+            obj.GetXaxis().SetTickLength(0.07)
+            obj.GetXaxis().SetRangeUser(xmin,xmax)
 
-        rt.gPad.SetLogy(0)
+        
+        histData.Draw("pe1")
+        curve2.Draw("f same")
+        curve1.Draw("f same")
+        nom.Draw("c same")
+        histData.Draw("pe1 same")
 
 
         pad2.Update()
