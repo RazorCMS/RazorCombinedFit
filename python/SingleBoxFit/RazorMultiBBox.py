@@ -30,9 +30,9 @@ class RazorMultiBBox(RazorBox.RazorBox):
         label = 'TTj'
         #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s, SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s )" %(label,label,label, label,label,label,label,label))
         #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, A1_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
-
-        self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
+        #self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
         #self.workspace.factory("RooTwoSideGaussianWithThreeExponentialTails::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, S3_%s, F1_%s, F2_%s)"%(label,label,label,label,label,label,label,label,label))
+        self.workspace.factory("RooTwoSideGaussianWithTwoExponentialTails::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, F1_%s)"%(label,label,label,label,label,label,label))
         
         #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
         self.workspace.factory("RooExtendPdf::ePDF_%s(PDF_%s, Ntot_%s)"%(label,label,label))
