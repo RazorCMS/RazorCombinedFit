@@ -42,15 +42,18 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
 
     #iterate over selected entries in the input tree
     boxCut = "(" + "||".join(["BOX_NUM==%i"%cut for cut in boxMap[box]]) + ")"
+    print 'iterated over input tree entries'
     
 
-    tree.Draw('>>elist','gammaR >= %f && gammaR <= %f' % (gammaRmin,gammaRmax),'entrylist')
+    tree.Draw('>>elist','gammaRList[1] >= %f && gammaRList[1] <= %f' % (gammaRmin,gammaRmax),'entrylist')
+
        
     elist = rt.gDirectory.Get('elist')
-    
+    print elist
     entry = -1;
     while True:
         entry = elist.Next()
+        print entry
         if entry == -1: break
         tree.GetEntry(entry)
         
@@ -65,8 +68,8 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
         
-        a.setRealValue('MDR',tree.shatR_bl*(1.0/(2000.*tree.gammaR)))
-        a.setRealValue('gammaR',tree.gammaR)
+        a.setRealValue('MDR',tree.shatR_bl*(1.0/(2000.*tree.gammaRList[1])))
+        a.setRealValue('gammaR',tree.gammaRList[1])
         a.setRealValue('nBtag',tree.nBtag)
         if useWeight:
             try:
