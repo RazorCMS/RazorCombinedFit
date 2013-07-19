@@ -28,7 +28,10 @@ class RazorMultiBBox(RazorBox.RazorBox):
             
         MDR  = self.workspace.var("MDR")
         label = 'TTj'
-        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s, SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s )" %(label,label,label, label,label,label,label,label))
+#        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s, SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s )" %(label,label,label, label,label,label,label,label))
+#        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, A1_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
+        self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
+#        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
         self.workspace.factory("RooExtendPdf::ePDF_%s(RazPDF%s, Ntot_%s)"%(label,label,label))
         myPDFlist =  rt.RooArgList(self.workspace.pdf("ePDF_%s"%label))
 
@@ -89,11 +92,11 @@ class RazorMultiBBox(RazorBox.RazorBox):
         [errorArgSet.add(self.workspace.var("SigmaL_%s"%z)) for z in components if self.name not in self.zeros[z]]
         [errorArgSet.add(self.workspace.var("SigmaR_%s"%z)) for z in components if self.name not in self.zeros[z]]
         [errorArgSet.add(self.workspace.var("S1_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("S2_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("N_%s"%z)) for z in components if self.name not in self.zeros[z]]
-
+        #[errorArgSet.add(self.workspace.var("S2_%s"%z)) for z in components if self.name not in self.zeros[z]]
+        #[errorArgSet.add(self.workspace.var("N_%s"%z)) for z in components if self.name not in self.zeros[z]]
         #[errorArgSet.add(self.workspace.var("S3_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("F1_%s"%z)) for z in components if self.name not in self.zeros[z]]
+        [errorArgSet.add(self.workspace.var("A1_%s"%z)) for z in components if self.name not in self.zeros[z]]
+        #[errorArgSet.add(self.workspace.var("F1_%s"%z)) for z in components if self.name not in self.zeros[z]]
         #[errorArgSet.add(self.workspace.var("F2_%s"%z)) for z in components if self.name not in self.zeros[z]]
         #[errorArgSet.add(self.workspace.var("Ntot_%s"%z)) for z in components if self.name not in self.zeros[z]]
         errorArgSet.Print("v")
