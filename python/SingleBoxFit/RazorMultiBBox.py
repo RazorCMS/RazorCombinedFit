@@ -28,23 +28,20 @@ class RazorMultiBBox(RazorBox.RazorBox):
             
         MDR  = self.workspace.var("MDR")
         label = 'TTj'
-#        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s, SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s )" %(label,label,label, label,label,label,label,label))
-#        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, A1_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
-        self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
-#        self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
-        self.workspace.factory("RooExtendPdf::ePDF_%s(RazPDF%s, Ntot_%s)"%(label,label,label))
-        myPDFlist =  rt.RooArgList(self.workspace.pdf("ePDF_%s"%label))
+        #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s, SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s )" %(label,label,label, label,label,label,label,label))
+        #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, A1_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
+
+        #self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
+        self.workspace.factory("RooTwoSideGaussianWithThreeExponentialTails::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, S3_%s, F1_%s, F2_%s)"%(label,label,label,label,label,label,label,label,label))
+        
+        #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
+        self.workspace.factory("RooExtendPdf::ePDF_%s(PDF_%s, Ntot_%s)"%(label,label,label))
 
 
-        self.fixPars('TTj',False)
-        self.fixPars('Ntot_TTj',True)
+        # float all TTj parameters 
+        self.fixPars(label,False)
         
-        self.fitmodel = "PDF_%s"%label
-        
-        #model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
-        #model.Print("v")
-        # import the model in the workspace.
-        #self.importToWS(model)
+        self.fitmodel = "ePDF_%s"%label
         
         #print the workspace
         self.workspace.Print("v")
@@ -88,30 +85,28 @@ class RazorMultiBBox(RazorBox.RazorBox):
         # to get error band
         errorArgSet = rt.RooArgSet()
         components = ["TTj"]
-        [errorArgSet.add(self.workspace.var("MDR0_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("SigmaL_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("SigmaR_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("S1_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        #[errorArgSet.add(self.workspace.var("S2_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        #[errorArgSet.add(self.workspace.var("N_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        #[errorArgSet.add(self.workspace.var("S3_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        [errorArgSet.add(self.workspace.var("A1_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        #[errorArgSet.add(self.workspace.var("F1_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        #[errorArgSet.add(self.workspace.var("F2_%s"%z)) for z in components if self.name not in self.zeros[z]]
-        #[errorArgSet.add(self.workspace.var("Ntot_%s"%z)) for z in components if self.name not in self.zeros[z]]
+        for z in components:
+            if self.name not in self.zeros[z]:
+                errorArgSet.add(self.workspace.set("pdfpars_%s"%z))
+                errorArgSet.add(self.workspace.set("otherpars_%s"%z))
+            
         errorArgSet.Print("v")
 
 
         # plot the data
         data_cut = data.reduce(rangeCut)
         data_cut.plotOn(frame,rt.RooFit.Name("Data") )
+
         
-        # PLOT TOTAL ERROR
-        [self.workspace.pdf(fitmodel).plotOn(frame,rt.RooFit.LineColor(rt.kBlue-10), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,2,True),rt.RooFit.Name("twoSigma")) for myrange  in ranges]
-        [self.workspace.pdf(fitmodel).plotOn(frame,rt.RooFit.LineColor(rt.kBlue-9), rt.RooFit.FillColor(rt.kBlue-9),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,1,True),rt.RooFit.Name("oneSigma")) for myrange  in ranges]
+        pdf =  self.workspace.pdf(fitmodel)
+        
+        # PLOT TOTAL ERROR +- 1sigma, +- 2 sigma
+        [pdf.plotOn(frame,rt.RooFit.LineColor(rt.kBlue-10), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,2,True),rt.RooFit.Name("twoSigma")) for myrange  in ranges]
+        [pdf.plotOn(frame,rt.RooFit.LineColor(rt.kBlue-9), rt.RooFit.FillColor(rt.kBlue-9),rt.RooFit.Range(myrange),rt.RooFit.VisualizeError(fr,errorArgSet,1,True),rt.RooFit.Name("oneSigma")) for myrange  in ranges]
+        
         # PLOT THE TOTAL NOMINAL
-        [self.workspace.pdf(fitmodel).plotOn(frame, rt.RooFit.Name("Totalpm1sigma"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-9),rt.RooFit.Range(myrange)) for myrange in ranges]
-        [self.workspace.pdf(fitmodel).plotOn(frame, rt.RooFit.Name("Totalpm2sigma"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange)) for myrange in ranges]
+        [pdf.plotOn(frame, rt.RooFit.Name("Totalpm1sigma"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-9),rt.RooFit.Range(myrange)) for myrange in ranges]
+        [pdf.plotOn(frame, rt.RooFit.Name("Totalpm2sigma"), rt.RooFit.LineColor(rt.kBlue), rt.RooFit.FillColor(rt.kBlue-10),rt.RooFit.Range(myrange)) for myrange in ranges]
 
         # plot the data again
         data_cut.plotOn(frame,rt.RooFit.Name("Data") )
@@ -182,56 +177,48 @@ class RazorMultiBBox(RazorBox.RazorBox):
         
         rt.gPad.SetLogy(0)
         
-        toy = self.workspace.pdf(fitmodel).generate(rt.RooArgSet(self.workspace.var("MDR")),50*data_cut.numEntries())
-
         histData = rt.TH1D("histData","histData",nbins,xmin,xmax)
-        histToy = rt.TH1D("histToy","histToy",nbins,xmin,xmax)
      
-        data.fillHistogram(histData,rt.RooArgList(self.workspace.var("MDR")))
-        toy.fillHistogram(histToy,rt.RooArgList(self.workspace.var("MDR")))
+        data.fillHistogram(histData,rt.RooArgList(self.workspace.var(varname)))
+    
+        curve1 = frame.getCurve("oneSigma").Clone("newcurve1")
+        curve2 = frame.getCurve("twoSigma").Clone("newcurve2")
+        nomcurve = frame.getCurve("Totalpm1sigma").Clone("newnomcurve")
         
-        histToy.Scale(0.02)
+        nomfunction = pdf.asTF(rt.RooArgList(self.workspace.var(varname)))
         
-        for i in range(1,histToy.GetNbinsX()):
-            if histToy.GetBinContent(i)>0.:
-                histData.SetBinContent(i, histData.GetBinContent(i)/histToy.GetBinContent(i))
-                histData.SetBinError(i, histData.GetBinError(i)/histToy.GetBinContent(i))
-                histToy.SetBinError(i, 1./sqrt(histToy.GetBinContent(i)))
-                histToy.SetBinContent(i, 1.)
+        for i in range(1,histData.GetNbinsX()):
+            xup = histData.GetXaxis().GetBinUpEdge(i)
+            xlow = histData.GetXaxis().GetBinLowEdge(i)
+            nomintegral = nomfunction.Integral(xlow,xup)/nomfunction.Integral(xmin,xmax)
+            nomevents = pdf.expectedEvents(rt.RooArgSet(self.workspace.var(varname))) * nomintegral
+            if nomevents>0.:
+                histData.SetBinContent(i, histData.GetBinContent(i)/nomevents)
+                histData.SetBinError(i, histData.GetBinError(i)/nomevents)
 
-                
-        histToy.SetMarkerStyle(1)
-        histToy.SetLineWidth(1)
-        histToy.SetLineColor(rt.kBlue-9)
-        histToy.SetFillColor(rt.kBlue-9)
-        histToy.SetMarkerColor(rt.kBlue-9)
                 
         
         histData.SetMarkerStyle(20)
         histData.SetLineWidth(1)
         histData.SetLineColor(rt.kBlack)
         
-        curve1 = frame.getCurve("oneSigma").Clone("newcurve1")
-        curve2 = frame.getCurve("twoSigma").Clone("newcurve2")
-        nom = frame.getCurve("Totalpm1sigma").Clone("newnom")
 
         for curve in [curve1,curve2]:
             for i in range(0,curve.GetN()):
                 x = array('d',[0])
                 y = array('d',[0])
                 curve.GetPoint(i, x, y)
-                if nom.Eval(x[0])>0.:
-                    curve.SetPoint(i, x[0], y[0]/nom.Eval(x[0]))
+                if nomcurve.Eval(x[0])>0.:
+                    curve.SetPoint(i, x[0], y[0]/nomcurve.Eval(x[0]))
 
-        for j in range(0,nom.GetN()):
+        for j in range(0,nomcurve.GetN()):
             nomx = array('d',[0])
             nomy = array('d',[0])
-            nom.GetPoint(j, nomx, nomy)
-            nom.SetPoint(j, nomx[0], 1.)
-
+            nomcurve.GetPoint(j, nomx, nomy)
+            nomcurve.SetPoint(j, nomx[0], 1.)
 
         
-        for obj in [curve1, curve2, nom, histData]:
+        for obj in [curve1, curve2, nomcurve, histData]:
             obj.SetMinimum(0.)
             obj.SetMaximum(3.5)
             obj.GetXaxis().SetTitleOffset(0.97)
@@ -253,7 +240,7 @@ class RazorMultiBBox(RazorBox.RazorBox):
         histData.Draw("pe1")
         curve2.Draw("f same")
         curve1.Draw("f same")
-        nom.Draw("c same")
+        nomcurve.Draw("c same")
         histData.Draw("pe1 same")
 
 
