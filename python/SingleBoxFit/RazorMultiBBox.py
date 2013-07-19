@@ -31,8 +31,8 @@ class RazorMultiBBox(RazorBox.RazorBox):
         #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s, SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s )" %(label,label,label, label,label,label,label,label))
         #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, A1_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
 
-        #self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
-        self.workspace.factory("RooTwoSideGaussianWithThreeExponentialTails::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, S3_%s, F1_%s, F2_%s)"%(label,label,label,label,label,label,label,label,label))
+        self.workspace.factory("RooTwoSideGaussianWithOneXDependentExponential::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, A1_%s)"%(label,label,label,label,label,label))
+        #self.workspace.factory("RooTwoSideGaussianWithThreeExponentialTails::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, S3_%s, F1_%s, F2_%s)"%(label,label,label,label,label,label,label,label,label))
         
         #self.workspace.factory("RooTwoSideGaussianWithOneExponentialTailAndOneInverseN::PDF_%s(MDR, MDR0_%s,SigmaL_%s, SigmaR_%s, S1_%s, S2_%s, N_%s, F1_%s)"%(label,label,label,label,label,label,label,label))
         self.workspace.factory("RooExtendPdf::ePDF_%s(PDF_%s, Ntot_%s)"%(label,label,label))
@@ -137,16 +137,28 @@ class RazorMultiBBox(RazorBox.RazorBox):
         frame.SetMinimum(0.005)
         frame.Draw()
 
+
+
+        # get curves from frame
+        curve1 = frame.getCurve("oneSigma").Clone("newcurve1")
+        curve2 = frame.getCurve("twoSigma").Clone("newcurve2")
+        nomcurve = frame.getCurve("Totalpm1sigma").Clone("newnomcurve")
+        datahist = frame.getHist("Data").Clone("newdatahist")
+
+        # get chisq from curves and paramter set: errorArgList
+        chisqdof = nomcurve.chiSquare(datahist,errorArgSet.getSize())
+        print "chisq/dof = %f" %chisqdof
+        nomfunction = pdf.asTF(rt.RooArgList(self.workspace.var(varname)))
         
         # legend
-        leg = rt.TLegend(0.7,0.65,0.93,0.93)
+        leg = rt.TLegend(0.65,0.6,0.93,0.93)
         leg.SetFillColor(0)
         leg.SetTextFont(42)
         leg.SetLineColor(0)
-
         leg.AddEntry("Data","Data","pe")
         leg.AddEntry("Totalpm1sigma","Total Bkgd #pm 1#sigma","lf")
         leg.AddEntry("Totalpm2sigma","Total Bkgd #pm 2#sigma","lf")
+        leg.AddEntry(rt.TObject(),"#chi^{2}/dof = %.2f"%chisqdof,"")
         leg.Draw()
         
         pt = rt.TPaveText(0.25,0.75,0.6,0.87,"ndc")
@@ -168,7 +180,6 @@ class RazorMultiBBox(RazorBox.RazorBox):
 
 
         # ratio plot
-        
         d.Update()
         d.cd()
         pad2.Draw()
@@ -176,16 +187,11 @@ class RazorMultiBBox(RazorBox.RazorBox):
 
         
         rt.gPad.SetLogy(0)
-        
+
+        # get histogram from RooDataSet
         histData = rt.TH1D("histData","histData",nbins,xmin,xmax)
-     
         data.fillHistogram(histData,rt.RooArgList(self.workspace.var(varname)))
-    
-        curve1 = frame.getCurve("oneSigma").Clone("newcurve1")
-        curve2 = frame.getCurve("twoSigma").Clone("newcurve2")
-        nomcurve = frame.getCurve("Totalpm1sigma").Clone("newnomcurve")
         
-        nomfunction = pdf.asTF(rt.RooArgList(self.workspace.var(varname)))
         
         for i in range(1,histData.GetNbinsX()):
             xup = histData.GetXaxis().GetBinUpEdge(i)
