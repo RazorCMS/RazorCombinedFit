@@ -48,7 +48,11 @@ def writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys
     outputfile.write('#!/bin/bash\n')
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
-    outputfile.write('eval `scramv1 runtime -sh` \n')
+    #outputfile.write('eval `scramv1 runtime -sh` \n')
+    outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
+    outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
+    outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
+    outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
     outputfile.write("source setup.sh\n")
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
     if doToys:
@@ -87,7 +91,7 @@ if __name__ == '__main__':
     fitmode = '3D'
     queue = "8nh"
     nToys = 10000
-    nJobs = 1
+    nJobs = 50
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
@@ -137,7 +141,6 @@ if __name__ == '__main__':
 
             if glob.glob("%s/expected_sigbin_%s.root"%(ffDir,box)): doFinalJob = False
 
-            doFinalJob = True
             for t in xrange(0,nJobsByBox[(box,xsec)]):
                 doToys = False
                 doConvertToRoot = False
@@ -145,9 +148,6 @@ if __name__ == '__main__':
                     if "%s/frtoydata_%s_%i.txt"%(toyDir,box,i) in missingToys: doToys = True
                     if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingRoot: doConvertToRoot = True
 
-                doFinalJob = True
-                doToys = False
-                doConvertToRoot = False
                 if doFinalJob or doToys or doConvertToRoot:
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
                     totalJobs+=1
