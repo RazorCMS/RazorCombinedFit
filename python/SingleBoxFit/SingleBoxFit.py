@@ -562,7 +562,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
             boxes[box].workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
             tot_toy = data.Clone()
-            #tot_toy.append(sig_toy)
+            tot_toy.append(sig_toy)
             
             print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
