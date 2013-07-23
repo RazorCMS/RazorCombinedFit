@@ -48,11 +48,11 @@ def writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys
     outputfile.write('#!/bin/bash\n')
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
-    #outputfile.write('eval `scramv1 runtime -sh` \n')
-    outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
-    outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
-    outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
-    outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
+    outputfile.write('eval `scramv1 runtime -sh` \n')
+    #outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
+    #outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
+    #outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
+    #outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
     outputfile.write("source setup.sh\n")
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
     if doToys:
@@ -90,8 +90,8 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "8nh"
-    nToys = 10000
-    nJobs = 50
+    nToys = 3000
+    nJobs = 10
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
