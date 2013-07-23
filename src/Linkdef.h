@@ -17,6 +17,7 @@
 #pragma link C++ defined_in "RooTwoSideGaussianWithOneExponentialTailAndOneInverseN.h";
 #pragma link C++ defined_in "RooTwoSideGaussianWithOneExponentialTailAndOneXDependentExponential.h"; 
 #pragma link C++ defined_in "RooTwoSideGaussianWithOneXDependentExponential.h"; 
+#pragma link C++ defined_in "RooTwoSideGaussianWithOneXDependentExponentialWithInverseN.h"; 
 #pragma link C++ defined_in "RooRazor2DSignal.h";
 #pragma link C++ defined_in "RooRazor3DSignal.h";
 #pragma link C++ defined_in "RooRazor2DTail.h";
