@@ -575,8 +575,14 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 fr_SpB = getProfile(boxes[box], tot_toy, fr_B, Extend=True)
                 
             else:
-                RootTools.Utils.importToWS(workspace,SpBModel)
+                #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_pdferr_nom_MultiJet"))
+                #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_pdferr_pe_MultiJet"))
+                #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_btagerr_pe_MultiJet"))
+                #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_JESerr_pe_MultiJet"))
+                #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_ISRerr_pe_MultiJet"))
+                #RootTools.Utils.importToWS(workspace,SpBModel)
                 RootTools.Utils.importToWS(workspace,tot_toy)
+                RootTools.Utils.importToWS(workspace,boxes[box].getFitPDF(name=boxes[box].fitmodel))
 
                 # backgrounds
                 boxes[box].defineSet("variables", self.config.getVariables(box, "variables"),workspace)
@@ -597,8 +603,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                 # define the fit range
                 fit_range = boxes[box].fitregion
-                #fit_range = 'LowMR'
-
+                
                 opt = rt.RooLinkedList()
                 opt.Add(rt.RooFit.Range(fit_range))
                 opt.Add(rt.RooFit.Extended(True))
@@ -621,7 +626,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
 
                 # make any plots required
-                workspace.var('sigma').setVal(0.)
                 #reset(boxes[box], fr_B, fixSigma = True)
                 #boxes[box].plot(fileName, self, box, data=data, fitmodel=boxes[box].fitmodel, frName='independentFR')
                 boxes[box].plot(fileName, self, box, data=tot_toy, fitmodel=boxes[box].fitmodel, frName='independentFRsigbkg')
