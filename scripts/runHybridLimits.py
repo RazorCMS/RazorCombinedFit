@@ -242,9 +242,9 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         elif mDelta < 400:
             xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.]
         elif mDelta < 800:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
         else:
-            xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
+            xsecRange = [0.0005, 0.001, 0.003, 0.005, 0.01, 0.05]
     elif model=="T2tt":
         topMass = 175.
         mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2)
@@ -256,9 +256,9 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         elif mDelta < 400:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
         elif mDelta < 500:
-            xsecRange = [0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif model=="T1tttt":
         topMass = 175.
         mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*topMass,2) )/(2.*gluinoMass) , 2) - pow(2.*topMass,2)
@@ -270,9 +270,9 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         elif mDelta < 700:
             xsecRange = [0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
         elif mDelta < 1000:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+            xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
         else:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1]
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1]
     elif model=="T6bbHH":
         higgsMass = 125.
         mDelta = 2*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
@@ -282,9 +282,9 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         elif mDelta < 400:
             xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5., 10.]
         elif mDelta < 500:
-            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
     elif model=="T2bb":
             # Probably don't need the last entry of each xsec scan!!!
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
@@ -296,9 +296,9 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         elif mDelta < 400:
             xsecRange = [0.01,0.05, 0.1, 0.5, 1., 5., 10., 50.]
         elif mDelta < 500:
-            xsecRange = [0.001,0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.001,0.003, 0.005,0.01, 0.05, 0.1, 0.5, 1., 5.]
         else:
-            xsecRange = [0.0005,0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.0005,0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
         
     return xsecRange
 
@@ -442,14 +442,16 @@ if __name__ == '__main__':
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
     
-    if model=="T6bbHH":
-        nJobs = 36 # do 250 toys each job => 9000 toys
+    if model in ["T6bbHH", "T2tt"]:
+        nJobs = 24 # do 250 toys each job => 6000 toys
     else:
         nJobs = 12 # do 250 toys each job => 3000 toys
     
     print box, model, queue
 
     gchipairs = getGChiPairs(model)
+
+    gchipairs = reversed(gchipairs)
     
     pwd = os.environ['PWD']
     
