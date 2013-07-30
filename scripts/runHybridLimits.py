@@ -390,7 +390,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     #outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
     outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("git checkout tags/woodson_120713\n")
+    outputfile.write("git checkout tags/woodson_300713\n")
     outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make clean; make -j 4\n")
