@@ -442,8 +442,10 @@ if __name__ == '__main__':
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
     
-    if model in ["T6bbHH", "T2tt"]:
-        nJobs = 24 # do 250 toys each job => 6000 toys
+    if model in ["T6bbHH"]:
+        nJobs = 25 # do 250 toys each job => 6000 toys
+    if model in ["T2tt"]:
+        nJobs = 20 # do 250 toys each job => 5000 toys
     else:
         nJobs = 12 # do 250 toys each job => 3000 toys
     
@@ -510,7 +512,7 @@ if __name__ == '__main__':
                         os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
-                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        #outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
