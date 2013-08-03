@@ -87,7 +87,6 @@ def getGChiPairs(model):
                      (700, 25), (700, 50), (700, 100), (700, 150), (700, 200), (700, 250), (700, 300), (700, 350), (700, 400), (700, 450), (700, 500), (700, 550), (700, 600),
                      (750, 25), (750, 50), (750, 100), (750, 150), (750, 200), (750, 250), (750, 300), (750, 350), (750, 400), (750, 450), (750, 500), (750, 550), (750, 600), (750, 650),
                      (800, 25), (800, 50), (800, 100), (800, 150), (800, 200), (800, 250), (800, 300), (800, 350), (800, 400), (800, 450), (800, 500), (800, 550), (800, 600), (800, 650), (800, 700)]
-        
         # gchipairs = [(150, 25), (150, 50),
         #              (175, 25), (175, 50), (175, 75),
         #              (200, 25), (200, 50), (200, 75), (200, 100),
@@ -249,7 +248,7 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
         print "mDelta = ", mDelta
         if mDelta < 250:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
         elif mDelta < 400:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
         elif mDelta < 500:
@@ -424,8 +423,10 @@ def getDataSet(boxes,hypo,LzCut, boxDict,Xmin):
     if totalEntries==0:
         print "INFO: the fit quality cut killed all entries, moving on to next point!"
         return 0, 0, 0, 0
-    
-    while float(hypoDataSetCut.sumEntries("lnQ>%f && lnQ<%f"%(XmaxTest,Xmax)))/totalEntries < 0.01:
+
+    numAttempts = 0
+    while float(hypoDataSetCut.sumEntries("lnQ>%f && lnQ<%f"%(XmaxTest,Xmax)))/totalEntries < 0.01 and numAttempts < 100:
+        numAttempts += 1
         XmaxTest = Xmin + float(XmaxTest-Xmin)*0.95
     Xmax = XmaxTest
     
@@ -622,6 +623,7 @@ def writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExp
     xsecTree.Write()
     
     fileOut.Close()
+    
     return outputFileName
 
 def erfcInv(prob):
@@ -688,34 +690,35 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
     print "      CLVals =", CLVals
     
 
-    # now making array of erfc inv vals
-    erfcInvVals = array('d',[erfcInv(min(CLs,1.0)) for CLs in CLVals])
-        
-    erfcTGraph = rt.TGraph(len(xsecVals),erfcInvVals,xsecVals)
+    # now extrapolating using tgraph of transformed CLs values
+    #erfcInvVals = array('d',[erfcInv(min(CLs,1.0)) for CLs in CLVals])
+    #xsecUL = erfcTGraph.Eval(erfcInv(0.05),0)
+    #erfcTGraph = rt.TGraph(len(xsecVals),erfcInvVals,xsecVals)
+
+    # now extrapolating using tgraph of CLs values
+    clsTGraph = rt.TGraph(len(xsecVals),CLVals,xsecVals)
+    xsecUL = clsTGraph.Eval(0.05,0)
+    
 
     #this is to be able to see the usual CLs vs. sigma plot
     xsecTGraph = rt.TGraph(len(xsecVals),xsecVals,CLVals)
     
-    xsecULPolyLine = erfcTGraph.Eval(erfcInv(0.05),0)
-
-    xsecUL = xsecULPolyLine
-    
     # making the lines that show the extrapolation
     lines = []
-    lines.append(rt.TLine(erfcInv(0.05), 0, erfcInv(0.05), xsecUL))
-    lines.append(rt.TLine(erfcTGraph.GetXaxis().GetXmin(), xsecUL, erfcInv(0.05), xsecUL))
-    #lines.append(rt.TLine(0, 0.05, xsecUL, 0.05))
-    #lines.append(rt.TLine(xsecUL, 0, xsecUL, 0.05))
+    #lines.append(rt.TLine(erfcInv(0.05), 0, erfcInv(0.05), xsecUL))
+    #lines.append(rt.TLine(erfcTGraph.GetXaxis().GetXmin(), xsecUL, erfcInv(0.05), xsecUL))
+    lines.append(rt.TLine(0, 0.05, xsecUL, 0.05))
+    lines.append(rt.TLine(xsecUL, 0, xsecUL, 0.05))
     [line.SetLineColor(rt.kBlue) for line in lines]
     [line.SetLineWidth(2) for line in lines]
     
     # plotting things so you can see if anything went wrong 
     d = rt.TCanvas("d","d",500,400)
-    #xsecTGraph.SetLineWidth(2)
-    #xsecTGraph.Draw("al*")
+    xsecTGraph.SetLineWidth(2)
+    xsecTGraph.Draw("al*")
     
-    erfcTGraph.SetLineWidth(2)
-    erfcTGraph.Draw("al*")
+    #erfcTGraph.SetLineWidth(2)
+    #erfcTGraph.Draw("al*")
     [line.Draw("lsame") for line in lines]
 
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
@@ -730,9 +733,13 @@ def getXsecUL(CL, rootFileName, mg, mchi, box):
         l.DrawLatex(0.2,0.955,"m_{#tilde{t}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
     elif model in ["T1bbbb","T1tttt"]:
         l.DrawLatex(0.2,0.955,"m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
+    elif model in ["T2bb","T6bbHH"]:
+        l.DrawLatex(0.2,0.955,"m_{#tilde{b}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV; %s Box"%(mg,mchi,box))
     l.DrawLatex(0.25,0.8,"#sigma^{95%%CL} = %.4f pb"%(xsecUL))
-    erfcTGraph.GetXaxis().SetTitle("Erfc(CL_{s})")
-    erfcTGraph.GetYaxis().SetTitle("#sigma [pb]")
+    #erfcTGraph.GetXaxis().SetTitle("Erfc(CL_{s})")
+    #erfcTGraph.GetYaxis().SetTitle("#sigma [pb]")
+    xsecTGraph.GetYaxis().SetTitle("CL_{s}")
+    xsecTGraph.GetXaxis().SetTitle("#sigma [pb]")
     
     d.Print("%s/xsecUL%s_%s_%s_%s.pdf"%(directory,CL,model,modelPoint,box))
     del d
@@ -746,8 +753,7 @@ def getCLs(mg, mchi, xsec, boxes, model, directory, boxDictB, boxDictSpB):
     Xmin = 0
     LzCut = ""
     for box in boxes:
-        myCut = "H0covQual_%s>=2&&H1covQual_%s>=2&&LzSR_%s>=0."%(box,box,box)
-        LzCut+="H0covQual_%s>=2&&H1covQual_%s>=2&&LzSR_%s>=0.&&"%(box,box,box)
+        LzCut+="H0covQual_%s>=2&&H1covQual_%s>=3&&LzSR_%s>=0.&&"%(box,box,box)
     LzCut = LzCut[:-2]
     
     lnQSpB, SpBDataSet, XmaxSpB, totalEntriesSpB = getDataSet(boxes,"SpB",LzCut,boxDictSpB, Xmin)
@@ -981,6 +987,7 @@ if __name__ == '__main__':
     rootFileName = "%s/CLs_%s.root"%(directory,'_'.join(boxes))
     print "INFO: is output CLs file %s present?"%rootFileName
     calcCLsMode = (not glob.glob(rootFileName))
+
     
     if calcCLsMode:
         print "INFO: output CLs file not present: entering calculate CLs mode"
@@ -992,7 +999,9 @@ if __name__ == '__main__':
                 print "      for mg = %i, mchi = %i, xsec = %f"%(mg, mchi, xsec)
                 print "      for boxes %s" % ("+".join(boxes))
                 xsecString = str(xsec).replace(".","p")
-                if glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes))):
+                outputFilePresent = glob.glob("%s/CLs_mg_%i_mchi_%i_xsec_%s_%s.root"%(directory,mg, mchi, xsecString,'_'.join(boxes)))
+                
+                if outputFilePresent:
                     print "ERROR: output file is there! moving on to next point!"
                     continue
 
