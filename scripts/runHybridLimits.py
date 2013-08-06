@@ -147,6 +147,12 @@ if __name__ == '__main__':
     box = sys.argv[1]
     neutralinopoint = int(sys.argv[2])
     done = sys.argv[3]
+    mg_lower = 150
+    mg_upper = 800
+
+    for i in xrange(4,len(sys.argv)):
+        if sys.argv[i].find('--mg-lt') != -1: mg_upper = int(sys.argv[i+1])
+        if sys.argv[i].find('--mg-geq') != -1: mg_lower = int(sys.argv[i+1])
 
     nJobs = 50
     nToys = 30 # do 60=30+30 toys each job => 3000 toys
@@ -182,6 +188,7 @@ if __name__ == '__main__':
     missingFiles = 0
 
     for gluinopoint in gluinopoints:
+        if gluinopoint < mg_lower or gluinopoint > mg_upper: continue
         gluinopoint = float(gluinopoint)
         xsecRange = getXsecRange(neutralinopoint,gluinopoint)
         for xsecpoint in xsecRange:
