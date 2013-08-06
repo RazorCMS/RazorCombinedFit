@@ -237,14 +237,29 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
     if model=="T1bbbb":
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         print "mDelta = ", mDelta
-        if mDelta < 150:
-            xsecRange = [0.005, 0.007, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        elif mDelta < 400:
-            xsecRange = [0.005, 0.007, 0.01, 0.03, 0.05, 0.1, 0.5, 1.]
-        elif mDelta < 800:
-            xsecRange = [0.001, 0.002, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
+        # if mDelta < 150:
+        #     xsecRange = [0.005, 0.007, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        # elif mDelta < 400:
+        #     xsecRange = [0.005, 0.007, 0.01, 0.03, 0.05, 0.1, 0.5, 1.]
+        # elif mDelta < 800:
+        #     xsecRange = [0.001, 0.002, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
+        # else:
+        #     xsecRange = [0.0005, 0.001, 0.002, 0.003, 0.005, 0.01, 0.05]
+
+        if gluinoMass >= 1200 and neutralinoMass < 1000:
+            xsecRange = [0.0005, 0.0007, 0.001, 0.002, 0.005, 0.007]
+        elif ( gluinoMass >= 1000 and gluinoMass < 1200 ) and ( neutralinoMass >= 500 and neutralinoMass < 1000 ):
+            xsecRange = [0.007, 0.01, 0.02, 0.05]
+        elif ( gluinoMass >= 900 and gluinoMass < 1000 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
+            xsecRange = [0.01, 0.02, 0.05, 0.07]
+        elif ( gluinoMass >= 800 and gluinoMass < 900 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
+            xsecRange = [0.05, 0.07, 0.1, 0.2]
+        elif ( gluinoMass >= 700 and gluinoMass < 800 ) and ( neutralinoMass >= 500 and neutralinoMass < 750 ):
+            xsecRange = [0.1, 0.2, 0.5, 0.7]
+        elif ( gluinoMass < 700 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
+            xsecRange = [0.3, 0.5, 0.7, 1., 2.]
         else:
-            xsecRange = [0.0005, 0.001, 0.002, 0.003, 0.005, 0.01, 0.05]
+            xsecRange = []
     elif model=="T2tt":
         topMass = 175.
         mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2)
