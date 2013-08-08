@@ -590,8 +590,9 @@ if __name__ == '__main__':
                                      "all.q@compute-3-5.local","all.q@compute-3-7.local",
                                      "all.q@compute-3-9.local"]
                         queues = ",".join(queuelist)
-                        os.system("echo qsub -j y -q "+queues+" -o /dev/null "+pwd+"/"+outputname)
-                        os.system("qsub -j y -q "+queues+" -o /dev/null "+pwd+"/"+outputname)
+                        
+                        os.system("echo qsub -j y -q "+queues+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log "+pwd+"/"+outputname)
+                        os.system("qsub -j y -q "+queues+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
                         outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
