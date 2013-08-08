@@ -383,11 +383,11 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
-    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".sge"
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
-    
-    label = "MR300.0_R0.387298334621"
 
+    label = "MR300.0_R0.387298334621"
+    
     tagHypo = ""
     if hypo == "B":
         tagHypo = "-e"
@@ -395,30 +395,37 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
     user = os.environ['USER']
     
-    hybridDir = "/home/%s/work/RAZORLIMITS/Hybrid/"%(user)
+    hybridDir = "/home/jduarte/work/RAZORLIMITS/Hybrid/"
     
-    
-    outputfile.write('#$ -S /bin/sh\n')
-    outputfile.write('#$ -cwd\n')
-    outputfile.write("export WD=/wntmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
-    outputfile.write("mkdir -p $WD\n")
-    outputfile.write("cd $WD\n")
-    
-    outputfile.write("source /home/jduarte/.bashrc\n")
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/RazorCombinedFit.tar.gz .\n")
-    outputfile.write("tar -xvzf RazorCombinedFit.tar.gz\n")
+    outputfile.write('#!/bin/sh\n')
+    outputfile.write('#$ -S /bin/sh')
+    outputfile.write("export TWD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("mkdir -p $TWD\n")
+    outputfile.write("cd $TWD\n")
+    outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
+    outputfile.write("source /cvmfs/cms.cern.ch/cmsset_default.sh\n")
+    outputfile.write("scram project CMSSW_6_2_0\n")
+    outputfile.write("cd CMSSW_6_2_0/src\n")
+    outputfile.write("eval `scram runtime -sh`\n")
+    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0/src\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("export GIT_SSL_NO_VERIFY=true\n")
+    outputfile.write("export https_proxy=newman.ultralight.org:3128\n")
+    outputfile.write("export http_proxy=newman.ultralight.org:3128\n")
+    outputfile.write("export SSH_ASKPASS=\"\"\n")
+    outputfile.write("git clone https://github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("mkdir lib\n")
+    outputfile.write("git checkout tags/woodson_300713\n")
+    outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
-    outputfile.write("make clean; make\n")
+    outputfile.write("make clean; make -j 4\n")
     
     outputfile.write("export NAME=\"%s\"\n"%model)
     outputfile.write("export LABEL=\"%s\"\n"%label)
     
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    outputfile.write("cp /home/jduarte/work/RAZORLIMITS/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
-    
+    outputfile.write("cp /home/jduarte/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /home/jduarte/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
+    outputfile.write("cp /home/jduarte/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
+        
     nToyOffset = nToys*(2*t)
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     
@@ -427,6 +434,8 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
 
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")
+    
+    outputfile.close
     
     return outputname,ffDir
     
