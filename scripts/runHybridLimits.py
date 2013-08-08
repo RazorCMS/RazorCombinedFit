@@ -398,8 +398,8 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     hybridDir = "/home/jduarte/work/RAZORLIMITS/Hybrid/"
     
     outputfile.write('#!/bin/sh\n')
-    outputfile.write('#$ -S /bin/sh')
     outputfile.write("export TWD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("mkdir -p /tmp/${USER}\n")
     outputfile.write("mkdir -p $TWD\n")
     outputfile.write("cd $TWD\n")
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
@@ -412,7 +412,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("export https_proxy=newman.ultralight.org:3128\n")
     outputfile.write("export http_proxy=newman.ultralight.org:3128\n")
     outputfile.write("export SSH_ASKPASS=\"\"\n")
-    outputfile.write("git clone https://github.com:RazorCMS/RazorCombinedFit.git\n")
+    outputfile.write("git clone https://github.com/RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("git checkout tags/woodson_300713\n")
     outputfile.write("mkdir -p lib\n")
@@ -433,7 +433,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreeISR.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
-    outputfile.write("cd; rm -rf $WD\n")
+    outputfile.write("cd; rm -rf $TWD\n")
     
     outputfile.close
     
@@ -467,11 +467,6 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("cd CMSSW_6_2_0_pre8/src\n")
     outputfile.write("eval `scram runtime -sh`\n")
     outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0_pre8/src\n"%(model,massPoint,box,xsecstring,t))
-    #outputfile.write("cd $WD\n")
-    #outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
-    #outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
-    #outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
-    #outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
     outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("git checkout tags/woodson_300713\n")
@@ -590,10 +585,13 @@ if __name__ == '__main__':
                         os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
-                        #queues = "all.q@compute-2-2.local,all.q@compute-2-4.local,all.q@compute-3-10.local,all.q@compute-3-11.local,all.q@compute-3-12.local,all.q@compute-3-2.local,all.q@compute-3-3.local,all.q@compute-3-4.local,all.q@compute-3-5.local,all.q@compute-3-6.local,all.q@compute-3-7.local,all.q@compute-3-8.local,all.q@compute-3-9.local"
-                        queues = "all.q@compute-2-2.local"
-                        os.system("echo qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
-                        os.system("qsub -j y -q "+queues+" -o /dev/null source "+pwd+"/"+outputname)
+                        queuelist = ["all.q@compute-3-10.local","all.q@compute-3-11.local","all.q@compute-3-12.local",
+                                     "all.q@compute-3-2.local","all.q@compute-3-3.local","all.q@compute-3-4.local",
+                                     "all.q@compute-3-5.local","all.q@compute-3-7.local",
+                                     "all.q@compute-3-9.local"]
+                        queues = ",".join(queuelist)
+                        os.system("echo qsub -j y -q "+queues+" -o /dev/null "+pwd+"/"+outputname)
+                        os.system("qsub -j y -q "+queues+" -o /dev/null "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
                         outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
