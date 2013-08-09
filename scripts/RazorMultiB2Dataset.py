@@ -33,9 +33,17 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     gammaRmin = args['gammaR'].getMin()
     gammaRmax = args['gammaR'].getMax()
     
-    nBtagmin= args['nBtag'].getMin()
+    nBtagmin = args['nBtag'].getMin()
     nBtagmax = args['nBtag'].getMax()
 
+    dPhillmin = args['dPhill'].getMin()
+    dPhillmax = args['dPhill'].getMax()
+    
+    #nbins = 5
+    #cutoffs = []
+    #for i in range(nbins):
+    #    cutoffs.append(dPhillmax / nbins)
+        
     label = ""
     if useWeight:
         label += "WEIGHT_"
@@ -45,7 +53,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     print 'iterated over input tree entries'
     
 
-    tree.Draw('>>elist','gammaRList[1] >= %f && gammaRList[1] <= %f' % (gammaRmin,gammaRmax),'entrylist')
+    tree.Draw('>>elist','gammaRList[1] >= %f && gammaRList[1] <= %f && dPhi_ll >= %f && dPhi_ll < %f && %s' % (gammaRmin,gammaRmax,dPhillmin,dPhillmax,boxCut),'entrylist')
 
        
     elist = rt.gDirectory.Get('elist')
@@ -71,6 +79,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         a.setRealValue('MDR',tree.shatR_bl*(1.0/(2000.*tree.gammaRList[1])))
         a.setRealValue('gammaR',tree.gammaRList[1])
         a.setRealValue('nBtag',tree.nBtag)
+        a.setRealValue('dPhill',tree.dPhi_ll)
         if useWeight:
             try:
                 a.setRealValue('W',tree.WXSEC*lumi/5.0)
