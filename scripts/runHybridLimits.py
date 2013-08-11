@@ -130,23 +130,23 @@ def getGChiPairs(model):
                      (750, 1), (750, 25), (750, 75), (750, 125), (750, 175), (750, 225), (750, 275), (750, 325), (750, 375), (750, 425), (750, 475), (750, 525),
                      (775, 25), (775, 75), (775, 125), (775, 175), (775, 225), (775, 275), (775, 325), (775, 375), (775, 425), (775, 475), (775, 525), (775, 575),
                      (800, 1),
-                     (825, 25), (825, 75), (825, 125), (825, 175), (825, 225), (825, 275), (825, 325), (825, 375), (825, 425), (825, 475), (825, 525), (825, 575), (825, 625),
+                     (825, 75), (825, 125), (825, 175), (825, 225), (825, 275), (825, 325), (825, 375), (825, 425), (825, 475), (825, 525), (825, 575), (825, 625),
                      (850, 1), (875, 25), (875, 75), (875, 125), (875, 175), (875, 225), (875, 275), (875, 325), (875, 375), (875, 425), (875, 475), (875, 525), (875, 575), (875, 625), (875, 675),
                      (900, 1),
-                     (925, 25), (925, 75), (925, 125), (925, 175), (925, 225), (925, 275), (925, 325), (925, 375), (925, 425), (925, 475), (925, 525), (925, 575), (925, 625), (925, 675), (925, 725),
+                     (925, 75), (925, 125), (925, 175), (925, 225), (925, 275), (925, 325), (925, 375), (925, 425), (925, 475), (925, 525), (925, 575), (925, 625), (925, 675), (925, 725),
                      (950, 1),
-                     (975, 25), (975, 75), (975, 125), (975, 175), (975, 225), (975, 275), (975, 325), (975, 375), (975, 425), (975, 475), (975, 525), (975, 575), (975, 625), (975, 675), (975, 725), (975, 775),
+                     (975, 75), (975, 125), (975, 175), (975, 225), (975, 275), (975, 325), (975, 375), (975, 425), (975, 475), (975, 525), (975, 575), (975, 625), (975, 675), (975, 725), (975, 775),
                      (1000, 1),
-                     (1025, 25), (1025, 75), (1025, 125), (1025, 175), (1025, 225), (1025, 275), (1025, 325), (1025, 375), (1025, 425), (1025, 475), (1025, 525), (1025, 575), (1025, 625), (1025, 675), (1025, 725), (1025, 775), (1025, 825),
+                     (1025, 75), (1025, 125), (1025, 175), (1025, 225), (1025, 275), (1025, 325), (1025, 375), (1025, 425), (1025, 475), (1025, 525), (1025, 575), (1025, 625), (1025, 675), (1025, 725), (1025, 775), (1025, 825),
                      (1050, 1),
-                     (1075, 25), (1075, 75), (1075, 125), (1075, 175), (1075, 225), (1075, 275), (1075, 325), (1075, 375), (1075, 425), (1075, 475), (1075, 525), (1075, 575), (1075, 625), (1075, 675), (1075, 725), (1075, 775), (1075, 825), (1075, 875),
-                     (1100, 1), (1100, 25), (1100, 75), (1100, 125), (1100, 175), (1100, 225), (1100, 275), (1100, 325), (1100, 375), (1100, 425), (1100, 475), (1100, 525), (1100, 575), (1100, 625), (1100, 675), (1100, 725), (1100, 775), (1100, 825), (1100, 875), (1100, 900),
-                     (1150, 1), (1150, 25), (1150, 75), (1150, 125), (1150, 175), (1150, 225), (1150, 275), (1150, 325), (1150, 375), (1150, 425), (1150, 475), (1150, 525), (1150, 575), (1150, 625), (1150, 675), (1150, 725), (1150, 775), (1150, 825), (1150, 875), (1150, 925), (1150, 950),
+                     (1075, 75), (1075, 125), (1075, 175), (1075, 225), (1075, 275), (1075, 325), (1075, 375), (1075, 425), (1075, 475), (1075, 525), (1075, 575), (1075, 625), (1075, 675), (1075, 725), (1075, 775), (1075, 825), (1075, 875),
+                     (1100, 1), (1100, 75), (1100, 125), (1100, 175), (1100, 225), (1100, 275), (1100, 325), (1100, 375), (1100, 425), (1100, 475), (1100, 525), (1100, 575), (1100, 625), (1100, 675), (1100, 725), (1100, 775), (1100, 825), (1100, 875), (1100, 900),
+                     (1150, 1), (1150, 75), (1150, 125), (1150, 175), (1150, 225), (1150, 275), (1150, 325), (1150, 375), (1150, 425), (1150, 475), (1150, 525), (1150, 575), (1150, 625), (1150, 675), (1150, 725), (1150, 775), (1150, 825), (1150, 875), (1150, 925), (1150, 950),
                      (1200, 1), (1200, 25), (1200, 75), (1200, 125), (1200, 175), (1200, 225), (1200, 275), (1200, 325), (1200, 375), (1200, 425), (1200, 475), (1200, 525), (1200, 575), (1200, 625), (1200, 675), (1200, 725), (1200, 775), (1200, 825), (1200, 875), (1200, 925), (1200, 975), (1200, 1000),
-                     (1250, 1), (1250, 25), (1250, 75), (1250, 125), (1250, 175), (1250, 225), (1250, 275), (1250, 325), (1250, 375), (1250, 425), (1250, 475), (1250, 525), (1250, 575), (1250, 625),(1250, 675), (1250, 725), (1250, 775), (1250, 825), (1250, 875), (1250, 925), (1250, 975), (1250, 1025),
-                     (1300, 1), (1300, 25), (1300, 75), (1300, 125), (1300, 175), (1300, 225), (1300, 275), (1300, 325), (1300, 375), (1300, 425), (1300, 475), (1300, 525), (1300, 575), (1300, 625), (1300, 675), (1300, 725), (1300, 775), (1300, 825), (1300, 875), (1300, 925), (1300, 975), (1300, 1025), (1300, 1075),
-                     (1350, 1), (1350, 25), (1350, 75), (1350, 125), (1350, 175), (1350, 225), (1350, 275), (1350, 325), (1350, 375), (1350, 425), (1350, 475), (1350, 525), (1350, 575), (1350, 625), (1350, 675), (1350, 725), (1350, 775), (1350, 825), (1350, 875), (1350, 925), (1350, 975), (1350, 1025), (1350, 1075), (1350, 1125),
-                     (1400, 1), (1400, 25), (1400, 75), (1400, 125), (1400, 175), (1400, 225), (1400, 275), (1400, 325), (1400, 375), (1400, 425), (1400, 475), (1400, 525), (1400, 575), (1400, 625), (1400, 675), (1400, 725), (1400, 775), (1400, 825), (1400, 875), (1400, 925), (1400, 975), (1400, 1025), (1400, 1075), (1400, 1125), (1400, 1175)]
+                     (1250, 1), (1250, 75), (1250, 125), (1250, 175), (1250, 225), (1250, 275), (1250, 325), (1250, 375), (1250, 425), (1250, 475), (1250, 525), (1250, 575), (1250, 625),(1250, 675), (1250, 725), (1250, 775), (1250, 825), (1250, 875), (1250, 925), (1250, 975), (1250, 1025),
+                     (1300, 1), (1300, 75), (1300, 125), (1300, 175), (1300, 225), (1300, 275), (1300, 325), (1300, 375), (1300, 425), (1300, 475), (1300, 525), (1300, 575), (1300, 625), (1300, 675), (1300, 725), (1300, 775), (1300, 825), (1300, 875), (1300, 925), (1300, 975), (1300, 1025), (1300, 1075),
+                     (1350, 1), (1350, 75), (1350, 125), (1350, 175), (1350, 225), (1350, 275), (1350, 325), (1350, 375), (1350, 425), (1350, 475), (1350, 525), (1350, 575), (1350, 625), (1350, 675), (1350, 725), (1350, 775), (1350, 825), (1350, 875), (1350, 925), (1350, 975), (1350, 1025), (1350, 1075), (1350, 1125),
+                     (1400, 1), (1400, 75), (1400, 125), (1400, 175), (1400, 225), (1400, 275), (1400, 325), (1400, 375), (1400, 425), (1400, 475), (1400, 525), (1400, 575), (1400, 625), (1400, 675), (1400, 725), (1400, 775), (1400, 825), (1400, 875), (1400, 925), (1400, 975), (1400, 1025), (1400, 1075), (1400, 1125), (1400, 1175)]
 
         
         # gchipairs = [(400, 1), (400, 25), (400, 75), (400, 125), (400, 175),
@@ -237,145 +237,134 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
     if model=="T1bbbb":
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         print "mDelta = ", mDelta
-        # if mDelta < 150:
-        #     xsecRange = [0.005, 0.007, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        # elif mDelta < 400:
-        #     xsecRange = [0.005, 0.007, 0.01, 0.03, 0.05, 0.1, 0.5, 1.]
-        # elif mDelta < 800:
-        #     xsecRange = [0.001, 0.002, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
-        # else:
-        #     xsecRange = [0.0005, 0.001, 0.002, 0.003, 0.005, 0.01, 0.05]
-
-        if gluinoMass >= 1200 and neutralinoMass < 1000:
-            xsecRange = [0.0005, 0.0007, 0.001, 0.002, 0.005, 0.007]
-        elif ( gluinoMass >= 1000 and gluinoMass < 1200 ) and ( neutralinoMass >= 500 and neutralinoMass < 1000 ):
-            xsecRange = [0.007, 0.01, 0.02, 0.05]
-        elif ( gluinoMass >= 900 and gluinoMass < 1000 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
-            xsecRange = [0.01, 0.02, 0.05, 0.07]
-        elif ( gluinoMass >= 800 and gluinoMass < 900 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
-            xsecRange = [0.05, 0.07, 0.1, 0.2]
-        elif ( gluinoMass >= 700 and gluinoMass < 800 ) and ( neutralinoMass >= 500 and neutralinoMass < 750 ):
-            xsecRange = [0.1, 0.2, 0.5, 0.7]
-        elif ( gluinoMass < 700 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
-            xsecRange = [0.3, 0.5, 0.7, 1., 2.]
+        if mDelta < 150:
+            xsecRange = [0.005, 0.007, 0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 400:
+            xsecRange = [0.005, 0.007, 0.01, 0.03, 0.05, 0.1, 0.5, 1.]
+        elif mDelta < 800:
+            xsecRange = [0.001, 0.002, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
         else:
-            xsecRange = []
+            xsecRange = [0.0005, 0.001, 0.002, 0.003, 0.005, 0.01, 0.05]
+        if gluinoMass >= 1200 and neutralinoMass < 1000:
+            xsecRange.extend([0.0005, 0.0007, 0.001, 0.002, 0.005, 0.007])
+        elif ( gluinoMass >= 1000 and gluinoMass < 1200 ) and ( neutralinoMass >= 500 and neutralinoMass < 1000 ):
+            xsecRange.extend([0.007, 0.01, 0.02, 0.05])
+        elif ( gluinoMass >= 900 and gluinoMass < 1000 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
+            xsecRange.extend([0.01, 0.02, 0.05, 0.07])
+        elif ( gluinoMass >= 800 and gluinoMass < 900 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
+            xsecRange.extend([0.05, 0.07, 0.1, 0.2])
+        elif ( gluinoMass >= 700 and gluinoMass < 800 ) and ( neutralinoMass >= 500 and neutralinoMass < 750 ):
+            xsecRange.extend([0.1, 0.2, 0.5, 0.7])
+        elif ( gluinoMass < 700 ) and ( neutralinoMass >= 500 and neutralinoMass < 800 ):
+            xsecRange.extend([0.3, 0.5, 0.7, 1., 2.])
+            
     elif model=="T2tt":
         topMass = 175.
         mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(topMass,2) )/(2.*gluinoMass) , 2) - pow(topMass,2)
         mDeltaSq2 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(100.,2) )/(2.*gluinoMass) , 2) - pow(100.,2)
         mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
-        # print "mDelta = ", mDelta
-        # if mDelta < 250:
-        #     xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
-        # elif mDelta < 400:
-        #     xsecRange = [0.05, 0.1, 0.3, 0.5, 1., 5., 10., 50.]
-        # elif mDelta < 500:
-        #     xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5, 1., 5.]
-        # else:
-        #     xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5]
-        if (gluinoMass >= 700) and (neutralinoMass < 400): 
-            xsecRange = [0.002, 0.005, 0.007]
-        elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass < 400): 
-            xsecRange = [0.005, 0.007, 0.01, 0.02]
-        elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass < 300):
-            xsecRange = [0.02, 0.05, 0.07, 0.1]
-        elif (gluinoMass >= 400 and gluinoMass < 500) and (neutralinoMass < 200):
-            xsecRange = [0.1, 0.2, 0.3, 0.4]
-        elif (gluinoMass >= 300 and gluinoMass < 400) and (neutralinoMass < 150):
-            xsecRange = [0.4, 1.0, 2.0]
-        elif (gluinoMass >= 200 and gluinoMass < 300) and (neutralinoMass < 100):
-            xsecRange = [2.0, 5.0, 10., 20.]
-        elif (gluinoMass < 200):
-            xsecRange = [20., 50., 100., 200., 500.]
+        print "mDelta = ", mDelta
+        if mDelta < 250:
+            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
+        elif mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.3, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5, 1., 5.]
         else:
-            xsecRange = []
-        
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.3, 0.5]
+        if (gluinoMass >= 700) and (neutralinoMass < 400): 
+            xsecRange.extend([0.002, 0.005, 0.007])
+        elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass < 400): 
+            xsecRange.extend([0.005, 0.007, 0.01, 0.02])
+        elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass < 300):
+            xsecRange.extend([0.02, 0.05, 0.07, 0.1])
+        elif (gluinoMass >= 400 and gluinoMass < 500) and (neutralinoMass < 200):
+            xsecRange.extend([0.1, 0.2, 0.3, 0.4])
+        elif (gluinoMass >= 300 and gluinoMass < 400) and (neutralinoMass < 150):
+            xsecRange.extend([0.4, 1.0, 2.0])
+        elif (gluinoMass >= 200 and gluinoMass < 300) and (neutralinoMass < 100):
+            xsecRange.extend([2.0, 5.0, 10., 20.])
+        elif (gluinoMass < 200):
+            xsecRange.extend([20., 50., 100., 200., 500.])
+            
     elif model=="T1tttt":
         topMass = 175.
         mDeltaSq1 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*topMass,2) )/(2.*gluinoMass) , 2) - pow(2.*topMass,2)
         mDeltaSq2 = pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(200.,2) )/(2.*gluinoMass) , 2) - pow(200.,2)
         mDelta = 2.*sqrt(max(mDeltaSq1,mDeltaSq2))
         print "mDelta = ", mDelta
-        # if mDelta < 400:
-        #     xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100.]
-        # elif mDelta < 700:
-        #     xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
-        # elif mDelta < 1000:
-        #     xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
-        # else:
-        #     xsecRange = [0.001, 0.002, 0.003, 0.005, 0.01, 0.05, 0.1]
-        if gluinoMass >= 1200 and neutralinoMass < 650:
-            xsecRange = [0.0005, 0.0007, 0.001, 0.002, 0.005, 0.007]
-        elif ( gluinoMass >= 1100 and gluinoMass < 1200 ) and neutralinoMass < 650:
-            xsecRange = [0.005, 0.007, 0.01, 0.02]
-        elif ( gluinoMass >= 900 and gluinoMass < 1100 ) and ( neutralinoMass >= 300 and neutralinoMass < 600 ):
-            xsecRange = [0.007, 0.01, 0.02, 0.05, 0.07]
-        elif ( gluinoMass >= 800 and gluinoMass < 900 ) and ( neutralinoMass >= 250 and neutralinoMass < 500 ):
-            xsecRange = [0.05, 0.07, 0.1, 0.2]
-        elif ( gluinoMass >= 700 and gluinoMass < 800 ) and ( neutralinoMass >= 200 and neutralinoMass < 500 ):
-            xsecRange = [0.1, 0.2, 0.5, 0.7]
-        elif ( gluinoMass >= 600 and gluinoMass < 700 ) and ( neutralinoMass >= 200 and neutralinoMass < 500 ):
-            xsecRange = [0.3, 0.5, 0.7, 1., 2.]
-        elif ( gluinoMass < 600 ) and ( neutralinoMass >= 100 and neutralinoMass < 400 ):
-            xsecRange = [1., 2., 5., 10.]
+        if mDelta < 400:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 700:
+            xsecRange = [0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0]
+        elif mDelta < 1000:
+            xsecRange = [0.003, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
         else:
-            xsecRange = []
+            xsecRange = [0.001, 0.002, 0.003, 0.005, 0.01, 0.05, 0.1]
+        if gluinoMass >= 1200 and neutralinoMass < 650:
+            xsecRange.extend([0.0005, 0.0007, 0.001, 0.002, 0.005, 0.007])
+        elif ( gluinoMass >= 1100 and gluinoMass < 1200 ) and neutralinoMass < 650:
+            xsecRange.extend([0.005, 0.007, 0.01, 0.02])
+        elif ( gluinoMass >= 900 and gluinoMass < 1100 ) and ( neutralinoMass >= 300 and neutralinoMass < 600 ):
+            xsecRange.extend([0.007, 0.01, 0.02, 0.05, 0.07])
+        elif ( gluinoMass >= 800 and gluinoMass < 900 ) and ( neutralinoMass >= 250 and neutralinoMass < 500 ):
+            xsecRange.extend([0.05, 0.07, 0.1, 0.2])
+        elif ( gluinoMass >= 700 and gluinoMass < 800 ) and ( neutralinoMass >= 200 and neutralinoMass < 500 ):
+            xsecRange.extend([0.1, 0.2, 0.5, 0.7])
+        elif ( gluinoMass >= 600 and gluinoMass < 700 ) and ( neutralinoMass >= 200 and neutralinoMass < 500 ):
+            xsecRange.extend([0.3, 0.5, 0.7, 1., 2.])
+        elif ( gluinoMass < 600 ) and ( neutralinoMass >= 100 and neutralinoMass < 400 ):
+            xsecRange.extend([1., 2., 5., 10.])
     elif model=="T6bbHH":
         higgsMass = 125.
         mDelta = 2*sqrt(pow( (pow(gluinoMass,2) - pow(neutralinoMass,2) + pow(2.*higgsMass,2) )/(2.*gluinoMass) , 2) - pow(2.*higgsMass,2))
         print "mDelta = ", mDelta
-        # if mDelta < 200:
-        #     xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        # elif mDelta < 400:
-        #     xsecRange = [0.01, 0.03, 0.05, 0.1, 0.5, 1., 5., 10.]
-        # elif mDelta < 500:
-        #     xsecRange = [0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5, 1., 5.]
-        # else:
-        #     xsecRange = [0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5]
-        if gluinoMass >= 600: 
-            xsecRange = [0.005, 0.007, 0.01, 0.02]
-        elif (gluinoMass >= 500 and gluinoMass < 600):
-            xsecRange = [0.02, 0.05, 0.07, 0.1]
-        elif (gluinoMass >= 400 and gluinoMass < 500):
-            xsecRange = [0.1, 0.2, 0.3, 0.4]
-        elif (gluinoMass < 400):
-            xsecRange = [0.4, 1.0, 2.0]
+        if mDelta < 200:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 400:
+            xsecRange = [0.01, 0.03, 0.05, 0.1, 0.5, 1., 5., 10.]
+        elif mDelta < 500:
+            xsecRange = [0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5, 1., 5.]
         else:
-            xsecRange = []
-            
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5]
+        if gluinoMass >= 600: 
+            xsecRange.extend([0.005, 0.007, 0.01, 0.02])
+        elif (gluinoMass >= 500 and gluinoMass < 600):
+            xsecRange.extend([0.02, 0.05, 0.07, 0.1])
+        elif (gluinoMass >= 400 and gluinoMass < 500):
+            xsecRange.extend([0.1, 0.2, 0.3, 0.4])
+        elif (gluinoMass < 400):
+            xsecRange.extend([0.4, 1.0, 2.0])
     elif model=="T2bb":
-            # Probably don't need the last entry of each xsec scan!!!
         mDelta = (pow(gluinoMass,2) - pow(neutralinoMass,2))/gluinoMass
         print "mDelta = ", mDelta
-        # if mDelta < 150:
-        #     xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
-        # elif mDelta < 200:
-        #     xsecRange = [0.05,0.1, 0.5, 1., 5., 10., 50., 100.]
-        # elif mDelta < 400:
-        #     xsecRange = [0.01, 0.03, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
-        # elif mDelta < 500:
-        #     xsecRange = [0.001, 0.003, 0.005,0.01, 0.03, 0.05, 0.1, 0.5, 1., 5.]
-        # else:
-        #     xsecRange = [0.0005, 0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5]
-        if (gluinoMass >= 700) and (neutralinoMass < 600): 
-            xsecRange = [0.002, 0.005, 0.007]
-        elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass >= 300 and neutralinoMass < 500): 
-            xsecRange = [0.005, 0.007, 0.01, 0.02]
-        elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass >= 200 and neutralinoMass < 400):
-            xsecRange = [0.02, 0.05, 0.07, 0.1]
-        elif (gluinoMass >= 400 and gluinoMass < 500) and (neutralinoMass >= 200 and neutralinoMass < 400):
-            xsecRange = [0.1, 0.2, 0.3, 0.4]
-        elif (gluinoMass >= 300 and gluinoMass < 400) and (neutralinoMass >= 150):
-            xsecRange = [0.4, 1.0, 2.0]
-        elif (gluinoMass >= 200 and gluinoMass < 300):
-            xsecRange = [2.0, 5.0, 10., 20.]
-        elif (gluinoMass < 200):
-            xsecRange = [20., 50., 100., 200., 500.]
+        if mDelta < 150:
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
+        elif mDelta < 200:
+            xsecRange = [0.05,0.1, 0.5, 1., 5., 10., 50., 100.]
+        elif mDelta < 400:
+            xsecRange = [0.01, 0.03, 0.05, 0.1, 0.5, 1., 5., 10., 50.]
+        elif mDelta < 500:
+            xsecRange = [0.001, 0.003, 0.005,0.01, 0.03, 0.05, 0.1, 0.5, 1., 5.]
         else:
-            xsecRange = []
-        
-    return xsecRange
+            xsecRange = [0.0005, 0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5]
+        if (gluinoMass >= 700) and (neutralinoMass < 600): 
+            xsecRange.extend([0.002, 0.005, 0.007])
+        elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass >= 300 and neutralinoMass < 500): 
+            xsecRange.extend([0.005, 0.007, 0.01, 0.02])
+        elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass >= 200 and neutralinoMass < 400):
+            xsecRange.extend([0.02, 0.05, 0.07, 0.1])
+        elif (gluinoMass >= 400 and gluinoMass < 500) and (neutralinoMass >= 200 and neutralinoMass < 400):
+            xsecRange.extend([0.1, 0.2, 0.3, 0.4])
+        elif (gluinoMass >= 300 and gluinoMass < 400) and (neutralinoMass >= 150):
+            xsecRange.extend([0.4, 1.0, 2.0])
+        elif (gluinoMass >= 200 and gluinoMass < 300):
+            xsecRange.extend([2.0, 5.0, 10., 20.])
+        elif (gluinoMass < 200):
+            xsecRange.extend([20., 50., 100., 200., 500.])
+
+    print sorted(list(set(xsecRange)))
+    return sorted(list(set(xsecRange)))
 
     
 def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
@@ -582,7 +571,7 @@ if __name__ == '__main__':
                     if not runJob: continue
                     if t3:
                         outputname,ffDir = writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        os.system("xfmkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
                         time.sleep(3)
                         queuelist = ["all.q@compute-3-10.local","all.q@compute-3-11.local","all.q@compute-3-12.local",
