@@ -278,7 +278,9 @@ def getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, 
     myTree = fileIn.Get("myTree")
     nToys  = myTree.GetEntries()
     dataFile = rt.TFile.Open(dataFileName)
-    alldata = dataFile.Get("RMRTree")
+    workspace = dataFile.Get(Box+"/Box"+Box+"_workspace")
+    alldata = workspace.obj("sigbkg")
+#    alldata = dataFile.Get("RMRTree")
     
     # p-values 1D plot
     pValHist = rt.TH1D("pVal%s" %Box, "pVal%s" %Box, 20, 0., 1.)
@@ -544,7 +546,7 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
                 xBin  = hNS.GetXaxis().GetBinLowEdge(iBinX) + .1*hNS.GetXaxis().GetBinWidth(iBinX) # left side of TLatex 10% across the binwidth in X
                 yBin = hNS.GetYaxis().GetBinLowEdge(iBinY) + .3*hNS.GetYaxis().GetBinWidth(iBinY) # bottom of TLatex 30% across the binwidth in X
             tlatex = rt.TLatex(xBin,yBin,"%2.1f"%binCont)
-            tlatex.SetTextSize(0.05)
+            tlatex.SetTextSize(0.025)
             tlatex.SetTextFont(42)
             tlatexList.append(tlatex)
     for fGray in fGrayGraphs: fGray.Draw("F")
@@ -563,7 +565,7 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     tlabels.append(rt.TLatex(262,0.375, "0.4"))
     tlabels.append(rt.TLatex(262,0.19, "0.2"))
     for tlabel in tlabels:
-        tlabel.SetTextSize(0.055)
+        tlabel.SetTextSize(0.025)
         tlabel.SetTextFont(42)
         tlabel.Draw()
     c2.SaveAs("%s/nSigmaLog_%s.C" %(outFolder,Box))

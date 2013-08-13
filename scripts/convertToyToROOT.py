@@ -4,8 +4,8 @@ import sys
     
 if __name__ == '__main__':
     
-    MR = rt.RooRealVar("MR", "MR", 450., 4000.)
-    Rsq = rt.RooRealVar("Rsq", "Rsq", 0.03, 1.)
+    MR = rt.RooRealVar("MR", "MR", 350., 4000.)
+    Rsq = rt.RooRealVar("Rsq", "Rsq", 0.05, 1.)
     dir = sys.argv[1] 
     # to add the category
     #argc = len(sys.argv)

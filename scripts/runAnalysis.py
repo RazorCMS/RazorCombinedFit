@@ -36,6 +36,8 @@ def defineParser():
                   help="An input file to read fit results and workspaces from")
     parser.add_option('--signal-injection',dest="signal_injection", default=False,action='store_true',
                   help="Run the signal injection fit")
+    parser.add_option('--likelihood-scan',dest="likelihood_scan", default=False,action='store_true',
+                      help="Run the likelihood scan")
     parser.add_option('--splusb', dest="s_plus_b_fit", default=False,action='store_true',
                   help="Run the signal plus background fit")
     parser.add_option('--signal-file',dest="signalfile", default=None, metavar='FILE',
