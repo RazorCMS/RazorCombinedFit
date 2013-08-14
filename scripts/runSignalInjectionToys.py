@@ -149,15 +149,15 @@ if __name__ == '__main__':
                     if "%s/frtoydata_%s_%i.txt"%(toyDir,box,i) in missingToys: doToys = True
                     if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingRoot: doConvertToRoot = True
 
-                doFinalJob = True
-                doToys = False
-                doConvertToRoot = False
+                #doFinalJob = True
+                #doToys = False
+                #doConvertToRoot = False
                 if doFinalJob or doToys or doConvertToRoot:
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
                     totalJobs+=1
-                    #time.sleep(3)
+                    time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("source "+pwd+"/"+outputname)
                 
     print "TOTAL JOBS IS %i"%totalJobs
