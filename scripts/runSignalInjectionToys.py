@@ -13,7 +13,7 @@ import glob
 def writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob):
     pwd = os.environ['PWD']
     
-    fitResultsDir = "FitResults_MCClosure"
+    fitResultsDir = "FitResults_MCClosure_v2"
     config = "config_summer2012/avi.config"
 
     submitDir = "submit"
@@ -49,10 +49,10 @@ def writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
     outputfile.write('eval `scramv1 runtime -sh` \n')
-    #outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
-    #outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
-    #outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
-    #outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
+    outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
+    outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
+    outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
+    outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
     outputfile.write("source setup.sh\n")
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
     if doToys:
@@ -64,7 +64,8 @@ def writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys
         outputfile.write("ls %s/frtoydata*.root > %s.txt \n" %(toyDir, toyDir))
         outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
         outputfile.write("python scripts/makeToyPVALUE_sigbin.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -b \n"%(box, ffDir, box, fitResultMap[datasetName], ffDir,tagFR,tag3D,tagPrintPlots))
-        #outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots,datasetName,xsecstring,box))
+        outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots,datasetName,xsecstring,box))
+        outputfile.write("python scripts/make1DSlice.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots,datasetName,xsecstring,box))
    
     outputfile.close
 
@@ -90,8 +91,8 @@ if __name__ == '__main__':
     #fitmode = sys.argv[4]
     fitmode = '3D'
     queue = "8nh"
-    nToys = 3000
-    nJobs = 10
+    nToys = 10000
+    nJobs = 1
     
     for i in range(4,len(sys.argv)):
         if sys.argv[i].find("--q=") != -1:
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         boxNames = [sys.argv[2]]
 
     if sys.argv[3]=='All':
-        xsecRange = [0.0, 0.001, 0.003, 0.01, 0.05]
+        xsecRange = [0.0, 0.001, 0.003, 0.01, 0.02]
     else:
         xsecRange = [float(sys.argv[3])]
 
@@ -148,12 +149,15 @@ if __name__ == '__main__':
                     if "%s/frtoydata_%s_%i.txt"%(toyDir,box,i) in missingToys: doToys = True
                     if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingRoot: doConvertToRoot = True
 
+                doFinalJob = True
+                doToys = False
+                doConvertToRoot = False
                 if doFinalJob or doToys or doConvertToRoot:
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,mg,mchi,xsec,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
                     totalJobs+=1
-                    time.sleep(3)
+                    #time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("source "+pwd+"/"+outputname)
                 
     print "TOTAL JOBS IS %i"%totalJobs
