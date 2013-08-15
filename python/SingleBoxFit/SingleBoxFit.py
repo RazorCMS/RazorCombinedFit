@@ -407,38 +407,45 @@ class SingleBoxAnalysis(Analysis.Analysis):
              
             box.workspace.var("sigma").setVal(self.options.signal_xsec)
             box.workspace.var("sigma").setConstant(False)
+            
+            box.workspace.var("sigma").setVal(self.options.signal_xsec)
+
 
         
             pNll = box.getFitPDF(name=box.signalmodel).createNLL(ds,opt)
-            rt.RooMinuit(pNll).migrad()
-            rt.RooMinuit(pNll).hesse()
-            fr_SpB = rt.RooMinuit(pNll).save()
+            minuit = rt.RooMinuit(pNll)
+            minuit.migrad()
+            minuit.hesse()
+            fr_SpB = minuit.save()
+            fr_SpB.Print("v")
             bestFit = fr_SpB.minNll()
+            
             pN2ll = rt.RooFormulaVar("pN2ll","2*@0-2*%f"%bestFit,rt.RooArgList(pNll))
-
             print "bestFit", pNll.getVal()
             
             tlines = []
             if ds.GetName()=="sigbkg":
                 if self.options.signal_xsec==0.01:
-                    myRange = rt.RooFit.Range(0.006,0.016)
+                    box.fixPars("TTj2b")
+                    myRange = rt.RooFit.Range(0.007,0.016)
                     myLabel = "sigbkg"+str(self.options.signal_xsec)
-                    tline = rt.TLine(0.006,1,0.016,1)
+                    tline = rt.TLine(0.007,1,0.016,1)
                     tline.SetLineColor(rt.kRed)
                     tline.SetLineWidth(2)
                     tlines.append(tline)
-                    tline = rt.TLine(0.006,4,0.016,4)
+                    tline = rt.TLine(0.007,4,0.016,4)
                     tline.SetLineColor(rt.kRed)
                     tline.SetLineWidth(2)
                     tlines.append(tline)
                 elif self.options.signal_xsec==0.003:
-                    myRange = rt.RooFit.Range(0.0002,0.0065)
+                    box.fixPars("Ntot_TTj1b")
+                    myRange = rt.RooFit.Range(0.0006,0.0059)
                     myLabel = "sigbkg"+str(self.options.signal_xsec)
-                    tline = rt.TLine(0.0002,1,0.0065,1)
+                    tline = rt.TLine(0.0006,1,0.0059,1)
                     tline.SetLineColor(rt.kRed)
                     tline.SetLineWidth(2)
                     tlines.append(tline)
-                    tline = rt.TLine(0.0002,4,0.0065,4)
+                    tline = rt.TLine(0.0006,4,0.0059,4)
                     tline.SetLineColor(rt.kRed)
                     tline.SetLineWidth(2)
                     tlines.append(tline)
@@ -446,28 +453,30 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     myRange = rt.RooFit.Range(0.002,0.0092)
                     myLabel = "sigbkg"+str(self.options.signal_xsec)
                 elif self.options.signal_xsec==0.0:
-                    myRange = rt.RooFit.Range(-0.0021,0.0015)
+                    box.fixPars("Ntot_TTj2b")
+                    myRange = rt.RooFit.Range(-0.0005,0.0018)
                     myLabel = "bkg"
-                    tline = rt.TLine(-0.0021,1,0.0015,1)
+                    tline = rt.TLine(-0.0005,1,0.0018,1)
                     tline.SetLineColor(rt.kRed)
                     tline.SetLineWidth(2)
                     tlines.append(tline)
-                    tline = rt.TLine(-0.0021,4,0.0015,4)
+                    tline = rt.TLine(-0.0005,4,0.0018,4)
                     tline.SetLineColor(rt.kRed)
                     tline.SetLineWidth(2)
                     tlines.append(tline)
             else:
-                myRange = rt.RooFit.Range(-0.00195,0.0015)
+                myRange = rt.RooFit.Range(-0.0023,0.001)
                 myLabel = "data"
-                tline = rt.TLine(-0.00195,1,0.0015,1)
+                tline = rt.TLine(-0.0023,1,0.001,1)
                 tline.SetLineColor(rt.kRed)
                 tline.SetLineWidth(2)
                 tlines.append(tline)
-                tline = rt.TLine(-0.00195,4,0.0015,4)
+                tline = rt.TLine(-0.0023,4,0.001,4)
                 tline.SetLineColor(rt.kRed)
                 tline.SetLineWidth(2)
                 tlines.append(tline)
-        
+
+            box.workspace.set('poi').Print("V")
             pProfile = pN2ll.createProfile(box.workspace.set('poi'))
             rt.gStyle.SetOptTitle(0)
             
@@ -508,7 +517,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 l.SetTextSize(0.045)
                 l.DrawLatex(0.15,0.85,"CMS Preliminary, #sqrt{s} = 8 TeV, #int L = 19.3 fb^{-1}")
                 l.SetTextSize(0.05)
-            l.DrawLatex(0.1,0.95,"T1bbbb m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV, %s Box"%(1225,50,box.name))
+            l.DrawLatex(0.1,0.95,"T1bbbb m_{#tilde{g}} = %.0f GeV; m_{#tilde{#chi}} = %.0f GeV, %s Box"%(1325,50,box.name))
             
             prof.Print("profileLL"+myLabel+".pdf")
 
@@ -538,9 +547,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].fixParsExact(p.GetName(),True)
                 
             # change upper limits of variables
-            boxes[box].workspace.var("Ntot_TTj1b").setMax(1e6)
-            boxes[box].workspace.var("Ntot_TTj2b").setMax(1e6)
-            boxes[box].workspace.var("Ntot_Vpj").setMax(1e6)
+            #boxes[box].workspace.var("Ntot_TTj1b").setMax(1e6)
+            #boxes[box].workspace.var("Ntot_TTj2b").setMax(1e6)
+            #boxes[box].workspace.var("Ntot_Vpj").setMax(1e6)
             
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
@@ -553,28 +562,33 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # get the signal+background toy (no nuisnaces)
             SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+
+            # injecting signal 
             N_TTj1b = boxes[box].workspace.var("Ntot_TTj1b").getVal()
             N_TTj2b = boxes[box].workspace.var("Ntot_TTj2b").getVal()
             boxes[box].workspace.var("Ntot_TTj1b").setVal(0)
             boxes[box].workspace.var("Ntot_TTj2b").setVal(0)
             sig_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
-                                
             boxes[box].workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
             boxes[box].workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
             tot_toy = data.Clone()
-            #tot_toy.append(sig_toy)
+            tot_toy.append(sig_toy)
+            tot_toy.SetName("sigbkg")
+
+            #tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
+            #tot_toy.SetName("sigbkg")
+            #tot_toy = data
             
             print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
-            tot_toy.SetName("sigbkg")
             
-            boxes[box].importToWS(SpBModel)
-            boxes[box].importToWS(tot_toy)
-
             if self.options.likelihood_scan:
                 fr_SpB = getProfile(boxes[box], tot_toy, fr_B, Extend=True)
                 
             else:
+                boxes[box].importToWS(SpBModel)
+                boxes[box].importToWS(tot_toy)
+
                 #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_pdferr_nom_MultiJet"))
                 #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_pdferr_pe_MultiJet"))
                 #RootTools.Utils.importToWS(workspace,boxes[box].workspace.obj("wHisto_btagerr_pe_MultiJet"))
@@ -614,8 +628,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 opt.Add(rt.RooFit.PrintEvalErrors(0))
                 #opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
-                fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
-                boxes[box].fixPars("TTj2b")
+                #fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+                #boxes[box].fixPars("TTj2b")
                 fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
                 #fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(data, opt)
                 fr.SetName('independentFRsigbkg')
@@ -764,7 +778,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     #this means we're doing background-only toys or data
                     #so we should reset to nominal fit pars
                     reset(box, fr, fixSigma=False, random=(fitAttempts>0))
-                    box.workspace.var("sigma").setVal(1e-6)
+                    if self.options.pulls: box.workspace.var("sigma").setVal(0)
+                    else: box.workspace.var("sigma").setVal(1e-6)
                     box.workspace.var("sigma").setConstant(False)
                 else:
                     #this means we're doing signal+background toy
@@ -783,7 +798,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
                 fitAttempts+=1
 
-            if box.workspace.var("sigma").getVal()>=self.options.signal_xsec:
+            if box.workspace.var("sigma").getVal()>=self.options.signal_xsec and not self.options.pulls::
                 print "INFO: ^sigma > sigma"
                 print " returning q = 0 as per LHC style CLs prescription"
                 LH1x = LH0x
@@ -841,7 +856,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
 
             # change upper limit of sigma
-            boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
+            if not self.options.pulls: boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
             boxes[box].workspace.var("sigma").Print("v")
 
             
@@ -1826,7 +1841,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         #RootTools.Utils.importToWS(workspace,rt.TObjString(simultaneous_product.GetName()),'fullSplusBPDF')
         simultaneous_product.graphVizTree('fullSplusBPDF.dot')
 
-        workspace.var("sigma").setMax(10.*self.options.signal_xsec)
+        if not self.options.pulls: workspace.var("sigma").setMax(10.*self.options.signal_xsec)
 
         
         for var in RootTools.RootIterator.RootIterator(workspace.set('nuisance')):
