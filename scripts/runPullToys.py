@@ -22,7 +22,7 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
 
     
 def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 50 # toys per command
+    nToys = 10 # toys per command
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -84,7 +84,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     return outputname,ffDir
     
 def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 50 # toys per command
+    nToys = 10 # toys per command
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
     
-    nJobs = 10 # do 100 toys each job => 1000 toys
+    nJobs = 50 # do 20 toys each job => 1000 toys
     
     print box, model, queue
 
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     outFileList = [outFile.replace("Razor2013HybridLimit_","").replace(".root\n","") for outFile in doneFile.readlines()]
 
     # dictionary of src file to output file names
-    nToys = 50 # toys per command
+    nToys = 10 # toys per command
     srcDict = {}
     for i in xrange(0,nJobs):
         srcDict[i] = ["%i-%i"%(2*i*nToys,(2*i+1)*nToys-1), "%i-%i"%((2*i+1)*nToys, (2*i+2)*nToys-1)]
@@ -235,12 +235,12 @@ if __name__ == '__main__':
                         os.system("qsub -j y -q "+queues+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
                     else:    
-                        #outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        #os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
-                        #time.sleep(3)
-                        #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        time.sleep(3)
+                        os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
                         #os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
                         #os.system("source "+pwd+"/"+outputname)
