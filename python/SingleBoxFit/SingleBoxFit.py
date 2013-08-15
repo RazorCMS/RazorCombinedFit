@@ -798,7 +798,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print "-log L(x = %s|^s,^th) =  %f"%(ds.GetName(),LH1x)
                 fitAttempts+=1
 
-            if box.workspace.var("sigma").getVal()>=self.options.signal_xsec and not self.options.pulls::
+            if box.workspace.var("sigma").getVal()>=self.options.signal_xsec and not self.options.pulls:
                 print "INFO: ^sigma > sigma"
                 print " returning q = 0 as per LHC style CLs prescription"
                 LH1x = LH0x

@@ -71,10 +71,10 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("cp /home/jduarte/public/Razor2013/Signal/avi.config $PWD/config_summer2012/\n")
         
     nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i --pulls -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     
     nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i --pulls -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $TWD\n")
@@ -127,10 +127,10 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/avi.config $PWD/config_summer2012/\n")
         
     nToyOffset = nToys*(2*t)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i --pulls -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
     
     nToyOffset = nToys*(2*t+1)
-    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
+    outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/avi.config -i FULLFits2012ABCD.root -l --nuisance-file NuisanceTreePulls.root --nosave-workspace ${NAME}_%s_${LABEL}_%s.root -o Razor2013HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i --pulls -t %i\n"%(massPoint,box,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
 
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%hybridDir)
     outputfile.write("cd; rm -rf $WD\n")

@@ -36,6 +36,8 @@ def defineParser():
                   help="Run the signal injection fit")
     parser.add_option('--likelihood-scan',dest="likelihood_scan", default=False,action='store_true',
                   help="Run the likelihood scan")
+    parser.add_option('--pulls',dest="pulls", default=False,action='store_true',
+                  help="Run the pulls fit")
     parser.add_option('--simultaneous',dest="simultaneous", default=False,action='store_true',
                   help="Run the simultaneous fit")
     parser.add_option('-l','--limit',dest="limit", default=False,action='store_true',
