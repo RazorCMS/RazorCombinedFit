@@ -63,17 +63,16 @@ def findLeptonProb(flavor, pt = 0., eta = 0., errDir = 0):
         SFIso = 1.
         SFTrigger = 1.
   
-    return SFID, SFIso, SFTrigger 
+    return SFID, SFIso, SFTrigger
 
-
-def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, mstop, mlsp):
-    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+str(mstop)+'_'+str(mlsp)+'_'+outputBox,'RECREATE')
+def writeTree2DataSet(data, outputdir, outputFile, outputBox, rMin, mRmin, mstop, mlsp):
+    output = rt.TFile.Open(outputdir +'/'+outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+str(mstop)+'_'+str(mlsp)+'_'+outputBox,'RECREATE')
     print output.GetName()
     for d in data:
         d.Write()
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, mlsp, write = True):
+def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, run, mstop, mlsp, write = True):
     """This defines the format of the RooDataSet"""
     
     box = filter.name
@@ -103,7 +102,10 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
     
     #we cut away events outside our MR window
-    mRmin = 500.#args['MR'].getMin()
+    if box == 'BJetHS' or box == 'BJetLS':
+        mRmin = 500.0#args['MR'].getMin()
+    else :
+        mRmin = args['MR'].getMin()
     mRmax = args['MR'].getMax()
 
     #we cut away events outside our Rsq window
@@ -181,6 +183,8 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
     binedgex = array('d',binedgexLIST)
     binedgey = array('d',binedgeyLIST)
 
+    print binedgex
+    print binedgey
 
     # Book the histograms
     wHisto          = rt.TH2D("wHisto", "wHisto", nbinx, binedgex, nbiny, binedgey)
@@ -210,8 +214,10 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         vwHisto_pdfNNPDF.append(wHisto_pdfNNPDF)
         
     # Load the file with the SMS number of total events per each point
-    file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo_mLSP_0.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
+    #file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo_mLSP_'+str(mlsp)+'_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
+    file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
     norms = pickle.load(file)
+    print norms
     print 'Number of entries:', tree.GetEntries()
 
     isrWeightSum = 0
@@ -227,10 +233,10 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         if (mstop != tree.mStop or mlsp != tree.mLSP):
             continue
 
-       
         # Get the original event weight, which is 1/nevts for a given process
         point = (tree.mStop, tree.mLSP)
-        weight = 1/(1.*norms[point]) 
+        
+        weight = 1./(norms[point]) 
 
         ####First, apply a common selection
         #take only events in the MR and R2 region
@@ -339,7 +345,10 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
             eta = tree.eleTight_eta[0]
         else :
             flavor = ''
-             
+
+        if flavor == 'ele' and abs(eta)>2.5:
+            continue
+        
         SFID_nominal, SFIso_nominal, SFTrigger_nominal = findLeptonProb(flavor, pt, eta,  errDir = 0)
         SFID_Up     , SFIso_Up     , SFTrigger_Up      = findLeptonProb(flavor, pt, eta,  errDir = 1 )
         SFID_Down   , SFIso_Down   , SFTrigger_Down    = findLeptonProb(flavor, pt, eta,  errDir = -1)
@@ -449,6 +458,7 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
             isrdown = wHisto_lepdown.GetBinContent(i, j)
 
             if nominal == 0:
+                
                 JESup_pe = 0
                 wHisto_JESup_pe.SetBinContent(i, j, JESup_pe)
                 
@@ -542,7 +552,7 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
     if write:
         writeTree2DataSet([rdata,nLooseElectrons,nLooseMuons,nLooseTaus,
                            wHisto, wHisto_JESup, wHisto_JESdown, wHisto_pdfcen, wHisto_pdferr, wHisto_btagup, wHisto_btagdown, wHisto_lepup, wHisto_lepdown,wHisto_isrup, wHisto_isrdown, wHisto_JESup_pe, wHisto_JESdown_pe, wHisto_JESerr_pe, wHisto_pdferr_pe, wHisto_btagup_pe, wHisto_btagdown_pe, wHisto_btagerr_pe, wHisto_lepup_pe, wHisto_lepdown_pe, wHisto_leperr_pe, wHisto_isrup_pe, wHisto_isrdown_pe, wHisto_isrerr_pe],
-                          outputFile, '%s.root' % filter.name, rMin, mRmin, mstop, mlsp)
+                          outputDir, outputFile, '%s.root' % filter.name, rMin, mRmin, mstop, mlsp)
         
     return rdata
 
@@ -555,8 +565,8 @@ if __name__ == '__main__':
                   help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
                   help="The first event to take from the input Dataset")  
-    parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
-                  help="The maximum number of Btags to allow")     
+    parser.add_option('-b','--box',dest="box",type="string",default="",
+                  help="box to run")     
     parser.add_option('-e','--eff',dest="eff",default=False,action='store_true',
                   help="Calculate the MC efficiencies")
     parser.add_option('-f','--flavour',dest="flavour",default='TTj',
@@ -565,8 +575,8 @@ if __name__ == '__main__':
                   help="The minimum run number")
     parser.add_option('-d','--dir',dest="outdir",default="./",type="string",
                   help="Output directory to store datasets")
-    parser.add_option('-x','--box',dest="box",default=None,type="string",
-                  help="Specify only one box")
+ ##    parser.add_option('-x','--box',dest="box",default=None,type="string",
+##                   help="Specify only one box")
     parser.add_option('--name',dest="name",default='RMRTree',type="string",
                   help="The name of the TTree to use")
     parser.add_option('--mstop',dest="mstop",default=650,type=float,
@@ -582,6 +592,8 @@ if __name__ == '__main__':
         topDir = os.path.abspath(os.path.dirname(inspect.getsourcefile(convertTree2Dataset)))
         options.config = os.path.join(topDir,'boxConfig.cfg')    
     cfg = Config.Config(options.config)
+    box = options.box
+    outputDir = options.outdir
     
     print 'Input files are %s' % ', '.join(args)
     
@@ -601,11 +613,15 @@ if __name__ == '__main__':
     tagger = BTag('T2tt')
     muonScaling = MuSFUtil()
     eleScaling  = EleSFUtil()
-    
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
+
+    if box == "BJetHS" :
+        convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+    elif box == "BJetLS" :
+        convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+    elif box == "Mu" :
+        convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
+    else :
+        convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
    
 
 
