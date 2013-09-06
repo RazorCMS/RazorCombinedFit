@@ -230,7 +230,7 @@ if __name__ == '__main__':
                     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
                     output0 = str(outputname.replace("submit/submit_","").replace("xsec",""))
                     for i in xrange(0,nJobs):
-                        output0 = output0.replace("B_%i.src"%i,"B_%s"%srcDict[i][0])
+                        output0 = output0.replace("SpB_%i.src"%i,"SpB_%s"%srcDict[i][0])
                     runJob = False
                     if output0 not in outFileList: 
                         missingFiles+=1
