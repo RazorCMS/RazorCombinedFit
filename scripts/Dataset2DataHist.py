@@ -45,18 +45,22 @@ if __name__ == '__main__':
     WeightedDataset = rt.RooDataSet('WeightedDataset', 'WeightedDataset', wRMRTree, rt.RooArgSet(MR, Rsq, W), "", W.GetName())
     WeightedDataset.SetName('RMRTree')
 
-    # histo2D = Dataset.createHistogram(MR,Rsq,100,100)
-    # histo2D.SetName("StartingHisto")
-    # histo2D.Sumw2()
-    # histo2Dweighted = rt.TH2D('histo2Dweighted','histo2Dweighted',100,MR.getMin(),MR.getMax(),100,Rsq.getMin(),Rsq.getMax())
-    # histo2Dweighted.SetName('EndHisto')
-    # histo2Dweighted.Sumw2()
-    # for rsqbin in range(1,histo2D.GetNbinsY()+1):
-    #   for mrbin in range(1,histo2D.GetNbinsX()+1):
-    #       mr = histo2D.GetXaxis().GetBinCenter(mrbin)
-    #       rsq = histo2D.GetYaxis().GetBinCenter(rsqbin)
-    #       histo2Dweighted.Fill(mr,rsq,histo2D.GetBinContent(histo2D.FindBin(mr,rsq)))
-    # BinnedDataset = rt.RooDataHist('RMRTree','RMRTree',rt.RooArgList(MR,Rsq),histo2Dweighted)
+    # This is for the DataHist
+    histo2D = Dataset.createHistogram(MR, Rsq, 100, 100)
+    histo2D.SetName("StartingHisto")
+    histo2D.Sumw2()
+    histo2Dweighted = rt.TH2D('histo2Dweighted', 'histo2Dweighted', 100, MR.getMin(), MR.getMax(), 100, Rsq.getMin(), Rsq.getMax())
+    histo2Dweighted.SetName('EndHisto')
+    histo2Dweighted.Sumw2()
+    for rsqbin in range(1, histo2D.GetNbinsY()+1):
+        for mrbin in range(1, histo2D.GetNbinsX()+1):
+            mr = histo2D.GetXaxis().GetBinCenter(mrbin)
+            rsq = histo2D.GetYaxis().GetBinCenter(rsqbin)
+            histo2Dweighted.Fill(mr, rsq, histo2D.GetBinContent(histo2D.FindBin(mr, rsq)))
+    BinnedDataset = rt.RooDataHist('RMRTree', 'RMRTree', rt.RooArgList(MR, Rsq), histo2Dweighted)
+    histOutFile = rt.TFile("DataHist_BJetHS.root", 'RECREATE')
+    BinnedDataset.Write()
+    histOutFile.Close()
 
     outFile = rt.TFile("Weighted_BJetHS.root", "RECREATE")
     wRMRTree.Write()
