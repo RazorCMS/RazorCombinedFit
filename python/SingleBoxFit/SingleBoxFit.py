@@ -3,6 +3,7 @@ import ROOT as rt
 from RazorCombinedFit.Framework import Analysis
 import RootTools
 import math, os
+import sys
 
 def line(x1, x2, y1, y2):
      tline = rt.TLine(x1, x2, y1, y2)
@@ -600,7 +601,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #     significance.Scale(sigSum/significance.Integral())
             # self.store(significance, dir=box)            
 
-    def reset(box, fr, fixSigma = True, random = False):
+    def reset(self, box, fr, fixSigma=True, random = False):
             # fix all parameters
             box.fixAllPars()
             
@@ -817,6 +818,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             # get the signal+background toy (no nuisnaces)
             SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
+
+            
             tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
             print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
             print "SpB Yield = %f" %tot_toy.numEntries()
@@ -824,14 +827,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
             #boxes[box].importToWS(SpBModel)
             boxes[box].importToWS(tot_toy)#add RooDataSet with name sigbkg (Rsq, MR)
-
+            
             if self.options.likelihood_scan:
                 fr_SpB = getProfile(boxes[box], tot_toy, fr_B, Extend=True)
                 
             else:
                 RootTools.Utils.importToWS(workspace,boxes[box].getFitPDF(name=boxes[box].fitmodel))
-                #RootTools.Utils.importToWS(workspace,SpBModel)
+                RootTools.Utils.importToWS(workspace,SpBModel)
                 RootTools.Utils.importToWS(workspace,tot_toy)
+                workspace.Print("v")
 
                 # backgrounds
                 boxes[box].defineSet("variables", self.config.getVariables(box, "variables"),workspace)
@@ -861,7 +865,44 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 opt.Add(rt.RooFit.PrintEvalErrors(10))
                 opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
 
+                # fix sigma
+                boxes[box].workspace.var("sigma").setVal(0.)
+                boxes[box].workspace.var("sigma").setConstant(True)
+                # fit [1] Older Background Pdf
+                #boxes[box].workspace.var("MR01st_TTj").setVal(-9.0154e+01)
+                #boxes[box].workspace.var("MR02nd_TTj").setVal(-3.4051e+02)
+                #boxes[box].workspace.var("Ntot_TTj").setVal(1.1633e+04)
+                #boxes[box].workspace.var("R01st_TTj").setVal(-1.8898e-01)
+                #boxes[box].workspace.var("R02nd_TTj").setVal(-1.7685e-01)
+                #boxes[box].workspace.var("b1st_TTj").setVal(2.2204e-02)
+                #boxes[box].workspace.var("b2nd_TTj").setVal(3.8682e-02)
+                #boxes[box].workspace.var("f2_TTj").setVal(5.1985e-01)
+                # fit Mu [2] Newer Background Pdf
+                #boxes[box].workspace.var("MR01st_TTj").setVal(-1.7673e+02)
+                #boxes[box].workspace.var("MR02nd_TTj").setVal(-1.5738e+02)
+                #boxes[box].workspace.var("Ntot_TTj").setVal(3.3737e+04)
+                #boxes[box].workspace.var("R01st_TTj").setVal(-2.1555e-01)
+                #boxes[box].workspace.var("R02nd_TTj").setVal(-1.2222e-01)
+                #boxes[box].workspace.var("b1st_TTj").setVal(2.0473e-02)
+                #boxes[box].workspace.var("b2nd_TTj").setVal(4.8232e-02)
+                #boxes[box].workspace.var("f2_TTj").setVal(6.0602e-01)
+                # fit BJetHS
+                # boxes[box].workspace.var("MR01st_QCD").setVal(-9.9974e+01)
+                # boxes[box].workspace.var("MR01st_TTj").setVal(-1.6347e+02)
+                # boxes[box].workspace.var("MR02nd_TTj").setVal(-6.4889e+02)
+                # boxes[box].workspace.var("Ntot_QCD").setVal(1.0225e+04)
+                # boxes[box].workspace.var("Ntot_TTj").setVal(3.4428e+03)
+                # boxes[box].workspace.var("R01st_QCD").setVal(-3.2167e-02)
+                # boxes[box].workspace.var("R01st_TTj").setVal(-1.9856e-01)
+                # boxes[box].workspace.var("R02nd_TTj").setVal(-1.0500e-01)
+                # boxes[box].workspace.var("b1st_QCD").setVal(1.4299e-01)
+                # boxes[box].workspace.var("b1st_TTj").setVal(2.0144e-02)
+                # boxes[box].workspace.var("b2nd_TTj").setVal(5.1417e-02)
+                # boxes[box].workspace.var("f2_TTj").setVal(9.5000e-01)
+                
+                
                 fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+                #fr = boxes[box].getFitPDF(name=boxes[box].signalmodel).fitTo(data, opt)
                 fr.SetName('independentFRsigbkg')
                 fr.Print("v")
                 boxes[box].importToWS(fr)
@@ -869,16 +910,15 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
                 self.store(fr, name = 'independentFRsigbkg', dir=box)
                 self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
-
                 # make any plots required
                 boxes[box].plot(fileName, self,  box, data=tot_toy, fitmodel=boxes[box].fitmodel)#, frName='independentFRsigbkg')
-                
                 
                
             #skip saving the workspace if the option is set
             if not self.options.nosave_workspace:
                 for box in boxes.keys():
-                    self.store(workspace,'Box%s_workspace' % box, dir=box)
+                     self.store(workspace,'Box%s_workspace' % box, dir=box)
+                     
 
 
 

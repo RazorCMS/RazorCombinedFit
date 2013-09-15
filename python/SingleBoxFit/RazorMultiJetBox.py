@@ -4,6 +4,7 @@ import RootTools
 import RazorBox
 import ROOT as rt
 from array import *
+import sys
 
 # This is global, to be used also in the scripts for plots
 def Binning(boxName, varName):
@@ -36,7 +37,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.float1stComponentWithPenalty(z, True, fitmodel, modeltype)
         self.float2ndComponentWithPenalty(z, True, fitmodel, modeltype)
         self.floatYield(z)
-        self.floatFraction(z)
+        if z!= "QCD": self.floatFraction(z)
         
         # we put the n parameter but fix it
         self.fixParsExact("n2nd_%s" % z, True)
@@ -53,8 +54,14 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.addTailPdf("TTj",True)
 
         # build the total PDF
-        myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"),self.workspace.pdf("ePDF2nd_TTj"),
-                                  self.workspace.pdf("ePDF1st_QCD"),self.workspace.pdf("ePDF2nd_QCD"))
+        myPDFlist = rt.RooArgList()
+        if "TTj" not in self.zeros:
+            myPDFlist.add(self.workspace.pdf("ePDF1st_TTj"))
+            myPDFlist.add(self.workspace.pdf("ePDF2nd_TTj"))
+        if "QCD" not in self.zeros:
+            myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
+            myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))
+            
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
         # import the model in the workspace.
@@ -75,6 +82,20 @@ class RazorMultiJetBox(RazorBox.RazorBox):
                 if not z in fixed:
                     self.floatSomething(z)
                     fixed.append(z)
+
+        
+        newProdList = rt.RooArgList()
+        newProdList.add(self.workspace.pdf('%s' % (self.fitmodel)))
+        for z in self.zeros:
+            if self.name not in self.zeros[z]:
+                newProdList.add(self.workspace.pdf("R01st_%s_penalty"%z))
+                newProdList.add(self.workspace.pdf("MR01st_%s_penalty"%z))
+                newProdList.add(self.workspace.pdf("b1st_%s_penalty"%z))
+                if z!="QCD":
+                    newProdList.add(self.workspace.pdf("R02nd_%s_penalty"%z))
+                    newProdList.add(self.workspace.pdf("MR02nd_%s_penalty"%z))
+                    newProdList.add(self.workspace.pdf("b2nd_%s_penalty"%z))
+
         
         #remove redundant second components
         self.fix2ndComponent("QCD")
@@ -82,6 +103,11 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
 
 
+        newProd = rt.RooProdPdf("%s_newProd"%self.fitmodel,'BG PDF with new product of penalties', newProdList)
+        self.importToWS(newProd)
+        self.fitmodel = newProd.GetName()
+
+    
     def addSignalModel(self, inputFile, signalXsec, modelName = None):
         
         if modelName is None:
@@ -103,8 +129,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         
         SpBPdfList = rt.RooArgList(self.workspace.pdf("ePDF1st_TTj"))
         # prevent nan when there is no signal expected
-        if not math.isnan(self.workspace.function("Ntot_%s"%modelName).getVal()): SpBPdfList.add(self.workspace.pdf("eBinPDF_Signal"))
-        print self.workspace.function("N_2nd_TTj").getVal() 
+        if self.workspace.function("Ntot_%s"%modelName).getVal() > 0: SpBPdfList.add(self.workspace.pdf("eBinPDF_Signal"))
         if self.workspace.function("N_2nd_TTj").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF2nd_TTj"))
         if self.workspace.function("N_1st_QCD").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF1st_QCD"))
         if self.workspace.function("N_2nd_QCD").getVal() > 0: SpBPdfList.add(self.workspace.pdf("ePDF2nd_QCD"))
@@ -123,9 +148,25 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             else:
                 if not z in fixed:
                     self.floatSomething(z,None,"signalmodel")
-                    print "top loop", self.signalmodel
                     fixed.append(z)
-        return extended.GetName()
+
+        newProdList = rt.RooArgList()
+        newProdList.add(self.workspace.pdf('%s_%sCombined' % (theRealFitModel,modelName)))
+        for z in self.zeros:
+            if self.name not in self.zeros[z]:
+                newProdList.add(self.workspace.pdf("R01st_%s_penalty"%z))
+                newProdList.add(self.workspace.pdf("MR01st_%s_penalty"%z))
+                newProdList.add(self.workspace.pdf("b1st_%s_penalty"%z))
+                if z != "QCD":
+                    newProdList.add(self.workspace.pdf("R02nd_%s_penalty"%z))
+                    newProdList.add(self.workspace.pdf("MR02nd_%s_penalty"%z))
+                    newProdList.add(self.workspace.pdf("b2nd_%s_penalty"%z))
+
+        newProd = rt.RooProdPdf("%s_%sCombined_newProd" % (theRealFitModel,modelName),'Signal+BG PDF with new product of penalties', newProdList)
+        self.importToWS(newProd)
+        self.signalmodel = newProd.GetName()
+        return newProd.GetName()
+        #return extended.GetName()
 
     
     def plot1DHistoAllComponents(self, inputFile, xvarname, nbins = 25, ranges=None, data = None, fitmodel=None):
