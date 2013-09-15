@@ -169,7 +169,7 @@ if __name__ == '__main__':
    
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s" %outputDir)
-    os.system("ln -s %s" %outputDir)
+    #os.system("ln -s %s" %outputDir)
 
     hypotheses = ["B","SpB"]
 
