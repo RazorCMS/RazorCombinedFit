@@ -61,18 +61,15 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t, outputDir)
     outputfile.write("export WD=/tmp/${USER}/Razor2012_%s_%s_%s_%i\n"%(massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $WD\n")
     outputfile.write("cd $WD\n")
-    outputfile.write("scramv1 project CMSSW CMSSW_6_1_1\n")
-    outputfile.write("cd CMSSW_6_1_1/src\n")
-    outputfile.write("eval `scramv1 run -sh`\n")
-
-    outputfile.write("export CVSROOT=:gserver:cmssw.cvs.cern.ch:/local/reps/CMSSW\n")
-    outputfile.write("cvs co -r wreece_101212_2011_style_fits -d RazorCombinedFit UserCode/wreece/RazorCombinedFit\n")
-    outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("mkdir lib\n")
+    outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
+    outputfile.write("scram project CMSSW_6_2_0\n")
+    outputfile.write("cd CMSSW_6_2_0/src\n")
+    outputfile.write("eval `scram runtime -sh`\n")
+    outputfile.write("git -b signal_injection_Lucie clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
+    outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh\n")
-    outputfile.write("source /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.05/x86_64-slc5-gcc43-opt/root/bin/thisroot.sh\n")
-    outputfile.write("make\n")
+    outputfile.write("make clean; make -j 4\n")
+
     
     outputfile.write("export NAME=\"T2tt\"\n")
     if box == "BJetHS" or box == "BJetLS" :
@@ -127,7 +124,7 @@ def writeBashScript(box,neutralinopoint,gluinopoint,xsecpoint,hypo,t, outputDir)
         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c config_winter2012/MultiJet_All_fR1fR2fR3fR4_2012.cfg -i Run2012ABCD_Fit_Mu-120313.root -l --nuisance-file NuisanceTree_multijet.root --nosave-workspace %s_%s_Mu.root -o Razor2012HybridLimit_${NAME}_%s_%s_%s_%s_%i-%i.root %s --xsec %f --toy-offset %i -t %i --multijet\n"%(name,massPoint,massPoint,box,xsecstring,hypo,nToyOffset,nToyOffset+nToys-1,tagHypo,xsecpoint,nToyOffset,nToys))
         
 
-    outputfile.write("cp $WD/CMSSW_6_1_1/src/RazorCombinedFit/*.root %s/\n" %outputDir)
+    outputfile.write("cp $WD/CMSSW_6_2_0/src/RazorCombinedFit/*.root %s/\n" %outputDir)
     outputfile.write("rm -rf $WD\n")
     
     outputfile.close
