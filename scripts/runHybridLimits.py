@@ -157,7 +157,8 @@ if __name__ == '__main__':
     print box
     
     gluinopoints = getStopMassPoints(neutralinopoint)
-    queue = "2nd"
+    gluinopoints = [200,25]
+    queue = "8nh"
     
     pwd = os.environ['PWD']
 
@@ -188,6 +189,7 @@ if __name__ == '__main__':
         if gluinopoint < mg_lower or gluinopoint > mg_upper: continue
         gluinopoint = float(gluinopoint)
         xsecRange = getXsecRange(neutralinopoint,gluinopoint)
+        xsecRange = [1.,3.,5.,10.,15.,20.,25.]
         for xsecpoint in xsecRange:
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
