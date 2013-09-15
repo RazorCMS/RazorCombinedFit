@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     submitDir = "submit"
     # the output directory must be changed
-    outputDir = "~/work/RAZORLIMITS/HybridStop/"
+    outputDir = "~/work/RAZORSTOPLIMITS/Hybrid/"
     print outputDir
    
     os.system("mkdir -p %s"%(submitDir))
