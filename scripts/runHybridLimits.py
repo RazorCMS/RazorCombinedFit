@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     submitDir = "submit"
     # the output directory must be changed
-    outputDir = "/afs/cern.ch/work/s/salvati/private/workspace/RazorStops/ScanHybrid_" + box + "_" + str(neutralinopoint)
+    outputDir = "~/work/RAZORLIMITS/HybridStop/"
     print outputDir
    
     os.system("mkdir -p %s"%(submitDir))
