@@ -155,7 +155,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             
         for box in boxes:    
             pdf = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None)
-            vars = rt.RooArgSet(boxes[box].workspace.set('variables'))
+            variables = rt.RooArgSet(boxes[box].workspace.set('variables'))
 
             if box != simName:
                 #get the data yield without cuts
@@ -192,7 +192,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             yields = rt.RooDataSet('Yields','Yields',args)
             
             for i in xrange(nToys):
-                gdata = pdf.generate(vars,rt.RooRandom.randomGenerator().Poisson(data_yield))
+                gdata = pdf.generate(variables,rt.RooRandom.randomGenerator().Poisson(data_yield))
                 gdata_cut = gdata.reduce(boxes[box].cut)
                 
                 if self.options.save_toys:
@@ -329,7 +329,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|s,^th_s)" %(ds.GetName())
             covqualH0 = 0
             fitAttempts = 0
-            while covqualH0!=3 and fitAttempts<5:
+            while covqualH0!=3 and fitAttempts<3:
                 self.reset(box, fr, fixSigma=True, random=(fitAttempts>0))
                 box.workspace.var("sigma").setVal(self.options.signal_xsec)
                 box.workspace.var("sigma").setConstant(True)
@@ -346,7 +346,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "retrieving -log L(x = %s|^s,^th)" %(ds.GetName())
             covqualH1 = 0
             fitAttempts = 0
-            while covqualH1!=3 and fitAttempts<5:
+            while covqualH1!=3 and fitAttempts<3:
                 if self.options.expectedlimit==True or ds.GetName=="RMRTree":
                     #this means we're doing background-only toys or data
                     #so we should reset to nominal fit pars
@@ -413,16 +413,16 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)
             boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")        
-            boxes[box].workspace.extendSet("nuisance", boxes[box].workspace.factory('n2nd_TTj_prime[0,-5.,5.]').GetName())
-            boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_value[1.0]').GetName())
-            boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_uncert[0.1]').GetName())
+            #boxes[box].workspace.extendSet("nuisance", boxes[box].workspace.factory('n2nd_TTj_prime[0,-5.,5.]').GetName())
+            #boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_value[1.0]').GetName())
+            #boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_uncert[0.1]').GetName())
 
             #if not boxes[box].workspace.var('n2nd_TTj_%s_uncert' % box):
             #    boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_%s_uncert[0.1]' % box).GetName())
             #if not boxes[box].workspace.var("lumi_fraction_%s" % box):
             #    boxes[box].workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
 
-            boxes[box].workspace.factory("expr::n2nd('@0 * pow( (1+@1), @2)', n2nd_TTj_value, n2nd_TTj_uncert, n2nd_TTj_prime)")
+            #boxes[box].workspace.factory("expr::n2nd('@0 * pow( (1+@1), @2)', n2nd_TTj_value, n2nd_TTj_uncert, n2nd_TTj_prime)")
             
             # N_TTj = boxes[box].workspace.var("Ntot_TTj").setMax(1e9)
             # N_QCD = boxes[box].workspace.var("Ntot_QCD").setMax(1e9)
@@ -435,12 +435,54 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.Print('V')
            
             fr_central = boxes[box].workspace.obj('independentFR')    
-            vars = boxes[box].workspace.set('variables')
+            variables = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
 
             #add in the other signal regions
             norm_region = 'FULL'
-
+                    
+            
+            # # first refit the data
+            # newProdList = rt.RooArgList()
+            # myPDFlist = rt.RooArgList()
+            # for z in boxes[box].zeros:
+            #     if boxes[box].name not in boxes[box].zeros[z]:
+            #         myPDFlist.add(boxes[box].workspace.pdf("ePDF1st_%s"%z))
+            #         newProdList.add(boxes[box].workspace.pdf("R01st_%s_penalty"%z))
+            #         newProdList.add(boxes[box].workspace.pdf("MR01st_%s_penalty"%z))
+            #         newProdList.add(boxes[box].workspace.pdf("b1st_%s_penalty"%z))
+            #         if z!="QCD":
+            #             myPDFlist.add(boxes[box].workspace.pdf("ePDF2nd_%s"%z))
+            #             newProdList.add(boxes[box].workspace.pdf("R02nd_%s_penalty"%z))
+            #             newProdList.add(boxes[box].workspace.pdf("MR02nd_%s_penalty"%z))
+            #             newProdList.add(boxes[box].workspace.pdf("b2nd_%s_penalty"%z))
+            
+            # newAdd = rt.RooAddPdf('newAdd', 'newAdd', myPDFlist)
+            # newProdList.add(newAdd)
+            # boxes[box].importToWS(newAdd)
+           
+            # #remove redundant second components
+            # boxes[box].fix2ndComponent("QCD")
+            # boxes[box].workspace.var("f2_QCD").setVal(0.)
+            # boxes[box].workspace.var("f2_QCD").setConstant(rt.kTRUE)
+            # #create new product
+            # BModel = rt.RooProdPdf("fitmodel_newProd",'BG PDF with new product of penalties', newProdList)
+            # boxes[box].importToWS(BModel)
+            # opt = rt.RooLinkedList()
+            # opt.Add(rt.RooFit.Range("FULL"))
+            # opt.Add(rt.RooFit.Extended(True))
+            # opt.Add(rt.RooFit.Save(True))
+            # opt.Add(rt.RooFit.Hesse(True))
+            # opt.Add(rt.RooFit.Minos(False))
+            # opt.Add(rt.RooFit.PrintLevel(-1))
+            # opt.Add(rt.RooFit.PrintEvalErrors(10))
+            # opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
+            
+            # boxes[box].workspace.Print("v")
+            
+            BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
+            fr_B = fr_central
+                
             print "get Lz for data"
             
             myDataTree = rt.TTree("myDataTree", "myDataTree")
@@ -505,18 +547,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #wraps poisson TWICE around expectedEvents
             if self.options.expectedlimit == True:
                 # use the fr for B hypothesis to generate toys
-                fr_B = fr_central
-                BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
-                #genSpecB = BModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+                self.reset(boxes[box], fr_B, fixSigma = True)
+                boxes[box].workspace.var('sigma').setVal(0.0)
+                genSpecB = BModel.prepareMultiGen(variables,rt.RooFit.Extended(True))
             else:
                 # use the fr for SpB hypothesis to generate toys
                 fr_SpB = frH0Data
-                print boxes[box].signalmodel
                 SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
-                #genSpecSpB = SpBModel.prepareMultiGen(vars,rt.RooFit.Extended(True))
+                self.reset(boxes[box], fr_SpB, fixSigma = True)
+                boxes[box].workspace.var('sigma').setVal(self.options.signal_xsec)
+                genSpecSpB = SpBModel.prepareMultiGen(variables,rt.RooFit.Extended(True))
  
             #print "calculate number of bkg events to generate"
-            #bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(vars) 
+            #bkgGenNum = boxes[box].getFitPDF(name=boxes[box].fitmodel,graphViz=None).expectedEvents(variables) 
             #fitDataSet = boxes[box].workspace.data('RMRTree').reduce(boxes[box].getVarRangeCutNamed(fit_range))
             
             for i in xrange(nToyOffset,nToyOffset+nToys):
@@ -542,18 +585,19 @@ class SingleBoxAnalysis(Analysis.Analysis):
                         varVal = eval('nuisTree.%s'%var.GetName())
                         var.setVal(varVal)
                         print "NUISANCE PAR %s = %f"%(var.GetName(),var.getVal())
-                    print  boxes[box].workspace.var("n2nd_TTj_prime").getVal()
-                    boxes[box].workspace.var("n2nd_TTj_prime").setVal(rt.RooRandom.gaussian())
-                    print  boxes[box].workspace.var("n2nd_TTj_prime").getVal()
-                    print boxes[box].workspace.var("n2nd_TTj").getVal()
-                    print boxes[box].workspace.function("n2nd").getVal()
-                    boxes[box].workspace.var("n2nd_TTj").setVal(boxes[box].workspace.function("n2nd").getVal())
-                    print boxes[box].workspace.var("n2nd_TTj").getVal()
+                    #print  boxes[box].workspace.var("n2nd_TTj_prime").getVal()
+                    #boxes[box].workspace.var("n2nd_TTj_prime").setVal(rt.RooRandom.gaussian())
+                    #print  boxes[box].workspace.var("n2nd_TTj_prime").getVal()
+                    #print boxes[box].workspace.var("n2nd_TTj").getVal()
+                    #print boxes[box].workspace.function("n2nd").getVal()
+                    #boxes[box].workspace.var("n2nd_TTj").setVal(boxes[box].workspace.function("n2nd").getVal())
+                    #print boxes[box].workspace.var("n2nd_TTj").getVal()
                     boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
 
                     #fr_SpB.Print("v")
-                    print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
-                    tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
+                    print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
+                    #tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
+                    tot_toy = SpBModel.generate(genSpecSpB)
                     print "SpB Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("sigbkg")
 
@@ -562,8 +606,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                     print "generate a toy assuming bkg model"
                     self.reset(boxes[box], fr_B, fixSigma = True)
                     boxes[box].workspace.var("sigma").setVal(0.)
-                    tot_toy = BModel.generate(vars,rt.RooFit.Extended(True))
-                    print "B Expected = %f" %BModel.expectedEvents(vars)
+                    #tot_toy = BModel.generate(variables,rt.RooFit.Extended(True))
+                    tot_toy = BModel.generate(genSpecB)
+                    print "B Expected = %f" %BModel.expectedEvents(variables)
                     print "B Yield = %f" %tot_toy.numEntries()
                     tot_toy.SetName("bkg")
 
@@ -787,7 +832,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)#
 
-            vars = boxes[box].workspace.set('variables') #Rsq, MR
+            variables = boxes[box].workspace.set('variables') #Rsq, MR
             data = boxes[box].workspace.data('RMRTree')
             fr_B = boxes[box].workspace.obj('independentFR')
             
@@ -797,10 +842,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)
             boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
             boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
-            boxes[box].workspace.extendSet("nuisance", boxes[box].workspace.factory('n2nd_TTj_prime[0,-5.,5.]').GetName())
-            boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_value[1.0]').GetName())
-            boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_uncert[0.1]').GetName())
-            boxes[box].workspace.factory("expr::n2nd('@0 * pow( (1+@1), @2)', n2nd_TTj_value, n2nd_TTj_uncert, n2nd_TTj_prime)")
+            #boxes[box].workspace.extendSet("nuisance", boxes[box].workspace.factory('n2nd_TTj_prime[0,-5.,5.]').GetName())
+            #boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_value[1.0]').GetName())
+            #boxes[box].workspace.extendSet("other", boxes[box].workspace.factory('n2nd_TTj_uncert[0.1]').GetName())
+            #boxes[box].workspace.factory("expr::n2nd('@0 * pow( (1+@1), @2)', n2nd_TTj_value, n2nd_TTj_uncert, n2nd_TTj_prime)")
            
             for p in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
                 p.setVal(0.)
@@ -820,8 +865,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
 
             
-            tot_toy = SpBModel.generate(vars,rt.RooFit.Extended(True))
-            print "SpB Expected = %f" %SpBModel.expectedEvents(vars)
+            tot_toy = SpBModel.generate(variables,rt.RooFit.Extended(True))
+            print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
             tot_toy.SetName("sigbkg")
             
@@ -856,7 +901,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 fit_range = boxes[box].fitregion
 
                 opt = rt.RooLinkedList()
-                opt.Add(rt.RooFit.Range(fit_range))
+                #opt.Add(rt.RooFit.Range(fit_range))
+                opt.Add(rt.RooFit.Range("FULL"))
                 opt.Add(rt.RooFit.Extended(True))
                 opt.Add(rt.RooFit.Save(True))
                 opt.Add(rt.RooFit.Hesse(True))
@@ -901,8 +947,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # boxes[box].workspace.var("f2_TTj").setVal(9.5000e-01)
                 
                 
-                fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
-                #fr = boxes[box].getFitPDF(name=boxes[box].signalmodel).fitTo(data, opt)
+                #fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+                fr = boxes[box].getFitPDF(name=boxes[box].signalmodel).fitTo(data, opt)
                 fr.SetName('independentFRsigbkg')
                 fr.Print("v")
                 boxes[box].importToWS(fr)
@@ -912,6 +958,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 self.store(fr.correlationHist("correlation_%s_sigbkg" % box), dir=box)
                 # make any plots required
                 boxes[box].plot(fileName, self,  box, data=tot_toy, fitmodel=boxes[box].fitmodel)#, frName='independentFRsigbkg')
+                #boxes[box].plot(fileName, self,  box, data=tot_toy, fitmodel=boxes[box].signalmodel)#, frName='independentFRsigbkg')
                 
                
             #skip saving the workspace if the option is set
@@ -1048,10 +1095,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
         # workspace.extendSet('variables','Boxes')
         
         for box in fileIndex:
-            workspace.extendSet("nuisance", workspace.factory('n2nd_TTj_%s_prime[0,-5.,5.]' % box).GetName())
-            workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_value[1.0]' % box).GetName())
-            if not workspace.var('n2nd_TTj_%s_uncert' % box):
-                workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_uncert[0.1]' % box).GetName())
+            #workspace.extendSet("nuisance", workspace.factory('n2nd_TTj_%s_prime[0,-5.,5.]' % box).GetName())
+            #workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_value[1.0]' % box).GetName())
+            #if not workspace.var('n2nd_TTj_%s_uncert' % box):
+            #    workspace.extendSet("other", workspace.factory('n2nd_TTj_%s_uncert[0.1]' % box).GetName())
             if not workspace.var("lumi_fraction_%s" % box):
                 workspace.extendSet("other", workspace.factory("lumi_fraction_%s[1.0]" % box).GetName())
         
@@ -1066,12 +1113,12 @@ class SingleBoxAnalysis(Analysis.Analysis):
             background_pdf = boxes[box].getFitPDF(graphViz=None,name=boxes[box].workspace.obj('independentFRPDF').GetName())
             
             #replace the n parameter by a log normal
-            workspace.factory("expr::n2nd_TTj_%s('@0 * pow( (1+@1), @2)', n2nd_TTj_%s_value, n2nd_TTj_%s_uncert, n2nd_TTj_%s_prime)" % (box,box,box,box) )
-            box_primes.append('n2nd_TTj_%s_prime' % box)
+            #workspace.factory("expr::n2nd_TTj_%s('@0 * pow( (1+@1), @2)', n2nd_TTj_%s_value, n2nd_TTj_%s_uncert, n2nd_TTj_%s_prime)" % (box,box,box,box) )
+            #box_primes.append('n2nd_TTj_%s_prime' % box)
             
             #we import this into the workspace, but we rename things so that they don't clash
             var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('variables'))]
-            var_names.append('n2nd_TTj_%s' % box)
+            #var_names.append('n2nd_TTj_%s' % box)
             RootTools.Utils.importToWS(workspace,background_pdf,\
                                         rt.RooFit.RenameAllNodes(box),\
                                         rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))

@@ -8,8 +8,17 @@ import sys
 
 # This is global, to be used also in the scripts for plots
 def Binning(boxName, varName):
-    if varName == "MR" : return [350.0, 400.0, 450.0, 500.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
-    if varName == "Rsq": return [0.05, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+    if varName == "MR" :
+        if boxName.find("BJet")!=-1:
+            return [500.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
+        else:
+            return [350.0, 400.0, 450.0, 500.0, 550.0, 650.0, 790.0, 1000, 1500, 2200, 3000, 4000.0]
+            
+    if varName == "Rsq": 
+        if boxName.find("BJet")!=-1:
+            return [0.05, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
+        else:
+            return [0.05, 0.07, 0.12, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0]
     if varName == "Btag": return [1.,5.]
 
 def FindLastBin(h):
@@ -60,7 +69,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             myPDFlist.add(self.workspace.pdf("ePDF2nd_TTj"))
         if "QCD" not in self.zeros:
             myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
-            myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))
+            #myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))
             
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
