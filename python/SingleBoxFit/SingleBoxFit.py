@@ -441,7 +441,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #add in the other signal regions
             norm_region = 'FULL'
 
-            boxes[box].workspace("sigma").setMax(10*self.options.signal_xsec)
+            boxes[box].workspace.var("sigma").setMax(10*self.options.signal_xsec)
             
             BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
             fr_B = fr_central
