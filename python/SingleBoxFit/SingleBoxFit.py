@@ -443,44 +443,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
 
             boxes[box].workspace("sigma").setMax(10*self.options.signal_xsec)
             
-            # # first refit the data
-            # newProdList = rt.RooArgList()
-            # myPDFlist = rt.RooArgList()
-            # for z in boxes[box].zeros:
-            #     if boxes[box].name not in boxes[box].zeros[z]:
-            #         myPDFlist.add(boxes[box].workspace.pdf("ePDF1st_%s"%z))
-            #         newProdList.add(boxes[box].workspace.pdf("R01st_%s_penalty"%z))
-            #         newProdList.add(boxes[box].workspace.pdf("MR01st_%s_penalty"%z))
-            #         newProdList.add(boxes[box].workspace.pdf("b1st_%s_penalty"%z))
-            #         if z!="QCD":
-            #             myPDFlist.add(boxes[box].workspace.pdf("ePDF2nd_%s"%z))
-            #             newProdList.add(boxes[box].workspace.pdf("R02nd_%s_penalty"%z))
-            #             newProdList.add(boxes[box].workspace.pdf("MR02nd_%s_penalty"%z))
-            #             newProdList.add(boxes[box].workspace.pdf("b2nd_%s_penalty"%z))
-            
-            # newAdd = rt.RooAddPdf('newAdd', 'newAdd', myPDFlist)
-            # newProdList.add(newAdd)
-            # boxes[box].importToWS(newAdd)
-           
-            # #remove redundant second components
-            # boxes[box].fix2ndComponent("QCD")
-            # boxes[box].workspace.var("f2_QCD").setVal(0.)
-            # boxes[box].workspace.var("f2_QCD").setConstant(rt.kTRUE)
-            # #create new product
-            # BModel = rt.RooProdPdf("fitmodel_newProd",'BG PDF with new product of penalties', newProdList)
-            # boxes[box].importToWS(BModel)
-            # opt = rt.RooLinkedList()
-            # opt.Add(rt.RooFit.Range("FULL"))
-            # opt.Add(rt.RooFit.Extended(True))
-            # opt.Add(rt.RooFit.Save(True))
-            # opt.Add(rt.RooFit.Hesse(True))
-            # opt.Add(rt.RooFit.Minos(False))
-            # opt.Add(rt.RooFit.PrintLevel(-1))
-            # opt.Add(rt.RooFit.PrintEvalErrors(10))
-            # opt.Add(rt.RooFit.NumCPU(RootTools.Utils.determineNumberOfCPUs()))
-            
-            # boxes[box].workspace.Print("v")
-            
             BModel = boxes[box].getFitPDF(name=boxes[box].fitmodel)
             fr_B = fr_central
                 
@@ -915,41 +877,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 # fix sigma
                 boxes[box].workspace.var("sigma").setVal(0.)
                 boxes[box].workspace.var("sigma").setConstant(True)
-                # fit [1] Older Background Pdf
-                #boxes[box].workspace.var("MR01st_TTj").setVal(-9.0154e+01)
-                #boxes[box].workspace.var("MR02nd_TTj").setVal(-3.4051e+02)
-                #boxes[box].workspace.var("Ntot_TTj").setVal(1.1633e+04)
-                #boxes[box].workspace.var("R01st_TTj").setVal(-1.8898e-01)
-                #boxes[box].workspace.var("R02nd_TTj").setVal(-1.7685e-01)
-                #boxes[box].workspace.var("b1st_TTj").setVal(2.2204e-02)
-                #boxes[box].workspace.var("b2nd_TTj").setVal(3.8682e-02)
-                #boxes[box].workspace.var("f2_TTj").setVal(5.1985e-01)
-                # fit Mu [2] Newer Background Pdf
-                #boxes[box].workspace.var("MR01st_TTj").setVal(-1.7673e+02)
-                #boxes[box].workspace.var("MR02nd_TTj").setVal(-1.5738e+02)
-                #boxes[box].workspace.var("Ntot_TTj").setVal(3.3737e+04)
-                #boxes[box].workspace.var("R01st_TTj").setVal(-2.1555e-01)
-                #boxes[box].workspace.var("R02nd_TTj").setVal(-1.2222e-01)
-                #boxes[box].workspace.var("b1st_TTj").setVal(2.0473e-02)
-                #boxes[box].workspace.var("b2nd_TTj").setVal(4.8232e-02)
-                #boxes[box].workspace.var("f2_TTj").setVal(6.0602e-01)
-                # fit BJetHS
-                # boxes[box].workspace.var("MR01st_QCD").setVal(-9.9974e+01)
-                # boxes[box].workspace.var("MR01st_TTj").setVal(-1.6347e+02)
-                # boxes[box].workspace.var("MR02nd_TTj").setVal(-6.4889e+02)
-                # boxes[box].workspace.var("Ntot_QCD").setVal(1.0225e+04)
-                # boxes[box].workspace.var("Ntot_TTj").setVal(3.4428e+03)
-                # boxes[box].workspace.var("R01st_QCD").setVal(-3.2167e-02)
-                # boxes[box].workspace.var("R01st_TTj").setVal(-1.9856e-01)
-                # boxes[box].workspace.var("R02nd_TTj").setVal(-1.0500e-01)
-                # boxes[box].workspace.var("b1st_QCD").setVal(1.4299e-01)
-                # boxes[box].workspace.var("b1st_TTj").setVal(2.0144e-02)
-                # boxes[box].workspace.var("b2nd_TTj").setVal(5.1417e-02)
-                # boxes[box].workspace.var("f2_TTj").setVal(9.5000e-01)
                 
-                
-                #fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
-                fr = boxes[box].getFitPDF(name=boxes[box].signalmodel).fitTo(data, opt)
+                fr = boxes[box].getFitPDF(name=boxes[box].fitmodel).fitTo(tot_toy, opt)
+                #fr = boxes[box].getFitPDF(name=boxes[box].signalmodel).fitTo(data, opt)
                 fr.SetName('independentFRsigbkg')
                 fr.Print("v")
                 boxes[box].importToWS(fr)

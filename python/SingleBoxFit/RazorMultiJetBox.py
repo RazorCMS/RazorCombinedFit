@@ -64,12 +64,12 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
         # build the total PDF
         myPDFlist = rt.RooArgList()
-        if "TTj" not in self.zeros:
-            myPDFlist.add(self.workspace.pdf("ePDF1st_TTj"))
-            myPDFlist.add(self.workspace.pdf("ePDF2nd_TTj"))
-        if "QCD" not in self.zeros:
-            myPDFlist.add(self.workspace.pdf("ePDF1st_QCD"))
-            #myPDFlist.add(self.workspace.pdf("ePDF2nd_QCD"))
+        for z in self.zeros:
+            if self.name not in self.zeros[z]:
+                myPDFlist.add(self.workspace.pdf("ePDF1st_%s"%z))
+                if z!="QCD":
+                    myPDFlist.add(self.workspace.pdf("ePDF2nd_%s"%z))
+                    
             
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
@@ -94,7 +94,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
 
         
         newProdList = rt.RooArgList()
-        newProdList.add(self.workspace.pdf('%s' % (self.fitmodel)))
+        newProdList.add(self.workspace.pdf('%s' % ("fitmodel")))
         for z in self.zeros:
             if self.name not in self.zeros[z]:
                 newProdList.add(self.workspace.pdf("R01st_%s_penalty"%z))
@@ -112,7 +112,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
         self.workspace.var("f2_QCD").setConstant(rt.kTRUE)
 
 
-        newProd = rt.RooProdPdf("%s_newProd"%self.fitmodel,'BG PDF with new product of penalties', newProdList)
+        newProd = rt.RooProdPdf("%s_newProd"%"fitmodel",'BG PDF with new product of penalties', newProdList)
         self.importToWS(newProd)
         self.fitmodel = newProd.GetName()
 
