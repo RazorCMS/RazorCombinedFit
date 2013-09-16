@@ -857,7 +857,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 boxes[box].defineSet("otherpars_QCD", self.config.getVariables(box, "others_QCD"),workspace)
 
                 ####WHAT IS THIS
-               # boxes[box].defineFunctions(self.config.getVariables(box,"functions")) - we don't have any
+                # boxes[box].defineFunctions(self.config.getVariables(box,"functions")) - we don't have any
 
                 # define the fit range
 
