@@ -441,7 +441,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             #add in the other signal regions
             norm_region = 'FULL'
 
-            boxes[box].workspace("sigma").setMax(self.options.signal_xsec)
+            boxes[box].workspace("sigma").setMax(10*self.options.signal_xsec)
             
             # # first refit the data
             # newProdList = rt.RooArgList()
