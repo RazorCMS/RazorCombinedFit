@@ -179,25 +179,25 @@ class RazorBox(Box.Box):
             self.workspace.factory("RooTwoBin::PlusPDF(CHARGE,plusOne[1.])")
             self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
         
-        # # add only relevant components (for generating toys)
-        # myPDFlist = rt.RooArgList()
-        # for z in self.zeros:
-        #    if self.name not in self.zeros[z]:
-        #        #self.addTailPdf(z, not (z=="Vpj"))
-        #        self.addTailPdf(z, True)
-        #        myPDFlist.add(self.workspace.pdf("ePDF_%s"%z))
+        # add only relevant components (for generating toys)
+        myPDFlist = rt.RooArgList()
+        for z in self.zeros:
+            if self.name not in self.zeros[z]:
+                self.addTailPdf(z, not (z=="Vpj"))
+                #self.addTailPdf(z, True)
+                myPDFlist.add(self.workspace.pdf("ePDF_%s"%z))
 
         # add ALL the different components (for combining boxes in limit setting later):
         # - W+jets
         # - ttbar+jets 1b
         # - ttbar+jets j2b
-        self.addTailPdf("Vpj",False)
-        self.addTailPdf("TTj1b",True)
-        if self.fitMode=='3D' or self.name!="Jet1b": self.addTailPdf("TTj2b",True)
+        #self.addTailPdf("Vpj",False)
+        #self.addTailPdf("TTj1b",True)
+        #if self.fitMode=='3D' or self.name!="Jet1b": self.addTailPdf("TTj2b",True)
         
         # build the total PDF
-        if self.fitMode=='3D': myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
-        elif self.fitMode=='2D' or self.name!="Jet1b": myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"))
+        #if self.fitMode=='3D': myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"), self.workspace.pdf("ePDF_TTj2b"))
+        #elif self.fitMode=='2D' or self.name!="Jet1b": myPDFlist = rt.RooArgList(self.workspace.pdf("ePDF_Vpj"), self.workspace.pdf("ePDF_TTj1b"))
                         
         model = rt.RooAddPdf(self.fitmodel, self.fitmodel, myPDFlist)
         
@@ -334,9 +334,9 @@ class RazorBox(Box.Box):
         #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['HighMR'],data=data,fitmodel=fitmodel)]
         #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['HighMR'],data=data,fitmodel=fitmodel)]
             
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-        #[store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-        #if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         # if not (self.name=='MuEle' or self.name=='MuMu' or self.name=='EleEle' or self.name=='TauTauJet' or self.name=='Jet1b'):
         #     if not (self.name=='Jet2b'):
         #         [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['LowRsq1b','LowMR1b','HighMR1b'],data=data,fitmodel=fitmodel)]
@@ -350,11 +350,11 @@ class RazorBox(Box.Box):
 
         #[store.store(s, dir=box) for s in self.plot2DHisto(inputFile, ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
 
-        [store.store(s, dir=box) for s in self.plot1DSlice(inputFile, "MR", ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
-        [store.store(s, dir=box) for s in self.plot1DSlice(inputFile, "Rsq", ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        #[store.store(s, dir=box) for s in self.plot1DSlice(inputFile, "MR", ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
+        #[store.store(s, dir=box) for s in self.plot1DSlice(inputFile, "Rsq", ranges=['LowRsq','LowMR','HighMR'],data=data,fitmodel=fitmodel)]
         
-        [store.store(s, dir=box) for s in self.plot1DSideband(inputFile, "MR", ranges=['LowMR'],data=data,fitmodel=fitmodel)]
-        [store.store(s, dir=box) for s in self.plot1DSideband(inputFile, "Rsq", ranges=['LowRsq'],data=data,fitmodel=fitmodel)]
+        #[store.store(s, dir=box) for s in self.plot1DSideband(inputFile, "MR", ranges=['LowMR'],data=data,fitmodel=fitmodel)]
+        #[store.store(s, dir=box) for s in self.plot1DSideband(inputFile, "Rsq", ranges=['LowRsq'],data=data,fitmodel=fitmodel)]
 
     def plot1D(self, inputFile, varname, nbin=200, ranges=None, data=None, fitmodel="none", frName="none"):
 

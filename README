@@ -33,6 +33,23 @@ cd RazorCombinedFit
 source setup.sh
 make -j 4
 
+
+To test the HEAD version:
+
+cp /afs/cern.ch/user/w/woodson/public/Razor2013/Data/HT-HTMHT-Run2012ABCD_MR400.0_R0.5_BTAG_PF_MultiJet.root .
+python scripts/runAnalysis.py -a SingleBoxFit -c config_summer2012/RazorInclusive2012_3D_hybrid.config HT-HTMHT-Run2012ABCD_MR400.0_R0.5_BTAG_PF_MultiJet.root --fit-region Sideband
+
+Output files:
+
+razor_canvas_MultiJet_Sideband_LowRsq_LowMR_HighMR_MR.pdf
+razor_canvas_MultiJet_Sideband_LowRsq_LowMR_HighMR_Rsq.pdf
+razor_canvas_MultiJet_Sideband_LowRsq_LowMR_HighMR_nBtag.pdf
+fitmodel_graphViz.dot
+
+To produce a graph of the fitmodel used (only works with newer version of graphviz than on lxplus):
+
+dot -Tpdf fitmodel_graphViz.dot -o fitmodel_graphViz.pdf
+
 To add a new file:
 git add file
 
