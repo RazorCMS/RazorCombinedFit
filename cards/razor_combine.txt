@@ -1,0 +1,33 @@
+Combination of MultiJet=razor_combine_MultiJet.txt  Jet2b=razor_combine_Jet2b.txt  MuJet=razor_combine_MuJet.txt
+imax 3 number of bins
+jmax 10 number of processes minus 1
+kmax 16 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes *         Jet2b     razor_combine_Jet2b.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes *         MuJet     razor_combine_MuJet.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes *         MultiJet  razor_combine_MultiJet.root $PROCESS $PROCESS_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          MultiJet  Jet2b     MuJet   
+observation  2589.0    728.0     5485.0  
+----------------------------------------------------------------------------------------------------------------------------------
+bin                                     MultiJet        MultiJet        MultiJet        MultiJet        Jet2b           Jet2b           Jet2b           MuJet           MuJet           MuJet           MuJet         
+process                                 MultiJet_T2tt   MultiJet_TTj3b  MultiJet_TTj1b  MultiJet_TTj2b  Jet2b_T2tt      Jet2b_TTj2b     Jet2b_TTj3b     MuJet_T2tt      MuJet_TTj2b     MuJet_TTj3b     MuJet_TTj1b   
+process                                 -2              1               2               3               -1              4               5               0               6               7               8             
+rate                                    19.9940         87.5366         1808.6140       771.3613        7.5823          708.7200        24.1610         3.0875          1272.1080       48.1400         4293.0100     
+----------------------------------------------------------------------------------------------------------------------------------
+bgnormJetTTj2b          lnN             -               -               -               -               1.0             1.037           1.0             -               -               -               -             
+bgnormJetTTj3b          lnN             -               -               -               -               1.0             1.0             1.2             -               -               -               -             
+bgnormMuJetTTj1b        lnN             -               -               -               -               -               -               -               1.0             1.0             1.0             1.015         
+bgnormMuJetTTj2b        lnN             -               -               -               -               -               -               -               1.0             1.028           1.0             1.0           
+bgnormMuJetTTj3b        lnN             -               -               -               -               -               -               -               1.0             1.0             1.14            1.0           
+bgnormMultiJetTTj1b     lnN             1.0             1.0             1.023           1.0             -               -               -               -               -               -               -             
+bgnormMultiJetTTj2b     lnN             1.0             1.0             1.0             1.036           -               -               -               -               -               -               -             
+bgnormMultiJetTTj3b     lnN             1.0             1.1             1.0             1.0             -               -               -               -               -               -               -             
+lepton                  lnN             1.03            1.0             1.0             1.0             1.03            1.0             1.0             1.03            1.0             1.0             1.0           
+lumi                    lnN             1.044           1.0             1.0             1.0             1.044           1.0             1.0             1.044           1.0             1.0             1.0           
+shapeJet2bTTj2b         shape           -               -               -               -               -               1.0             1.0             -               -               -               -             
+shapeMuJetTTj1b         shape           -               -               -               -               -               -               -               -               -               -               1.0           
+shapeMuJetTTj2b         shape           -               -               -               -               -               -               -               -               1.0             1.0             -             
+shapeMultiJetTTj1b      shape           -               -               1.0             -               -               -               -               -               -               -               -             
+shapeMultiJetTTj2b      shape           -               1.0             -               1.0             -               -               -               -               -               -               -             
+trigger                 lnN             1.05            1.0             1.0             1.0             1.05            1.0             1.0             1.05            1.0             1.0             1.0           
