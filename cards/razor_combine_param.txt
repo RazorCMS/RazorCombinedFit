@@ -1,0 +1,15 @@
+imax 1 number of channels
+jmax 1 number of backgrounds
+kmax 1 number of nuisnace parameters
+------------------------------------------------------------
+observation	3131
+------------------------------------------------------------
+shapes * * razor_combine_MultiJet.root w:$PROCESS
+------------------------------------------------------------
+bin		bin1			bin1		
+process	MultiJet_signal 	MultiJet_background
+process	0          		1
+rate  	75.4406		3184.016554786
+------------------------------------------------------------
+lumi	lnN	1.044	1.0
+eff	lnN	1.06		1.0
