@@ -146,9 +146,17 @@ def getBinning(boxName, varName):
             
 if __name__ == '__main__':
 
+    rt.gSystem.Load("../lib/libRazor")
+    
     boxes = ["MultiJet","Jet2b","EleMultiJet","MuMultiJet","MuJet","EleJet","MuEle","EleEle","MuMu"]
     boxes = [sys.argv[1]]
     infile = rt.TFile.Open("FULLFits2012ABCD.root","READ")
+    w = rt.RooWorkspace("w")
+    w.addClassDeclImportDir('src/')
+    w.addClassImplImportDir('src/')
+    w.importClassCode(rt.RooRazor2DTail_SYS.Class())
+    w.importClassCode(rt.RooBTagMult.Class())
+    w.importClassCode(rt.RooRazor3DSignal.Class())
     histos = {}
     histos1d = {}
     for box in boxes:
@@ -175,6 +183,18 @@ if __name__ == '__main__':
         MR = workspace.var("MR")
         Rsq = workspace.var("Rsq")
         nBtag = workspace.var("nBtag")
+
+        
+        MRRsqnBtag = rt.RooArgSet("MRRsqnBtag")
+        MRRsqnBtag.add(MR)
+        MRRsqnBtag.add(Rsq)
+        MRRsqnBtag.add(nBtag)
+
+        data_obs = data.reduce(MRRsqnBtag)
+        data_obs.SetName("data_obs")
+        RootTools.Utils.importToWS(w, data_obs)
+        RootTools.Utils.importToWS(w, workspace.pdf("fitmodel").Clone("%s_background"%box))
+        
         data.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
         
         x = array('d', getBinning(box, "MR"))
@@ -202,7 +222,7 @@ if __name__ == '__main__':
                     binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
                     binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),binMax,0,binMax)
                     
-        for iToy in xrange(0, 3000):
+        for iToy in xrange(0, 30):
             randomPars = getRandomPars(fr, workspace)
             if iToy%50==0: print "toy #", iToy
             #for p in RootTools.RootIterator.RootIterator(randomPars):
@@ -238,8 +258,66 @@ if __name__ == '__main__':
         
         sigFile = rt.TFile.Open("SMS/T2tt_MG_750.000000_MCHI_50.000000_MR300.0_R0.387298334621_%s.root"%box)
         sigHist = sigFile.Get("wHisto_pdferr_nom")
-        histos[box,"T2tt"] = sigHist.Clone("%s_%s"%(box,"T2tt"))
-        histos[box,"T2tt"].SetTitle("%s_%s"%(box,"T2tt"))
+        
+        wHisto = sigFile.Get('wHisto_pdferr_nom')
+        btag =  sigFile.Get('wHisto_btagerr_pe')
+        jes =  sigFile.Get('wHisto_JESerr_pe')
+        pdf =  sigFile.Get('wHisto_pdferr_pe')
+        isr =  sigFile.Get('wHisto_ISRerr_pe')
+        
+        def renameAndImport(histo):
+            #make a memory resident copy
+            newHisto = histo.Clone('%s_%s' % (histo.GetName(),box))
+            newHisto.SetDirectory(0)
+            RootTools.Utils.importToWS(w,newHisto)
+            return newHisto
+        
+        wHisto = renameAndImport(wHisto)
+        btag = renameAndImport(btag)
+        jes = renameAndImport(jes)
+        pdf = renameAndImport(pdf)
+        isr = renameAndImport(isr)
+            
+        
+        #set the per box eff value
+        sigNorm = wHisto.Integral()
+        #w.factory('eff_value_%s[%f]' % (box,sigNorm))
+        #w.factory('lumi_uncert[0.044]')
+        #w.factory('eff_uncert[0.06]')
+        #w.factory('lumi_value[19300.]')
+        #w.factory('eff_value[1.0]')
+        #w.factory('eff_prime[0,-5.,5.]')
+        #w.factory('lumi_prime[0,-5.,5.]')
+        w.factory('xJes_prime[0,-5.,5.]')
+        w.factory('xPdf_prime[0,-5.,5.]')
+        w.factory('xBtag_prime[0,-5.,5.]')
+        w.factory('xIsr_prime[0,-5.,5.]')
+        w.factory('sigma[0.02,0.,1.]')
+        
+        #w.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+        #w.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
+
+        w.factory('lumi[19300.]')
+        w.factory('eff[%f]'%sigNorm)
+        
+        signal = rt.RooRazor3DSignal('%s_signal_pdf' % box,'Signal PDF for box %s' % box,
+                                     w.var('MR'),w.var('Rsq'),w.var('nBtag'),
+                                     w,
+                                     wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),isr.GetName(),
+                                     w.var('xJes_prime'),w.var('xPdf_prime'),w.var('xBtag_prime'),w.var('xIsr_prime'))
+
+                
+        signalModel = signal.GetName()
+        
+        RootTools.Utils.importToWS(w, signal)
+        
+        modelName = "Signal"
+        w.factory("expr::Ntot_signal('@0*@1*@2',sigma, lumi, eff)")
+        extended = w.factory("RooExtendPdf::%s_signal(%s, Ntot_signal)" % (box,signalModel))
+
+        
+        histos[box,"T2tt"] = sigHist.Clone("%s_%s_3d"%(box,"T2tt"))
+        histos[box,"T2tt"].SetTitle("%s_%s_3d"%(box,"T2tt"))
         lumi = 19.3 # luminosity in fb^-1
         xsec = 6.23244 # cross section in fb at 725
         xsec_err = .188796 # percent error on cross section at 725
@@ -259,6 +337,12 @@ if __name__ == '__main__':
                     for k in xrange(1,histo.GetNbinsZ()+1):
                         newbin += 1
                         histo1d.SetBinContent(newbin,histo.GetBinContent(i,j,k))
-            histo.Write()
-            histo1d.Write()
+            #histo.Write()
+            #histo1d.Write()
+            #RootTools.Utils.importToWS(w, histo)
+            #RootTools.Utils.importToWS(w, histo1d)
+            #if bkg=="T2tt":
+            #    RootTools.Utils.importToWS(w, histo)
+        
+        w.Write()
         outFile.Close()
