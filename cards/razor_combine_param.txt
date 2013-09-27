@@ -6,10 +6,10 @@ observation	3131
 ------------------------------------------------------------
 shapes * * razor_combine_MultiJet.root w:$PROCESS
 ------------------------------------------------------------
-bin		bin1			bin1		
-process	MultiJet_signal 	MultiJet_background
-process	0          		1
-rate  	75.4406		3184.016554786
+bin		bin1			bin1			bin2
+process	PDF_Signal 	PDF_TTj1b	PDF_TTj2b
+process	0          		1			2
+rate  	75.44		2159.48		1024.53
 ------------------------------------------------------------
-lumi	lnN	1.044	1.0
-eff	lnN	1.06		1.0
+lumi	lnN	1.044	1.0	1.0			1.0
+eff	lnN	1.06		1.0	1.0			1.0

@@ -297,10 +297,10 @@ if __name__ == '__main__':
         #w.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
         #w.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
 
-        w.factory('lumi[19300.]')
-        w.factory('eff[%f]'%sigNorm)
+        #w.factory('lumi[19300.]')
+        #w.factory('eff[%f]'%sigNorm)
         
-        signal = rt.RooRazor3DSignal('%s_signal_pdf' % box,'Signal PDF for box %s' % box,
+        signal = rt.RooRazor3DSignal('PDF_Signal','Signal PDF for box %s' % box,
                                      w.var('MR'),w.var('Rsq'),w.var('nBtag'),
                                      w,
                                      wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),isr.GetName(),
@@ -312,8 +312,8 @@ if __name__ == '__main__':
         RootTools.Utils.importToWS(w, signal)
         
         modelName = "Signal"
-        w.factory("expr::Ntot_signal('@0*@1*@2',sigma, lumi, eff)")
-        extended = w.factory("RooExtendPdf::%s_signal(%s, Ntot_signal)" % (box,signalModel))
+        #w.factory("expr::Ntot_signal('@0*@1*@2',sigma, lumi, eff)")
+        #extended = w.factory("RooExtendPdf::%s_signal(%s, Ntot_signal)" % (box,signalModel))
 
         
         histos[box,"T2tt"] = sigHist.Clone("%s_%s_3d"%(box,"T2tt"))
