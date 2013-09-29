@@ -150,7 +150,8 @@ if __name__ == '__main__':
     
     boxes = ["MultiJet","Jet2b","EleMultiJet","MuMultiJet","MuJet","EleJet","MuEle","EleEle","MuMu"]
     boxes = [sys.argv[1]]
-    infile = rt.TFile.Open("FULLFits2012ABCD.root","READ")
+    #infile = rt.TFile.Open("FULLFits2012ABCD.root","READ")
+    infile = rt.TFile.Open("razor_output_MultiJet.root","READ")
     w = rt.RooWorkspace("w")
     w.addClassDeclImportDir('src/')
     w.addClassImplImportDir('src/')
@@ -222,7 +223,7 @@ if __name__ == '__main__':
                     binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
                     binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),binMax,0,binMax)
                     
-        for iToy in xrange(0, 30):
+        for iToy in xrange(0, 3):
             randomPars = getRandomPars(fr, workspace)
             if iToy%50==0: print "toy #", iToy
             #for p in RootTools.RootIterator.RootIterator(randomPars):
@@ -292,7 +293,7 @@ if __name__ == '__main__':
         w.factory('xPdf_prime[0,-5.,5.]')
         w.factory('xBtag_prime[0,-5.,5.]')
         w.factory('xIsr_prime[0,-5.,5.]')
-        w.factory('sigma[0.02,0.,1.]')
+        w.factory('sigma[0.01,0.,1.]')
         
         #w.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
         #w.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
