@@ -191,7 +191,7 @@ if __name__ == '__main__':
         if gluinopoint < mg_lower or gluinopoint > mg_upper: continue
         gluinopoint = float(gluinopoint)
         xsecRange = getXsecRange(neutralinopoint,gluinopoint)
-        xsecRange = [0.05, 1., 5., 10., 15.]
+        xsecRange = [0.05, 1., 5., 10., 15., 20., 25.]
         for xsecpoint in xsecRange:
             for hypo in hypotheses:
                 for t in xrange(0,nJobs):
