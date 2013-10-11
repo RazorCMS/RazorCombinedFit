@@ -177,7 +177,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("combine -M Asymptotic --saveWorkspace -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
     
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
-    outputfile.write("cd; rm -rf $WD\n")
+    outputfile.write("cd; rm -rf $TWD\n")
     
     outputfile.close
 
@@ -263,8 +263,8 @@ if __name__ == '__main__':
                     outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
-                    #time.sleep(3)
+                    time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
