@@ -153,6 +153,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("scram project CMSSW_6_1_1\n")
     outputfile.write("cd CMSSW_6_1_1/src\n")
     outputfile.write("eval `scram runtime -sh`\n")
+    outputfile.write("git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit\n")
     outputfile.write("cd HiggsAnalysis/CombinedLimit\n")
     outputfile.write("git pull origin master\n")
     outputfile.write("git checkout V03-05-00\n")
