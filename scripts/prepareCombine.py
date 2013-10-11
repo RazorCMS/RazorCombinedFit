@@ -361,11 +361,11 @@ if __name__ == '__main__':
         RootTools.Utils.importToWS(w, data_obs)
 
         for bkg in initialbkgs[:-1]:
-            step = rt.RooRazorStep("StepPdf_%s"%bkg,"StepPdf_%s"%bkg,MR,Rsq,w.var("MRcut"),w.var("Rsqcut"))
+            #step = rt.RooRazorStep("StepPdf_%s"%bkg,"StepPdf_%s"%bkg,MR,Rsq,w.var("MRcut"),w.var("Rsqcut"))
             prod = rt.RooArgList()
             prod.add(workspace.pdf("RazPDF_%s"%bkg))
             prod.add(workspace.pdf("BtagPDF_%s"%bkg))
-            prod.add(step)
+            #prod.add(step)
             finalprod = rt.RooProduct("PDF_%s"%bkg,"PDF_%s"%bkg,prod)
             
             RootTools.Utils.importToWS(w,finalprod,\
