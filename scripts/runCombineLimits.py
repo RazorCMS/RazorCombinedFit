@@ -143,7 +143,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
     user = os.environ['USER']
     
-    combineDir = "/afs/cern.ch/work/%s/%s/RAZORLIMITS/Combine/"%(user[0],user)
+    combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/"%(user[0],user)
     
     outputfile.write('#!/usr/bin/env bash -x\n')
     outputfile.write("export TWD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
@@ -172,7 +172,8 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
         
-    outputfile.write("python scripts/prepareCombine.py %s ${NAME} FULLFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root"%(box,massPoint,box))
+    outputfile.write("python scripts/prepareCombine.py %s ${NAME} FULLFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root\n"%(box,massPoint,box))
+    outputfile.write("combine -M Asymptotic --saveWorkspace -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
     
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
     outputfile.write("cd; rm -rf $WD\n")
@@ -242,7 +243,7 @@ if __name__ == '__main__':
     for gluinopoint, neutralinopoint in gchipairs:
         if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
         if gluinopoint < mg_lower or gluinopoint >= mg_upper: continue
-        xsecRange = getXsecRange(model,neutralinopoint,gluinopoint)
+        xsecRange = [1.]
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
             for hypo in hypotheses:
@@ -261,8 +262,8 @@ if __name__ == '__main__':
                     outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
-                    time.sleep(3)
+                    #time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
