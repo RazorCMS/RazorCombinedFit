@@ -30,7 +30,7 @@ def getGChiPairs(model):
                      (950, 525), (950, 550), (950, 600), (950, 625), (950, 650), (950, 700), (950, 750), (950, 800), (950, 850), (950, 900), (950, 925),
                      (1000, 525), (1000, 550), (1000, 600), (1000, 625), (1000, 650), (1000, 700), (1000, 750), (1000, 800), (1000, 850),  (1000, 900), (1000, 950), (1000, 975),
                      (1025, 50), (1025, 200), (1025, 300), (1025, 400), (1025, 450), (1025, 500), (1025, 525), (1025, 550), (1025, 600), (1025, 625), (1025, 650), (1025, 700), (1025, 750), (1025, 800), (1025, 850), (1025, 900), (1025, 950), (1025, 1000),
-                     (1050, 550), (1050, 600), (1050, 650), (1050, 700), (1050, 750), (1050, 800), (1050, 825), (1050, 850), (1050, 900), (1050, 950), (1050, 1000), (1050, 1025),
+c                     (1050, 550), (1050, 600), (1050, 650), (1050, 700), (1050, 750), (1050, 800), (1050, 825), (1050, 850), (1050, 900), (1050, 950), (1050, 1000), (1050, 1025),
                      (1075, 50), (1075, 200), (1075, 300), (1075, 400), (1075, 450), (1075, 500), (1075, 525), (1075, 550), (1075, 600), (1075, 625), (1075, 650), (1075, 700), (1075, 750), (1075, 800), (1075, 850), (1075, 900), (1075, 950),  (1075, 1000),  (1075, 1050),
                      (1100, 550), (1100, 600), (1100, 650), (1100, 700), (1100, 750), (1100, 800), (1100, 850), (1100, 900), (1100, 950), (1100, 1000), (1100, 1050), (1100, 1075),
                      (1125, 50), (1125, 200), (1125, 300), (1125, 400), (1125, 450), (1125, 500), (1125, 525), (1125, 550), (1125, 600), (1125, 625), (1125, 650), (1125, 700), (1125, 750), (1125, 800), (1125, 850), (1125, 900), (1125, 950), (1125, 1000), (1125, 1050), (1125, 1100),
@@ -146,22 +146,29 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/"%(user[0],user)
     
     outputfile.write('#!/usr/bin/env bash -x\n')
+    outputfile.write('echo $SHELL\n')
+    outputfile.write('pwd\n')
     outputfile.write("export TWD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("mkdir -p $TWD\n")
     outputfile.write("cd $TWD\n")
+    outputfile.write('pwd\n')
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
     outputfile.write("scram project CMSSW_6_1_1\n")
     outputfile.write("cd CMSSW_6_1_1/src\n")
+    outputfile.write('pwd\n')
     outputfile.write("eval `scram runtime -sh`\n")
     outputfile.write("git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit\n")
     outputfile.write("cd HiggsAnalysis/CombinedLimit\n")
+    outputfile.write('pwd\n')
     outputfile.write("git pull origin master\n")
     outputfile.write("git checkout V03-05-00\n")
     outputfile.write("scramv1 b\n")
     outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_1_1/src\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("cd $WD\n")
+    outputfile.write('pwd\n')
     outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
+    outputfile.write('pwd\n')
     outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make clean; make -j 4\n")
@@ -177,7 +184,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("combine -M Asymptotic --saveWorkspace -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
     
     outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
-    outputfile.write("cd; rm -rf $TWD\n")
+    outputfile.write("cd; pwd; rm -rf $TWD\n")
     
     outputfile.close
 
