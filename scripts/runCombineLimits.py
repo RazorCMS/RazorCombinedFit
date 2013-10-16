@@ -198,7 +198,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     if len(boxes)>1:
         options = ["%s=razor_combine_%s_%s.txt"%(ibox,ibox,model) for ibox in boxes]
         option = " ".join(options)
-        outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s.txt"%(option,box,model))
+        outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s.txt \n"%(option,box,model))
         outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic --saveWorkspace -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
         
     #outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
