@@ -8,16 +8,16 @@ import sys
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
     if boxName in ["Jet", "TauTauJet", "MultiJet", "Jet2b", "Jet1b"]:
-        if varName == "MR" :        return [400, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
+        if varName == "MR" :        return [350, 400, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" : 
             if btag == "NoBtag" or boxName in ["Jet", "Jet1b"]:
                                     return [0.25,0.30,0.35,0.40,0.45,0.50]
             if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
-        if varName == "MR" :        return [300, 350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
+        if varName == "MR" :        return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" :
-            if btag == "NoBtag":    return [0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50]
-            elif btag == "Btag":    return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
+            if btag == "NoBtag":    return [0.05, 0.1, 0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50]
+            elif btag == "Btag":    return [0.05, 0.1, 0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     if varName == "nBtag" :
         if btag == "NoBtag":        return [0,1]
         elif btag == "Btag":        return [1,2,3,4]
@@ -40,7 +40,7 @@ class RazorBox(Box.Box):
         else:
             self.btag = "Btag"
             self.zeros = {'TTj1b':['Jet2b'],
-                          'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b'],
+                          'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b','Ele'],
                           'Vpj':['MuEle','EleEle','MuMu','Mu','MuJet','MuMultiJet','Ele','EleJet','EleMultiJet','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b']}
                         
         if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"

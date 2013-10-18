@@ -6,7 +6,11 @@ import RootTools
 from RazorCombinedFit.Framework import Config
 
 #boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'MuTau':3,'Mu':4,'EleTau':5,'Ele':6,'Jet':7,'Jet2b':7,'Jet1b':7,'TauTauJet':8,'MultiJet':9}
-boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[8,9]}
+#boxMap = {'MuEle':[0],'MuMu':[1],'Ele':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[8,9]}
+
+boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'Mu':[3],'Ele':[4],'Had':[5],'BJet':[6]}
+
+
 cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
@@ -44,71 +48,43 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     btagmax =  args['nBtag'].getMax()
     label ="BTAG_"
     if btagmax <= 1.: label = "NoBTAG_"
-    if not calo: label += "PF_"
-    else: label += "CALO_"
+
     if useWeight: label += "WEIGHT_"
 
     btagcutoff = 3
     if box in ["MuEle", "MuMu", "EleEle", "TauTauJet"]:
         btagcutoff = 1
 
-    if box in ["Jet",  "MultiJet", "TauTauJet", "EleEle", "EleTau", "Ele", "Jet2b", "Jet1b", "EleMultiJet", "EleJet"]: 
-        noiseCut = "abs(TMath::Min( abs(atan2(MET_y,MET_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_y,MET_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
-    elif box in ["MuEle", "MuMu", "MuTau", "Mu", "MuMultiJet", "MuJet"]:
-        noiseCut = "abs(TMath::Min( abs(atan2(MET_NOMU_y,MET_NOMU_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_NOMU_y,MET_NOMU_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
-    
-    if box in ["Jet", "MultiJet", "TauTauJet", "Jet2b", "Jet1b"]:
-        triggerReq = "HLT_RsqMR55_Rsq0p09_MR150 || HLT_RsqMR60_Rsq0p09_MR150 || HLT_RsqMR65_Rsq0p09_MR150"
-    elif box in ["MuMu", "MuTau", "Mu", "MuMultiJet", "MuJet"]:
-        triggerReq = "HLT_Mu12_RsqMR30_Rsq0p04_MR200 || HLT_Mu12_RsqMR40_Rsq0p04_MR200 ||  HLT_Mu12_RsqMR45_Rsq0p04_MR200"
-    elif box in ["MuEle", "EleEle", "Ele", "EleTau", "EleMultiJet", "EleJet"]:
-        triggerReq = "HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR30_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR40_Rsq0p04_MR200 || HLT_Ele12_CaloIdL_CaloIsoVL_TrkIdVL_TrkIsoVL_RsqMR45_Rsq0p04_MR200"
-
-    if useWeight or isMC:
-        triggerReq = "MR>0."
-        noiseCut = "MR>0."
-
     #iterate over selected entries in the input tree
     boxCut = "(" + "||".join(["BOX_NUM==%i"%cut for cut in boxMap[box]]) + ")"
     print boxCut
-
-    jetReq = "MR>0."
-
-    if box in ["MuMultiJet", "EleMultiJet"]:
-        if isMC:
-            jetReq = "NJET>=4"
-        else:
-            jetReq = "NJET_NOMU>=4"
-    elif box in ["MuJet", "EleJet"]:
-        if isMC:
-            jetReq = "NJET<=3"
-        else:
-            jetReq = "(NJET_NOMU<=3)"
-        
-    if not calo:
-        if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && (%s) && GOOD_PF && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,jetReq),'entrylist')
-        else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && %s && GOOD_PF && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
-    else:
-        tree.Draw('>>elist','MR_CALO_NOMU >= %f && MR_CALO_NOMU <= %f && RSQ_CALO_NOMU >= %f && RSQ_CALO_NOMU <= %f && %s && GOOD_CALO && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
+      
+    if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f' % (mRmin,mRmax,rsqMin,rsqMax),'entrylist')
+    else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && %s  && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;
+    nEvents=0
     while True:
+        nEvents+=1
+        #if nEvents > 100000: break
         entry = elist.Next()
         if entry == -1: break
         tree.GetEntry(entry)
-        
-        if not calo:
-            if tree.BTAG_NUM < btagmin: continue
-            if box =="Jet1b" and tree.BTAG_NUM>=2: continue
-            if box =="Jet2b" and tree.BTAG_NUM<2: continue
-                #if box in ["MuJet","EleJet"]:
-                #if tree.BTAG_NUM==1 and tree.BTAG_NUM_CSV[2]==0: continue
-                #if tree.RSQ_PFTYPE1>0.7: print tree.BTAG_NUM, tree.BTAG_NUM_CSV[2], tree.RSQ_PFTYPE1
-                
-        else:
-            if tree.BTAG_NUM_CALO < btagmin: continue
 
+        #box selection
+        boxCut = False
+        if box in ['Ele']:
+            boxCut = tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM >0 and tree.MR >= 350. and tree.RSQ >= 0.05 and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
+
+        if not(boxCut): continue
+        if tree.nCSVM < btagmin: continue
+        if box =="Jet1b" and tree.nCSVM>=2: continue
+        if box =="Jet2b" and tree.nCSVM<2: continue
+        #if box in ["MuJet","EleJet"]:
+        #if tree.nCSVM==1 and tree.nCSVM_CSV[2]==0: continue
+        #if tree.RSQ_PFTYPE1>0.7: print tree.nCSVM, tree.nCSVM_CSV[2], tree.RSQ_PFTYPE1
+                
         runrange = run.split(":")
         if len(runrange) == 2:
             minrun = int(runrange[0])
@@ -119,28 +95,14 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
         
-        if not calo:
-            a.setRealValue('MR',tree.MR)
-            if isMC:
-                a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
-                a.setRealValue('Rsq',tree.RSQ)
-            else:
-                a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_PFTYPE1))
-                a.setRealValue('Rsq',tree.RSQ_PFTYPE1)
-            if tree.BTAG_NUM >= btagcutoff:
-                a.setRealValue('nBtag',btagcutoff)
-            else:
-                a.setRealValue('nBtag',tree.BTAG_NUM)
-            #a.setRealValue('CHARGE',tree.CHARGE)
+        a.setRealValue('MR',tree.MR)
+        a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ))
+        a.setRealValue('Rsq',tree.RSQ)
+       
+        if tree.nCSVM >= btagcutoff:
+            a.setRealValue('nBtag',btagcutoff)
         else:
-            a.setRealValue('MR',tree.MR_CALO_NOMU)
-            a.setRealValue('R',rt.TMath.Sqrt(tree.RSQ_CALO_NOMU))
-            a.setRealValue('Rsq',tree.RSQ_CALO_NOMU)
-            if  tree.BTAG_NUM_CALO >= btagcutoff:
-                a.setRealValue('nBtag',btagcutoff)
-            else:
-                a.setRealValue('nBtag',tree.BTAG_NUM_CALO)
-            #a.setRealValue('CHARGE',tree.CHARGE)
+            a.setRealValue('nBtag',tree.nCSVM)
         if useWeight:
             try:
                 a.setRealValue('W',tree.WXSEC*lumi/5.0)
@@ -224,20 +186,20 @@ if __name__ == '__main__':
             if not options.eff:
                 #dump the trees for the different datasets
                 if options.box != None:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, options.box+'.root', cfg,options.box,options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
                 else:
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuJet.root', cfg,'MuJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MuMultiJet.root', cfg,'MuMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleJet.root', cfg,'EleJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'EleMultiJet.root', cfg,'EleMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2DataseGt(input.Get('EVENTS'), decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    #convertTree2Dataset(input.Get('EVENTS'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
-                    convertTree2Dataset(input.Get('EVENTS'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'MuEle.root', cfg,'MuEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'MuMu.root', cfg,'MuMu',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'EleEle.root', cfg,'EleEle',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'MuJet.root', cfg,'MuJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'MuMultiJet.root', cfg,'MuMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'EleJet.root', cfg,'EleJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'EleMultiJet.root', cfg,'EleMultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2DataseGt(input.Get('RMRTree'), decorator, 'Jet2b.root', cfg,'Jet2b',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    #convertTree2Dataset(input.Get('RMRTree'), decorator, 'Jet.root', cfg,'Jet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
+                    convertTree2Dataset(input.Get('RMRTree'), decorator, 'MultiJet.root', cfg,'MultiJet',options.min,options.max,options.run,options.calo,options.useWeight,options.isMC)
             else:
-                printEfficiencies(input.Get('EVENTS'), decorator, cfg, options.flavour)
+                printEfficiencies(input.Get('RMRTree'), decorator, cfg, options.flavour)
             
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
