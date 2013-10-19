@@ -43,7 +43,23 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
         txtfile.write("shapes * * razor_combine_%s_%s.root $PROCESS $PROCESS_$SYSTEMATIC\n"%
                       (box,model))
         txtfile.write("------------------------------------------------------------\n")
-        if box=="Jet2b":
+        if box in ["MuEle","MuMu","EleEle"]:
+            txtfile.write("bin		bin1			bin1		\n")
+            txtfile.write("process		%s_%s 	%s_%s\n"%
+                          (box,model,box,bkgs[0]))
+            txtfile.write("process        	0          		1\n")
+            txtfile.write("rate            %f		%f	\n"%
+                          (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral()))
+            txtfile.write("------------------------------------------------------------\n")
+            txtfile.write("lumi			    lnN	1.044       1.00\n")
+            txtfile.write("lepton			lnN	1.03       1.00\n")
+            txtfile.write("trigger			lnN	1.05       1.00\n")
+            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       %f\n"%
+                          (box,bkgs[0],norm_err))
+            for param_name in param_names:
+                txtfile.write("%s_%s	shape	-	   0.50\n"%(param_name,box))
+        elif box=="Jet2b":
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1]))
@@ -62,7 +78,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s\n"%
                           (box,bkgs[1],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   1.00	1.00\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   0.50	0.50\n"%(param_name,box))
         else:
                 
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
@@ -86,7 +102,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	1.00	%f\n"%
                           (box,bkgs[2],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   1.00	1.00	1.00\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   0.50	0.50	0.50\n"%(param_name,box))
         txtfile.close()
 
 def find68ProbRange(hToy, probVal=0.6827):
@@ -259,7 +275,10 @@ if __name__ == '__main__':
     histos = {}
     histos1d = {}
     for box in boxes:
-        if box == "Jet2b":
+        if box in ["MuEle", "EleEle", "MuMu"]:
+            param_names = ["MR0_TTj1b", "Ntot_TTj1b", "R0_TTj1b", "b_TTj1b", "n_TTj1b"]
+            initialbkgs = ["TTj1b"]
+        elif box == "Jet2b":
             param_names = ["MR0_TTj2b", "Ntot_TTj2b", "R0_TTj2b", "b_TTj2b", "f3_TTj2b", "n_TTj2b"]
             initialbkgs = ["TTj2b", "TTj3b"]
         else:
@@ -295,8 +314,8 @@ if __name__ == '__main__':
         paramList = rt.RooArgList()
         for param_name in param_names:
             paramList.add(workspace.var(param_name))
-        condCovMatrix = fr.conditionalCovarianceMatrix(paramList)
 
+        #condCovMatrix = fr.conditionalCovarianceMatrix(paramList)
         #covMatrix = condCovMatrix
         
         covMatrixE = rt.TMatrixDSymEigen(covMatrix)
@@ -360,7 +379,8 @@ if __name__ == '__main__':
         data_obs.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
         RootTools.Utils.importToWS(w, data_obs)
 
-        for bkg in initialbkgs[:-1]:
+        for bkg in initialbkgs:
+            if bkgs=="TTj3b": continue
             #step = rt.RooRazorStep("StepPdf_%s"%bkg,"StepPdf_%s"%bkg,MR,Rsq,w.var("MRcut"),w.var("Rsqcut"))
             prod = rt.RooArgList()
             prod.add(workspace.pdf("RazPDF_%s"%bkg))
@@ -373,8 +393,10 @@ if __name__ == '__main__':
                                        rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
         
         
+
         
-        for bkg in initialbkgs[:-1]:
+        for bkg in initialbkgs:
+            if bkgs=="TTj3b": continue
             for i in xrange(1,len(x)):
                 for j in xrange(1,len(y)):
                     for k in xrange(1, len(z)):
@@ -397,8 +419,8 @@ if __name__ == '__main__':
                     binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
 
         sign = {}
-        sign["Up"] = 1.00
-        sign["Down"] = -1.00
+        sign["Up"] = 0.50
+        sign["Down"] = -0.50
         for bkg in initialbkgs:
             for p in range(0,len(param_names)):
                 var_name = param_names[p]
@@ -464,7 +486,7 @@ if __name__ == '__main__':
         w.factory('xPdf_prime[0,-5.,5.]')
         w.factory('xBtag_prime[0,-5.,5.]')
         w.factory('xIsr_prime[0,-5.,5.]')
-        w.factory('sigma[0.005,0.,100.]')
+        w.factory('sigma[0.001,0.,100.]')
         
         #w.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
         #w.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
@@ -490,7 +512,7 @@ if __name__ == '__main__':
         
         histos[box,model] = sigHist.Clone("%s_%s_3d"%(box,model))
         histos[box,model].SetTitle("%s_%s_3d"%(box,model))
-        lumi = 19.3 # luminosity in fb^-1
+        lumi = 193. # luminosity in fb^-1/10
         histos[box,model].Scale(lumi)
         outFile = rt.TFile.Open("razor_combine_%s_%s.root"%(box,model),"RECREATE")
 
