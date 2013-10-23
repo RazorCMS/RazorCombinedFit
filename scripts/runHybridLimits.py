@@ -357,33 +357,33 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         elif mDelta < 150 and gluinoMass >= 400:
             xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
         elif mDelta < 200 and gluinoMass < 400:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100.]
+            xsecRange = [0.1, 0.5, 1., 3., 5., 7., 10., 50., 100.]
         elif mDelta < 200 and gluinoMass >= 400:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50.]
+            xsecRange = [0.1, 0.5, 1., 3., 5., 7., 10., 30., 50.]
         elif mDelta < 400 and gluinoMass < 400:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+            xsecRange = [0.05, 0.1, 0.3, 0.5, 1., 3., 5., 7., 10., 50.]
         elif mDelta < 400 and gluinoMass >= 400:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5.]
+            xsecRange = [0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 1., 3., 5.]
         elif mDelta < 500 and gluinoMass < 500:
-            xsecRange = [0.01, 0.05, 0.1, 0.5, 1.]
+            xsecRange = [0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 0.7, 1.]
         elif mDelta < 500 and gluinoMass >= 500:
-            xsecRange = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
+            xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
         else:
-            xsecRange = [0.0005, 0.001, 0.005, 0.01, 0.05]
-        # if (gluinoMass >= 700) and (neutralinoMass < 600): 
-        #     xsecRange.extend([0.002, 0.005, 0.007])
-        # elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass >= 300 and neutralinoMass < 500): 
-        #     xsecRange.extend([0.005, 0.007, 0.01, 0.02])
-        # elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass >= 200 and neutralinoMass < 400):
-        #     xsecRange.extend([0.02, 0.05, 0.07, 0.1])
-        # elif (gluinoMass >= 400 and gluinoMass < 500) and (neutralinoMass >= 200 and neutralinoMass < 400):
-        #     xsecRange.extend([0.1, 0.2, 0.3, 0.4])
-        # elif (gluinoMass >= 300 and gluinoMass < 400) and (neutralinoMass >= 150):
-        #     xsecRange.extend([0.4, 1.0, 2.0])
-        # elif (gluinoMass >= 200 and gluinoMass < 300):
-        #     xsecRange.extend([2.0, 5.0, 10., 20.])
-        # elif (gluinoMass < 200):
-        #     xsecRange.extend([20., 50., 100., 200., 500.])
+            xsecRange = [0.0005, 0.0007, 0.001, 0.003, 0.005, 0.01, 0.05]
+        if (gluinoMass >= 700) and (neutralinoMass < 600): 
+            xsecRange.extend([0.002, 0.005, 0.007])
+        elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass >= 300 and neutralinoMass < 500): 
+            xsecRange.extend([0.005, 0.007, 0.01, 0.02])
+        elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass >= 200 and neutralinoMass < 400):
+            xsecRange.extend([0.02, 0.05, 0.07, 0.1])
+        elif (gluinoMass >= 400 and gluinoMass < 500) and (neutralinoMass >= 200 and neutralinoMass < 400):
+            xsecRange.extend([0.1, 0.2, 0.3, 0.4])
+        elif (gluinoMass >= 300 and gluinoMass < 400) and (neutralinoMass >= 150):
+            xsecRange.extend([0.4, 1.0, 2.0])
+        elif (gluinoMass >= 200 and gluinoMass < 300):
+            xsecRange.extend([2.0, 5.0, 10., 20.])
+        elif (gluinoMass < 200):
+            xsecRange.extend([20., 50., 100., 200., 500.])
 
     print sorted(list(set(xsecRange)))
     return sorted(list(set(xsecRange)))
