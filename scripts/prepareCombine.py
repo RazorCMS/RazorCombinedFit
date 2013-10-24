@@ -57,10 +57,10 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			    lnN	1.044       1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00\n")
-            txtfile.write("Pdf			shape	1.00       -\n")
-            txtfile.write("Jes			shape	1.00       -\n")
-            txtfile.write("Btag			shape	1.00       -\n")
-            txtfile.write("Isr			shape	1.00       -\n")
+            txtfile.write("Pdf			shape	0.50       -\n")
+            txtfile.write("Jes			shape	0.50       -\n")
+            txtfile.write("Btag			shape	0.50       -\n")
+            txtfile.write("Isr			shape	0.50       -\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f\n"%
@@ -79,10 +79,10 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
-            txtfile.write("Pdf			shape	1.00       -	-\n")
-            txtfile.write("Jes			shape	1.00       -	-\n")
-            txtfile.write("Btag			shape	1.00       -	-\n")
-            txtfile.write("Isr			shape	1.00       -	-\n")
+            txtfile.write("Pdf			shape	0.50       -	-\n")
+            txtfile.write("Jes			shape	0.50       -	-\n")
+            txtfile.write("Btag			shape	0.50       -	-\n")
+            txtfile.write("Isr			shape	0.50       -	-\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00\n"%
@@ -106,10 +106,10 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			lnN	1.044      1.00	1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
-            txtfile.write("Pdf			shape	1.00       -	-	-\n")
-            txtfile.write("Jes			shape	1.00       -	-	-\n")
-            txtfile.write("Btag			shape	1.00       -	-	-\n")
-            txtfile.write("Isr			shape	1.00       -	-	-\n")
+            txtfile.write("Pdf			shape	0.50       -	-	-\n")
+            txtfile.write("Jes			shape	0.50       -	-	-\n")
+            txtfile.write("Btag			shape	0.50       -	-	-\n")
+            txtfile.write("Isr			shape	0.50       -	-	-\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00	1.00\n"%
@@ -503,8 +503,8 @@ if __name__ == '__main__':
         isrDown.SetTitle("%s_%s_IsrDown"%(box,model))
         isrAbs = isr.Clone("IsrAbs")
         isrAbs.Multiply(wHisto)
-        isrUp.Add(isrAbs,1.0)
-        isrDown.Add(isrAbs,-1.0)
+        isrUp.Add(isrAbs,0.5)
+        isrDown.Add(isrAbs,-0.5)
         histos[(box,"%s_IsrUp"%(model))] = isrUp
         histos[(box,"%s_IsrDown"%(model))] = isrDown
                
@@ -514,8 +514,8 @@ if __name__ == '__main__':
         btagDown.SetTitle("%s_%s_BtagDown"%(box,model))
         btagAbs = btag.Clone("BtagAbs")
         btagAbs.Multiply(wHisto)
-        btagUp.Add(btagAbs,1.0)
-        btagDown.Add(btagAbs,-1.0)
+        btagUp.Add(btagAbs,0.5)
+        btagDown.Add(btagAbs,-0.5)
         histos[(box,"%s_BtagUp"%(model))] = btagUp
         histos[(box,"%s_BtagDown"%(model))] = btagDown
 
@@ -525,8 +525,8 @@ if __name__ == '__main__':
         jesDown.SetTitle("%s_%s_JesDown"%(box,model))
         jesAbs = jes.Clone("JesAbs")
         jesAbs.Multiply(wHisto)
-        jesUp.Add(jesAbs,1.0)
-        jesDown.Add(jesAbs,-1.0)
+        jesUp.Add(jesAbs,0.5)
+        jesDown.Add(jesAbs,-0.5)
         histos[(box,"%s_JesUp"%(model))] = jesUp
         histos[(box,"%s_JesDown"%(model))] = jesDown
 
@@ -536,8 +536,8 @@ if __name__ == '__main__':
         pdfDown.SetTitle("%s_%s_PdfDown"%(box,model))
         pdfAbs = pdf.Clone("PdfAbs")
         pdfAbs.Multiply(wHisto)
-        pdfUp.Add(pdfAbs,1.0)
-        pdfDown.Add(pdfAbs,-1.0)
+        pdfUp.Add(pdfAbs,0.5)
+        pdfDown.Add(pdfAbs,-0.5)
         histos[(box,"%s_PdfUp"%(model))] = pdfUp
         histos[(box,"%s_PdfDown"%(model))] = pdfDown
         
