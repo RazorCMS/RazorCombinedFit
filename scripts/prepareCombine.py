@@ -10,7 +10,7 @@ import sys
 
 
 
-def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
+def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
         # txtfile = open(txtfileName,"w")
         # txtfile.write("imax 1 number of channels\n")
         # txtfile.write("jmax 1 number of backgrounds\n")
@@ -54,7 +54,12 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
             txtfile.write("lumi			    lnN	1.044       1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00\n")
-            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            txtfile.write("Pdf			shape	1.00       -\n")
+            txtfile.write("Jes			shape	1.00       -\n")
+            txtfile.write("Btag			shape	1.00       -\n")
+            txtfile.write("Isr			shape	1.00       -\n")
+            #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f\n"%
                           (box,bkgs[0],norm_err))
             for param_name in param_names:
@@ -71,10 +76,16 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
             txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
-            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            txtfile.write("Pdf			shape	1.00       -	-\n")
+            txtfile.write("Jes			shape	1.00       -	-\n")
+            txtfile.write("Btag			shape	1.00       -	-\n")
+            txtfile.write("Isr			shape	1.00       -	-\n")
+            #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00\n"%
                           (box,bkgs[0],norm_err))
-            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[1]].Integral())
+            #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[1]].Integral())
+            norm_err = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s\n"%
                           (box,bkgs[1],norm_err))
             for param_name in param_names:
@@ -89,16 +100,23 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d):
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral(),histos1d[box,bkgs[2]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			    lnN	1.044       1.00	1.00	1.00\n")
+            txtfile.write("lumi			lnN	1.044      1.00	1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
-            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            txtfile.write("Pdf			shape	1.00       -	-	-\n")
+            txtfile.write("Jes			shape	1.00       -	-	-\n")
+            txtfile.write("Btag			shape	1.00       -	-	-\n")
+            txtfile.write("Isr			shape	1.00       -	-	-\n")
+            #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
+            norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00	1.00\n"%
                           (box,bkgs[0],norm_err))
-            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[1]].Integral())
+            #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[1]].Integral())
+            norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s	1.00\n"%
                           (box,bkgs[1],norm_err))
-            norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[2]].Integral())
+            #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[2]].Integral())
+            norm_err = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	1.00	%f\n"%
                           (box,bkgs[2],norm_err))
             for param_name in param_names:
@@ -297,15 +315,9 @@ if __name__ == '__main__':
                     bkgs.append("%s_%s_%s%s"%(bkg,param_name,box,syst))
         for bkg in bkgs:
             histos[box,bkg] = rt.TH3D("%s_%s_3d"%(box,bkg),"%s_%s_3d"%(box,bkg),len(x)-1,x,len(y)-1,y,len(z)-1,z)
-            totalbins = (len(x)-1)*(len(y)-1)*(len(z)-1)
-            histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),totalbins, 1, totalbins+1)
-        
         histos[box,model] = rt.TH3D("%s_%s_3d"%(box,model),"%s_%s_3d"%(box,model),len(x)-1,x,len(y)-1,y,len(z)-1,z)
-        totalbins = (len(x)-1)*(len(y)-1)*(len(z)-1)
-        histos1d[box,model] = rt.TH1D("%s_%s"%(box,model),"%s_%s"%(box,model),totalbins, 1, totalbins+1)
-        
         histos[box,"data"] = rt.TH3D("%s_%s_3d"%(box,"data"),"%s_%s_3d"%(box,"data"),len(x)-1,x,len(y)-1,y,len(z)-1,z)
-        histos1d[box,"data"] = rt.TH1D("data_obs","data_obs",totalbins, 1, totalbins+1)
+        
     for box in boxes:
         workspace = infile.Get("%s/Box%s_workspace"%(box,box))
         data = workspace.data("RMRTree")
@@ -327,17 +339,26 @@ if __name__ == '__main__':
         eigenVectT.Transpose(eigenVect)
         
         diag = eigenVectT * (covMatrix *  eigenVect)
-        
+
+        print "INFO: fit result!"
+        fr.Print("v")
+        #covMatrix.Print()
+        #eigenVal.Print()
         eigenVal.Sqrt()
+        #eigenVal.Print()
+        #eigenVect.Print()
+
 
         
         rotEigenVal =  eigenVal.Clone()
         rotEigenVal *=  eigenVect
 
-
+        
         variation = []
         for j in range(0,len(param_names)):
-            variation.append([eigenVal[i]*eigenVect[i][j] for i in range(0,len(param_names))])
+            variation.append([eigenVal[j]*eigenVect[i][j] for i in range(0,len(param_names))])
+            #print rel_err = eigenVal[j]*eigenVect[j][i]/(workspace.var(param_names[i]).getError())
+            #print param_names[i], rel_err
         
         cen = [workspace.var(param_name).getVal() for param_name in param_names]
         
@@ -353,13 +374,8 @@ if __name__ == '__main__':
         MRRsqnBtag.add(Rsq)
         MRRsqnBtag.add(nBtag)
 
-        #RootTools.Utils.importToWS(w, workspace.pdf("fitmodel").Clone("%s_background"%box))
 
         var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(workspace.set('variables'))]
-        #RootTools.Utils.importToWS(w,workspace.pdf("fitmodel"),\
-        #                           rt.RooFit.RenameAllNodes(box),\
-        #                           rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
-
         
         
         x = array('d', getBinning(box, "MR"))
@@ -387,13 +403,9 @@ if __name__ == '__main__':
             prod.add(workspace.pdf("BtagPDF_%s"%bkg))
             #prod.add(step)
             finalprod = rt.RooProduct("PDF_%s"%bkg,"PDF_%s"%bkg,prod)
-            
-            RootTools.Utils.importToWS(w,finalprod,\
-                                       rt.RooFit.RenameAllNodes(box),\
-                                       rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
-        
-        
-
+            #RootTools.Utils.importToWS(w,finalprod,\
+            #                           rt.RooFit.RenameAllNodes(box),\
+            #                           rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
         
         for bkg in initialbkgs:
             if bkgs=="TTj3b": continue
@@ -423,11 +435,16 @@ if __name__ == '__main__':
         sign["Down"] = -0.50
         for bkg in initialbkgs:
             for p in range(0,len(param_names)):
+                print ""
+                print "INFO: Now varying parameters"
+                print ""
+                print "variation #", p
                 var_name = param_names[p]
                 for syst in ["Up","Down"]:
                     for q in range(0,len(param_names)):
                         param_name = param_names[q]
-                        if var_name=="b_TTj1b": print param_name, syst, " = ", cen[q]+sign[syst]*variation[p][q]
+                        rel_err = sign[syst]*variation[p][q]/(workspace.var(param_name).getError())
+                        print param_name, syst, " = ", cen[q]+sign[syst]*variation[p][q], " -> ", "%.2fsigma"%(rel_err)
                         workspace.var(param_name).setVal(cen[q]+sign[syst]*variation[p][q])
                     for i in xrange(1,len(x)):
                         for j in xrange(1,len(y)):
@@ -471,7 +488,56 @@ if __name__ == '__main__':
         jes = renameAndImport(jes)
         pdf = renameAndImport(pdf)
         isr = renameAndImport(isr)
+
+        # adding signal shape systematics
+        print ""
+        print "INFO: Now obtaining signal shape systematics"
+        print ""
             
+        isrUp = wHisto.Clone("%s_%s_IsrUp"%(box,model))
+        isrUp.SetTitle("%s_%s_IsrUp"%(box,model))
+        isrDown = wHisto.Clone("%s_%s_IsrDown"%(box,model))
+        isrDown.SetTitle("%s_%s_IsrDown"%(box,model))
+        isrAbs = isr.Clone("IsrAbs")
+        isrAbs.Multiply(wHisto)
+        isrUp.Add(isrAbs,1.0)
+        isrDown.Add(isrAbs,-1.0)
+        histos[(box,"%s_IsrUp"%(model))] = isrUp
+        histos[(box,"%s_IsrDown"%(model))] = isrDown
+               
+        btagUp = wHisto.Clone("%s_%s_BtagUp"%(box,model))
+        btagUp.SetTitle("%s_%s_BtagUp"%(box,model))
+        btagDown = wHisto.Clone("%s_%s_BtagDown"%(box,model))
+        btagDown.SetTitle("%s_%s_BtagDown"%(box,model))
+        btagAbs = btag.Clone("BtagAbs")
+        btagAbs.Multiply(wHisto)
+        btagUp.Add(btagAbs,1.0)
+        btagDown.Add(btagAbs,-1.0)
+        histos[(box,"%s_BtagUp"%(model))] = btagUp
+        histos[(box,"%s_BtagDown"%(model))] = btagDown
+
+        jesUp = wHisto.Clone("%s_%s_JesUp"%(box,model))
+        jesUp.SetTitle("%s_%s_JesUp"%(box,model))
+        jesDown = wHisto.Clone("%s_%s_JesDown"%(box,model))
+        jesDown.SetTitle("%s_%s_JesDown"%(box,model))
+        jesAbs = jes.Clone("JesAbs")
+        jesAbs.Multiply(wHisto)
+        jesUp.Add(jesAbs,1.0)
+        jesDown.Add(jesAbs,-1.0)
+        histos[(box,"%s_JesUp"%(model))] = jesUp
+        histos[(box,"%s_JesDown"%(model))] = jesDown
+
+        pdfUp = wHisto.Clone("%s_%s_PdfUp"%(box,model))
+        pdfUp.SetTitle("%s_%s_PdfUp"%(box,model))
+        pdfDown = wHisto.Clone("%s_%s_PdfDown"%(box,model))
+        pdfDown.SetTitle("%s_%s_PdfDown"%(box,model))
+        pdfAbs = pdf.Clone("PdfAbs")
+        pdfAbs.Multiply(wHisto)
+        pdfUp.Add(pdfAbs,1.0)
+        pdfDown.Add(pdfAbs,-1.0)
+        histos[(box,"%s_PdfUp"%(model))] = pdfUp
+        histos[(box,"%s_PdfDown"%(model))] = pdfDown
+        
         
         #set the per box eff value
         sigNorm = wHisto.Integral()
@@ -517,23 +583,37 @@ if __name__ == '__main__':
         outFile = rt.TFile.Open("razor_combine_%s_%s.root"%(box,model),"RECREATE")
 
         #unroll histograms 3D -> 1D
+        print ""
+        print "INFO: Now Unrolling 3D histograms" 
+        print ""
+        
         for index, histo in histos.iteritems():
             box, bkg = index
-            histo1d = histos1d[(box,bkg)]
-            totalbins = histo1d.GetNbinsX()
+            print box, bkg
+            totalbins = (len(x)-1)*(len(y)-1)*(len(z)-1)
+            if bkg=="data":
+                histos1d[box,bkg] = rt.TH1D("data_obs","data_obs",totalbins, 1, totalbins+1)
+            else:
+                histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),totalbins, 1, totalbins+1)
+                
+            totalbins = histos1d[box,bkg].GetNbinsX()
             newbin = 0
             for i in xrange(1,histo.GetNbinsX()+1):
                 for j in xrange(1,histo.GetNbinsY()+1):
                     for k in xrange(1,histo.GetNbinsZ()+1):
                         newbin += 1
-                        histo1d.SetBinContent(newbin,histo.GetBinContent(i,j,k))
-            histo.Write()
-            histo1d.Write()
+                        histos1d[box,bkg].SetBinContent(newbin,histo.GetBinContent(i,j,k))
+                        
+            #histo.Write()
+            histos1d[box,bkg].Write()
             #RootTools.Utils.importToWS(w, histo)
-            #RootTools.Utils.importToWS(w, histo1d)
+            #RootTools.Utils.importToWS(w, histos1d[box,bkg])
         
         #w.Write()
+
+        print ""
+        print "INFO: Now writing data card"
+        print ""
+        writeDataCard(box,model,"razor_combine_%s_%s.txt"%(box,model),initialbkgs,param_names,histos1d,workspace)
+
         outFile.Close()
-
-
-        writeDataCard(box,model,"razor_combine_%s_%s.txt"%(box,model),initialbkgs,param_names,histos1d)
