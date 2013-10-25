@@ -477,7 +477,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("scram project CMSSW_6_2_0\n")
     outputfile.write("cd CMSSW_6_2_0/src\n")
     outputfile.write("eval `scram runtime -sh`\n")
-b    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0/src\n"%(model,massPoint,box,xsecstring,t))
+    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0/src\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("git checkout tags/woodson_300713\n")
@@ -543,7 +543,7 @@ if __name__ == '__main__':
 
     gchipairs = getGChiPairs(model)
 
-    gchipairs = reversed(gchipairs)
+    #gchipairs = reversed(gchipairs)
     
     pwd = os.environ['PWD']
     
