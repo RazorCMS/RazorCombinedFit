@@ -353,25 +353,25 @@ def getXsecRange(model,neutralinoMass,gluinoMass):
         print "mDelta = ", mDelta
         xsecRange = []
         if mDelta < 150 and gluinoMass < 400:
-            xsecRange = [0.1, 0.5, 1., 5., 10., 50., 100., 500.]
+            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50., 100., 500., 1.e3]
         elif mDelta < 150 and gluinoMass >= 400:
-            xsecRange = [0.05, 0.1, 0.5, 1., 5., 10., 50.]
+            xsecRange = [0.01, 0.05, 0.1, 0.5, 1., 5., 10., 50.,100.]
         elif mDelta < 200 and gluinoMass < 400:
-            xsecRange = [0.1, 0.5, 1., 3., 5., 7., 10., 50., 100.]
+            xsecRange = [0.03, 0.05, 0.07, 0.1, 0.5, 1., 3., 5., 7., 10., 50., 100.]
         elif mDelta < 200 and gluinoMass >= 400:
-            xsecRange = [0.1, 0.5, 1., 3., 5., 7., 10., 30., 50.]
+            xsecRange = [0.03, 0.05, 0.07, 0.1, 0.5, 1., 3., 5., 7., 10., 30., 50.]
         elif mDelta < 400 and gluinoMass < 400:
             xsecRange = [0.05, 0.1, 0.3, 0.5, 1., 3., 5., 7., 10., 50.]
         elif mDelta < 400 and gluinoMass >= 400:
             xsecRange = [0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 1., 3., 5.]
         elif mDelta < 500 and gluinoMass < 500:
-            xsecRange = [0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 0.7, 1.]
+            xsecRange = [0.005, 0.01, 0.03, 0.05, 0.1, 0.3, 0.5, 0.7, 1.]
         elif mDelta < 500 and gluinoMass >= 500:
             xsecRange = [0.001, 0.003, 0.005, 0.01, 0.05, 0.1, 0.5]
         else:
-            xsecRange = [0.0005, 0.0007, 0.001, 0.003, 0.005, 0.01, 0.05]
+            xsecRange = [0.0001, 0.0005, 0.0007, 0.001, 0.003, 0.005, 0.01, 0.05]
         if (gluinoMass >= 700) and (neutralinoMass < 600): 
-            xsecRange.extend([0.002, 0.005, 0.007])
+            xsecRange.extend([0.0003, 0.002, 0.005, 0.007])
         elif (gluinoMass >= 600 and gluinoMass < 700) and (neutralinoMass >= 300 and neutralinoMass < 500): 
             xsecRange.extend([0.005, 0.007, 0.01, 0.02])
         elif (gluinoMass >= 500 and gluinoMass < 600) and (neutralinoMass >= 200 and neutralinoMass < 400):
@@ -477,7 +477,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("scram project CMSSW_6_2_0\n")
     outputfile.write("cd CMSSW_6_2_0/src\n")
     outputfile.write("eval `scram runtime -sh`\n")
-    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0/src\n"%(model,massPoint,box,xsecstring,t))
+b    outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0/src\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
     outputfile.write("git checkout tags/woodson_300713\n")
