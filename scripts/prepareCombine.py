@@ -9,6 +9,19 @@ from pdfShit import *
 import sys
 
 
+def rebin3d(oldhisto, x,y,z):
+    newhisto = rt.TH3D(oldhisto.GetName(),oldhisto.GetTitle(),len(x)-1,x,len(y)-1,y,len(z)-1,z)
+    for i in range(1,oldhisto.GetNbinsX()+1):
+        for j in range(1,oldhisto.GetNbinsY()+1):
+            for k in range(1,oldhisto.GetNbinsZ()+1):
+                xold = oldhisto.GetXaxis().GetBinCenter(i)
+                yold = oldhisto.GetYaxis().GetBinCenter(j)
+                zold = oldhisto.GetZaxis().GetBinCenter(k)
+                oldbincontent = oldhisto.GetBinContent(i,j,k)
+                newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))
+    return newhisto
+                    
+
 
 def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
         # txtfile = open(txtfileName,"w")
@@ -57,16 +70,16 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			    lnN	1.044       1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00\n")
-            txtfile.write("Pdf			shape	0.50       -\n")
-            txtfile.write("Jes			shape	0.50       -\n")
-            txtfile.write("Btag			shape	0.50       -\n")
-            txtfile.write("Isr			shape	0.50       -\n")
+            txtfile.write("Pdf			shape	1.00       -\n")
+            txtfile.write("Jes			shape	1.00       -\n")
+            txtfile.write("Btag			shape	1.00       -\n")
+            txtfile.write("Isr			shape	1.00       -\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f\n"%
                           (box,bkgs[0],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   0.50\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   1.00\n"%(param_name,box))
         elif box=="Jet2b":
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
@@ -79,10 +92,10 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
-            txtfile.write("Pdf			shape	0.50       -	-\n")
-            txtfile.write("Jes			shape	0.50       -	-\n")
-            txtfile.write("Btag			shape	0.50       -	-\n")
-            txtfile.write("Isr			shape	0.50       -	-\n")
+            txtfile.write("Pdf			shape	1.00       -	-\n")
+            txtfile.write("Jes			shape	1.00       -	-\n")
+            txtfile.write("Btag			shape	1.00       -	-\n")
+            txtfile.write("Isr			shape	1.00       -	-\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00\n"%
@@ -92,7 +105,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s\n"%
                           (box,bkgs[1],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   0.50	0.50\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   1.00	1.00\n"%(param_name,box))
         else:
                 
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
@@ -106,10 +119,10 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			lnN	1.044      1.00	1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
-            txtfile.write("Pdf			shape	0.50       -	-	-\n")
-            txtfile.write("Jes			shape	0.50       -	-	-\n")
-            txtfile.write("Btag			shape	0.50       -	-	-\n")
-            txtfile.write("Isr			shape	0.50       -	-	-\n")
+            txtfile.write("Pdf			shape	1.00       -	-	-\n")
+            txtfile.write("Jes			shape	1.00       -	-	-\n")
+            txtfile.write("Btag			shape	1.00       -	-	-\n")
+            txtfile.write("Isr			shape	1.00       -	-	-\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00	1.00\n"%
@@ -123,8 +136,33 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	1.00	%f\n"%
                           (box,bkgs[2],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   0.50	0.50	0.50\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   1.00	1.00	1.00\n"%(param_name,box))
         txtfile.close()
+
+# def find68ProbRange(hToy, probVal=0.6827):
+#     minVal = 0.
+#     maxVal = 100000.
+#     if hToy.Integral()<=0: return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
+#     # get the bin contents
+#     probsList = []
+#     for  iX in range(1, hToy.GetNbinsX()+1):
+#         probsList.append(hToy.GetBinContent(iX)/hToy.Integral())
+#     probsList = reversed(sorted(probsList))
+#     prob = 0
+#     found = False
+#     range68 = 0
+#     counter = 0
+#     for prob_inc in probsList:
+#         counter += 1
+#         if prob+prob_inc >= probVal and not found:
+#             range68 = counter
+#             found = True
+#         prob += prob_inc
+#     range68 = range68 * hToy.GetBinWidth(1)
+#     mode = hToy.GetBinLowEdge(hToy.GetMaximumBin())
+#     #print "mode +- range68 = %i +- %i"%(mode,range68)
+#     return mode,range68
+
 
 def find68ProbRange(hToy, probVal=0.6827):
     minVal = 0.
@@ -132,23 +170,33 @@ def find68ProbRange(hToy, probVal=0.6827):
     if hToy.Integral()<=0: return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
     # get the bin contents
     probsList = []
-    for  iX in range(1, hToy.GetNbinsX()+1):
+    for iX in range(1, hToy.GetNbinsX()+1):
         probsList.append(hToy.GetBinContent(iX)/hToy.Integral())
-    probsList = reversed(sorted(probsList))
+    probsList.sort()
     prob = 0
+    prob68 = 0
     found = False
-    range68 = 0
-    counter = 0
-    for prob_inc in probsList:
-        counter += 1
-        if prob+prob_inc >= probVal and not found:
-            range68 = counter
+    for iX in range(0,len(probsList)):
+        if prob+probsList[iX] >= 1-probVal and not found:
+            frac = (1-probVal-prob)/probsList[iX]
+            prob68 = probsList[iX-1]+frac*(probsList[iX]-probsList[iX-1])
             found = True
-        prob += prob_inc
-    range68 = range68 * hToy.GetBinWidth(1)
-    mode = hToy.GetBinLowEdge(hToy.GetMaximumBin())
-    #print "mode +- range68 = %i +- %i"%(mode,range68)
-    return mode,range68
+        prob = prob + probsList[iX]
+
+    foundMin = False
+    foundMax = False
+    for  iX in range(0, hToy.GetNbinsX()):
+        if not foundMin and hToy.GetBinContent(iX+1) >= prob68:
+            fraction = (prob68-hToy.GetBinContent(iX))/(hToy.GetBinContent(iX+1)-hToy.GetBinContent(iX))
+            minVal = hToy.GetBinLowEdge(iX)+hToy.GetBinWidth(iX)*fraction
+            foundMin = True
+        if not foundMax and hToy.GetBinContent(hToy.GetNbinsX()-iX) >= prob68:
+            fraction = (prob68-hToy.GetBinContent(hToy.GetNbinsX()-iX+1))/(hToy.GetBinContent(hToy.GetNbinsX()-iX)-hToy.GetBinContent(hToy.GetNbinsX()-iX+1))
+            maxVal = hToy.GetBinLowEdge(hToy.GetNbinsX()-iX)+hToy.GetBinWidth(hToy.GetNbinsX()-iX)*(1-fraction)
+            foundMax = True
+
+    range68 = (maxVal-max(minVal,0.))/2.
+    return hToy.GetBinCenter(hToy.GetMaximumBin()),range68
 
 
 def getBinEvents(i, j, k, x, y, z, workspace):
@@ -199,6 +247,7 @@ def getBinEvents(i, j, k, x, y, z, workspace):
     if bin_events <0:
         print "integral", integral
         print "total_integral", total_integral
+        return 0.
     return bin_events
 
 def getRandomPars(fr, workspace):
@@ -267,16 +316,19 @@ def getBinning(boxName, varName):
             #return [300, 350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
     elif varName == "Rsq" : 
         if boxName in ["MultiJet", "Jet2b"]:
-            return [0.25,0.3,0.35,0.41,0.52,0.64,0.80,1.5]
+            return [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.5]
             #return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
+            #return [0.25,0.30,0.41,0.52,1.5]
         else:
             return [0.15, 0.2, 0.25,0.3,0.35,0.41,0.52,0.64,0.8,1.5]
             #return [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     elif varName == "nBtag" :
         if boxName in ["Jet2b"]:
             return [2.,3.,4.]
+            #return [2.,4.]
         else:
             return [1.,2.,3.,4.]
+            #return [1.,2.,4.]
             
 if __name__ == '__main__':
 
@@ -434,8 +486,8 @@ if __name__ == '__main__':
                     binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
 
         sign = {}
-        sign["Up"] = 0.50
-        sign["Down"] = -0.50
+        sign["Up"] = 1.00
+        sign["Down"] = -1.00
         for bkg in initialbkgs:
             for p in range(0,len(param_names)):
                 print ""
@@ -467,7 +519,9 @@ if __name__ == '__main__':
         for bkg in initialbkgs:
             for param_name in param_names:
                 for syst in ['Up','Down']:
-                    histos[box,"%s_%s_%s%s"%(bkg,param_name,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,param_name,box,syst)].Integral())
+                    if histos[box,"%s_%s_%s%s"%(bkg,param_name,box,syst)].Integral() > 0:
+                        histos[box,"%s_%s_%s%s"%(bkg,param_name,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,param_name,box,syst)].Integral())
+                    else: print "ERROR: histogram for %s_%s_%s%s has zero integral!"%(bkg,param_name,box,syst)
 
         
         
@@ -503,10 +557,10 @@ if __name__ == '__main__':
         isrDown.SetTitle("%s_%s_IsrDown"%(box,model))
         isrAbs = isr.Clone("IsrAbs")
         isrAbs.Multiply(wHisto)
-        isrUp.Add(isrAbs,0.5)
-        isrDown.Add(isrAbs,-0.5)
-        histos[(box,"%s_IsrUp"%(model))] = isrUp
-        histos[(box,"%s_IsrDown"%(model))] = isrDown
+        isrUp.Add(isrAbs,1.0)
+        isrDown.Add(isrAbs,-1.0)
+        histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z)
+        histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z)
                
         btagUp = wHisto.Clone("%s_%s_BtagUp"%(box,model))
         btagUp.SetTitle("%s_%s_BtagUp"%(box,model))
@@ -514,10 +568,10 @@ if __name__ == '__main__':
         btagDown.SetTitle("%s_%s_BtagDown"%(box,model))
         btagAbs = btag.Clone("BtagAbs")
         btagAbs.Multiply(wHisto)
-        btagUp.Add(btagAbs,0.5)
-        btagDown.Add(btagAbs,-0.5)
-        histos[(box,"%s_BtagUp"%(model))] = btagUp
-        histos[(box,"%s_BtagDown"%(model))] = btagDown
+        btagUp.Add(btagAbs,1.0)
+        btagDown.Add(btagAbs,-1.0)
+        histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z)
+        histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z)
 
         jesUp = wHisto.Clone("%s_%s_JesUp"%(box,model))
         jesUp.SetTitle("%s_%s_JesUp"%(box,model))
@@ -525,10 +579,10 @@ if __name__ == '__main__':
         jesDown.SetTitle("%s_%s_JesDown"%(box,model))
         jesAbs = jes.Clone("JesAbs")
         jesAbs.Multiply(wHisto)
-        jesUp.Add(jesAbs,0.5)
-        jesDown.Add(jesAbs,-0.5)
-        histos[(box,"%s_JesUp"%(model))] = jesUp
-        histos[(box,"%s_JesDown"%(model))] = jesDown
+        jesUp.Add(jesAbs,1.0)
+        jesDown.Add(jesAbs,-1.0)
+        histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z)
+        histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z)
 
         pdfUp = wHisto.Clone("%s_%s_PdfUp"%(box,model))
         pdfUp.SetTitle("%s_%s_PdfUp"%(box,model))
@@ -536,10 +590,10 @@ if __name__ == '__main__':
         pdfDown.SetTitle("%s_%s_PdfDown"%(box,model))
         pdfAbs = pdf.Clone("PdfAbs")
         pdfAbs.Multiply(wHisto)
-        pdfUp.Add(pdfAbs,0.5)
-        pdfDown.Add(pdfAbs,-0.5)
-        histos[(box,"%s_PdfUp"%(model))] = pdfUp
-        histos[(box,"%s_PdfDown"%(model))] = pdfDown
+        pdfUp.Add(pdfAbs,1.0)
+        pdfDown.Add(pdfAbs,-1.0)
+        histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z)
+        histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z)
         
         
         #set the per box eff value
@@ -579,10 +633,11 @@ if __name__ == '__main__':
         #extended = w.factory("RooExtendPdf::%s_signal(%s, Ntot_Signal)" % (box,signalModel))
 
         
-        histos[box,model] = sigHist.Clone("%s_%s_3d"%(box,model))
+        histos[box,model] = rebin3d(sigHist.Clone("%s_%s_3d"%(box,model)), x, y, z )
         histos[box,model].SetTitle("%s_%s_3d"%(box,model))
         lumi = 19.3 # luminosity in fb^-1
-        ref_xsec = 10.
+        ref_xsec = 1.09501 #900 GeV stop/sbottom reference xsec in fb
+        #ref_xsec = 4.80639 #750 GeV stop/sbottom reference xsec in fb
         histos[box,model].Scale(lumi*ref_xsec)
         outFile = rt.TFile.Open("razor_combine_%s_%s.root"%(box,model),"RECREATE")
 
@@ -620,4 +675,73 @@ if __name__ == '__main__':
         print ""
         writeDataCard(box,model,"razor_combine_%s_%s.txt"%(box,model),initialbkgs,param_names,histos1d,workspace)
 
+
+        
+        binHistos = {}
+        for i in xrange(1,len(x)):
+            for j in xrange(1,len(y)):
+                for k in xrange(1, len(z)):
+                    if x[i] < MRcut and y[j] < Rsqcut: continue
+                    #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
+                    binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
+                    #binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
+                    binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),int(max(binMax,5)),0,int(max(binMax,5)))
+        for iToy in xrange(0, 100):
+            randomPars = getRandomPars(fr, workspace)
+            if iToy%100==0: 
+                print "toy #", iToy
+                for p in RootTools.RootIterator.RootIterator(randomPars):
+                    print p.GetName(), "=", p.getVal(), "+-", p.getError()
+            for i in xrange(1,len(x)):
+                for j in xrange(1,len(y)):
+                    for k in xrange(1, len(z)):
+                        if x[i] < MRcut and y[j] < Rsqcut: continue
+                        bin_events = rt.RooRandom.randomGenerator().Poisson(getBinEvents(i,j,k,x,y,z,workspace))
+                        binHistos[i,j,k].Fill(bin_events)
+                        
+        c = rt.TCanvas("c","c",500,500)
+        for i in xrange(1,len(x)):
+            for j in xrange(1,len(y)):
+                for k in xrange(1, len(z)):
+                    if x[i] < MRcut and y[j] < Rsqcut: continue
+                    binHistos[i,j,k].Draw("")
+                    c.Print("bin/bin%i%i%i.pdf"%(i,j,k))
+                    
+        for bkg in initialbkgs:
+            for i in xrange(1,len(x)):
+                for j in xrange(1,len(y)):
+                    for k in xrange(1,len(z)):
+                        if x[i] < MRcut and y[j] < Rsqcut: continue
+                        mode, range68 = find68ProbRange(binHistos[i,j,k])
+                        if (bkg.find("1b")!=-1 and z[k-1]==1) :
+                            histos[box,bkg].SetBinError(i,j,k,range68/2.)
+                        elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
+                            histos[box,bkg].SetBinError(i,j,k,range68/2.)
+                        elif (bkg.find("3b")!=-1 and z[k-1]==3) : 
+                            histos[box,bkg].SetBinError(i,j,k,range68/2.)
+        
+        for i in xrange(1,len(x)):
+            for j in xrange(1,len(y)):
+                for k in xrange(1, len(z)):
+                    bkg = initialbkgs[k-1]
+                    if x[i] < MRcut and y[j] < Rsqcut: continue
+                    obsYield = histos[box,"data"].GetBinContent(i,j,k)
+                    bkgYield = histos[box,bkg].GetBinContent(i,j,k)
+                    #bkgError = rt.TMath.Sqrt(rt.TMath.Power(histos[box,bkg].GetBinError(i,j,k),2) + bkgYield)
+                    bkgError = histos[box,bkg].GetBinError(i,j,k)
+                    sigYield = histos[box,model].GetBinContent(i,j,k)
+    
+                    sOverB = sigYield/bkgYield
+                    sOverSqrtB = sigYield/rt.TMath.Sqrt(bkgYield)
+                    sOverDeltaB = sigYield/bkgError
+                    if x[i]>550 and y[j]>0.3:
+                        print "[%i,%i] [%.2f,%.2f] %i b-tag : data = %i, B = %.3f+-%.3f, S = %.3f, S/B = %.3f, S/sqrt(B) = %.3f"%(x[i-1],x[i],
+                                                                                                                                  y[j-1],y[j],
+                                                                                                                                  z[k-1], 
+                                                                                                                                  obsYield, 
+                                                                                                                                  bkgYield, bkgError, 
+                                                                                                                                  sigYield, 
+                                                                                                                                  sOverB, sOverSqrtB)
+                    
+                        
         outFile.Close()
