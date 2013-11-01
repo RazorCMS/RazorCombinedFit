@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     
     data = workspace.data("RMRTree")
-    MRsqForm = rt.RooFormulaVar("MRsq","MRsqForm","(@0-%f)*(@2-%f)"%(mr0,r0),MR,Rsq)
+    MRsqForm = rt.RooFormulaVar("MRsq","MRsqForm","(@0-%f)*(@2-%f)"%(mr0,r0),rt.RooArgList(MR,Rsq))
     data.addColumn(MRsqForm)
     
     #we cut away events outside our MR window
