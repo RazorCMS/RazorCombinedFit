@@ -57,6 +57,7 @@ if __name__ == '__main__':
     data = workspace.data("RMRTree")
     MRsqForm = rt.RooFormulaVar("MRsq","MRsqForm","(@0-%f)*(@1-%f)"%(mr0,r0),rt.RooArgList(MR,Rsq))
     data.addColumn(MRsqForm)
+    data = data.reduce("(MR>=450||Rsq>=0.3)&&nBtag>=2")
     
     #we cut away events outside our MR window
     mRmin = args['MR'].getMin()
@@ -125,6 +126,8 @@ if __name__ == '__main__':
         sigmc.add(a)
     
     wsigmc = rt.RooDataSet(sigmc.GetName(),sigmc.GetTitle(),sigmc,sigmc.get(),"MR>=0.","W")
+    
+    wsigmc = wsigmc.reduce("(MR>=450||Rsq>=0.3)&&nBtag>=2")
     wsigmc.Print("v")
 
     
