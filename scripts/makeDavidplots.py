@@ -126,8 +126,9 @@ if __name__ == '__main__':
     
     c = rt.TCanvas("c","c",500,500)
     frame = MRsq.frame()
-    wsigmc.plotOn(frame)
-    razPdf.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
+    wsigmc.plotOn(frame,rt.RooFit.MarkerColor(rt.kRed))
+    data.plotOn(frame)
+    #razPdf.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
     frame.Draw()
     c.SetLogy()
     c.Print("MRsq.pdf")
