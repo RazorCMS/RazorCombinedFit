@@ -40,7 +40,7 @@ if __name__ == '__main__':
     print "R0_TTj2b=%f"%(r0)
 
     minMRsq = (MR.getMin()-mr0)*(Rsq.getMin()-r0)
-    maxMRsq = (MR.getMax()-mr0)*(Rsq.getMax()-r0)
+    maxMRsq = (MR.getMax()-mr0)*(Rsq.getMax()-r0)/3.
     
     MRsq = rt.RooRealVar("MRsq","MRsq",minMRsq,maxMRsq)
     
