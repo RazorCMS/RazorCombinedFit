@@ -11,7 +11,7 @@ import sys
 
 boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[8,9]}
 lumi = 19.3
-xsec = 80.11
+xsec = 8.11
 
 if __name__ == '__main__':
 
@@ -137,5 +137,5 @@ if __name__ == '__main__':
     data.plotOn(frame)
     #razPdf.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
     frame.Draw()
-    #c.SetLogy()
+    c.SetLogy()
     c.Print("MRsq.pdf")
