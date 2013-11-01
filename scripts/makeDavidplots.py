@@ -119,7 +119,7 @@ if __name__ == '__main__':
         a.setRealValue('MR',tree.MR)
         a.setRealValue('Rsq',tree.RSQ)
         a.setRealValue('nBtag',tree.btag_nom)
-        a.setRealValue('W',max(0.,0.95*tree.WISR*tree.WLEP*tree.WPU*lumi*xsec/wall))
+        a.setRealValue('W',0.95*tree.WISR*tree.WLEP*tree.WPU*lumi*xsec/wall)
 
         a.setRealValue('MRsq',(tree.MR-mr0)*(tree.RSQ-r0))
     
