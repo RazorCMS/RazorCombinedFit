@@ -17,6 +17,10 @@ if __name__ == '__main__':
 
     signalFile = rt.TFile.Open("SMS/T2tt_MG_700.000000_MCHI_25.000000.root")
     bkgdFile = rt.TFile.Open("SidebandFits2012ABCD_FINAL.root")
+    histoFile  = rt.TFile.Open("SMS/T2tt_histo.root")
+    histo = histoFile.Get("SMSWALL")
+    wall = histo.GetBinContent(histo.FindBin(700,25))
+        
     box = "MultiJet"
 
     workspace = bkgdFile.Get("%s/Box%s_workspace"%(box,box))
@@ -113,7 +117,7 @@ if __name__ == '__main__':
         a.setRealValue('MR',tree.MR)
         a.setRealValue('Rsq',tree.RSQ)
         a.setRealValue('nBtag',tree.btag_nom)
-        a.setRealValue('W',0.95*tree.WISR*tree.WLEP*tree.WPU*lumi*xsec)
+        a.setRealValue('W',0.95*tree.WISR*tree.WLEP*tree.WPU*lumi*xsec/wall)
 
         a.setRealValue('MRsq',(tree.MR-mr0)*(tree.RSQ-r0))
     
