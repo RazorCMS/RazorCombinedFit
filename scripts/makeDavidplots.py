@@ -120,26 +120,14 @@ if __name__ == '__main__':
     wsigmc = rt.RooDataSet(sigmc.GetName(),sigmc.GetTitle(),sigmc,sigmc.get(),"MR>=0.","W")
     wsigmc.Print("v")
 
-    #MRRsq = rt.RooFormulaVar("MRRsq","(@0-@1)*(@2-@3)",rt.RooArgList(MR,MR0,Rsq,R0))
-    bexp = rt.RooFormulaVar("bexp","@0*@1*pow(@2,1./@1)",rt.RooArgList(b,n,MRsq))
-    #one = rt.RooRealVar("one","one",-1,-1,1)
-    #bexpminus1 = rt.RooFormulaVar("bexpminus1","@0*@1*pow(@2),1./@1)-1",rt.RooArgList(b,n,MRsq))
     
-    projPdf = rt.RooFormulaVar("projPdf","(@0-1)*exp(-@0)",rt.RooArgList(bexp))
+    razPdf = rt.RooRazor1DTail_SYS("razor","razor", MRsq,b, n)
 
-    print projPdf.getVal()
-    projPdf.Print("v")
-    #exp = rt.RooExponential("exp","exp",bexp,one)
-    #prodList = rt.RooArgList()
-    #prodList.add(bexpminus1)
-    #prodList.add(exp)
-    #prod = rt.RooProdPdf("prod","prod",prodList)
     
     c = rt.TCanvas("c","c",500,500)
     frame = MRsq.frame()
     wsigmc.plotOn(frame)
-    #prod.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
-    projPdf.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
+    razPdf.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
     frame.Draw()
     c.SetLogy()
     c.Print("MRsq.pdf")
