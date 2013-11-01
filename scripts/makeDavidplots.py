@@ -11,7 +11,7 @@ import sys
 
 boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'MuMultiJet':[3,4],'MuJet':[3,4],'Mu':[4],'EleMultiJet':[5,6],'EleJet':[5,6],'Jet':[7],'Jet2b':[7],'Jet1b':[7],'MultiJet':[8,9]}
 lumi = 19.3
-xsec = 8.11
+xsec = 80.11
 
 if __name__ == '__main__':
 
@@ -20,6 +20,7 @@ if __name__ == '__main__':
     histoFile  = rt.TFile.Open("SMS/T2tt_histo.root")
     histo = histoFile.Get("SMSWALL")
     wall = histo.GetBinContent(histo.FindBin(700,25))
+    print "wall=%f"%(wall)
         
     box = "MultiJet"
 
