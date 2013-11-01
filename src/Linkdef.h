@@ -22,8 +22,10 @@
 #pragma link C++ defined_in "RooRazor3DSignal.h";
 #pragma link C++ defined_in "RooRazor2DTail.h";
 #pragma link C++ defined_in "RooRazor2DTail_SYS.h";
+#pragma link C++ defined_in "RooRazor1DTail_SYS.h";
 #pragma link C++ defined_in "RooRazor2DTailBNN_SYS.h";
 #pragma link C++ defined_in "RooRazor2DTurnOn.h";
+#pragma link C++ defined_in "RooRazorStep.h";
 #pragma link C++ defined_in "RooRazorLShape.h";
 #pragma link C++ defined_in "RooTwoBin.h";
 #pragma link C++ defined_in "RooDalglish.h";
