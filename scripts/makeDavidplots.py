@@ -50,6 +50,8 @@ if __name__ == '__main__':
 
     
     data = workspace.data("RMRTree")
+    MRsqForm = rt.RooFormulaVar("MRsqRorm","MRsqForm","(@0-%f)*(@2-%f)"%(mr0,r0),MR,Rsq)
+    data.addColumn(MRsqForm)
     
     #we cut away events outside our MR window
     mRmin = args['MR'].getMin()
