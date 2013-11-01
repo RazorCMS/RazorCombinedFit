@@ -132,5 +132,5 @@ if __name__ == '__main__':
     data.plotOn(frame)
     #razPdf.plotOn(frame,rt.RooFit.Normalization(Ntot.getVal()))
     frame.Draw()
-    c.SetLogy()
+    #c.SetLogy()
     c.Print("MRsq.pdf")
