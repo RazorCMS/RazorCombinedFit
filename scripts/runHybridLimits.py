@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 from optparse import OptionParser
-
-import ROOT as rt
-import RootTools
-from RazorCombinedFit.Framework import Config
+#import ROOT as rt
+#import RootTools
+#from RazorCombinedFit.Framework import Config
 import os.path
 import sys
 import time
@@ -398,7 +397,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("export SSH_ASKPASS=\"\"\n")
     outputfile.write("git clone https://github.com/RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("git checkout tags/woodson_300713\n")
+    outputfile.write("git checkout tags/woodson_021113\n")
     outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make clean; make -j 4\n")
@@ -453,7 +452,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("export WD=/tmp/${USER}/Razor2013_%s_%s_%s_%s_%i/CMSSW_6_2_0/src\n"%(model,massPoint,box,xsecstring,t))
     outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
     outputfile.write("cd RazorCombinedFit\n")
-    outputfile.write("git checkout tags/woodson_300713\n")
+    outputfile.write("git checkout tags/woodson_021113\n")
     outputfile.write("mkdir -p lib\n")
     outputfile.write("source setup.sh\n")
     outputfile.write("make clean; make -j 4\n")
