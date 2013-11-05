@@ -1,14 +1,18 @@
-#! /usr/bin/env python
-from optparse import OptionParser
 
 import ROOT as rt
-import RootTools
-from RazorCombinedFit.Framework import Config
-import os.path
 import sys
-import time
+import RootTools
+import glob
 from math import *
+import os
 from array import *
+
+def getFileName(mg, mchi, box, model, directory):
+    hybridLimit = "higgsCombine"
+    modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
+    fileName = "%s/%s%s_%s_%s.Asymptotic.mH120.root"%(directory,hybridLimit,model,modelPoint,box)
+    return fileName
+
 
 def getGChiPairs(model):
     if model=="T1bbbb":
@@ -30,7 +34,7 @@ def getGChiPairs(model):
                      (950, 525), (950, 550), (950, 600), (950, 625), (950, 650), (950, 700), (950, 750), (950, 800), (950, 850), (950, 900), (950, 925),
                      (1000, 525), (1000, 550), (1000, 600), (1000, 625), (1000, 650), (1000, 700), (1000, 750), (1000, 800), (1000, 850),  (1000, 900), (1000, 950), (1000, 975),
                      (1025, 50), (1025, 200), (1025, 300), (1025, 400), (1025, 450), (1025, 500), (1025, 525), (1025, 550), (1025, 600), (1025, 625), (1025, 650), (1025, 700), (1025, 750), (1025, 800), (1025, 850), (1025, 900), (1025, 950), (1025, 1000),
-c                     (1050, 550), (1050, 600), (1050, 650), (1050, 700), (1050, 750), (1050, 800), (1050, 825), (1050, 850), (1050, 900), (1050, 950), (1050, 1000), (1050, 1025),
+                     (1050, 550), (1050, 600), (1050, 650), (1050, 700), (1050, 750), (1050, 800), (1050, 825), (1050, 850), (1050, 900), (1050, 950), (1050, 1000), (1050, 1025),
                      (1075, 50), (1075, 200), (1075, 300), (1075, 400), (1075, 450), (1075, 500), (1075, 525), (1075, 550), (1075, 600), (1075, 625), (1075, 650), (1075, 700), (1075, 750), (1075, 800), (1075, 850), (1075, 900), (1075, 950),  (1075, 1000),  (1075, 1050),
                      (1100, 550), (1100, 600), (1100, 650), (1100, 700), (1100, 750), (1100, 800), (1100, 850), (1100, 900), (1100, 950), (1100, 1000), (1100, 1050), (1100, 1075),
                      (1125, 50), (1125, 200), (1125, 300), (1125, 400), (1125, 450), (1125, 500), (1125, 525), (1125, 550), (1125, 600), (1125, 625), (1125, 650), (1125, 700), (1125, 750), (1125, 800), (1125, 850), (1125, 900), (1125, 950), (1125, 1000), (1125, 1050), (1125, 1100),
@@ -148,175 +152,95 @@ c                     (1050, 550), (1050, 600), (1050, 650), (1050, 700), (1050,
                      (975, 1), (975, 25), (975, 50), (975, 75), (975, 100), (975, 125), (975, 150), (975, 175), (975, 200), (975, 225), (975, 250), (975, 275), (975, 300), (975, 325), (975, 350), (975, 375), (975, 400), (975, 425), (975, 450), (975, 475), (975, 500), (975, 525), (975, 550), (975, 575), (975, 600), (975, 625), (975, 650), (975, 675), (975, 700), (975, 725), (975, 750), (975, 775), (975, 800), (975, 825), (975, 850), (975, 875), (975, 900), (975, 925), (975, 950), 
                      (1000, 1), (1000, 50), (1000, 100), (1000, 150), (1000, 200), (1000, 250), (1000, 300), (1000, 350), (1000, 400), (1000, 450), (1000, 500), (1000, 550), (1000, 600), (1000, 650), (1000, 700), (1000, 750), (1000, 800), (1000, 850), (1000, 900), (1000, 950), (1000, 975)]
 
-        
     return gchipairs
 
-    
-def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t):
-    nToys = 125 # toys per command
-    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
-    # prepare the script to run
-    xsecstring = str(xsecpoint).replace(".","p")
-    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
-    outputfile = open(outputname,'w')
 
-    label = "MR300.0_R0.387298334621"
+def writeXsecTree(box, directory, mg, mchi, xsecULObs, xsecULExpPlus2, xsecULExpPlus, xsecULExp, xsecULExpMinus, xsecULExpMinus2):
+    outputFileName = "%s/xsecUL_mg_%s_mchi_%s_%s.root" %(directory, mg, mchi, '_'.join(boxes))
+    print "INFO: xsec UL values being written to %s"%outputFileName
+    fileOut = rt.TFile.Open(outputFileName, "recreate")
     
-    tagHypo = ""
-    if hypo == "B":
-        tagHypo = "-e"
-        
-    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
-    user = os.environ['USER']
-    
-    combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/"%(user[0],user)
-    
-    outputfile.write('#!/usr/bin/env bash -x\n')
-    outputfile.write('echo $SHELL\n')
-    outputfile.write('pwd\n')
-    outputfile.write('cd /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit \n')
-    outputfile.write('pwd\n')
-    outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
-    outputfile.write('eval `scramv1 runtime -sh`\n')
-    outputfile.write('source setup.sh\n')
-    outputfile.write("export TWD=${PWD}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecstring,t))
-    outputfile.write("mkdir -p $TWD\n")
-    outputfile.write("cd $TWD\n")
-    outputfile.write('pwd\n')
-    
-    #outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
-    #outputfile.write("scramv1 project CMSSW_6_1_1\n")
-    #outputfile.write("cd CMSSW_6_1_1/src\n")
-    #outputfile.write('pwd\n')
-    #outputfile.write("eval `scramv1 runtime -sh`\n")
-    #outputfile.write("root -l -q\n")
-    #outputfile.write("git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit\n")
-    #outputfile.write("cd HiggsAnalysis/CombinedLimit\n")
-    #outputfile.write('pwd\n')
-    #outputfile.write("git pull origin master\n")
-    #outputfile.write("git checkout V03-05-00\n")
-    #outputfile.write("scramv1 b\n")
-    #outputfile.write("export WD=${TWD}/CMSSW_6_1_1/src\n")
-    #outputfile.write("cd $WD\n")
-    #outputfile.write('pwd\n')
-    #outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
-    #outputfile.write("cd RazorCombinedFit\n")
-    #outputfile.write('pwd\n')
-    #outputfile.write("mkdir -p lib\n")
-    #outputfile.write("source setup.sh\n")
-    #outputfile.write("make clean; make -j 4\n")
-    
-    outputfile.write("export NAME=\"%s\"\n"%model)
-    outputfile.write("export LABEL=\"%s\"\n"%label)
-    
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
-        
-    #outputfile.write("python scripts/prepareCombine.py %s ${NAME} FULLFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root\n"%(box,massPoint,box))
-    #outputfile.write("combine -M Asymptotic -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
+    xsecTree = rt.TTree("xsecTree", "xsecTree")
+    myStructCmd = "struct MyStruct{Double_t mg;Double_t mchi;"
+    ixsecUL = 0
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+0)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+1)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+2)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+3)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+4)
+    myStructCmd+= "Double_t xsecUL%i;"%(ixsecUL+5)
+    ixsecUL+=6
+    myStructCmd += "}"
+    rt.gROOT.ProcessLine(myStructCmd)
+    from ROOT import MyStruct
 
-    boxes =  box.split("_")
-    for ibox in boxes:
-        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py %s ${NAME} FULLFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root\n"%(ibox,massPoint,ibox))
-        outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,ibox,ibox))
-
-    if len(boxes)>1:
-        options = ["%s=razor_combine_%s_%s.txt"%(ibox,ibox,model) for ibox in boxes]
-        option = " ".join(options)
-        outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s.txt \n"%(option,box,model))
-        outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
-        
-    #outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
-    outputfile.write("cp $TWD/*.root %s \n"%combineDir)
-    outputfile.write("cd; pwd; rm -rf $TWD\n")
+    s = MyStruct()
+    xsecTree.Branch("mg", rt.AddressOf(s,"mg"),'mg/D')
+    xsecTree.Branch("mchi", rt.AddressOf(s,"mchi"),'mchi/D')
     
-    outputfile.close
+    s.mg = mg
+    s.mchi = mchi
+    
+    ixsecUL = 0
+    xsecTree.Branch("xsecULObs_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+0)),'xsecUL%i/D'%(ixsecUL+0))
+    xsecTree.Branch("xsecULExpPlus2_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+1)),'xsecUL%i/D'%(ixsecUL+1))
+    xsecTree.Branch("xsecULExpPlus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+2)),'xsecUL%i/D'%(ixsecUL+2))
+    xsecTree.Branch("xsecULExp_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+3)),'xsecUL%i/D'%(ixsecUL+3))
+    xsecTree.Branch("xsecULExpMinus_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+4)),'xsecUL%i/D'%(ixsecUL+4))
+    xsecTree.Branch("xsecULExpMinus2_%s"%box, rt.AddressOf(s,"xsecUL%i"%(ixsecUL+5)),'xsecUL%i/D'%(ixsecUL+5))
+    exec 's.xsecUL%i = xsecULObs[ixsecUL]'%(ixsecUL+0)
+    exec 's.xsecUL%i = xsecULExpPlus2[ixsecUL]'%(ixsecUL+1)
+    exec 's.xsecUL%i = xsecULExpPlus[ixsecUL]'%(ixsecUL+2)
+    exec 's.xsecUL%i = xsecULExp[ixsecUL]'%(ixsecUL+3)
+    exec 's.xsecUL%i = xsecULExpMinus[ixsecUL]'%(ixsecUL+4)
+    exec 's.xsecUL%i = xsecULExpMinus2[ixsecUL]'%(ixsecUL+5)
+    ixsecUL += 4
 
-    return outputname,ffDir
+    xsecTree.Fill()
+
+    fileOut.cd()
+    xsecTree.Write()
+    
+    fileOut.Close()
+    
+    return outputFileName
 
 if __name__ == '__main__':
-    if len(sys.argv) < 5:
-        print "\nRun the script as follows:\n"
-        print "python scripts/runCombineLimits.py Box Model Queue CompletedOutputTextFile"
-        print "with:"
-        print "- Box = name of the Box (MuMu, MuEle, etc.)"
-        print "- Model = T1bbbb, T1tttt, T2tt, etc. "
-        print "- Queue = 1nh, 8nh, 1nd, etc."
-        print "- CompletedOutputTextFile = text file containing all completed output files"
-        print ""
-        sys.exit()
-    box = sys.argv[1]
+
+    boxInput = sys.argv[1]
     model = sys.argv[2]
-    queue = sys.argv[3]
-    done  = sys.argv[4]
-    t3 = False
-    mchi_lower = 0
-    mchi_upper = 2025
-    mg_lower = 0
-    mg_upper = 2025
-    for i in xrange(5,len(sys.argv)):
-        if sys.argv[i].find("--t3")!=-1: t3 = True
-    for i in xrange(5,len(sys.argv)):
-        if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
-        if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
-        if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
-        if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
-    
-    nJobs = 1 # do 1 toy each job => 1 toy
-    
-    print box, model, queue
+    directory = sys.argv[3]
+
 
     gchipairs = getGChiPairs(model)
-
-    gchipairs = reversed(gchipairs)
-    
-    pwd = os.environ['PWD']
-    
-    submitDir = "submit"
-    outputDir = "output"+box
-    
-    os.system("mkdir -p %s"%(submitDir))
-    os.system("mkdir -p %s"%(outputDir))
-
-    hypotheses = ["SpB"]
-
-    # for compting what jobs are left:
-    doneFile = open(done)
-    outFileList = [outFile.replace("Razor2013CombineLimit_","").replace(".root\n","") for outFile in doneFile.readlines()]
-
-    # dictionary of src file to output file names
-    nToys = 1 # toys per command
-    srcDict = {}
-    for i in xrange(0,nJobs):
-        srcDict[i] = ["0-0"]
         
-    totalJobs = 0
-    missingFiles = 0
-    for gluinopoint, neutralinopoint in gchipairs:
-        if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
-        if gluinopoint < mg_lower or gluinopoint >= mg_upper: continue
-        xsecRange = [1.]
-        for xsecpoint in xsecRange:
-            print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
-            for hypo in hypotheses:
-                for t in xrange(0,nJobs):
-                    xsecstring = str(xsecpoint).replace(".","p")
-                    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
-                    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
-                    output0 = str(outputname.replace("submit/submit_","").replace("xsec",""))
-                    for i in xrange(0,nJobs):
-                        output0 = output0.replace("SpB_%i.src"%i,"SpB_%s"%srcDict[i][0])
-                    runJob = False
-                    if output0 not in outFileList: 
-                        missingFiles+=1
-                        runJob = True
-                    if not runJob: continue
-                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                    totalJobs+=1
-                    time.sleep(3)
-                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-    print "Missing files = ", missingFiles
-    print "Total jobs = ", totalJobs
+    boxes = boxInput.split("_")
+
+    #output = rt.TFile.Open("%s/combine_%s_%s.root"%(directory,model,boxInput),"RECREATE")
+    #rt.TTree("combine","combine")
+
+    for mg, mchi in gchipairs:
+        if not glob.glob(getFileName(mg,mchi,boxInput,model,directory)): continue
+        tFile = rt.TFile.Open(getFileName(mg,mchi,boxInput,model,directory))
+        limit = tFile.Get("limit")
+        
+        limit.Draw('>>elist','','entrylist')
+        elist = rt.gDirectory.Get('elist')
+        entry = elist.Next()
+        limit.GetEntry(entry)
+
+        limits = []
+        while True:
+            if entry == -1: break
+            limit.GetEntry(entry)
+            limits.append(1e-3*limit.limit)
+            
+            entry = elist.Next()
+        if len(limits) < 6: continue
+        
+        print mg, mchi
+        print limits
+        limits.reverse()
+        
+
+        writeXsecTree(boxInput, directory, mg, mchi, [limits[0]],[limits[1]],[limits[2]],[limits[3]],[limits[4]],[limits[5]])
