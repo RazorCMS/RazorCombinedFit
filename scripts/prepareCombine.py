@@ -110,7 +110,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
                 
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
-                          (box,model,box,bkgs[0],box,bkgs[1],box,bkgs[2]))5
+                          (box,model,box,bkgs[0],box,bkgs[1],box,bkgs[2]))
             txtfile.write("process        	0          		1			2			3\n")
             txtfile.write("rate            %f		%f		%f		%f\n"%
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
