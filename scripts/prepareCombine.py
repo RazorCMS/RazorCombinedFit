@@ -636,7 +636,8 @@ if __name__ == '__main__':
         histos[box,model] = rebin3d(sigHist.Clone("%s_%s_3d"%(box,model)), x, y, z )
         histos[box,model].SetTitle("%s_%s_3d"%(box,model))
         lumi = 19.3 # luminosity in fb^-1
-        ref_xsec = 1.09501 #900 GeV stop/sbottom reference xsec in fb
+        ref_xsec = 10.
+        #ref_xsec = 1.09501 #900 GeV stop/sbottom reference xsec in fb
         #ref_xsec = 4.80639 #750 GeV stop/sbottom reference xsec in fb
         histos[box,model].Scale(lumi*ref_xsec)
         outFile = rt.TFile.Open("razor_combine_%s_%s.root"%(box,model),"RECREATE")
