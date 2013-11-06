@@ -265,7 +265,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print 'Using the fit range: %s' % fit_range
 
 
-                #boxes[box].fixPars('TTj')
+                #boxes[box].fixPars('Ntot_TTj1b',True)
+                #boxes[box].fixPars('Ntot_TTj2b',True)
                 #boxes[box].fixPars('S1_TTj',False)
                 
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))

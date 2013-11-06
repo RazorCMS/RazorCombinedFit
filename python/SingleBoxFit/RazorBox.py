@@ -21,6 +21,9 @@ def getBinning(boxName, varName, btag):
     if varName == "nBtag" :
         if btag == "NoBtag":        return [0,1]
         elif btag == "Btag":        return [1,2,3,4]
+    if varName == "nJet" :
+        if btag == "NoJet":        return [0,1]
+        elif btag == "Jet":        return [1,2,3,4]
 
             
 def FindLastBin(h):
@@ -39,11 +42,13 @@ class RazorBox(Box.Box):
             self.zeros = {'TTj1b':[],'TTj2b':[],'Vpj':[]}
         else:
             self.btag = "Btag"
+            self.njet = "Jet"
             self.zeros = {'TTj1b':['Jet2b'],
-                          'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b','Ele'],
-                          'Vpj':['MuEle','EleEle','MuMu','Mu','MuJet','MuMultiJet','Ele','EleJet','EleMultiJet','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b']}
+                          'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b'],
+                          'Vpj':['MuEle','EleEle','MuMu','Mu','MuJet','MuMultiJet','EleJet','EleMultiJet','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b','Ele']}
                         
-        if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
+       # if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
+        if fitregion=="Sideband": self.fitregion = "fR1, fR2, fR3, fR4, fR5"
         # for CLs limit setting  remove the following line
         elif fitregion=="FULL": self.fitregion = "LowRsq,LowMR,HighMR"
         else: self.fitregion = fitregion
