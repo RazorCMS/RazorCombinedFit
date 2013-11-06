@@ -674,30 +674,29 @@ if __name__ == '__main__':
         print "INFO: Now writing data card"
         print ""
         writeDataCard(box,model,"razor_combine_%s_%s.txt"%(box,model),initialbkgs,param_names,histos1d,workspace)
-
-
         
-        binHistos = {}
-        for i in xrange(1,len(x)):
-            for j in xrange(1,len(y)):
-                for k in xrange(1, len(z)):
-                    if x[i] < MRcut and y[j] < Rsqcut: continue
-                    #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
-                    binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
-                    #binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
-                    binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),int(max(binMax,5)),0,int(max(binMax,5)))
-        for iToy in xrange(0, 100):
-            randomPars = getRandomPars(fr, workspace)
-            if iToy%100==0: 
-                print "toy #", iToy
-                for p in RootTools.RootIterator.RootIterator(randomPars):
-                    print p.GetName(), "=", p.getVal(), "+-", p.getError()
-            for i in xrange(1,len(x)):
-                for j in xrange(1,len(y)):
-                    for k in xrange(1, len(z)):
-                        if x[i] < MRcut and y[j] < Rsqcut: continue
-                        bin_events = rt.RooRandom.randomGenerator().Poisson(getBinEvents(i,j,k,x,y,z,workspace))
-                        binHistos[i,j,k].Fill(bin_events)
+        # binHistos = {}
+        # for i in xrange(1,len(x)):
+        #     for j in xrange(1,len(y)):
+        #         for k in xrange(1, len(z)):
+        #             if x[i] < MRcut and y[j] < Rsqcut: continue
+        #             #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
+        #             binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
+        #             #binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
+        #             binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),int(max(binMax,5)),0,int(max(binMax,5)))
+                    
+        # for iToy in xrange(0, 100):
+        #     randomPars = getRandomPars(fr, workspace)
+        #     if iToy%100==0: 
+        #         print "toy #", iToy
+        #         for p in RootTools.RootIterator.RootIterator(randomPars):
+        #             print p.GetName(), "=", p.getVal(), "+-", p.getError()
+        #     for i in xrange(1,len(x)):
+        #         for j in xrange(1,len(y)):
+        #             for k in xrange(1, len(z)):
+        #                 if x[i] < MRcut and y[j] < Rsqcut: continue
+        #                 bin_events = rt.RooRandom.randomGenerator().Poisson(getBinEvents(i,j,k,x,y,z,workspace))
+        #                 binHistos[i,j,k].Fill(bin_events)
                         
         # c = rt.TCanvas("c","c",500,500)
         # for i in xrange(1,len(x)):
@@ -707,41 +706,40 @@ if __name__ == '__main__':
         #             binHistos[i,j,k].Draw("")
         #             c.Print("bin/bin%i%i%i.pdf"%(i,j,k))
                     
-        for bkg in initialbkgs:
-            for i in xrange(1,len(x)):
-                for j in xrange(1,len(y)):
-                    for k in xrange(1,len(z)):
-                        if x[i] < MRcut and y[j] < Rsqcut: continue
-                        mode, range68 = find68ProbRange(binHistos[i,j,k])
-                        if (bkg.find("1b")!=-1 and z[k-1]==1) :
-                            histos[box,bkg].SetBinError(i,j,k,range68/2.)
-                        elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
-                            histos[box,bkg].SetBinError(i,j,k,range68/2.)
-                        elif (bkg.find("3b")!=-1 and z[k-1]==3) : 
-                            histos[box,bkg].SetBinError(i,j,k,range68/2.)
+        # for bkg in initialbkgs:
+        #     for i in xrange(1,len(x)):
+        #         for j in xrange(1,len(y)):
+        #             for k in xrange(1,len(z)):
+        #                 if x[i] < MRcut and y[j] < Rsqcut: continue
+        #                 mode, range68 = find68ProbRange(binHistos[i,j,k])
+        #                 if (bkg.find("1b")!=-1 and z[k-1]==1) :
+        #                     histos[box,bkg].SetBinError(i,j,k,range68/2.)
+        #                 elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
+        #                     histos[box,bkg].SetBinError(i,j,k,range68/2.)
+        #                 elif (bkg.find("3b")!=-1 and z[k-1]==3) : 
+        #                     histos[box,bkg].SetBinError(i,j,k,range68/2.)
         
-        for i in xrange(1,len(x)):
-            for j in xrange(1,len(y)):
-                for k in xrange(1, len(z)):
-                    bkg = initialbkgs[k-1]
-                    if x[i] < MRcut and y[j] < Rsqcut: continue
-                    obsYield = histos[box,"data"].GetBinContent(i,j,k)
-                    bkgYield = histos[box,bkg].GetBinContent(i,j,k)
-                    #bkgError = rt.TMath.Sqrt(rt.TMath.Power(histos[box,bkg].GetBinError(i,j,k),2) + bkgYield)
-                    bkgError = histos[box,bkg].GetBinError(i,j,k)
-                    sigYield = histos[box,model].GetBinContent(i,j,k)
+        # for i in xrange(1,len(x)):
+        #     for j in xrange(1,len(y)):
+        #         for k in xrange(1, len(z)):
+        #             bkg = initialbkgs[k-1]
+        #             if x[i] < MRcut and y[j] < Rsqcut: continue
+        #             obsYield = histos[box,"data"].GetBinContent(i,j,k)
+        #             bkgYield = histos[box,bkg].GetBinContent(i,j,k)
+        #             bkgError = histos[box,bkg].GetBinError(i,j,k)
+        #             sigYield = histos[box,model].GetBinContent(i,j,k)
     
-                    sOverB = sigYield/bkgYield
-                    sOverSqrtB = sigYield/rt.TMath.Sqrt(bkgYield)
-                    sOverDeltaB = sigYield/bkgError
-                    if x[i]>550 and y[j]>0.3:
-                        print "[%i,%i] [%.2f,%.2f] %i b-tag : data = %i, B = %.3f+-%.3f, S = %.3f, S/B = %.3f, S/sqrt(B) = %.3f"%(x[i-1],x[i],
-                                                                                                                                  y[j-1],y[j],
-                                                                                                                                  z[k-1], 
-                                                                                                                                  obsYield, 
-                                                                                                                                  bkgYield, bkgError, 
-                                                                                                                                  sigYield, 
-                                                                                                                                  sOverB, sOverSqrtB)
+        #             sOverB = sigYield/bkgYield
+        #             sOverSqrtB = sigYield/rt.TMath.Sqrt(bkgYield)
+        #             sOverDeltaB = sigYield/bkgError
+        #             if x[i]>550 and y[j]>0.3:
+        #                 print "[%i,%i] [%.2f,%.2f] %i b-tag : data = %i, B = %.3f+-%.3f, S = %.3f, S/B = %.3f, S/sqrt(B) = %.3f"%(x[i-1],x[i],
+        #                                                                                                                           y[j-1],y[j],
+        #                                                                                                                           z[k-1], 
+        #                                                                                                                           obsYield, 
+        #                                                                                                                           bkgYield, bkgError, 
+        #                                                                                                                           sigYield, 
+        #                                                                                                                           sOverB, sOverSqrtB)
                     
                         
         outFile.Close()
