@@ -699,13 +699,13 @@ if __name__ == '__main__':
                         bin_events = rt.RooRandom.randomGenerator().Poisson(getBinEvents(i,j,k,x,y,z,workspace))
                         binHistos[i,j,k].Fill(bin_events)
                         
-        c = rt.TCanvas("c","c",500,500)
-        for i in xrange(1,len(x)):
-            for j in xrange(1,len(y)):
-                for k in xrange(1, len(z)):
-                    if x[i] < MRcut and y[j] < Rsqcut: continue
-                    binHistos[i,j,k].Draw("")
-                    c.Print("bin/bin%i%i%i.pdf"%(i,j,k))
+        # c = rt.TCanvas("c","c",500,500)
+        # for i in xrange(1,len(x)):
+        #     for j in xrange(1,len(y)):
+        #         for k in xrange(1, len(z)):
+        #             if x[i] < MRcut and y[j] < Rsqcut: continue
+        #             binHistos[i,j,k].Draw("")
+        #             c.Print("bin/bin%i%i%i.pdf"%(i,j,k))
                     
         for bkg in initialbkgs:
             for i in xrange(1,len(x)):
