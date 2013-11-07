@@ -81,7 +81,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f\n"%
                           (box,bkgs[0],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   1.00\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   2.00\n"%(param_name,box))
         elif box=="Jet2b":
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
@@ -94,10 +94,10 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
-            txtfile.write("Pdf			shape	1.00       -	-\n")
-            txtfile.write("Jes			shape	1.00       -	-\n")
-            txtfile.write("Btag			shape	1.00       -	-\n")
-            txtfile.write("Isr			shape	1.00       -	-\n")
+            txtfile.write("Pdf			shape	2.00       -	-\n")
+            txtfile.write("Jes			shape	2.00       -	-\n")
+            txtfile.write("Btag			shape	2.00       -	-\n")
+            txtfile.write("Isr			shape	2.00       -	-\n")
             #norm_err = 1.+1./rt.TMath.Sqrt(histos1d[box,bkgs[0]].Integral())
             norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
             txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00\n"%
@@ -107,7 +107,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
             txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s\n"%
                           (box,bkgs[1],norm_err))
             for param_name in param_names:
-                txtfile.write("%s_%s	shape	-	   1.00	1.00\n"%(param_name,box))
+                txtfile.write("%s_%s	shape	-	   2.00	2.00\n"%(param_name,box))
         else:
                 
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
@@ -488,8 +488,8 @@ if __name__ == '__main__':
         #             binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
 
         sign = {}
-        sign["Up"] = 1.00
-        sign["Down"] = -1.00
+        sign["Up"] = 0.5
+        sign["Down"] = -0.5
         for bkg in initialbkgs:
             for p in range(0,len(param_names)):
                 print ""
@@ -559,8 +559,8 @@ if __name__ == '__main__':
         isrDown.SetTitle("%s_%s_IsrDown"%(box,model))
         isrAbs = isr.Clone("IsrAbs")
         isrAbs.Multiply(wHisto)
-        isrUp.Add(isrAbs,1.0)
-        isrDown.Add(isrAbs,-1.0)
+        isrUp.Add(isrAbs,sign["Up"])
+        isrDown.Add(isrAbs,sign["Down"])
         histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, MRcut, Rsqcut)
         histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, MRcut, Rsqcut)
                
@@ -570,8 +570,8 @@ if __name__ == '__main__':
         btagDown.SetTitle("%s_%s_BtagDown"%(box,model))
         btagAbs = btag.Clone("BtagAbs")
         btagAbs.Multiply(wHisto)
-        btagUp.Add(btagAbs,1.0)
-        btagDown.Add(btagAbs,-1.0)
+        btagUp.Add(btagAbs,sign["Up"])
+        btagDown.Add(btagAbs,sign["Down"])
         histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, MRcut, Rsqcut)
         histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, MRcut, Rsqcut)
 
@@ -581,8 +581,8 @@ if __name__ == '__main__':
         jesDown.SetTitle("%s_%s_JesDown"%(box,model))
         jesAbs = jes.Clone("JesAbs")
         jesAbs.Multiply(wHisto)
-        jesUp.Add(jesAbs,1.0)
-        jesDown.Add(jesAbs,-1.0)
+        jesUp.Add(jesAbs,sign["Up"])
+        jesDown.Add(jesAbs,sign["Down"])
         histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, MRcut, Rsqcut)
         histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, MRcut, Rsqcut)
 
@@ -592,8 +592,8 @@ if __name__ == '__main__':
         pdfDown.SetTitle("%s_%s_PdfDown"%(box,model))
         pdfAbs = pdf.Clone("PdfAbs")
         pdfAbs.Multiply(wHisto)
-        pdfUp.Add(pdfAbs,1.0)
-        pdfDown.Add(pdfAbs,-1.0)
+        pdfUp.Add(pdfAbs,sign["Up"])
+        pdfDown.Add(pdfAbs,sign["Down"])
         histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, MRcut, Rsqcut)
         histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, MRcut, Rsqcut)
         
@@ -638,10 +638,18 @@ if __name__ == '__main__':
         histos[box,model] = rebin3d(sigHist.Clone("%s_%s_3d"%(box,model)), x, y, z, MRcut, Rsqcut )
         histos[box,model].SetTitle("%s_%s_3d"%(box,model))
         lumi = 19.3 # luminosity in fb^-1
-        ref_xsec = 10.
+        ref_xsec = 100.
         #ref_xsec = 1.09501 #900 GeV stop/sbottom reference xsec in fb
         #ref_xsec = 4.80639 #750 GeV stop/sbottom reference xsec in fb
         histos[box,model].Scale(lumi*ref_xsec)
+        
+        for param_name in ["Jes","Isr","Btag","Pdf"]:
+            for syst in ['Up','Down']:
+                if histos[box,"%s_%s%s"%(model,param_name,syst)].Integral() > 0:
+                    histos[box,"%s_%s%s"%(model,param_name,syst)].Scale( histos[box,model].Integral()/histos[box,"%s_%s%s"%(model,param_name,syst)].Integral())
+        
+
+        
         outFile = rt.TFile.Open("razor_combine_%s_%s.root"%(box,model),"RECREATE")
 
         #unroll histograms 3D -> 1D
