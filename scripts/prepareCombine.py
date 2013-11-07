@@ -9,7 +9,7 @@ from pdfShit import *
 import sys
 
 
-def rebin3d(oldhisto, x,y,z):
+def rebin3d(oldhisto, x,y,z, MRcut, Rsqcut):
     newhisto = rt.TH3D(oldhisto.GetName(),oldhisto.GetTitle(),len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -17,6 +17,8 @@ def rebin3d(oldhisto, x,y,z):
                 xold = oldhisto.GetXaxis().GetBinCenter(i)
                 yold = oldhisto.GetYaxis().GetBinCenter(j)
                 zold = oldhisto.GetZaxis().GetBinCenter(k)
+                
+                if xold < MRcut and  yold < Rsqcut: continue
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))
     return newhisto
@@ -476,14 +478,14 @@ if __name__ == '__main__':
                         elif (bkg.find("2b")!=-1 and z[k-1]==3) : 
                             histos[box,"TTj3b"].SetBinContent(i,j,k,bin_events)
 
-        binHistos = {}
-        for i in xrange(1,len(x)):
-            for j in xrange(1,len(y)):
-                for k in xrange(1, len(z)):
-                    if x[i] < MRcut and y[j] < Rsqcut: continue
-                    #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
-                    binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
-                    binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
+        # binHistos = {}
+        # for i in xrange(1,len(x)):
+        #     for j in xrange(1,len(y)):
+        #         for k in xrange(1, len(z)):
+        #             if x[i] < MRcut and y[j] < Rsqcut: continue
+        #             #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
+        #             binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
+        #             binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
 
         sign = {}
         sign["Up"] = 1.00
@@ -559,8 +561,8 @@ if __name__ == '__main__':
         isrAbs.Multiply(wHisto)
         isrUp.Add(isrAbs,1.0)
         isrDown.Add(isrAbs,-1.0)
-        histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z)
-        histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z)
+        histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, MRcut, Rsqcut)
+        histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, MRcut, Rsqcut)
                
         btagUp = wHisto.Clone("%s_%s_BtagUp"%(box,model))
         btagUp.SetTitle("%s_%s_BtagUp"%(box,model))
@@ -570,8 +572,8 @@ if __name__ == '__main__':
         btagAbs.Multiply(wHisto)
         btagUp.Add(btagAbs,1.0)
         btagDown.Add(btagAbs,-1.0)
-        histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z)
-        histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z)
+        histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, MRcut, Rsqcut)
+        histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, MRcut, Rsqcut)
 
         jesUp = wHisto.Clone("%s_%s_JesUp"%(box,model))
         jesUp.SetTitle("%s_%s_JesUp"%(box,model))
@@ -581,8 +583,8 @@ if __name__ == '__main__':
         jesAbs.Multiply(wHisto)
         jesUp.Add(jesAbs,1.0)
         jesDown.Add(jesAbs,-1.0)
-        histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z)
-        histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z)
+        histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, MRcut, Rsqcut)
+        histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, MRcut, Rsqcut)
 
         pdfUp = wHisto.Clone("%s_%s_PdfUp"%(box,model))
         pdfUp.SetTitle("%s_%s_PdfUp"%(box,model))
@@ -592,8 +594,8 @@ if __name__ == '__main__':
         pdfAbs.Multiply(wHisto)
         pdfUp.Add(pdfAbs,1.0)
         pdfDown.Add(pdfAbs,-1.0)
-        histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z)
-        histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z)
+        histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, MRcut, Rsqcut)
+        histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, MRcut, Rsqcut)
         
         
         #set the per box eff value
@@ -633,7 +635,7 @@ if __name__ == '__main__':
         #extended = w.factory("RooExtendPdf::%s_signal(%s, Ntot_Signal)" % (box,signalModel))
 
         
-        histos[box,model] = rebin3d(sigHist.Clone("%s_%s_3d"%(box,model)), x, y, z )
+        histos[box,model] = rebin3d(sigHist.Clone("%s_%s_3d"%(box,model)), x, y, z, MRcut, Rsqcut )
         histos[box,model].SetTitle("%s_%s_3d"%(box,model))
         lumi = 19.3 # luminosity in fb^-1
         ref_xsec = 10.
