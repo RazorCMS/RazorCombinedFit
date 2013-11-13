@@ -130,8 +130,12 @@ if __name__ == '__main__':
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--3D": fit3D = True
 
-    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
-
+    #MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
+    from RazorBox import getBinning
+    MRbins    = getBinning(Box, "MR"   , "Btag")
+    Rsqbins   = getBinning(Box, "Rsq"  , "Btag")
+    nBtagbins = getBinning(Box, "nBtag", "Btag")
+   
     if fit3D:
         myTree = getTree3D(MRbins,Rsqbins,nBtagbins,listfileName)
     else:

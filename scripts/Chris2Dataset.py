@@ -4,8 +4,9 @@ import os
 import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
+from CalcBDT import CalcBDT
 
-boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'Mu':[3],'Ele':[4],'Had':[5],'BJet':[6]}
+boxMap = {'MuEle':[0],'MuMu':[1],'EleEle':[2],'Mu':[3],'Ele':[4],'Had':[5],'BJet':[6], 'BJetLS':[7],'BJetHS':[8]}
 
 cross_sections = {'SingleTop_s':4.21,
                   'SingleTop_t':64.6,
@@ -61,8 +62,10 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     if box in ['Ele']:
         boxCut = "nJetNoLeptons == 4 && metFilter && eleBoxFilter && eleTriggerFilter && nCSVM >0 && MR >= 350. && RSQ >= 0.05 && nMuonTight == 0 && nElectronTight == 1 && nMuonLoose == 0 && nElectronLoose == 1 &&  !isolatedTrack10LeptonFilter"
     elif box in ['Mu']:
-        boxCut = "nJetNoLeptons >= 4 && metFilter && muBoxFilter && muTriggerFilter && nCSVM >0  && MR >= 350. && RSQ >= 0.05 && nMuonTight == 1 && nElectronTight == 0 && nMuonLoose == 1 && nElectronLoose == 0 &&  !isolatedTrack10LeptonFilter"
- 
+        boxCut = "nJetNoLeptons == 4 && metFilter && muBoxFilter && muTriggerFilter && nCSVM >0  && MR >= 350. && RSQ >= 0.05 && nMuonTight == 1 && nElectronTight == 0 && nMuonLoose == 1 && nElectronLoose == 0 &&  !isolatedTrack10LeptonFilter"
+    elif box in ['BJetHS','BJetLS']:
+        boxCut = "nJet == 6 && hadBoxFilter && hadTriggerFilter && nCSVM > 0 && MR >= 500. && RSQ >= 0.05  && nMuonTight == 0 && nElectronTight == 0 && !isolatedTrack10Filter && nMuonLoose == 0 && nElectronLoose == 0 "#&& self.dumper.bdt() >= -0.2"
+        
     if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && %s' % (mRmin,mRmax,rsqMin,rsqMax,boxCut),'entrylist')
     else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && %s  && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
     elist = rt.gDirectory.Get('elist')

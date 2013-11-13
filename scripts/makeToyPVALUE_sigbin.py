@@ -585,7 +585,7 @@ def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, out
     #hNS.SetContourLevel(5,-1.5)
     #hNS.SetContourLevel(7,2.5)
     #hNS.SetContourLevel(4,-2.5)
-    hNS.SetBinContent(1, 1, -999)
+    #hNS.SetBinContent(1, 1, -999)
     hNS.GetXaxis().SetMoreLogLabels()
     #hNS.GetYaxis().SetMoreLogLabels()
     hNS.GetXaxis().SetNoExponent()
@@ -705,7 +705,10 @@ if __name__ == '__main__':
         if sys.argv[i] == "--printPlots": printPlots = True
             
         
-    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
+    from RazorBox import getBinning
+    MRbins    = getBinning(Box, "MR"   , "Btag")
+    Rsqbins   = getBinning(Box, "Rsq"  , "Btag")
+    nBtagbins = getBinning(Box, "nBtag", "Btag")
     
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
     

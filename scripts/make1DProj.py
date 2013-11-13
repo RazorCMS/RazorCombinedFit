@@ -296,7 +296,11 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     pad1.cd()
     rt.gPad.SetLogy()
 
-    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, False)
+    from RazorBox import getBinning
+    MRbins    = getBinning(Box, "MR"   , "Btag")
+    Rsqbins   = getBinning(Box, "Rsq"  , "Btag")
+    nBtagbins = getBinning(Box, "nBtag", "Btag")
+    
     binMap = {"MR":MRbins,"RSQ":Rsqbins,"BTAG":nBtagbins}
     print binMap
     print binMap[varname]
@@ -603,8 +607,11 @@ if __name__ == '__main__':
         if sys.argv[i].find("-Lumi=") != -1: Lumi = float(sys.argv[i].replace("-Lumi=",""))
         if sys.argv[i].find("-Energy=") != -1: Energy = float(sys.argv[i].replace("-Energy=",""))
 
-    MRbins, Rsqbins, nBtagbins = makeBluePlot.Binning(Box, noBtag)
-        
+    from RazorBox import getBinning
+    MRbins    = getBinning(Box, "MR"   , "Btag")
+    Rsqbins   = getBinning(Box, "Rsq"  , "Btag")
+    nBtagbins = getBinning(Box, "nBtag", "Btag")
+    
     x = array("d",MRbins)
     y = array("d",Rsqbins)
     z = array("d",nBtagbins)

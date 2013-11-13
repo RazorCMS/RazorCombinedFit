@@ -7,12 +7,10 @@ import sys
 
 #this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
-    if boxName in ["Jet", "TauTauJet", "MultiJet", "Jet2b", "Jet1b"]:
-        if varName == "MR" :        return [350, 400, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
+    if boxName in ["BJetHS"]:
+        if varName == "MR" :        return [500, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" : 
-            if btag == "NoBtag" or boxName in ["Jet", "Jet1b"]:
-                                    return [0.25,0.30,0.35,0.40,0.45,0.50]
-            if btag == "Btag":      return [0.25,0.30,0.41,0.52,0.64,0.80,1.5]
+            return [0.05, 0.1, 0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
     else:
         if varName == "MR" :        return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" :
@@ -45,7 +43,7 @@ class RazorBox(Box.Box):
             self.njet = "Jet"
             self.zeros = {'TTj1b':['Jet2b'],
                           'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b'],
-                          'Vpj':['MuEle','EleEle','MuMu','Mu','MuJet','MuMultiJet','EleJet','EleMultiJet','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b','Ele']}
+                          'Vpj':['MuEle','EleEle','MuMu','Mu','MuJet','MuMultiJet','EleJet','EleMultiJet','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b','Ele','BJetHS','BJetLS']}
                         
        # if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
         if fitregion=="Sideband": self.fitregion = "fR1, fR2, fR3, fR4, fR5"
