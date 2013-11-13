@@ -304,7 +304,7 @@ def makePDFPlotCOND2D(tree, histo, condition, relative):
     del myXarray, myYarray
     return Cen,Error
 
-def makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM,histoFileName,outputFile):
+def makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM, histoFileName, outputFile):
     ibinx = histo.GetXaxis().GetNbins()
     minx = histo.GetXaxis().GetXmin()
     maxx = histo.GetXaxis().GetXmax()
@@ -329,8 +329,10 @@ def makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM,histoFileName,ou
     Cen.SetTitle(histo.GetName()+"_pdferr_nom")
     Error = histo.Clone(histo.GetName()+"_pdferr_pe")
     Error.SetTitle(histo.GetName()+"_pdferr_pe")
+    print "IN PDF CODE: minz = %i, maxz = %i"%(minz,maxz)
     for k in xrange(1,ibinz+1):
-        condition_btag = condition.replace("%s >= 1"%BTAGNOM,"%s == %i"%(BTAGNOM,k))
+        btagbin = histo.GetZaxis().GetBinLowEdge(k)
+        condition_btag = condition.replace("%s >= 1"%BTAGNOM,"%s == %i"%(BTAGNOM,btagbin))
         histo2D = rt.TH2D("histo2D_%i"%k,"histo2D_%i"%k, ibinx, myXarray, ibiny, myYarray)
         tree.Project("histo2D_%i"%k,"RSQ:MR","%s"%condition_btag)
         TMPCen,TMPError = makePDFPlotCONDARRAY(tree, histo2D, ibinx, myXarray, ibiny, myYarray, condition_btag, relative, histoFileName, outputFile)        

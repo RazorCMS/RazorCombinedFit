@@ -14,28 +14,8 @@ def FindLastBin(h):
     return h.GetXaxis().GetNbins()
 
 def GetProbRange(h):
-    # find the maximum
-    binMax = h.GetMaximumBin()
-    # move left and right until integrating 68%
-    prob = h.GetMaximum()/h.Integral()
-    iLeft = 1
-    iRight = 1
-    while prob < 0.68 and binMax+iRight <= h.GetXaxis().GetNbins():
-        print binMax-iLeft,binMax+iRight, prob
-        probRight = 0.
-        if h.GetBinContent(binMax+iRight) <= 0.: iRight += 1
-        else: probRight = h.GetBinContent(binMax+iRight)
-        probLeft = 0.
-        if h.GetBinContent(binMax+iLeft) <= 0. and binMax > 1 : iLeft += 1
-        else: probLeft = h.GetBinContent(binMax-iLeft)
-        if probRight > probLeft:
-            prob += probRight/h.Integral()
-            iRight += 1
-        else:
-            if binMax > 1:
-                prob += probLeft/h.Integral()
-                iLeft += 1
-    return h.GetXaxis().GetBinUpEdge(binMax+iRight), h.GetXaxis().GetBinLowEdge(binMax-iLeft)
+    modeVal,rangeMin,rangeMax = makeToyPVALUE_sigbin.find68ProbRange(h)
+    return rangeMax, rangeMin
     
 def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLabel):
     err = []
@@ -59,6 +39,12 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
                 if btagOpt == 23:
                     sumName = sumName+"b%i_%i_2+b%i_%i_3+" %(i,j,i,j)
                     varNames.extend(["b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)])
+                if btagOpt == 2:
+                    sumName = sumName+"b%i_%i_2+" %(i,j)
+                    varNames.extend(["b%i_%i_2"%(i,j)])
+                if btagOpt == 3:
+                    sumName = sumName+"b%i_%i_3+" %(i,j)
+                    varNames.extend(["b%i_%i_3"%(i,j)])
             else:
                 sumName = sumName+"b%i_%i+" %(i,j)
                 varNames.append("b%i_%i" %(i,j))
@@ -91,28 +77,39 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
             rho = makeToyPVALUE_sigbin.useThisRho(0.,maxX,myhisto)
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
-            myhisto.Draw()
-            ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
-            func.SetLineColor(ic.GetColor(0.1, .85, 0.5))
-            func.Draw("same")
             mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMode(maxX,func)
-            tleg = rt.TLegend(0.6,.65,.9,.9)
-            if switchToKDE:
-                tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
-            else:
-                tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
-            tleg.SetFillColor(rt.kWhite)
-            tleg.Draw("same")
-            rt.gStyle.SetOptStat(0)
-            if printPlots:
-                if btagOpt>0:
-                    d.Print("%s/functest_X_%ib_%i.pdf"%(outFolder,btagOpt,i))
-                else:
-                    d.Print("%s/functest_X_%i.pdf"%(outFolder,i))
         else:
             xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
         err.append((xmax-xmin)/2.)
+        
+        #now making plots
+        myhisto.Draw()
+        tleg = rt.TLegend(0.6,.65,.9,.9)
+        if switchToKDE:
+            ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
+            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
+            func.Draw("same")
+            funcFill68.SetRange(xmin,xmax)
+            ic68 = rt.TColor(1404, 0.49, 0.60, 0.82,"")
+            funcFill68.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
+            funcFill68.SetFillColor(ic68.GetColor(0.49,0.60,.82))
+            funcFill68.SetFillStyle(3144)
+            funcFill68.Draw("same")
+            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+        else:
+            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+        tleg.SetFillColor(rt.kWhite)
+        tleg.Draw("same")
+        rt.gStyle.SetOptStat(0)
+        
+        #now printing plots
+        if printPlots:
+            if btagOpt>0:
+                d.Print("%s/functest_X_%ib_%i.pdf"%(outFolder,btagOpt,i))
+            else:
+                d.Print("%s/functest_X_%i.pdf"%(outFolder,i))
+                
     myhisto.Delete()
     if printPlots: del d
     del myhisto
@@ -140,6 +137,12 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
                 if btagOpt == 23:
                     sumName = sumName+"b%i_%i_2+b%i_%i_3+" %(i,j,i,j)
                     varNames.extend(["b%i_%i_2"%(i,j),"b%i_%i_3"%(i,j)])
+                if btagOpt == 2:
+                    sumName = sumName+"b%i_%i_2+" %(i,j)
+                    varNames.extend(["b%i_%i_2"%(i,j)])
+                if btagOpt == 3:
+                    sumName = sumName+"b%i_%i_3+" %(i,j)
+                    varNames.extend(["b%i_%i_3"%(i,j)])
             else:
                 sumName = sumName+"b%i_%i+" %(i,j)
                 varNames.append("b%i_%i" %(i,j))
@@ -172,27 +175,39 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
             rho = makeToyPVALUE_sigbin.useThisRho(0.,maxX,myhisto)
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
-            myhisto.Draw()
-            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
-            func.Draw("same")
             mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMode(maxX,func)
-            tleg = rt.TLegend(0.6,.65,.9,.9)
-            if switchToKDE:
-                tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
-            else:
-                tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
-            tleg.SetFillColor(rt.kWhite)
-            tleg.Draw("same")
-            rt.gStyle.SetOptStat(0)
-            if printPlots:
-                if btagOpt>0:
-                    d.Print("%s/functest_Y_%ib_%i.pdf"%(outFolder,btagOpt,j))
-                else:
-                    d.Print("%s/functest_Y_%i.pdf"%(outFolder,j))
         else:
             xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
         err.append((xmax-xmin)/2.)
+        
+        #now making plots
+        myhisto.Draw()
+        tleg = rt.TLegend(0.6,.65,.9,.9)
+        if switchToKDE:
+            ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
+            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
+            func.Draw("same")
+            funcFill68.SetRange(xmin,xmax)
+            ic68 = rt.TColor(1404, 0.49, 0.60, 0.82,"")
+            funcFill68.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
+            funcFill68.SetFillColor(ic68.GetColor(0.49,0.60,.82))
+            funcFill68.SetFillStyle(3144)
+            funcFill68.Draw("same")
+            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+        else:
+            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+        tleg.SetFillColor(rt.kWhite)
+        tleg.Draw("same")
+        rt.gStyle.SetOptStat(0)
+        
+        #now printing plots
+        if printPlots:
+            if btagOpt>0:
+                d.Print("%s/functest_Y_%ib_%i.pdf"%(outFolder,btagOpt,j))
+            else:
+                d.Print("%s/functest_Y_%i.pdf"%(outFolder,j))
+    
     myhisto.Delete()
     if printPlots: del d
     del myhisto
@@ -227,6 +242,7 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
         
         switchToKDE = makeToyPVALUE_sigbin.decideToUseKDE(0.,maxX,myhisto)
         
+        
         # USING ROOKEYSPDF
         if switchToKDE:
             nExp = [rt.RooRealVar(varName,varName,0,maxX) for varName in varNames]
@@ -242,27 +258,36 @@ def GetErrorsZ(nbinx, nbiny, nbinz, myTree, printPlots, outFolder, fit3D, btagOp
             rho = makeToyPVALUE_sigbin.useThisRho(0.,maxX,myhisto)
             rkpdf = rt.RooKeysPdf("rkpdf","rkpdf",sumExpData,dataset,rt.RooKeysPdf.NoMirror,rho)
             func = rkpdf.asTF(rt.RooArgList(sumExpData))
-            myhisto.Draw()
-            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
-            func.Draw("same")
             mode,xmin,xmax,probRange,funcFill68 = makeToyPVALUE_sigbin.find68ProbRangeFromKDEMode(maxX,func)
-            tleg = rt.TLegend(0.6,.65,.9,.9)
-            if switchToKDE:
-                tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
-            else:
-                tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
-            tleg.SetFillColor(rt.kWhite)
-            tleg.Draw("same")
-            rt.gStyle.SetOptStat(0)
-            if printPlots:
-                if fit3D:
-                    d.Print("%s/functest_Z_%i.pdf"%(outFolder,k))
-                else:
-                    d.Print("%s/functest_Z_%i.pdf"%(outFolder,k))
         else:
             xmax, xmin = GetProbRange(myhisto)
         print xmin, xmax
         err.append((xmax-xmin)/2.)
+
+        #now making plots
+        myhisto.Draw()
+        tleg = rt.TLegend(0.6,.65,.9,.9)
+        if switchToKDE:
+            ic = rt.TColor(1398, 0.75, 0.92, 0.68,"")
+            func.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
+            func.Draw("same")
+            funcFill68.SetRange(xmin,xmax)
+            ic68 = rt.TColor(1404, 0.49, 0.60, 0.82,"")
+            funcFill68.SetLineColor(rt.TColor.GetColor(0.1, .85, 0.5))
+            funcFill68.SetFillColor(ic68.GetColor(0.49,0.60,.82))
+            funcFill68.SetFillStyle(3144)
+            funcFill68.Draw("same")
+            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+        else:
+            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+        tleg.SetFillColor(rt.kWhite)
+        tleg.Draw("same")
+        rt.gStyle.SetOptStat(0)
+        
+        #now printing plots
+        if printPlots:
+            d.Print("%s/functest_Z_%i.pdf"%(outFolder,k))
+            
     myhisto.Delete()
     if printPlots: del d
     del myhisto
@@ -307,7 +332,6 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     print binMap[varname][0]
     # MR PLOT
     hMRData.SetLineWidth(2)
-    hMRTOTcopy.SetMinimum(0.5)
     hMRTOTcopy.SetFillStyle(1001)
     hMRTOTcopy.SetFillColor(rt.kBlue-10)
     hMRTOTcopy.SetLineColor(rt.kBlue)
@@ -321,11 +345,38 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     hMRTOTcopy.GetXaxis().SetTitleOffset(0.8)
     hMRTOTcopy.GetYaxis().SetTitleOffset(0.7)
     hMRTOTcopy.GetXaxis().SetTicks("+-")
-    hMRTOTcopy.GetXaxis().SetRange(1,FindLastBin(hMRTOTcopy))
+    #hMRTOTcopy.GetXaxis().SetRange(1,FindLastBin(hMRTOTcopy))
+    hMRTOTcopy.GetXaxis().SetRange(1,hMRTOTcopy.GetNbinsX())
     hMRTOTcopy.GetYaxis().SetTitle("Events")
-    if varname == "MR": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*2.)
-    elif varname == "RSQ": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
-    elif varname == "BTAG": hMRTOTcopy.SetMaximum(hMRTOTcopy.GetMaximum()*5.)
+    hMRTOTmax = 1.e6
+    if hMRTOTcopy.GetMaximum() < 1.e5 and hMRTOTcopy.GetMaximum() >= 1.e4:
+        hMRTOTmax = 1.e5
+    if hMRTOTcopy.GetMaximum() < 1.e4 and hMRTOTcopy.GetMaximum() >= 1.e3:
+        hMRTOTmax = 1.e4
+    elif hMRTOTcopy.GetMaximum() < 1.e3 and hMRTOTcopy.GetMaximum() >= 1.e2:
+        hMRTOTmax = 1.e3
+    elif hMRTOTcopy.GetMaximum() < 1.e2 and hMRTOTcopy.GetMaximum() >= 1.e1:
+        hMRTOTmax = 1.e2
+        
+    if varname == "MR":
+        hMRTOTmax = 4.5E3
+        hMRTOTmax = 2*2287.49060835
+        print ""
+        print "MAXIMUM = ", hMRTOTcopy.GetMaximum()
+        print ""
+        hMRTOTcopy.SetMaximum(hMRTOTmax)
+        hMRTOTcopy.SetMinimum(0.05)
+    elif varname == "RSQ":
+        hMRTOTmax = 1.2e4
+        hMRTOTmax = 5*2421.97127178
+        print ""
+        print "MAXIMUM = ", hMRTOTcopy.GetMaximum()
+        print ""
+        hMRTOTcopy.SetMaximum(hMRTOTmax)
+        hMRTOTcopy.SetMinimum(0.5)
+    elif varname == "BTAG":
+        hMRTOTcopy.SetMaximum(hMRTOTmax)
+        hMRTOTcopy.SetMinimum(0.5)
     #if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=10.: hMRTOTcopy.SetMinimum(5.)
     #if hMRTOTcopy.GetBinContent(hMRTOTcopy.GetNbinsX())>=100.: hMRTOTcopy.SetMinimum(50.)
     hMRTOTcopy.Draw("e2")
@@ -414,28 +465,33 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     leg.SetLineColor(0)
 
     if noBtag:
-        btagLabel = "no b-tag"
+        btagLabel = ", no b-tag"
     else:
         if btagOpt==0:
-            btagLabel = "#geq 1 b-tag"
+            btagLabel = ", #geq 1 b-tag"
         elif btagOpt==1:
-            btagLabel = "1 b-tag"
+            btagLabel = ", 1 b-tag"
         elif btagOpt==23:
-            btagLabel = "#geq 2 b-tag"
+            btagLabel = ", #geq2 b-tag"
+        elif btagOpt==2:
+            btagLabel = ", 2 b-tag"
+        elif btagOpt==3:
+            btagLabel = ", #geq3 b-tag"
         
     if datasetName=="TTJets" or datasetName=="WJets" or datasetName=="DYJetsToLL" or datasetName=="ZJetsToNuNu" or  datasetName=="SMCocktail":
         if btagOpt==0:
             leg.AddEntry(hMRData,"Simulated Data","lep")
         else:
-            leg.AddEntry(hMRData,"Simulated Data %s"%(btagLabel),"lep")
+            leg.AddEntry(hMRData,"Simulated Data%s"%(btagLabel),"lep")
             
     else:
         if btagOpt==0:
             leg.AddEntry(hMRData,"Data","lep")
         else:
-            leg.AddEntry(hMRData,"Data %s"%(btagLabel),"lep")
+            leg.AddEntry(hMRData,"Data%s"%(btagLabel),"lep")
             
-    leg.AddEntry(hMRTOTcopy,"Total Bkgd")
+    leg.AddEntry(hMRTOTcopy,"Bkgd%s"%(btagLabel))
+    #leg.AddEntry(hMRTOTcopy,"Total Bkgd")
     if showTTj1b and showTTj2b:
         if varname=="BTAG":
             if showVpj:
@@ -457,8 +513,10 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     leg.Draw("same")
 
     # plot labels
-    pt = rt.TPaveText(0.25,0.67,0.7,0.93,"ndc")
-    #pt = rt.TPaveText(0.4,0.8,0.5,0.93,"ndc")
+    if Box in ["EleMultiJet","MuMultiJet"]:
+        pt = rt.TPaveText(0.17,0.67,0.7,0.93,"ndc")
+    else:
+        pt = rt.TPaveText(0.25,0.67,0.7,0.93,"ndc")
     pt.SetBorderSize(0)
     pt.SetTextSize(0.05)
     pt.SetFillColor(0)
@@ -479,14 +537,8 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     elif datasetName=="DYJetsToLL":
         text = pt.AddText("Z(ll)+jets")
     else:
-        if Box=="MuMultiJet":
-            text = pt.AddText("Razor MuJet Box #int L = %3.1f fb^{-1}" %(Lumi))
-        elif Box=="MuJet":
-            text = pt.AddText("Razor Mu Box #int L = %3.1f fb^{-1}" %(Lumi))
-        elif Box=="EleMultiJet":
-            text = pt.AddText("Razor EleJet Box #int L = %3.1f fb^{-1}" %(Lumi))
-        elif Box=="EleJet":
-            text = pt.AddText("Razor Ele Box #int L = %3.1f fb^{-1}" %(Lumi))
+        if Box=="Jet2b":
+            text = pt.AddText("Razor 2b-Jet Box #int L = %3.1f fb^{-1}" %(Lumi))
         else:
             text = pt.AddText("Razor %s Box #int L = %3.1f fb^{-1}" %(Box,Lumi))
     pt.Draw()
@@ -633,7 +685,7 @@ if __name__ == '__main__':
     if len(frLabels)==3:
         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
     if len(frLabels)==4:
-        btagToDo = [0,0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
+        btagToDo = [0,1,2,3] # THIS MEANS WE ARE DOING EACH BTAG REGION
     
     # TTj1b histograms
     hMRTTj1bList = [fitFile.Get("%s/histoToyTTj1b_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]

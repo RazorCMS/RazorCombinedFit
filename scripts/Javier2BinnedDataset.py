@@ -46,13 +46,16 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
                     sumOverBtags = sum([histo.GetBinContent(i,j,k) for k in xrange(1,histo.GetZaxis().GetNbins()+1)])
                     histo.SetBinContent(i,j,1,sumOverBtags)
                     [histo.SetBinContent(i,j,k,0) for k in xrange(2,histo.GetZaxis().GetNbins()+1)]
-    elif box=="Jet1b":
+    elif box=="Jet1b" or box=="Jet2b":
         for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
             for i in xrange(1,histo.GetXaxis().GetNbins()+1):
                 for j in xrange(1,histo.GetYaxis().GetNbins()+1):
-                    #clear overflow bins
+                    #clear underflow and overflow bins in b-tags
+                    k = 0
+                    histo.SetBinContent(i,j,k,0)
                     k = histo.GetZaxis().GetNbins()+1
                     histo.SetBinContent(i,j,k,0)
+                    
     elif box=="Jet2b":
         for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
             for i in xrange(1,histo.GetXaxis().GetNbins()+1):
@@ -124,25 +127,29 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_JESerr_up','%s:RSQ_JESup:MR_JESup'%(BTAGNOM),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    # BUG ALERT! WPU MISSING IN ALL THE FOLLOWING PROJECTIONS ORIGINALLY! SPOTTED 10/31/2013
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_JESerr_down','%s:RSQ_JESdown:MR_JESdown'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_btagerr_up','%s:RSQ:MR'%(BTAGUP),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_btagerr_down','%s:RSQ:MR'%(BTAGDOWN),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRUP*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISRUP*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_ISRerr_up','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRDOWN*WLEP*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISRDOWN*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     tree.Project('wHisto_ISRerr_down','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
-    
+
+    #BUG ALERT! condition should be the NOMINAL! SPOTTED 10/31/2013
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
     pdf_nom, pdf_pe = makePDFPlot(tree, nominal, condition, relative = True, BTAGNOM = BTAGNOM, histoFileName = histoFileName,outputFile = outputFile)
+    
     ###### JES ######
     #using (UP - DOWN)/2:
     jes_pe.Add(jes_up,0.5)
