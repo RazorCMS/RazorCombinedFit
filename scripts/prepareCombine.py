@@ -26,23 +26,6 @@ def rebin3d(oldhisto, x,y,z, MRcut, Rsqcut):
 
 
 def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
-        # txtfile = open(txtfileName,"w")
-        # txtfile.write("imax 1 number of channels\n")
-        # txtfile.write("jmax 1 number of backgrounds\n")
-        # txtfile.write("kmax * number of nuisnace parameters\n")
-        # txtfile.write("------------------------------------------------------------\n")
-        # txtfile.write("observation	%i\n"%w.data("data_obs").numEntries())
-        # txtfile.write("------------------------------------------------------------\n")
-        # txtfile.write("shapes * * razor_combine_MultiJet.root w:$PROCESS\n")
-        # txtfile.write("------------------------------------------------------------\n")
-        # txtfile.write("bin		bin1			bin1			bin1\n")
-        # txtfile.write("process	PDF_Signal _MultiJet	PDF_TTj1b_MultiJet	PDF_TTj2b_MultiJet\n")
-        # txtfile.write("process	0          		1			2\n")
-        # txtfile.write("rate  	%f		%f		%f\n"%(w.function("Ntot_Signal_%s"%box).getVal(),N_TTj1b,N_TTj2b))
-        # txtfile.write("------------------------------------------------------------\n")
-        # txtfile.write("lumi	lnN	1.044	1.0	1.0\n")
-        # txtfile.write("eff_%s	lnN	1.06		1.0	1.0\n"%box)
-        # txtfile.close()
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -240,10 +223,8 @@ def getBinEvents(i, j, k, x, y, z, workspace):
         bin_events =  NTOT*integral/total_integral
     elif (z[k-1]==2) : 
         bin_events = (1.-F3)*NTOT*integral/total_integral
-        #bin_events = (1.-f3_TTj2b)*N_TTj2b*(integral/total_integral-excl_integral)
     elif (z[k-1]==3) : 
         bin_events =  F3*NTOT*integral/total_integral
-        #bin_events = f3_TTj2b*N_TTj2b*(integral/total_integral-excl_integral)
         
 
     if bin_events <0:
@@ -340,13 +321,7 @@ if __name__ == '__main__':
     boxes = [sys.argv[1]]
     model = sys.argv[2]
     infile = rt.TFile.Open(sys.argv[3],"READ")
-    #infile = rt.TFile.Open("razor_output_MultiJet.root","READ")
     w = rt.RooWorkspace("w")
-    #w.addClassDeclImportDir('src/')
-    #w.addClassImplImportDir('src/')
-    #w.importClassCode(rt.RooRazor2DTail_SYS.Class())
-    #w.importClassCode(rt.RooBTagMult.Class())
-    #w.importClassCode(rt.RooRazor3DSignal.Class())
     histos = {}
     histos1d = {}
     for box in boxes:
@@ -442,34 +417,18 @@ if __name__ == '__main__':
         MRcut = x[3]
         Rsqcut = y[1]
         
-        w.factory("MRcut[%i]"%(MRcut))
-        w.factory("Rsqcut[%f]"%(Rsqcut))
-        
         data_obs = data.reduce(MRRsqnBtag)
         data_obs = data_obs.reduce("MR>=%i || Rsq>=%f"%(MRcut,Rsqcut))
         data_obs.SetName("data_obs")
         
         data_obs.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
-        RootTools.Utils.importToWS(w, data_obs)
-
-        for bkg in initialbkgs:
-            if bkgs=="TTj3b": continue
-            #step = rt.RooRazorStep("StepPdf_%s"%bkg,"StepPdf_%s"%bkg,MR,Rsq,w.var("MRcut"),w.var("Rsqcut"))
-            prod = rt.RooArgList()
-            prod.add(workspace.pdf("RazPDF_%s"%bkg))
-            prod.add(workspace.pdf("BtagPDF_%s"%bkg))
-            #prod.add(step)
-            finalprod = rt.RooProduct("PDF_%s"%bkg,"PDF_%s"%bkg,prod)
-            #RootTools.Utils.importToWS(w,finalprod,\
-            #                           rt.RooFit.RenameAllNodes(box),\
-            #                           rt.RooFit.RenameAllVariablesExcept(box,','.join(var_names)))
         
         for bkg in initialbkgs:
             if bkgs=="TTj3b": continue
             for i in xrange(1,len(x)):
                 for j in xrange(1,len(y)):
                     for k in xrange(1, len(z)):
-                        if x[i] < MRcut and y[j] < Rsqcut: continue
+                        if x[i-1] < MRcut and y[j-1] < Rsqcut: continue
                         bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                         if (bkg.find("1b")!=-1 and z[k-1]==1) :
                             histos[box,bkg].SetBinContent(i,j,k,bin_events)
@@ -477,15 +436,6 @@ if __name__ == '__main__':
                             histos[box,bkg].SetBinContent(i,j,k,bin_events)
                         elif (bkg.find("2b")!=-1 and z[k-1]==3) : 
                             histos[box,"TTj3b"].SetBinContent(i,j,k,bin_events)
-
-        # binHistos = {}
-        # for i in xrange(1,len(x)):
-        #     for j in xrange(1,len(y)):
-        #         for k in xrange(1, len(z)):
-        #             if x[i] < MRcut and y[j] < Rsqcut: continue
-        #             #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
-        #             binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
-        #             binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
 
         sign = {}
         sign["Up"] = 0.5
@@ -505,8 +455,8 @@ if __name__ == '__main__':
                         workspace.var(param_name).setVal(cen[q]+sign[syst]*variation[p][q])
                     for i in xrange(1,len(x)):
                         for j in xrange(1,len(y)):
-                            for k in xrange(1, len(z)):
-                                if x[i] < MRcut and y[j] < Rsqcut: continue
+                            for k in xrange(1,len(z)):
+                                if x[i-1] < MRcut and y[j-1] < Rsqcut: continue
                                 bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                                 if (bkg.find("1b")!=-1 and z[k-1]==1) :
                                     histos[box,"%s_%s_%s%s"%(bkg,var_name,box,syst)].SetBinContent(i,j,k,bin_events)
@@ -535,18 +485,6 @@ if __name__ == '__main__':
         pdf =  sigFile.Get('wHisto_pdferr_pe')
         isr =  sigFile.Get('wHisto_ISRerr_pe')
         
-        def renameAndImport(histo):
-            #make a memory resident copy
-            newHisto = histo.Clone('%s_%s' % (histo.GetName(),box))
-            newHisto.SetDirectory(0)
-            RootTools.Utils.importToWS(w,newHisto)
-            return newHisto
-        
-        wHisto = renameAndImport(wHisto)
-        btag = renameAndImport(btag)
-        jes = renameAndImport(jes)
-        pdf = renameAndImport(pdf)
-        isr = renameAndImport(isr)
 
         # adding signal shape systematics
         print ""
@@ -600,55 +538,17 @@ if __name__ == '__main__':
         
         #set the per box eff value
         sigNorm = wHisto.Integral()
-        #w.factory('eff_value_%s[%f]' % (box,sigNorm))
-        #w.factory('lumi_uncert[0.044]')
-        #w.factory('eff_uncert[0.06]')
-        #w.factory('lumi_value[19300.]')
-        #w.factory('eff_value[1.0]')
-        #w.factory('eff_prime[0,-5.,5.]')
-        #w.factory('lumi_prime[0,-5.,5.]')
-        w.factory('xJes_prime[0,-5.,5.]')
-        w.factory('xPdf_prime[0,-5.,5.]')
-        w.factory('xBtag_prime[0,-5.,5.]')
-        w.factory('xIsr_prime[0,-5.,5.]')
-        w.factory('sigma[0.001,0.,100.]')
-        
-        #w.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
-        #w.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)") 
-
-        w.factory('lumi[19300.]')
-        w.factory('eff_%s[%f]'%(box,sigNorm))
-        
-        signal = rt.RooRazor3DSignal('PDF_Signal_%s'%box,'Signal PDF for box %s' % box,
-                                     w.var('MR'),w.var('Rsq'),w.var('nBtag'),
-                                     w,
-                                     wHisto.GetName(),jes.GetName(),pdf.GetName(),btag.GetName(),isr.GetName(),
-                                     w.var('xJes_prime'),w.var('xPdf_prime'),w.var('xBtag_prime'),w.var('xIsr_prime'))
-
-                
-        signalModel = signal.GetName()
-        
-        RootTools.Utils.importToWS(w, signal)
-        
-        modelName = "Signal"
-        w.factory("expr::Ntot_Signal_%s('@0*@1*@2',sigma, lumi, eff_%s)"%(box,box))
-        #extended = w.factory("RooExtendPdf::%s_signal(%s, Ntot_Signal)" % (box,signalModel))
-
         
         histos[box,model] = rebin3d(sigHist.Clone("%s_%s_3d"%(box,model)), x, y, z, MRcut, Rsqcut )
         histos[box,model].SetTitle("%s_%s_3d"%(box,model))
         lumi = 19.3 # luminosity in fb^-1
         ref_xsec = 100.
-        #ref_xsec = 1.09501 #900 GeV stop/sbottom reference xsec in fb
-        #ref_xsec = 4.80639 #750 GeV stop/sbottom reference xsec in fb
         histos[box,model].Scale(lumi*ref_xsec)
         
         for param_name in ["Jes","Isr","Btag","Pdf"]:
             for syst in ['Up','Down']:
                 if histos[box,"%s_%s%s"%(model,param_name,syst)].Integral() > 0:
                     histos[box,"%s_%s%s"%(model,param_name,syst)].Scale( histos[box,model].Integral()/histos[box,"%s_%s%s"%(model,param_name,syst)].Integral())
-        
-
         
         outFile = rt.TFile.Open("razor_combine_%s_%s.root"%(box,model),"RECREATE")
 
@@ -674,83 +574,12 @@ if __name__ == '__main__':
                         newbin += 1
                         histos1d[box,bkg].SetBinContent(newbin,histo.GetBinContent(i,j,k))
                         
-            #histo.Write()
             histos1d[box,bkg].Write()
-            #RootTools.Utils.importToWS(w, histo)
-            #RootTools.Utils.importToWS(w, histos1d[box,bkg])
-        
-        #w.Write()
 
         print ""
         print "INFO: Now writing data card"
         print ""
         writeDataCard(box,model,"razor_combine_%s_%s.txt"%(box,model),initialbkgs,param_names,histos1d,workspace)
         
-        # binHistos = {}
-        # for i in xrange(1,len(x)):
-        #     for j in xrange(1,len(y)):
-        #         for k in xrange(1, len(z)):
-        #             if x[i] < MRcut and y[j] < Rsqcut: continue
-        #             #binMax = int(2*histos[box,"data"].GetBinContent(histos[box,"data"].GetMaximumBin()))
-        #             binMax = 10*max([histos[box,bkg].GetBinContent(i,j,k) for bkg in initialbkgs])
-        #             #binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),1000,0,binMax)
-        #             binHistos[i,j,k] = rt.TH1D("hist_%i_%i_%i"%(i,j,k),"hist_%i_%i_%i"%(i,j,k),int(max(binMax,5)),0,int(max(binMax,5)))
-                    
-        # for iToy in xrange(0, 100):
-        #     randomPars = getRandomPars(fr, workspace)
-        #     if iToy%100==0: 
-        #         print "toy #", iToy
-        #         for p in RootTools.RootIterator.RootIterator(randomPars):
-        #             print p.GetName(), "=", p.getVal(), "+-", p.getError()
-        #     for i in xrange(1,len(x)):
-        #         for j in xrange(1,len(y)):
-        #             for k in xrange(1, len(z)):
-        #                 if x[i] < MRcut and y[j] < Rsqcut: continue
-        #                 bin_events = rt.RooRandom.randomGenerator().Poisson(getBinEvents(i,j,k,x,y,z,workspace))
-        #                 binHistos[i,j,k].Fill(bin_events)
-                        
-        # c = rt.TCanvas("c","c",500,500)
-        # for i in xrange(1,len(x)):
-        #     for j in xrange(1,len(y)):
-        #         for k in xrange(1, len(z)):
-        #             if x[i] < MRcut and y[j] < Rsqcut: continue
-        #             binHistos[i,j,k].Draw("")
-        #             c.Print("bin/bin%i%i%i.pdf"%(i,j,k))
-                    
-        # for bkg in initialbkgs:
-        #     for i in xrange(1,len(x)):
-        #         for j in xrange(1,len(y)):
-        #             for k in xrange(1,len(z)):
-        #                 if x[i] < MRcut and y[j] < Rsqcut: continue
-        #                 mode, range68 = find68ProbRange(binHistos[i,j,k])
-        #                 if (bkg.find("1b")!=-1 and z[k-1]==1) :
-        #                     histos[box,bkg].SetBinError(i,j,k,range68/2.)
-        #                 elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
-        #                     histos[box,bkg].SetBinError(i,j,k,range68/2.)
-        #                 elif (bkg.find("3b")!=-1 and z[k-1]==3) : 
-        #                     histos[box,bkg].SetBinError(i,j,k,range68/2.)
-        
-        # for i in xrange(1,len(x)):
-        #     for j in xrange(1,len(y)):
-        #         for k in xrange(1, len(z)):
-        #             bkg = initialbkgs[k-1]
-        #             if x[i] < MRcut and y[j] < Rsqcut: continue
-        #             obsYield = histos[box,"data"].GetBinContent(i,j,k)
-        #             bkgYield = histos[box,bkg].GetBinContent(i,j,k)
-        #             bkgError = histos[box,bkg].GetBinError(i,j,k)
-        #             sigYield = histos[box,model].GetBinContent(i,j,k)
-    
-        #             sOverB = sigYield/bkgYield
-        #             sOverSqrtB = sigYield/rt.TMath.Sqrt(bkgYield)
-        #             sOverDeltaB = sigYield/bkgError
-        #             if x[i]>550 and y[j]>0.3:
-        #                 print "[%i,%i] [%.2f,%.2f] %i b-tag : data = %i, B = %.3f+-%.3f, S = %.3f, S/B = %.3f, S/sqrt(B) = %.3f"%(x[i-1],x[i],
-        #                                                                                                                           y[j-1],y[j],
-        #                                                                                                                           z[k-1], 
-        #                                                                                                                           obsYield, 
-        #                                                                                                                           bkgYield, bkgError, 
-        #                                                                                                                           sigYield, 
-        #                                                                                                                           sOverB, sOverSqrtB)
-                    
                         
         outFile.Close()
