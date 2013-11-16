@@ -20,7 +20,7 @@ def getBinning(box):
     print "nBtag: ", nBtagbins
     return MRbins, Rsqbins, nBtagbins
 
-def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, histoFileName,jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom):
+def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, histoFileName, jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down):
     MGstringstart = outputFile.find("MG")+3
     MGstringend = outputFile.find("MCHI")-1
     MCHIstringstart = MGstringend+6
@@ -32,37 +32,22 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
     args.Print()
     histoFile = rt.TFile.Open(histoFileName)
     smscount = histoFile.Get("SMSWALL")
-    nominal.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
-    #pdf_nom.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
+    for histo in [nominal, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:     
+        histo.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
+    
     print "signal efficiency from nominal     = %f"%nominal.Integral()
     print "signal efficiency from pdf nominal = %f"%pdf_nom.Integral()
     print "integral of pdf relative errors = %f"%pdf_pe.Integral()
 
-    # now collapse the b-tag information for certain boxes
-    if box=="TauTauJet" or box=="MuEle" or box=="EleEle" or box=="MuMu":
-        for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
-            for i in xrange(1,histo.GetXaxis().GetNbins()+1):
-                for j in xrange(1,histo.GetYaxis().GetNbins()+1):
-                    sumOverBtags = sum([histo.GetBinContent(i,j,k) for k in xrange(1,histo.GetZaxis().GetNbins()+1)])
-                    histo.SetBinContent(i,j,1,sumOverBtags)
-                    [histo.SetBinContent(i,j,k,0) for k in xrange(2,histo.GetZaxis().GetNbins()+1)]
-    elif box=="Jet1b" or box=="Jet2b":
-        for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
-            for i in xrange(1,histo.GetXaxis().GetNbins()+1):
-                for j in xrange(1,histo.GetYaxis().GetNbins()+1):
-                    #clear underflow and overflow bins in b-tags
-                    k = 0
-                    histo.SetBinContent(i,j,k,0)
-                    k = histo.GetZaxis().GetNbins()+1
-                    histo.SetBinContent(i,j,k,0)
-                    
-    elif box=="Jet2b":
-        for histo in [nominal, jes_pe, pdf_pe, btag_pe, isr_pe, pdf_nom]:
-            for i in xrange(1,histo.GetXaxis().GetNbins()+1):
-                for j in xrange(1,histo.GetYaxis().GetNbins()+1):
-                    #clear underflow bins
-                    k = 0
-                    histo.SetBinContent(i,j,k,0)
+    #clear underflow and overflow bins in b-tags
+    for histo in [jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:
+        for i in xrange(1,histo.GetXaxis().GetNbins()+1):
+            for j in xrange(1,histo.GetYaxis().GetNbins()+1):
+                #clear underflow and overflow bins in b-tags
+                k = 0
+                histo.SetBinContent(i,j,k,0)
+                k = histo.GetZaxis().GetNbins()+1
+                histo.SetBinContent(i,j,k,0)
         
     histoFile.Close()
     print "signal efficiency from nominal     = %f"%nominal.Integral()
@@ -71,12 +56,9 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
     
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+label+outputBox,'RECREATE')
     print "writing dataset to", output.GetName()
-    nominal.Write()
-    jes_pe.Write()
-    pdf_pe.Write()
-    btag_pe.Write()
-    isr_pe.Write()
-    pdf_nom.Write()
+
+    for histo in [jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:
+        histo.Write()
     
     output.Close()
 
@@ -148,7 +130,18 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
 
     #BUG ALERT! condition should be the NOMINAL! SPOTTED 10/31/2013
     condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
-    pdf_nom, pdf_pe = makePDFPlot(tree, nominal, condition, relative = True, BTAGNOM = BTAGNOM, histoFileName = histoFileName,outputFile = outputFile)
+    pdf_nom, pdf_pe = makePDFPlot(tree, box, nominal, condition, relative = True, BTAGNOM = BTAGNOM, histoFileName = histoFileName,outputFile = outputFile)
+    
+    pdf_up = pdf_pe.Clone("wHist_pdferr_up") 
+    pdf_up.SetTitle("wHist_pdferr_up") 
+    pdf_up.Multiply(pdf_nom)
+    pdf_up.Add(pdf_nom)
+    
+    pdf_down = pdf_pe.Clone("wHist_pdferr_down") 
+    pdf_down.SetTitle("wHist_pdferr_down") 
+    pdf_down.Multiply(pdf_nom)
+    pdf_down.Scale(-1.0)
+    pdf_down.Add(pdf_nom)
     
     ###### JES ######
     #using (UP - DOWN)/2:
@@ -197,7 +190,7 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     print "Number of entries in Box %s pdf nominal = %i"%(box,pdf_nom.GetEntries())
     print "Sum of weights in Box %s pdf nominal    = %f"%(box,pdf_nom.Integral())
     
-    return jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom
+    return jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down
     
 def convertTree2Dataset(tree, histoFileName, outputFile, outputBox, config, box, min, max, run, useWeight, write = True):
     """This defines the format of the RooDataSet"""
@@ -232,9 +225,9 @@ def convertTree2Dataset(tree, histoFileName, outputFile, outputBox, config, box,
     elif box in ["MuEle", "MuMu", "MuMultiJet","MuJet"]:
         noiseCut = "abs(TMath::Min( abs(atan2(MET_NOMU_y,MET_NOMU_x)-atan2(MET_CALO_y,MET_CALO_x) ), abs( TMath::TwoPi()-atan2(MET_NOMU_y,MET_NOMU_x)+atan2(MET_CALO_y,MET_CALO_x ) ) ) - TMath::Pi()) > 1.0"
 
-    jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom = getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,histoFileName,outputFile)
+    jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down = getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,histoFileName,outputFile)
     
-    writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, histoFileName, jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom)
+    writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, histoFileName, jes_pe, pdf_pe, btag_pe, isr_pe, nominal, pdf_nom, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down)
 
 if __name__ == '__main__':
     

@@ -172,7 +172,7 @@ def GetErrEigenEff(w, w2, wALL, PDFSET):
     return acc_central*(1-wminus)*wALL[0],acc_central*(1+wplus)*wALL[0]
 
 
-def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, relative, histoFileName, outputFile):
+def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, condition, relative, histoFileName, outputFile):
     # for PDFs
     hCTEQ66_EIGENP = rt.TH2D("hCTEQ66_EIGENP",   "hCTEQ66_EIGENP", ibinx, xarray, ibiny, yarray)
     hCTEQ66_EIGENM = rt.TH2D("hCTEQ66_EIGENM", "hCTEQ66_EIGENM", ibinx, xarray, ibiny, yarray)
@@ -284,7 +284,7 @@ def makePDFPlotCONDARRAY(tree, histo, ibinx, xarray, ibiny, yarray, condition, r
     del hMRST2006NNLO_EIGENP, hMRST2006NNLO_EIGENM, hCTEQ66_EIGENP, hCTEQ66_EIGENM
     return Cen,Error
 
-def makePDFPlotCOND2D(tree, histo, condition, relative):
+def makePDFPlotCOND2D(tree, box, histo, condition, relative):
     ibinx = histo.GetXaxis().GetNbins()
     minx = histo.GetXaxis().GetXmin()
     maxx = histo.GetXaxis().GetXmax()
@@ -300,11 +300,11 @@ def makePDFPlotCOND2D(tree, histo, condition, relative):
     myY = []
     for i in xrange (0,ibiny+1): myY.append(miny+ (maxy-miny)/ibiny*i)
     myYarray = array("d", myY)
-    Cen,Error = makePDFPlotCONDARRAY(tree, histo, ibinx, myXarray, ibiny, myYarray, condition, relative)
+    Cen,Error = makePDFPlotCONDARRAY(tree, box, histo, ibinx, myXarray, ibiny, myYarray, condition, relative)
     del myXarray, myYarray
     return Cen,Error
 
-def makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM, histoFileName, outputFile):
+def makePDFPlotCOND3D(tree, box, histo, condition, relative, BTAGNOM, histoFileName, outputFile):
     ibinx = histo.GetXaxis().GetNbins()
     minx = histo.GetXaxis().GetXmin()
     maxx = histo.GetXaxis().GetXmax()
@@ -332,10 +332,15 @@ def makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM, histoFileName, 
     print "IN PDF CODE: minz = %i, maxz = %i"%(minz,maxz)
     for k in xrange(1,ibinz+1):
         btagbin = histo.GetZaxis().GetBinLowEdge(k)
-        condition_btag = condition.replace("%s >= 1"%BTAGNOM,"%s == %i"%(BTAGNOM,btagbin))
+        if box in ["MuEle", "MuMu", "EleEle"]:
+            condition_btag = condition
+            print box, condition_btag
+        else:
+            condition_btag = condition.replace("%s >= 1"%BTAGNOM,"%s == %i"%(BTAGNOM,btagbin))
+            print box, condition_btag
         histo2D = rt.TH2D("histo2D_%i"%k,"histo2D_%i"%k, ibinx, myXarray, ibiny, myYarray)
         tree.Project("histo2D_%i"%k,"RSQ:MR","%s"%condition_btag)
-        TMPCen,TMPError = makePDFPlotCONDARRAY(tree, histo2D, ibinx, myXarray, ibiny, myYarray, condition_btag, relative, histoFileName, outputFile)        
+        TMPCen,TMPError = makePDFPlotCONDARRAY(tree, box, histo2D, ibinx, myXarray, ibiny, myYarray, condition_btag, relative, histoFileName, outputFile)        
         for i in xrange(1,ibinx+1):
             for j in xrange(1,ibiny+1):
                 Cen.SetBinContent(i,j,k,TMPCen.GetBinContent(i,j))
@@ -343,6 +348,6 @@ def makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM, histoFileName, 
     del myXarray, myYarray
     return Cen,Error
 
-def makePDFPlot(tree, histo, condition, relative = False, BTAGNOM = "btag_nom", histoFileName = "T1bbbb_histo.root", outputFile = "none"):
-    if histo.InheritsFrom("TH3"): return makePDFPlotCOND3D(tree, histo, condition, relative, BTAGNOM, histoFileName, outputFile)
-    else: return makePDFPlotCOND2D(tree, histo, condition, relative)
+def makePDFPlot(tree, box, histo, condition, relative = False, BTAGNOM = "btag_nom", histoFileName = "T1bbbb_histo.root", outputFile = "none"):
+    if histo.InheritsFrom("TH3"): return makePDFPlotCOND3D(tree, box, histo, condition, relative, BTAGNOM, histoFileName, outputFile)
+    else: return makePDFPlotCOND2D(tree, box, histo, condition, relative)
