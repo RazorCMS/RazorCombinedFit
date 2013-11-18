@@ -260,13 +260,14 @@ if __name__ == '__main__':
     mchi_upper = 2025
     mg_lower = 0
     mg_upper = 2025
+    ref_xsec = 1.
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
-    for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
+        if sys.argv[i].find("--xsec")!=-1: ref_xsec = float(sys.argv[i+1])
     
     nJobs = 1 # do 1 toy each job => 1 toy
     
@@ -288,7 +289,7 @@ if __name__ == '__main__':
 
     # for compting what jobs are left:
     doneFile = open(done)
-    outFileList = [outFile.replace("Razor2013CombineLimit_","").replace(".root\n","") for outFile in doneFile.readlines()]
+    outFileList = [outFile.replace("higgsCombine","").replace(".root\n","") for outFile in doneFile.readlines()]
 
     # dictionary of src file to output file names
     nToys = 1 # toys per command
@@ -301,7 +302,7 @@ if __name__ == '__main__':
     for gluinopoint, neutralinopoint in gchipairs:
         if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
         if gluinopoint < mg_lower or gluinopoint >= mg_upper: continue
-        xsecRange = [1.]
+        xsecRange = [ref_xsec]
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
             for hypo in hypotheses:
