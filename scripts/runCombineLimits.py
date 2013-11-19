@@ -78,7 +78,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lu
 
     boxes =  box.split("_")
     for ibox in boxes:
-        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root -c /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_hybrid.config --xsec %f --lumi %f --fit-region %s\n"%(ibox,massPoint,ibox,fitRegion,xsecpoint,lumi,fitRegion))
+        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root -c /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_hybrid.config --xsec %f --lumi %f --fit-region %s\n"%(ibox,fitRegion,massPoint,ibox,xsecpoint,lumi,fitRegion))
         outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,fitRegion,ibox,ibox))
 
     if len(boxes)>1:
