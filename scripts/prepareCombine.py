@@ -11,14 +11,14 @@ import sys
 def getCutString(box, fitRegion):
     if box in ["Jet2b","MultiJet"]:
         if fitRegion=="FULL":
-            return "(MR>=400.&&Rsq>=0.25&&(MR>=450||Rsq>=0.3))"
+            return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))"
         else:
-            return "(MR>=550||Rsq>=0.3)"
+            return "(MR>=550.&&Rsq>=0.3)"
     else:
         if fitRegion=="FULL":
-            return "(MR>=300.&&Rsq>=0.15&&(MR>=350||Rsq>=0.2))"
+            return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))"
         else:
-            return "(MR>=450||Rsq>=0.2)"
+            return "(MR>=450.&&Rsq>=0.2)"
                 
 def passCut(MRVal, RsqVal, box, fitRegion):
     if box in ["Jet2b","MultiJet"]:
@@ -35,7 +35,7 @@ def passCut(MRVal, RsqVal, box, fitRegion):
     return False
         
 def rebin3d(oldhisto, x, y, z, box, fitRegion):
-    newhisto = rt.TH3D(oldhisto.GetName(),oldhisto.GetTitle(),len(x)-1,x,len(y)-1,y,len(z)-1,z)
+    newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
             for k in range(1,oldhisto.GetNbinsZ()+1):
@@ -468,44 +468,44 @@ if __name__ == '__main__':
     # adding signal shape systematics
     print "\nINFO: Now obtaining signal shape systematics\n"
     
-    isrUp = wHisto.Clone("%s_%s_IsrUp"%(box,model))
-    isrUp.SetTitle("%s_%s_IsrUp"%(box,model))
-    isrDown = wHisto.Clone("%s_%s_IsrDown"%(box,model))
-    isrDown.SetTitle("%s_%s_IsrDown"%(box,model))
-    isrAbs = isr.Clone("IsrAbs")
+    isrUp = wHisto.Clone("%s_%s_IsrUp_3d"%(box,model))
+    isrUp.SetTitle("%s_%s_IsrUp_3d"%(box,model))
+    isrDown = wHisto.Clone("%s_%s_IsrDown_3d"%(box,model))
+    isrDown.SetTitle("%s_%s_IsrDown_3d"%(box,model))
+    isrAbs = isr.Clone("IsrAbs_3d")
     isrAbs.Multiply(wHisto)
     isrUp.Add(isrAbs,sign["Up"])
     isrDown.Add(isrAbs,sign["Down"])
     histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, box, fitRegion)
     histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, box, fitRegion)
     
-    btagUp = wHisto.Clone("%s_%s_BtagUp"%(box,model))
-    btagUp.SetTitle("%s_%s_BtagUp"%(box,model))
-    btagDown = wHisto.Clone("%s_%s_BtagDown"%(box,model))
-    btagDown.SetTitle("%s_%s_BtagDown"%(box,model))
-    btagAbs = btag.Clone("BtagAbs")
+    btagUp = wHisto.Clone("%s_%s_BtagUp_3d"%(box,model))
+    btagUp.SetTitle("%s_%s_BtagUp_3d"%(box,model))
+    btagDown = wHisto.Clone("%s_%s_BtagDown_3d"%(box,model))
+    btagDown.SetTitle("%s_%s_BtagDown_3d"%(box,model))
+    btagAbs = btag.Clone("BtagAbs_3d")
     btagAbs.Multiply(wHisto)
     btagUp.Add(btagAbs,sign["Up"])
     btagDown.Add(btagAbs,sign["Down"])
     histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, fitRegion)
     histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, fitRegion)
 
-    jesUp = wHisto.Clone("%s_%s_JesUp"%(box,model))
-    jesUp.SetTitle("%s_%s_JesUp"%(box,model))
-    jesDown = wHisto.Clone("%s_%s_JesDown"%(box,model))
-    jesDown.SetTitle("%s_%s_JesDown"%(box,model))
-    jesAbs = jes.Clone("JesAbs")
+    jesUp = wHisto.Clone("%s_%s_JesUp_3d"%(box,model))
+    jesUp.SetTitle("%s_%s_JesUp_3d"%(box,model))
+    jesDown = wHisto.Clone("%s_%s_JesDown_3d"%(box,model))
+    jesDown.SetTitle("%s_%s_JesDown_3d"%(box,model))
+    jesAbs = jes.Clone("JesAbs_3d")
     jesAbs.Multiply(wHisto)
     jesUp.Add(jesAbs,sign["Up"])
     jesDown.Add(jesAbs,sign["Down"])
     histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, fitRegion)
     histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, fitRegion)
     
-    pdfUp = wHisto.Clone("%s_%s_PdfUp"%(box,model))
-    pdfUp.SetTitle("%s_%s_PdfUp"%(box,model))
-    pdfDown = wHisto.Clone("%s_%s_PdfDown"%(box,model))
-    pdfDown.SetTitle("%s_%s_PdfDown"%(box,model))
-    pdfAbs = pdf.Clone("PdfAbs")
+    pdfUp = wHisto.Clone("%s_%s_PdfUp_3d"%(box,model))
+    pdfUp.SetTitle("%s_%s_PdfUp_3d"%(box,model))
+    pdfDown = wHisto.Clone("%s_%s_PdfDown_3d"%(box,model))
+    pdfDown.SetTitle("%s_%s_PdfDown_3d"%(box,model))
+    pdfAbs = pdf.Clone("PdfAbs_3d")
     pdfAbs.Multiply(wHisto)
     pdfUp.Add(pdfAbs,sign["Up"])
     pdfDown.Add(pdfAbs,sign["Down"])
