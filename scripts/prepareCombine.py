@@ -8,8 +8,33 @@ from array import *
 from pdfShit import *
 import sys
 
+def getCutString(box, fitRegion):
+    if box in ["Jet2b","MultiJet"]:
+        if fitRegion=="FULL":
+            return "(MR>=400.&&Rsq>=0.25&&(MR>=450||Rsq>=0.3))"
+        else:
+            return "(MR>=550||Rsq>=0.3)"
+    else:
+        if fitRegion=="FULL":
+            return "(MR>=300.&&Rsq>=0.15&&(MR>=350||Rsq>=0.2))"
+        else:
+            return "(MR>=450||Rsq>=0.2)"
+                
+def passCut(MRVal, RsqVal, box, fitRegion):
+    if box in ["Jet2b","MultiJet"]:
+        if fitRegion=="FULL":
+            if MRVal >= 400. and RsqVal >= 0.25 and (MRVal >= 450. or RsqVal >= 0.3): return True
+        else:
+            if MRVal >= 550. and RsqVal >= 0.3: return True
+    else:
+        if fitRegion=="FULL":
+            if MRVal >= 300. and RsqVal >= 0.15 and (MRVal >= 350. or RsqVal >= 0.2): return True
+        else:
+            if MRVal >= 450. and RsqVal >= 0.2: return True
 
-def rebin3d(oldhisto, x,y,z, MRcut, Rsqcut):
+    return False
+        
+def rebin3d(oldhisto, x, y, z, box, fitRegion):
     newhisto = rt.TH3D(oldhisto.GetName(),oldhisto.GetTitle(),len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -17,12 +42,12 @@ def rebin3d(oldhisto, x,y,z, MRcut, Rsqcut):
                 xold = oldhisto.GetXaxis().GetBinCenter(i)
                 yold = oldhisto.GetYaxis().GetBinCenter(j)
                 zold = oldhisto.GetZaxis().GetBinCenter(k)
-                if xold < MRcut and  yold < Rsqcut: continue
+                if not passCut(xold, yold, box, fitRegion): continue
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
     return newhisto
     
-def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace):
+def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma):
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -46,73 +71,72 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace):
             txtfile.write("process		%s_%s 	%s_%s\n"%
                           (box,model,box,bkgs[0]))
             txtfile.write("process        	0          		1\n")
-            txtfile.write("rate            %f		%f	\n"%
+            txtfile.write("rate            %.3f		%.3f	\n"%
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			    lnN	1.044       1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00\n")
-            txtfile.write("Pdf			shape	2.00       -\n")
-            txtfile.write("Jes			shape	2.00       -\n")
-            txtfile.write("Btag			shape	2.00       -\n")
-            txtfile.write("Isr			shape	2.00       -\n")
-            norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       %f\n"%
-                          (box,bkgs[0],norm_err))
+            txtfile.write("Pdf			shape	%.2f       -\n"%(1./sigma))
+            txtfile.write("Jes			shape	%.2f       -\n"%(1./sigma))
+            txtfile.write("Btag			shape	%.2f       -\n"%(1./sigma))
+            txtfile.write("Isr			shape	%.2f       -\n"%(1./sigma))
+            normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       %.3f\n"%
+                          (box,bkgs[0],normErr))
             for paramName in paramNames:
-                txtfile.write("%s_%s	shape	-	   2.00\n"%(paramName,box))
+                txtfile.write("%s_%s	shape	-	   %.2f\n"%(paramName,box,(1./sigma)))
         elif box=="Jet2b":
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1]))
             txtfile.write("process        	0          		1			2\n")
-            txtfile.write("rate            %f		%f		%f\n"%
+            txtfile.write("rate            %.3f		%.3f		%.3f\n"%
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
-            txtfile.write("Pdf			shape	2.00       -	-\n")
-            txtfile.write("Jes			shape	2.00       -	-\n")
-            txtfile.write("Btag			shape	2.00       -	-\n")
-            txtfile.write("Isr			shape	2.00       -	-\n")
-            norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00\n"%
-                          (box,bkgs[0],norm_err))
-            norm_err = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s\n"%
-                          (box,bkgs[1],norm_err))
+            txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./sigma))
+            txtfile.write("Jes			shape	%.2f       -	-\n"%(1./sigma))
+            txtfile.write("Btag			shape	%.2f       -	-\n"%(1./sigma))
+            txtfile.write("Isr			shape	%.2f       -	-\n"%(1./sigma))
+            normErr = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       %.3f	1.00\n"%
+                          (box,bkgs[0],normErr))
+            normErr = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%.3f\n"%
+                          (box,bkgs[1],normErr))
             for paramName in paramNames:
-                txtfile.write("%s_%s	shape	-	   2.00	2.00\n"%(paramName,box))
+                txtfile.write("%s_%s	shape	-	   %.2f	%.2f\n"%(paramName,box,(1./sigma),(1./sigma)))
         else:
-                
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1],box,bkgs[2]))
             txtfile.write("process        	0          		1			2			3\n")
-            txtfile.write("rate            %f		%f		%f		%f\n"%
+            txtfile.write("rate            %.3f		%.3f		%.3f		%.3f\n"%
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral(),histos1d[box,bkgs[2]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			lnN	1.044      1.00	1.00	1.00\n")
             txtfile.write("lepton			lnN	1.03       1.00	1.00	1.00\n")
             txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
-            txtfile.write("Pdf			shape	2.00       -	-	-\n")
-            txtfile.write("Jes			shape	2.00       -	-	-\n")
-            txtfile.write("Btag			shape	2.00       -	-	-\n")
-            txtfile.write("Isr			shape	2.00       -	-	-\n")
-            norm_err = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       %f	1.00	1.00\n"%
-                          (box,bkgs[0],norm_err))
-            norm_err = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%s	1.00\n"%
-                          (box,bkgs[1],norm_err))
-            norm_err = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	1.00	%f\n"%
-                          (box,bkgs[2],norm_err))
+            txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./sigma))
+            txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./sigma))
+            txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./sigma))
+            txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./sigma))
+            normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
+                          (box,bkgs[0],normErr))
+            normErr = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
+                          (box,bkgs[1],normErr))
+            normErr = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
+            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
+                          (box,bkgs[2],normErr))
             for paramName in paramNames:
-                txtfile.write("%s_%s	shape	-	   2.00	2.00	2.00\n"%(paramName,box))
+                txtfile.write("%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(paramName,box,(1./sigma),(1./sigma),(1./sigma)))
         txtfile.close()
 
 def find68ProbRange(hToy, probVal=0.6827):
@@ -258,13 +282,15 @@ if __name__ == '__main__':
     parser.add_option('-i','--input',dest="input", default=None,metavar='FILE',
                   help="An input file to read fit results and workspaces from")
     parser.add_option('-x','--xsec',dest="refXsec", default=100,type="float",
-                  help="Reference signal cross section to define mu (signal strength)")
+                  help="Reference signal cross section in fb to define mu (signal strength)")
     parser.add_option('-l','--lumi',dest="lumi", default=19.3,type="float",
-                  help="Reference signal cross section to define mu (signal strength)")
+                  help="Nominal luminosity in fb^-1")
     parser.add_option('-s','--sigma',dest="sigma", default=0.5,type="float",
                   help="Number of sigmas to fluctuate systematic uncertainties")
     parser.add_option('-m','--model',dest="model", default="T2tt",type="string",
                   help="SMS model string")
+    parser.add_option('-f','--fit-region',dest="fitRegion", default="FULL",type="string",
+                  help="fit region = FULL, Sideband")
 
     (options,args) = parser.parse_args()
     
@@ -291,6 +317,8 @@ if __name__ == '__main__':
     refXsec = options.refXsec
     lumi = options.lumi
     outdir = options.outdir
+    sigma = options.sigma
+    fitRegion = options.fitRegion
             
     histos = {}
     histos1d = {}
@@ -298,9 +326,6 @@ if __name__ == '__main__':
     x = array('d', cfg.getBinning(box)[0])
     y = array('d', cfg.getBinning(box)[1])
     z = array('d', cfg.getBinning(box)[2])
-    
-    MRcut = x[3]
-    Rsqcut = y[1]
     
     if box in ["MuEle", "EleEle", "MuMu"]:
         initialBkgs = ["TTj1b"]
@@ -379,7 +404,7 @@ if __name__ == '__main__':
     var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(workspace.set('variables'))]
         
     data_obs = data.reduce(MRRsqnBtag)
-    data_obs = data_obs.reduce("MR>=%i || Rsq>=%f"%(MRcut,Rsqcut))
+    data_obs = data_obs.reduce(getCutString(box,fitRegion))
     data_obs.SetName("data_obs")
     
     data_obs.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
@@ -389,7 +414,7 @@ if __name__ == '__main__':
         for i in xrange(1,len(x)):
             for j in xrange(1,len(y)):
                 for k in xrange(1, len(z)):
-                    if x[i-1] < MRcut and y[j-1] < Rsqcut: continue
+                    if not passCut(x[i-1],y[j-1], box, fitRegion): continue
                     bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                     if (bkg.find("1b")!=-1 and z[k-1]==1) :
                         histos[box,bkg].SetBinContent(i,j,k,bin_events)
@@ -399,8 +424,8 @@ if __name__ == '__main__':
                         histos[box,"TTj3b"].SetBinContent(i,j,k,bin_events)
 
     sign = {}
-    sign["Up"] = options.sigma
-    sign["Down"] = -options.sigma
+    sign["Up"] = sigma
+    sign["Down"] = -sigma
     for bkg in initialBkgs:
         for p in range(0,len(paramNames)):
             print "\nINFO: Now varying parameter\n"
@@ -409,13 +434,13 @@ if __name__ == '__main__':
             for syst in ["Up","Down"]:
                 for q in range(0,len(paramNames)):
                     paramName = paramNames[q]
-                    rel_err = sign[syst]*variation[p][q]/(workspace.var(paramName).getError())
-                    print paramName, syst, " = ", cen[q]+sign[syst]*variation[p][q], " -> ", "%.2fsigma"%(rel_err)
+                    relErr = sign[syst]*variation[p][q]/(workspace.var(paramName).getError())
+                    print paramName, syst, " = ", cen[q]+sign[syst]*variation[p][q], " -> ", "%.2fsigma"%(relErr)
                     workspace.var(paramName).setVal(cen[q]+sign[syst]*variation[p][q])
                 for i in xrange(1,len(x)):
                     for j in xrange(1,len(y)):
                         for k in xrange(1,len(z)):
-                            if x[i-1] < MRcut and y[j-1] < Rsqcut: continue
+                            if not passCut(x[i-1],y[j-1], box, fitRegion): continue
                             bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                             if (bkg.find("1b")!=-1 and z[k-1]==1) :
                                 histos[box,"%s_%s_%s%s"%(bkg,var_name,box,syst)].SetBinContent(i,j,k,bin_events)
@@ -451,8 +476,8 @@ if __name__ == '__main__':
     isrAbs.Multiply(wHisto)
     isrUp.Add(isrAbs,sign["Up"])
     isrDown.Add(isrAbs,sign["Down"])
-    histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, MRcut, Rsqcut)
-    histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, MRcut, Rsqcut)
+    histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, box, fitRegion)
+    histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, box, fitRegion)
     
     btagUp = wHisto.Clone("%s_%s_BtagUp"%(box,model))
     btagUp.SetTitle("%s_%s_BtagUp"%(box,model))
@@ -462,8 +487,8 @@ if __name__ == '__main__':
     btagAbs.Multiply(wHisto)
     btagUp.Add(btagAbs,sign["Up"])
     btagDown.Add(btagAbs,sign["Down"])
-    histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, MRcut, Rsqcut)
-    histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, MRcut, Rsqcut)
+    histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, fitRegion)
+    histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, fitRegion)
 
     jesUp = wHisto.Clone("%s_%s_JesUp"%(box,model))
     jesUp.SetTitle("%s_%s_JesUp"%(box,model))
@@ -473,8 +498,8 @@ if __name__ == '__main__':
     jesAbs.Multiply(wHisto)
     jesUp.Add(jesAbs,sign["Up"])
     jesDown.Add(jesAbs,sign["Down"])
-    histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, MRcut, Rsqcut)
-    histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, MRcut, Rsqcut)
+    histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, fitRegion)
+    histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, fitRegion)
     
     pdfUp = wHisto.Clone("%s_%s_PdfUp"%(box,model))
     pdfUp.SetTitle("%s_%s_PdfUp"%(box,model))
@@ -484,15 +509,15 @@ if __name__ == '__main__':
     pdfAbs.Multiply(wHisto)
     pdfUp.Add(pdfAbs,sign["Up"])
     pdfDown.Add(pdfAbs,sign["Down"])
-    histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, MRcut, Rsqcut)
-    histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, MRcut, Rsqcut)
+    histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, box, fitRegion)
+    histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, fitRegion)
     
     #set the per box eff value
     sigNorm = wHisto.Integral()
     sigEvents = sigNorm*lumi*refXsec
     print "\nINFO: now multiplying:  efficiency x lumi x refXsec = %f x %f x %f = %f"%(sigNorm,lumi,refXsec,sigEvents)
     
-    histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, MRcut, Rsqcut )
+    histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, box, fitRegion)
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
     histos[box,model].Scale(lumi*refXsec)
     
@@ -526,6 +551,6 @@ if __name__ == '__main__':
         histos1d[box,bkg].Write()
 
     print "\nINFO: Now writing data card\n"
-    writeDataCard(box,model,"%s/razor_combine_%s_%s.txt"%(outdir,box,model),initialBkgs,paramNames,histos1d,workspace)
+    writeDataCard(box,model,"%s/razor_combine_%s_%s.txt"%(outdir,box,model),initialBkgs,paramNames,histos1d,workspace,sigma)
     os.system("cat %s/razor_combine_%s_%s.txt \n"%(outdir,box,model)) 
     outFile.Close()
