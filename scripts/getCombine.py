@@ -7,10 +7,10 @@ import os
 from array import *
 from getGChiPairs import *
 
-def getFileName(mg, mchi, box, model, directory):
+def getFileName(mg, mchi, box, model, directory,fitRegion):
     hybridLimit = "higgsCombine"
     modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
-    fileName = "%s/%s%s_%s_%s.Asymptotic.mH120.root"%(directory,hybridLimit,model,modelPoint,box)
+    fileName = "%s/%s%s_%s_%s_%s.Asymptotic.mH120.root"%(directory,hybridLimit,model,modelPoint,fitRegion,box)
     return fileName
 
 
@@ -70,6 +70,9 @@ if __name__ == '__main__':
     model = sys.argv[2]
     directory = sys.argv[3]
 
+    fitRegion="FULL"
+    for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--fit-region")!=-1: fitRegion = float(sys.argv[i+1])
 
     gchipairs = getGChiPairs(model)
         
@@ -80,8 +83,8 @@ if __name__ == '__main__':
 
     haddOutputs = []
     for mg, mchi in gchipairs:
-        if not glob.glob(getFileName(mg,mchi,boxInput,model,directory)): continue
-        tFile = rt.TFile.Open(getFileName(mg,mchi,boxInput,model,directory))
+        if not glob.glob(getFileName(mg,mchi,boxInput,model,directory,fitRegion)): continue
+        tFile = rt.TFile.Open(getFileName(mg,mchi,boxInput,model,directory,fitRegion))
         limit = tFile.Get("limit")
         
         limit.Draw('>>elist','','entrylist')
@@ -108,6 +111,6 @@ if __name__ == '__main__':
         tFile.cd()
         tFile.Close()
 
-    os.system("hadd %s/xsecUL_%s.root %s"%(directory,boxInput," ".join(haddOutputs)))
+    os.system("hadd -f %s/xsecUL_%s.root %s"%(directory,boxInput," ".join(haddOutputs)))
 
     
