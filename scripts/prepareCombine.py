@@ -189,9 +189,27 @@ def getBinEvents(i, j, k, x, y, z, workspace):
     xmax  = x[-1]
     ymin  = y[0]
     ymax  = y[-1]
-    if Y0 > ymin: Y0 = ymin-0.05
-    if X0 > xmin: X0 = xmin-100
+    if Y0 > ymin-0.05: 
+        print "ERROR: R0 has left range"
+        Y0 = ymin-0.05
+    if X0 > xmin-100.: 
+        print "ERROR: MR0 has left range"
+        X0 = xmin-100.
+    if B < 0:
+        print "ERROR: B has left range"
+        B = 0.01
+    if N < 0:
+        print "ERROR: N has left range"
+        N = 0.01
+        
     total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+
+    while total_integral==0 and N*B>500:
+        print "ERROR: N, B = (%.2f,%.2f) combination too big!"%(N,B)
+        N = N-1.
+        B = B-1.
+        total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+        
 
     xmin  = x[0]
     xmax  = x[3]
@@ -452,12 +470,12 @@ if __name__ == '__main__':
                     paramName = paramNames[q]
                     workspace.var(paramName).setVal(cen[q])
                     
-    for bkg in initialBkgs:
-        for paramName in paramNames:
-            for syst in ['Up','Down']:
-                if histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral() > 0:
-                    histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral())
-                else: print "ERROR: histogram for %s_%s_%s%s has zero integral!"%(bkg,paramName,box,syst)
+    # for bkg in initialBkgs:
+    #     for paramName in paramNames:
+    #         for syst in ['Up','Down']:
+    #             if histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral() > 0:
+    #                 histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral())
+    #             else: print "ERROR: histogram for %s_%s_%s%s has zero integral!"%(bkg,paramName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btag =  sigFile.Get('wHisto_btagerr_pe')
