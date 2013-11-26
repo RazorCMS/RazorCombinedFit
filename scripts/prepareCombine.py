@@ -52,13 +52,13 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
             txtfile.write("jmax 1 number of backgrounds\n")
-            txtfile.write("kmax 13 number of nuisnace parameters\n")
+            txtfile.write("kmax 12 number of nuisnace parameters\n")
         elif box=="Jet2b":
             txtfile.write("jmax 2 number of backgrounds\n")
-            txtfile.write("kmax 15 number of nuisnace parameters\n")
+            txtfile.write("kmax 14 number of nuisnace parameters\n")
         else:
             txtfile.write("jmax 3 number of backgrounds\n")
-            txtfile.write("kmax 21 number of nuisnace parameters\n")
+            txtfile.write("kmax 20 number of nuisnace parameters\n")
         txtfile.write("------------------------------------------------------------\n")
         txtfile.write("observation	%i\n"%
                       histos1d[box,"data"].Integral())
