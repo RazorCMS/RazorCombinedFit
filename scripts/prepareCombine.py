@@ -75,8 +75,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			    lnN	1.044       1.00\n")
-            txtfile.write("lepton			lnN	1.03       1.00\n")
-            txtfile.write("trigger			lnN	1.05       1.00\n")
+            txtfile.write("lepton			lnN	1.06       1.00\n")
+            #txtfile.write("trigger			lnN	1.05       1.00\n")
             txtfile.write("Pdf			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./sigma))
@@ -96,8 +96,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                            histos1d[box,bkgs[1]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
-            txtfile.write("lepton			lnN	1.03       1.00	1.00\n")
-            txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
+            txtfile.write("lepton			lnN	1.06       1.00	1.00\n")
+            #txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
             txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./sigma))
@@ -120,8 +120,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                            histos1d[box,bkgs[1]].Integral(),histos1d[box,bkgs[2]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			lnN	1.044      1.00	1.00	1.00\n")
-            txtfile.write("lepton			lnN	1.03       1.00	1.00	1.00\n")
-            txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
+            txtfile.write("lepton			lnN	1.06       1.00	1.00	1.00\n")
+            #txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
             txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./sigma))
@@ -470,12 +470,12 @@ if __name__ == '__main__':
                     paramName = paramNames[q]
                     workspace.var(paramName).setVal(cen[q])
                     
-    # for bkg in initialBkgs:
-    #     for paramName in paramNames:
-    #         for syst in ['Up','Down']:
-    #             if histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral() > 0:
-    #                 histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral())
-    #             else: print "ERROR: histogram for %s_%s_%s%s has zero integral!"%(bkg,paramName,box,syst)
+    for bkg in initialBkgs:
+        for paramName in paramNames:
+            for syst in ['Up','Down']:
+                if histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral() > 0:
+                    histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral())
+                else: print "ERROR: histogram for %s_%s_%s%s has zero integral!"%(bkg,paramName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btag =  sigFile.Get('wHisto_btagerr_pe')
