@@ -8,7 +8,7 @@ class Config(object):
             raise IOError("File not found: '%s'" % fileName)
         self.config = ConfigParser.ConfigParser()
         self.config.read(fileName)
-    
+      
     def __checkBox(self, box):
         if box not in self.config.sections():
             raise KeyError("The box '%s' was not found" % box)

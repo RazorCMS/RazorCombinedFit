@@ -12,12 +12,13 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                }
 lumi = 1.0
 
-sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
+#sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
 from CalcBDT import CalcBDT
 
-MR_CUT = 500.
-RSQ_CUT = 0.05
-BDT_CUT = -100.2
+MR_CUT_HAD  = 400.
+MR_CUT_LEP  = 350.
+RSQ_CUT     = 0.25
+BDT_CUT     = -0.2
 
 class BJetBoxLS(object):
     """The BJet search box used in the analysis"""
@@ -25,8 +26,17 @@ class BJetBoxLS(object):
         self.name = 'BJetLS'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+        return tree.nJet >=2 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < BDT_CUT 
+
+class BJetBox(object):
+    """The BJet search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'BJet'
+        self.dumper = dumper
+    def __call__(self, tree):
+        return tree.nJet >=4 and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0  and (tree.MR >= 550. or tree.RSQ >= 0.3)
 
 class BJetBoxHS(object):
     """The BJet search box used in the analysis"""
@@ -34,46 +44,8 @@ class BJetBoxHS(object):
         self.name = 'BJetHS'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet == 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
+        return tree.nJet >= 2 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= BDT_CUT 
-
-class CR6JBVetoBoxLS(object):
-    """The CR6JBVeto search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JBVetoLS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < BDT_CUT
-
-class CR6JBVetoBoxHS(object):
-    """The CR6JBVeto search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JBVetoHS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= BDT_CUT
-
-class CR6JSingleLeptonBVetoLS(object):
-    """The CR6JSingleLeptonBJet search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JSingleLeptonBVetoLS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.nJet >= 6  and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() < BDT_CUT 
-
-class CR6JSingleLeptonBVetoHS(object):
-    """The BJet search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JSingleLeptonBVetoHS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.nJet >= 6 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() >= BDT_CUT
 
 class MuBox(object):
     """The Mu search box used in the analysis"""
@@ -81,17 +53,8 @@ class MuBox(object):
         self.name = 'Mu'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter
-
-class CRMuBVetoBox(object):
-    """The Mu search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CRMuBVeto'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter    
+        return tree.nJetNoLeptons >=2 and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter 
 
 class EleBox(object):
     """The Ele search box used in the analysis"""
@@ -99,17 +62,9 @@ class EleBox(object):
         self.name = 'Ele'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
+        return  tree.nJetNoLeptons >=4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
+            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter #and (tree.MR > 450. or tree.RSQ > 0.2) #tree.nJetNoLeptons == 4 and
 
-class CREleBVetoBox(object):
-    """The Ele search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CREleBVeto'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVL == 0 and tree.MR >= MR_CUT and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter
             
 class SelectBox(object):
     """Tells you which box this was"""
@@ -125,7 +80,7 @@ class SelectBox(object):
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
     output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
-    print output.GetName()
+    print 'writing dataset to ', output.GetName()
     for d in data:
         d.Write()
     output.Close()
@@ -147,21 +102,21 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     box = filter.name
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
-    #
-    workspace.factory('Run[0,0,+INF]')
-    workspace.factory('Lumi[0,0,+INF]')
-    workspace.factory('Event[0,0,+INF]')
-    #
-    workspace.factory('nLepton[0,0,15.0]')
-    workspace.factory('nElectron[0,0,15.0]')
-    workspace.factory('nMuon[0,0,15.0]')
-    workspace.factory('nTau[0,0,15.0]')
-    workspace.factory('nVertex[1,0.,50.]')
-    workspace.factory('nJet[0,0,15.0]')
     workspace.factory('W[0,0,+INF]')
-    workspace.factory('BDT[0,-INF,+INF]')
-    workspace.factory('deltaPhiMET[0,-INF,+INF]')
-    workspace.factory('genInfo[0,-INF,+INF]')
+## #
+##     workspace.factory('Run[0,0,+INF]')
+##     workspace.factory('Lumi[0,0,+INF]')
+##     workspace.factory('Event[0,0,+INF]')
+##     #
+##     workspace.factory('nLepton[0,0,15.0]')
+##     workspace.factory('nElectron[0,0,15.0]')
+##     workspace.factory('nMuon[0,0,15.0]')
+##     workspace.factory('nTau[0,0,15.0]')
+##     workspace.factory('nVertex[1,0.,50.]')
+##     #workspace.factory('nJet[0,0,15.0]')
+##     workspace.factory('BDT[0,-INF,+INF]')
+##     workspace.factory('deltaPhiMET[0,-INF,+INF]')
+##     workspace.factory('genInfo[0,-INF,+INF]')
     
     if filter.dumper is not None:
         for h in filter.dumper.sel.headers_for_MVA():
@@ -179,11 +134,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     rsqMax = args['Rsq'].getMax()
     rMin = rt.TMath.Sqrt(rsqMin)
     rMax = rt.TMath.Sqrt(rsqMax)
-
-    nLooseElectrons = rt.TH2D('nLooseElectrons','nLooseElectrons',350,mRmin,mRmax,100,rsqMin,rsqMax)
-    nLooseMuons = rt.TH2D('nLooseMuons','nLooseMuons',350,mRmin,mRmax,100,rsqMin,rsqMax)
-    nLooseTaus = rt.TH2D('nLooseTaus','nLooseTaus',350,mRmin,mRmax,100,rsqMin,rsqMax)
-    
+   
     events = set()
     
     selectionFilter = 0
@@ -227,11 +178,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         bdt = -9999.
         if filter.dumper is not None:
             bdt = filter.dumper.bdt_val
-        
-        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.MR,tree.RSQ)
-        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.MR,tree.RSQ)
-        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.MR,tree.RSQ)
-        
+
         try:
             if tree.run <= run:
                 continue
@@ -243,24 +190,30 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
         
-        a.setRealValue('Run',tree.run)
-        a.setRealValue('Lumi',tree.lumi)
-        a.setRealValue('Event',tree.event)
+        ## a.setRealValue('Run',tree.run)
+##         a.setRealValue('Lumi',tree.lumi)
+##         a.setRealValue('Event',tree.event)
         
-        a.setRealValue('MR',tree.MR, True)
-        a.setRealValue('Rsq',tree.RSQ, True)
-        a.setRealValue('nBtag',nBtag)
+        a.setRealValue('MR',tree.MR)
+        a.setRealValue('Rsq',tree.RSQ)
+        btagcutoff = 3
+        if tree.nCSVM >= btagcutoff:
+            a.setRealValue('nBtag',btagcutoff)
+        else:
+            a.setRealValue('nBtag',tree.nCSVM)
+
+        
         a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
-        a.setRealValue('nElectron',tree.nElectronLoose)
-        a.setRealValue('nMuon',tree.nMuonLoose)
-        a.setRealValue('nTau',tree.nTauLoose)
-        a.setRealValue('nJet',tree.nJet)
-        a.setRealValue('nVertex',tree.nVertex)        
+    ##     a.setRealValue('nElectron',tree.nElectronLoose)
+##         a.setRealValue('nMuon',tree.nMuonLoose)
+##         a.setRealValue('nTau',tree.nTauLoose)
+##         #a.setRealValue('nJet',tree.nJet)
+##         a.setRealValue('nVertex',tree.nVertex)        
         a.setRealValue('W',1.0)
-        a.setRealValue('BDT',bdt)
-        a.setRealValue('deltaPhiMET',dphi)
+##         a.setRealValue('BDT',bdt)
+##         a.setRealValue('deltaPhiMET',dphi)
         
-        a.setRealValue('genInfo',tree.genInfo)
+ ##       a.setRealValue('genInfo',tree.genInfo)
         
         if filter.dumper is not None:
             for h in filter.dumper.sel.headers_for_MVA():
@@ -281,7 +234,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:
-        writeTree2DataSet([rdata,nLooseElectrons,nLooseMuons,nLooseTaus], outputFile, '%s.root' % filter.name, rMin, mRmin)
+        writeTree2DataSet([rdata], outputFile, '%s.root' % filter.name, rMin, mRmin)
     return rdata
 
 if __name__ == '__main__':
@@ -328,17 +281,14 @@ if __name__ == '__main__':
                 fName = name[:-5]
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
-    
+
+##    # if 'SingleMu' in fName or 'START' in fName:
+##    #     convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
+   
     if 'MultiJet' in fName or 'START' in fName:
-##        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
-        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxLS(CalcBDT(chain)),options.run)
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxHS(CalcBDT(chain)),options.run)
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoLS(CalcBDT(chain)),options.run)
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoHS(CalcBDT(chain)),options.run)
- ##    if 'SingleElectron' in fName or 'START' in fName:
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
-   #     convertTree2Dataset(chain,fName, cfg,options.min,options.max,CREleBVetoBox(None),options.run)    
-  ##   if 'SingleMu' in fName or 'START' in fName:
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
+## ##       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
+## ##        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
+       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
+#    if 'SingleElectron' in fName or 'START' in fName:
+#       convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
+    

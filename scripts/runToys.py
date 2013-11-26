@@ -27,30 +27,25 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     # 'MuHad-Run2012ABCD':'%s/razor_output_MuHad-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box),
     # 'ElectronHad-Run2012ABCD':'%s/razor_output_ElectronHad-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box),
     # 'HT-HTMHT-Run2012ABCD':'%s/razor_output_HT-HTMHT-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box)}
-    fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets_Ele_FULL.root'}
+    fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets_%s_FULL.root'%(box)}
 
-    mRmin = 350.
-    rMin = 0.22360679775
+    mRmin = 350.0
+    rMin  = 0.22360679775
+ ##    mRmin = 400.0
+##     rMin  = 0.5
+   
         
     label = "MR"+str(mRmin)+"_R"+str(rMin)
-    datasetMap = {'TTJets':'Datasets/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola-Summer12_DR53X-PU_S10_START53_V7C-v1-SUSY_MR350.0_R0.22360679775_BTAG_Ele.root',
+    datasetMap = {'TTJets':'Datasets/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola-Summer12_DR53X-PU_S10_START53_V7C-v1-SUSY_MR%s_R%s_BTAG_%s.root'%(mRmin, rMin,box),
                   }
+    print datasetMap
     resultDir = "/afs/cern.ch/work/l/lucieg/private/toys10k_%s_%s"%(datasetName,fitmode)
     toyDir = resultDir+"/%s_%s"%(sideband,box)
     ffDir = toyDir+"_FF"
 
-    tagFR = ""
-    tag3D = ""
+    tagFR = "--"+sideband
+    tag3D = "--"+fitmode
 
-    if box in ["Mu", "Ele"]:
-        tagFR = "--fit-region=LowRsq_LowMR_HighMR"
-    else:
-        tagFR = "--fit-region=LowRsq_LowMR_HighMR,LowRsq1b_LowMR1b_HighMR1b,LowRsq2b_LowMR2b_HighMR2b_LowRsq3b_LowMR3b_HighMR3b"
-
-        
-    if fitmode == "3D":
-        tag3D = "--3D"
-        
     tagPrintPlots = "--printPlots"
         
     os.system("mkdir -p %s"%(submitDir))
@@ -68,7 +63,7 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     outputfile.write("source setup.sh\n")
     outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
     if True:#doToys:
-        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b \n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob)))
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b --fitmode %s\n"%(config,datasetMap[datasetName],sideband,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob), fitmode))
     if doConvertToRoot:
         outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
     if True:#doFinalJob:
@@ -102,8 +97,8 @@ if __name__ == '__main__':
     datasetName = sys.argv[1]
     box = sys.argv[2]
     sideband = sys.argv[3]
-    #fitmode = sys.argv[4]
-    fitmode = '3D'
+    fitmode = sys.argv[4]
+    #fitmode = '3D'
     queue = "8nh"
     nToys = 10000
     nJobs = 100

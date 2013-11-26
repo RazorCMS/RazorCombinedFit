@@ -64,10 +64,9 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     elif box in ['Mu']:
         boxCut = "nJetNoLeptons == 4 && metFilter && muBoxFilter && muTriggerFilter && nCSVM >0  && MR >= 350. && RSQ >= 0.05 && nMuonTight == 1 && nElectronTight == 0 && nMuonLoose == 1 && nElectronLoose == 0 &&  !isolatedTrack10LeptonFilter"
     elif box in ['BJetHS','BJetLS']:
-        boxCut = "nJet == 6 && hadBoxFilter && hadTriggerFilter && nCSVM > 0 && MR >= 500. && RSQ >= 0.05  && nMuonTight == 0 && nElectronTight == 0 && !isolatedTrack10Filter && nMuonLoose == 0 && nElectronLoose == 0 "#&& self.dumper.bdt() >= -0.2"
+        boxCut = "nJet == 6 && hadBoxFilter && hadTriggerFilter && nCSVM > 0 && MR >= 350. && RSQ >= 0.05  && nMuonTight == 0 && nElectronTight == 0 && !isolatedTrack10Filter && nMuonLoose == 0 && nElectronLoose == 0 "#&& self.dumper.bdt() >= -0.2"
         
-    if isMC: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && %s' % (mRmin,mRmax,rsqMin,rsqMax,boxCut),'entrylist')
-    else: tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ_PFTYPE1 >= %f && RSQ_PFTYPE1 <= %f && %s  && (%s) && (%s) && (%s)' % (mRmin,mRmax,rsqMin,rsqMax,boxCut,noiseCut,triggerReq,jetReq),'entrylist')
+    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && %s' % (mRmin,mRmax,rsqMin,rsqMax,boxCut),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;

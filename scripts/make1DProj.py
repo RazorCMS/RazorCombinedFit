@@ -98,6 +98,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
             funcFill68.Draw("same")
             tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
         else:
+         #   tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
             tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
         tleg.SetFillColor(rt.kWhite)
         tleg.Draw("same")
@@ -196,6 +197,7 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
             funcFill68.Draw("same")
             tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
         else:
+            #tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
             tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
         tleg.SetFillColor(rt.kWhite)
         tleg.Draw("same")
@@ -676,11 +678,10 @@ if __name__ == '__main__':
     fitFile = rt.TFile.Open(fitfileName)
     print fitfileName
 
-    if frLabels == []: frLabels = []
+    if frLabels == []: frLabels = ["FULL"]
     #if fit3D: frLabels.extend(["%ib"%btag for btag in nBtagbins[:-1]])
-    print frLabels
-    
-    if len(frLabels)==1:
+   
+    if len(frLabels)<=1:
         btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
     if len(frLabels)==3:
         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
@@ -723,7 +724,7 @@ if __name__ == '__main__':
     if fit3D:
         hBTAGSignalList = [fitFile.Get("%s/histoToySignal_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     
-    for hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hMRSignal, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hRSQSignal, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData, hBTAGSignal, btagOpt, frLabel in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRVpjList, hMRDataList,  hMRSignalList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQVpjList, hRSQDataList, hRSQSignalList,  hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGVpjList, hBTAGDataList, hBTAGSignalList, btagToDo, frLabel):
+    for hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hMRSignal, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hRSQSignal, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData, hBTAGSignal, btagOpt, frLabel in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRVpjList, hMRDataList,  hMRSignalList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQVpjList, hRSQDataList, hRSQSignalList,  hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGVpjList, hBTAGDataList, hBTAGSignalList, btagToDo, frLabels):
 
         errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
         errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)

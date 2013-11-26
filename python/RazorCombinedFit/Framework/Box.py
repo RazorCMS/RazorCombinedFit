@@ -436,6 +436,8 @@ class Box(object):
         pdf = self.workspace.pdf(genmodel)
         allvars = rt.RooArgSet(self.workspace.set('variables'))
         myvars = rt.RooArgSet(self.workspace.var('MR'),self.workspace.var('Rsq'),self.workspace.var('nBtag'))
+        print '------------bla--------------'
+        myvars.Print('V')
         print "expectedEvents = %f" % pdf.expectedEvents(allvars)
         if self.workspace.cat('Boxes'):
             myvars.add(self.workspace.cat('Boxes'))
@@ -471,6 +473,7 @@ class Box(object):
             
                     # evaluate each pdf, assumed to be called "RazPDF_{component}"
                     for component in componentsOn:
+                        print component
                         pdfComp = self.workspace.pdf("RazPDF_%s"%component)
                         pdfValV = pdfComp.getValV(myvars)
 
