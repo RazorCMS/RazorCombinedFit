@@ -11,15 +11,16 @@ from array import *
 from getGChiPairs import *
 
     
-def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lumi,fitRegion,hypo,t):
-    nToys = 125 # toys per command
+def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lumi,fitRegion,hypo,t,nToys):
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+fitRegion+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
-
-    label = "MR300.0_R0.387298334621"
+    
+    label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
+             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
+             "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
     
     tagHypo = ""
     if hypo == "B":
@@ -58,7 +59,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lu
     #outputfile.write("export WD=${TWD}/CMSSW_6_1_1/src\n")
     #outputfile.write("cd $WD\n")
     #outputfile.write('pwd\n')
-    #outputfile.write("git clone git@github.com:RazorCMS/RazorCombinedFit.git\n")
+    #outputfile.write("git clone git@github.com:RazorCMS/RazorCombincaedFit.git\n")
     #outputfile.write("cd RazorCombinedFit\n")
     #outputfile.write('pwd\n')
     #outputfile.write("mkdir -p lib\n")
@@ -66,19 +67,19 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lu
     #outputfile.write("make clean; make -j 4\n")
     
     outputfile.write("export NAME=\"%s\"\n"%model)
-    outputfile.write("export LABEL=\"%s\"\n"%label)
+    boxes =  box.split("_")
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD_2Nov2013.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD_2Nov2013.root $PWD\n")
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
+    for ibox in boxes
+        outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_%s_%s.root $PWD\n"%(massPoint,label[ibox],ibox))
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
         
     #outputfile.write("python scripts/prepareCombine.py %s ${NAME} FULLFits2012ABCD.root ${NAME}_%s_${LABEL}_%s.root\n"%(box,massPoint,box))
     #outputfile.write("combine -M Asymptotic -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
 
-    boxes =  box.split("_")
     for ibox in boxes:
-        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_${LABEL}_%s.root -c /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_hybrid.config --xsec %f --lumi %f --fit-region %s\n"%(ibox,fitRegion,massPoint,ibox,xsecpoint,lumi,fitRegion))
+        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_hybrid.config --xsec %f --lumi %f --fit-region %s\n"%(ibox,fitRegion,massPoint,label[ibox],ibox,xsecpoint,lumi,fitRegion))
         outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,fitRegion,ibox,ibox))
 
     if len(boxes)>1:
@@ -86,6 +87,8 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lu
         option = " ".join(options)
         outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s.txt \n"%(option,box,model))
         outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,fitRegion,box,box))
+        if nToys>0: 
+            outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(nToys,massPoint,fitRegion,box,box))
         
     #outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/*.root %s \n"%combineDir)
@@ -118,6 +121,7 @@ if __name__ == '__main__':
     refXsec = 100.
     lumi = 19.3
     fitRegion="FULL"
+    nToys = -1
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
@@ -127,6 +131,7 @@ if __name__ == '__main__':
         if sys.argv[i].find("--xsec")!=-1: refXsec = float(sys.argv[i+1])
         if sys.argv[i].find("--lumi")!=-1: lumi = float(sys.argv[i+1])
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
+        if sys.argv[i].find("--toys")!=-1: nToys = sys.argv[i+1]
     
     nJobs = 1 # do 1 toy each job => 1 toy
     
@@ -151,7 +156,6 @@ if __name__ == '__main__':
     outFileList = [outFile.replace("higgsCombine","").replace(".root\n","") for outFile in doneFile.readlines()]
 
     # dictionary of src file to output file names
-    nToys = 1 # toys per command
     srcDict = {}
     for i in xrange(0,nJobs):
         srcDict[i] = ["0-0"]
@@ -177,7 +181,7 @@ if __name__ == '__main__':
                         missingFiles+=1
                         runJob = True
                     if not runJob: continue
-                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lumi,fitRegion,hypo,t)
+                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lumi,fitRegion,hypo,t,nToys)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     time.sleep(3)
