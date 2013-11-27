@@ -131,7 +131,7 @@ if __name__ == '__main__':
         if sys.argv[i].find("--xsec")!=-1: refXsec = float(sys.argv[i+1])
         if sys.argv[i].find("--lumi")!=-1: lumi = float(sys.argv[i+1])
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
-        if sys.argv[i].find("--toys")!=-1: nToys = sys.argv[i+1]
+        if sys.argv[i].find("--toys")!=-1: nToys = int(sys.argv[i+1])
     
     nJobs = 1 # do 1 toy each job => 1 toy
     
