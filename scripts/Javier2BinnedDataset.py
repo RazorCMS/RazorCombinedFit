@@ -31,7 +31,7 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
 
     args.Print()
     histoFile = rt.TFile.Open(histoFileName)
-    smscount = histoFile.Get("SMSWALL")
+    smscount = histoFile.Get("SMSWALLTB")
     for histo in [nominal, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:     
         histo.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     
@@ -96,7 +96,6 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     #BTAGDOWN = "BTAG_NUM"
 
     boxCut = "(" + "||".join(["BOX_NUM==%i"%cut for cut in boxMap[box]]) + ")"
-    print boxCut
     
     jetReq = "(MR>0.)"
     if box in ["MuMultiJet", "EleMultiJet"]:
@@ -104,41 +103,71 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     elif box in ["MuJet", "EleJet"]:
         jetReq = "(NJET_NOMU<=3)"
     boxCut = "(" + jetReq + "&&" + boxCut + ")"
-
     print boxCut
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+
+    nB = 0
+    nT = 0
+    if outputFile.find("T1bbbb")!=-1:
+        nB = 4
+        nT = 0
+    elif outputFile.find("T1tbbb")!=-1:
+        nB = 3
+        nT = 1
+    elif outputFile.find("T1ttbb")!=-1:
+        nB = 2
+        nT = 2
+    elif outputFile.find("T1tttb")!=-1:
+        nB = 1
+        nT = 3
+    elif outputFile.find("T1tttt")!=-1:
+        nB = 0
+        nT = 4
+    elif outputFile.find("T2bb")!=-1:
+        nB = 2
+        nT = 0
+    elif outputFile.find("T2tb")!=-1:
+        nB = 1
+        nT = 1
+    elif outputFile.find("T2tt")!=-1:
+        nB = 0
+        nT = 2
+        
+    quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
+    print quarkCut
+
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_JESerr_up','%s:RSQ_JESup:MR_JESup'%(BTAGNOM),'(%s)' % (condition) )
 
     # BUG ALERT! WPU MISSING IN ALL THE FOLLOWING PROJECTIONS ORIGINALLY! SPOTTED 10/31/2013
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_JESerr_down','%s:RSQ_JESdown:MR_JESdown'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_btagerr_up','%s:RSQ:MR'%(BTAGUP),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_btagerr_down','%s:RSQ:MR'%(BTAGDOWN),'(%s)' % (condition) )
-
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
-    tree.Project('wHisto','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRUP*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISRUP*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_ISRerr_up','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRDOWN*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISRDOWN*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_ISRerr_down','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
+    
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    tree.Project('wHisto','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
 
     #BUG ALERT! condition should be the NOMINAL! SPOTTED 10/31/2013
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     pdf_nom, pdf_pe = makePDFPlot(tree, box, nominal, condition, relative = True, BTAGNOM = BTAGNOM, histoFileName = histoFileName,outputFile = outputFile)
     
-    pdf_up = pdf_pe.Clone("wHist_pdferr_up") 
-    pdf_up.SetTitle("wHist_pdferr_up") 
+    pdf_up = pdf_pe.Clone("wHisto_pdferr_up") 
+    pdf_up.SetTitle("wHisto_pdferr_up") 
     pdf_up.Multiply(pdf_nom)
     pdf_up.Add(pdf_nom)
     
-    pdf_down = pdf_pe.Clone("wHist_pdferr_down") 
-    pdf_down.SetTitle("wHist_pdferr_down") 
+    pdf_down = pdf_pe.Clone("wHisto_pdferr_down") 
+    pdf_down.SetTitle("wHisto_pdferr_down") 
     pdf_down.Multiply(pdf_nom)
     pdf_down.Scale(-1.0)
     pdf_down.Add(pdf_nom)
