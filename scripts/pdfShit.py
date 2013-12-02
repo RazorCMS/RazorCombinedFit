@@ -231,7 +231,7 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
             hw = []
             hw2 = []
             for k in xrange(0,45):
-                htemp = histoFile.Get("SMSWCTEQTB_%i"%k)
+                htemp = histoFile.Get("SMSWCTEQ_%i"%k)
                 w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
                 hw.append(hwCTEQ66[k].GetBinContent(i,j))
                 hw2.append(hwCTEQ66SQ[k].GetBinContent(i,j))
@@ -248,7 +248,7 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
             hw = []
             hw2 = []
             for k in xrange(0,31):
-                htemp = histoFile.Get("SMSWMRSTTB_%i"%k)
+                htemp = histoFile.Get("SMSWMRST_%i"%k)
                 w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
                 hw.append(hwMRST2006NNLO[k].GetBinContent(i,j))
                 hw2.append(hwMRST2006NNLOSQ[k].GetBinContent(i,j))
@@ -264,7 +264,7 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
     #         hw = []
     #         hw2 = []
     #         for k in xrange(0,101):
-    #             htemp = histoFile.Get("SMSWNNPDFTB_%i"%k)
+    #             htemp = histoFile.Get("SMSWNNPDF_%i"%k)
     #             w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
     #             hw.append(hwNNPDF10100[k].GetBinContent(i,j))
     #             hw2.append(hwNNPDF10100SQ[k].GetBinContent(i,j))

@@ -31,7 +31,7 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
 
     args.Print()
     histoFile = rt.TFile.Open(histoFileName)
-    smscount = histoFile.Get("SMSWALLTB")
+    smscount = histoFile.Get("SMSWALL")
     for histo in [nominal, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:     
         histo.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     
@@ -132,7 +132,8 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
         nB = 0
         nT = 2
         
-    quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
+    #quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
+    quarkCut = "(MR>0.)"
     print quarkCut
 
     condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
