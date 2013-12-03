@@ -25,11 +25,11 @@ if __name__ == '__main__':
             label = "MR300.0_R0.387298334621"
         
         if model in ["T1tttt"]:
-            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 40,400, 1400, 56, 0, 1400)
+            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 41, 400, 1425, 56, 0, 1400)
         elif model in ["T1bbbb"]:
-            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 49,400, 1625, 64, 0, 1600)
+            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 49, 400, 1625, 64, 0, 1600)
         elif model in ["T1tttb","T1ttbb","T1tbbb"]:
-            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 25, 400, 1650, 32, 0, 1600)
+            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 25, 400, 1650, 34, 0, 1625)
         elif model in ["T2tt"]:
             effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 27, 150, 825, 29, 0, 725)
         elif model=="T6bbHH":
