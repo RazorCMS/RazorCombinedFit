@@ -47,18 +47,18 @@ def rebin3d(oldhisto, x, y, z, box, fitRegion):
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
     return newhisto
     
-def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma):
+def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert):
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
             txtfile.write("jmax 1 number of backgrounds\n")
-            txtfile.write("kmax 12 number of nuisnace parameters\n")
-        elif box=="Jet2b":
+            txtfile.write("kmax 13 number of nuisnace parameters\n")
+        elif box in ["Jet2b"]:
             txtfile.write("jmax 2 number of backgrounds\n")
-            txtfile.write("kmax 14 number of nuisnace parameters\n")
+            txtfile.write("kmax 15 number of nuisnace parameters\n")
         else:
             txtfile.write("jmax 3 number of backgrounds\n")
-            txtfile.write("kmax 20 number of nuisnace parameters\n")
+            txtfile.write("kmax 21 number of nuisnace parameters\n")
         txtfile.write("------------------------------------------------------------\n")
         txtfile.write("observation	%i\n"%
                       histos1d[box,"data"].Integral())
@@ -74,19 +74,21 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             txtfile.write("rate            %.3f		%.3f	\n"%
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			    lnN	1.044       1.00\n")
-            txtfile.write("lepton			lnN	1.06       1.00\n")
-            #txtfile.write("trigger			lnN	1.05       1.00\n")
+            txtfile.write("lumi			lnN	%.3f       1.00	1.00\n"%lumi_uncert)
+            txtfile.write("lepton			lnN	%.3f       1.00	1.00\n"%lepton_uncert)
+            txtfile.write("trigger			lnN	%.3f       1.00	1.00\n"%trigger_uncert)
             txtfile.write("Pdf			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Isr			shape	%.2f       -\n"%(1./sigma))
             normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       %.3f\n"%
-                          (box,bkgs[0],normErr))
-            for paramName in paramNames:
-                txtfile.write("%s_%s	shape	-	   %.2f\n"%(paramName,box,(1./sigma)))
-        elif box=="Jet2b":
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
+                          (bkgs[0],box,normErr))
+            i = 0
+            for paramName in paramNames: 
+                i += 1
+                txtfile.write("bgShape%i_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./sigma)))
+        elif box in ["Jet2b"]:
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1]))
@@ -95,21 +97,27 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			    lnN	1.044       1.00	1.00\n")
-            txtfile.write("lepton			lnN	1.06       1.00	1.00\n")
-            #txtfile.write("trigger			lnN	1.05       1.00	1.00\n")
+            txtfile.write("lumi			lnN	%.3f       1.00	1.00\n"%lumi_uncert)
+            txtfile.write("lepton			lnN	%.3f       1.00	1.00\n"%lepton_uncert)
+            txtfile.write("trigger			lnN	%.3f       1.00	1.00\n"%trigger_uncert)
             txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Isr			shape	%.2f       -	-\n"%(1./sigma))
-            normErr = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       %.3f	1.00\n"%
-                          (box,bkgs[0],normErr))
-            normErr = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%.3f\n"%
-                          (box,bkgs[1],normErr))
+            normErr = 1.
+            normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
+                          (bkgs[0],box,normErr))
+            normErr = 1.
+            quadErr = rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) 
+            quadErr += rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.)
+            normErr += rt.TMath.Sqrt(quadErr)
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
+                          (bkgs[1],box,normErr))
+            i = 0
             for paramName in paramNames:
-                txtfile.write("%s_%s	shape	-	   %.2f	%.2f\n"%(paramName,box,(1./sigma),(1./sigma)))
+                i += 1
+                txtfile.write("bgShape%i_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma)))
         else:
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
@@ -119,24 +127,31 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral(),histos1d[box,bkgs[2]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			lnN	1.044      1.00	1.00	1.00\n")
-            txtfile.write("lepton			lnN	1.06       1.00	1.00	1.00\n")
-            #txtfile.write("trigger			lnN	1.05       1.00	1.00	1.00\n")
+            txtfile.write("lumi			lnN	%.3f       1.00	1.00\n"%lumi_uncert)
+            txtfile.write("lepton			lnN	%.3f       1.00	1.00\n"%lepton_uncert)
+            txtfile.write("trigger			lnN	%.3f       1.00	1.00\n"%trigger_uncert)
             txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./sigma))
-            normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
-                          (box,bkgs[0],normErr))
-            normErr = 1.+(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal())
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
-                          (box,bkgs[1],normErr))
-            normErr = 1.+rt.TMath.Sqrt(rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) + rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.))
-            txtfile.write("bgnorm%s%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
-                          (box,bkgs[2],normErr))
+            normErr = 1.
+            normErr += workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal()
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
+                          (bkgs[0],box,normErr))
+            normErr = 1.
+            normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
+                          (bkgs[1],box,normErr))
+            normErr = 1. 
+            quadErr = rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.)
+            quadErr += rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.)
+            normErr += rt.TMath.Sqrt(quadErr)
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
+                          (bkgs[2],box,normErr))
+            i = 0
             for paramName in paramNames:
-                txtfile.write("%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(paramName,box,(1./sigma),(1./sigma),(1./sigma)))
+                i += 1
+                txtfile.write("bgShape%i_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma),(1./sigma)))
         txtfile.close()
 
 def find68ProbRange(hToy, probVal=0.6827):
@@ -281,12 +296,12 @@ def getRandomPars(fr, workspace):
                     zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
             randomizeAttempts+=1
     return argList
+
 def Gamma(a, x):
     return rt.TMath.Gamma(a) * rt.Math.inc_gamma_c(a,x)
 
 def Gfun(x, y, X0, Y0, B, N):
     return Gamma(N,B*N*rt.TMath.Power((x-X0)*(y-Y0),1/N))
-
             
 if __name__ == '__main__':
 
@@ -301,8 +316,6 @@ if __name__ == '__main__':
                   help="An input file to read fit results and workspaces from")
     parser.add_option('-x','--xsec',dest="refXsec", default=100,type="float",
                   help="Reference signal cross section in fb to define mu (signal strength)")
-    parser.add_option('-l','--lumi',dest="lumi", default=19.3,type="float",
-                  help="Nominal luminosity in fb^-1")
     parser.add_option('-s','--sigma',dest="sigma", default=0.5,type="float",
                   help="Number of sigmas to fluctuate systematic uncertainties")
     parser.add_option('-m','--model',dest="model", default="T2tt",type="string",
@@ -333,10 +346,20 @@ if __name__ == '__main__':
     infile = rt.TFile.Open(options.input,"READ")
     sigFile = rt.TFile.Open(args[0],"READ")
     refXsec = options.refXsec
-    lumi = options.lumi
     outdir = options.outdir
     sigma = options.sigma
     fitRegion = options.fitRegion
+    
+    other_parameters = cfg.getVariables(box, "other_parameters")
+    w = rt.RooWorkspace()
+    for parameters in other_parameters:
+        w.factory(parameters)
+        
+    lumi = w.var("lumi_value").getVal()
+    lumi_uncert = w.var("lumi_uncert").getVal()
+    trigger_uncert = w.var("trigger_uncert").getVal()
+    lepton_uncert = w.var("lepton_uncert").getVal()
+    
             
     histos = {}
     histos1d = {}
@@ -569,6 +592,6 @@ if __name__ == '__main__':
         histos1d[box,bkg].Write()
 
     print "\nINFO: Now writing data card\n"
-    writeDataCard(box,model,"%s/razor_combine_%s_%s.txt"%(outdir,box,model),initialBkgs,paramNames,histos1d,workspace,sigma)
+    writeDataCard(box,model,"%s/razor_combine_%s_%s.txt"%(outdir,box,model),initialBkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert)
     os.system("cat %s/razor_combine_%s_%s.txt \n"%(outdir,box,model)) 
     outFile.Close()
