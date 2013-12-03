@@ -29,7 +29,7 @@ if __name__ == '__main__':
         elif model in ["T1bbbb"]:
             effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 49, 400, 1625, 64, 0, 1600)
         elif model in ["T1tttb","T1ttbb","T1tbbb"]:
-            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 25, 400, 1650, 34, 0, 1625)
+            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 25, 400, 1650, 32, 0, 1600)
         elif model in ["T2tt"]:
             effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 27, 150, 825, 29, 0, 725)
         elif model=="T6bbHH":
