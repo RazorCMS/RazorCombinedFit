@@ -11,7 +11,7 @@ from array import *
 from getGChiPairs import *
 
     
-def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lumi,fitRegion,hypo,t,nToys):
+def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fitRegion,hypo,t,nToys):
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
@@ -79,7 +79,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lu
     #outputfile.write("combine -M Asymptotic -n ${NAME}_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,box,box))
 
     for ibox in boxes:
-        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_hybrid.config --xsec %f --lumi %f --fit-region %s\n"%(ibox,fitRegion,massPoint,label[ibox],ibox,xsecpoint,lumi,fitRegion))
+        outputfile.write("python /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --fit-region %s\n"%(ibox,fitRegion,massPoint,label[ibox],ibox,xsecpoint,fitRegion))
         outputfile.write("/afs/cern.ch/work/w/woodson/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(massPoint,fitRegion,ibox,ibox))
 
     if len(boxes)>1:
@@ -119,7 +119,6 @@ if __name__ == '__main__':
     mg_lower = 0
     mg_upper = 2025
     refXsec = 100.
-    lumi = 19.3
     fitRegion="FULL"
     nToys = -1
     for i in xrange(5,len(sys.argv)):
@@ -129,7 +128,6 @@ if __name__ == '__main__':
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--xsec")!=-1: refXsec = float(sys.argv[i+1])
-        if sys.argv[i].find("--lumi")!=-1: lumi = float(sys.argv[i+1])
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
         if sys.argv[i].find("--toys")!=-1: nToys = int(sys.argv[i+1])
     
@@ -181,7 +179,7 @@ if __name__ == '__main__':
                         missingFiles+=1
                         runJob = True
                     if not runJob: continue
-                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,lumi,fitRegion,hypo,t,nToys)
+                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fitRegion,hypo,t,nToys)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     time.sleep(3)
