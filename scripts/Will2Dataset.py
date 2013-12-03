@@ -35,8 +35,7 @@ class BJetBox(object):
         self.name = 'BJet'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >=4 and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0  and (tree.MR >= 550. or tree.RSQ >= 0.3)
+        return tree.nJet >=4  and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0  and tree.hadTriggerFilter # and (tree.MR >= 550. or tree.RSQ >= 0.3)
 
 class BJetBoxHS(object):
     """The BJet search box used in the analysis"""
@@ -62,7 +61,7 @@ class EleBox(object):
         self.name = 'Ele'
         self.dumper = dumper
     def __call__(self, tree):
-        return  tree.nJetNoLeptons >=4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
+        return  tree.nJetNoLeptons ==4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter #and (tree.MR > 450. or tree.RSQ > 0.2) #tree.nJetNoLeptons == 4 and
 
             
@@ -79,7 +78,7 @@ class SelectBox(object):
         
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
-    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+outputBox,'RECREATE')
+    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_BTAG_'+outputBox,'RECREATE')
     print 'writing dataset to ', output.GetName()
     for d in data:
         d.Write()
@@ -142,11 +141,12 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     metFilter = 0
     
     #entries = 10000
+    ent=1
     entries = tree.GetEntries()
     print entries
     for entry in xrange(entries):
         tree.GetEntry(entry)
-                
+
         ####First, apply a common selection
         #take only events in the MR and R2 region
       ##   if tree.MR > mRmax or tree.MR < mRmin or tree.RSQ < rsqMin or tree.RSQ > rsqMax:
@@ -186,6 +186,8 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
             pass
         
         nBtag = tree.nCSVM
+
+        #a.setRealValue('nJet',tree.nJet)
 
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
@@ -235,6 +237,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
     if write:
         writeTree2DataSet([rdata], outputFile, '%s.root' % filter.name, rMin, mRmin)
+       
     return rdata
 
 if __name__ == '__main__':
@@ -286,9 +289,9 @@ if __name__ == '__main__':
 ##    #     convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
    
     if 'MultiJet' in fName or 'START' in fName:
-## ##       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
-## ##        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
-       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
-#    if 'SingleElectron' in fName or 'START' in fName:
-#       convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
+##       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
+##        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
+        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
+ ##    if 'SingleElectron' in fName or 'START' in fName:
+##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
     

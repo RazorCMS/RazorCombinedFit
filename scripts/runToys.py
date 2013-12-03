@@ -17,7 +17,7 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     #fitResultsDir = "FitResults_NOTAU"
     fitResultsDir = "FitResults/"
     config = "config_summer2012/RazorMultiJet2013_3D_hybrid.config"
-
+  
     submitDir = "submit"
     
     # fitResultMap = {'WJets':'%s/razor_output_WJets_%s_%s.root'%(fitResultsDir,sideband,box),
@@ -29,12 +29,13 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     # 'HT-HTMHT-Run2012ABCD':'%s/razor_output_HT-HTMHT-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box)}
     fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets_%s_FULL.root'%(box)}
 
-    mRmin = 350.0
-    rMin  = 0.22360679775
- ##    mRmin = 400.0
-##     rMin  = 0.5
-   
-        
+   ##  mRmin = 350.0
+##     rMin  = 0.22360679775
+   ## mRmin = 350.0
+   ## rMin  = 0.387298334621
+    mRmin = 400.0
+    rMin  = 0.5
+    
     label = "MR"+str(mRmin)+"_R"+str(rMin)
     datasetMap = {'TTJets':'Datasets/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola-Summer12_DR53X-PU_S10_START53_V7C-v1-SUSY_MR%s_R%s_BTAG_%s.root'%(mRmin, rMin,box),
                   }
@@ -167,7 +168,7 @@ if __name__ == '__main__':
                     if "%s/frtoydata_%s_%i.txt"%(toyDir,box,i) in missingToys: doToys = True
                     if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingRoot: doConvertToRoot = True
 
-                if doFinalJob or doToys or doConvertToRoot:
+                if True :#doFinalJob or doToys or doConvertToRoot:
                     outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob)
                     totalJobs+=1
                     #time.sleep(3)
