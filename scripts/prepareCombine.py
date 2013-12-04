@@ -74,9 +74,9 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             txtfile.write("rate            %.3f		%.3f	\n"%
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			lnN	%.3f       1.00	1.00\n"%lumi_uncert)
-            txtfile.write("lepton			lnN	%.3f       1.00	1.00\n"%lepton_uncert)
-            txtfile.write("trigger			lnN	%.3f       1.00	1.00\n"%trigger_uncert)
+            txtfile.write("lumi			lnN	%.3f       1.00\n"%lumi_uncert)
+            txtfile.write("lepton			lnN	%.3f       1.00\n"%lepton_uncert)
+            txtfile.write("trigger			lnN	%.3f       1.00\n"%trigger_uncert)
             txtfile.write("Pdf			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./sigma))
@@ -87,7 +87,7 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             i = 0
             for paramName in paramNames: 
                 i += 1
-                txtfile.write("bgShape%i_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./sigma)))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./sigma)))
         elif box in ["Jet2b"]:
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
@@ -97,9 +97,9 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			lnN	%.3f       1.00	1.00\n"%lumi_uncert)
-            txtfile.write("lepton			lnN	%.3f       1.00	1.00\n"%lepton_uncert)
-            txtfile.write("trigger			lnN	%.3f       1.00	1.00\n"%trigger_uncert)
+            txtfile.write("lumi			lnN	%.3f       1.00 1.00\n"%lumi_uncert)
+            txtfile.write("lepton			lnN	%.3f       1.00 1.00\n"%lepton_uncert)
+            txtfile.write("trigger			lnN	%.3f       1.00 1.00\n"%trigger_uncert)
             txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -	-\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./sigma))
@@ -117,7 +117,7 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             i = 0
             for paramName in paramNames:
                 i += 1
-                txtfile.write("bgShape%i_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma)))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma)))
         else:
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
@@ -127,9 +127,9 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
                           (histos1d[box,model].Integral(),histos1d[box,bkgs[0]].Integral(),
                            histos1d[box,bkgs[1]].Integral(),histos1d[box,bkgs[2]].Integral()))
             txtfile.write("------------------------------------------------------------\n")
-            txtfile.write("lumi			lnN	%.3f       1.00	1.00\n"%lumi_uncert)
-            txtfile.write("lepton			lnN	%.3f       1.00	1.00\n"%lepton_uncert)
-            txtfile.write("trigger			lnN	%.3f       1.00	1.00\n"%trigger_uncert)
+            txtfile.write("lumi			lnN	%.3f       1.00	1.00 1.00\n"%lumi_uncert)
+            txtfile.write("lepton			lnN	%.3f       1.00	1.00 1.00\n"%lepton_uncert)
+            txtfile.write("trigger			lnN	%.3f       1.00	1.00 1.00\n"%trigger_uncert)
             txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./sigma))
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./sigma))
@@ -151,7 +151,7 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             i = 0
             for paramName in paramNames:
                 i += 1
-                txtfile.write("bgShape%i_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma),(1./sigma)))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma),(1./sigma)))
         txtfile.close()
 
 def find68ProbRange(hToy, probVal=0.6827):
