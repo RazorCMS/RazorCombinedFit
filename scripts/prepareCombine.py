@@ -84,9 +84,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
                           (bkgs[0],box,normErr))
-            i = 0
-            for paramName in paramNames: 
-                i += 1
+            for i in range(0,len(paramNames)):
+                paramName = paramNames[i]
                 txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./sigma)))
         elif box in ["Jet2b"]:
             txtfile.write("bin		bin1			bin1			bin1\n")
@@ -114,9 +113,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             normErr += rt.TMath.Sqrt(quadErr)
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
                           (bkgs[1],box,normErr))
-            i = 0
-            for paramName in paramNames:
-                i += 1
+            for i in range(0,len(paramNames)):
+                paramName = paramNames[i]
                 txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma)))
         else:
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
@@ -148,9 +146,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             normErr += rt.TMath.Sqrt(quadErr)
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
                           (bkgs[2],box,normErr))
-            i = 0
-            for paramName in paramNames:
-                i += 1
+            for i in range(0,len(paramNames)):
+                paramName = paramNames[i]
                 txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma),(1./sigma)))
         txtfile.close()
 
@@ -391,9 +388,10 @@ if __name__ == '__main__':
     bkgs = []
     bkgs.extend(initialBkgs)
     for bkg in initialBkgs:
-        for paramName in paramNames:
+        for p in range(0,len(paramNames)):
+            variationName = paramNames[p]
             for syst in ["Up","Down"]:
-                bkgs.append("%s_%s_%s%s"%(bkg,paramName,box,syst))
+                bkgs.append("%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst))
     for bkg in bkgs:
         histos[box,bkg] = rt.TH3D("%s_%s_3d"%(box,bkg),"%s_%s_3d"%(box,bkg),len(x)-1,x,len(y)-1,y,len(z)-1,z)
     histos[box,model] = rt.TH3D("%s_%s_3d"%(box,model),"%s_%s_3d"%(box,model),len(x)-1,x,len(y)-1,y,len(z)-1,z)
@@ -469,9 +467,9 @@ if __name__ == '__main__':
     sign["Down"] = -sigma
     for bkg in initialBkgs:
         for p in range(0,len(paramNames)):
-            print "\nINFO: Now varying parameter\n"
-            print "variation #", p
-            var_name = paramNames[p]
+            print "\nINFO: Now varying background shape parameters\n"
+            print "background shape variation #%02d"%p
+            variationName = paramNames[p]
             for syst in ["Up","Down"]:
                 for q in range(0,len(paramNames)):
                     paramName = paramNames[q]
@@ -484,21 +482,24 @@ if __name__ == '__main__':
                             if not passCut(x[i-1],y[j-1], box, fitRegion): continue
                             bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                             if (bkg.find("1b")!=-1 and z[k-1]==1) :
-                                histos[box,"%s_%s_%s%s"%(bkg,var_name,box,syst)].SetBinContent(i,j,k,bin_events)
+                                histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
                             elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
-                                histos[box,"%s_%s_%s%s"%(bkg,var_name,box,syst)].SetBinContent(i,j,k,bin_events)
+                                histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
                             elif (bkg.find("3b")!=-1 and z[k-1]==3) : 
-                                histos[box,"%s_%s_%s%s"%(bkg,var_name,box,syst)].SetBinContent(i,j,k,bin_events)
+                                histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
                 for q in range(0,len(paramNames)):
                     paramName = paramNames[q]
                     workspace.var(paramName).setVal(cen[q])
                     
     for bkg in initialBkgs:
-        for paramName in paramNames:
+        for p in range(0,len(paramNames)):
+            print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
+            print "background shape variation #%02d"%p
+            variationName = paramNames[p]
             for syst in ['Up','Down']:
-                if histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral() > 0:
-                    histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_%s_%s%s"%(bkg,paramName,box,syst)].Integral())
-                else: print "ERROR: histogram for %s_%s_%s%s has zero integral!"%(bkg,paramName,box,syst)
+                if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
+                    histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
+                else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btag =  sigFile.Get('wHisto_btagerr_pe')
@@ -563,6 +564,8 @@ if __name__ == '__main__':
     histos[box,model].Scale(lumi*refXsec)
     
     for paramName in ["Jes","Isr","Btag","Pdf"]:
+        print "\nINFO: Now renormalizing signal shape systematic histograms to nominal\n"
+        print "signal shape variation %s"%paramName
         for syst in ['Up','Down']:
             if histos[box,"%s_%s%s"%(model,paramName,syst)].Integral() > 0:
                 histos[box,"%s_%s%s"%(model,paramName,syst)].Scale( histos[box,model].Integral()/histos[box,"%s_%s%s"%(model,paramName,syst)].Integral())
