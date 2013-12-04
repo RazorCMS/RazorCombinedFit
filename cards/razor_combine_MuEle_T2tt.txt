@@ -11,9 +11,9 @@ process		MuEle_T2tt 	MuEle_TTj1b
 process        	0          		1
 rate            1.303		110.396	
 ------------------------------------------------------------
-lumi			lnN	0.026       1.00	1.00
-lepton			lnN	0.060       1.00	1.00
-trigger			lnN	0.050       1.00	1.00
+lumi			lnN	1.026       1.00
+lepton			lnN	1.060       1.00
+trigger			lnN	1.050       1.00
 Pdf			shape	2.00       -
 Jes			shape	2.00       -
 Btag			shape	2.00       -
