@@ -1,0 +1,34 @@
+imax 1 number of channels
+jmax 3 number of backgrounds
+kmax 21 number of nuisnace parameters
+------------------------------------------------------------
+observation	5485
+------------------------------------------------------------
+shapes * * razor_combine_MuJet_T2tt.root $PROCESS $PROCESS_$SYSTEMATIC
+------------------------------------------------------------
+bin		bin1			bin1			bin1			bin1
+process		MuJet_T2tt 	MuJet_TTj1b	MuJet_TTj2b	MuJet_TTj3b
+process        	0          		1			2			3
+rate            58.577		4293.010		1272.109		48.141
+------------------------------------------------------------
+lumi			lnN	0.026       1.00	1.00
+lepton			lnN	0.030       1.00	1.00
+trigger			lnN	0.050       1.00	1.00
+Pdf			shape	2.00       -	-	-
+Jes			shape	2.00       -	-	-
+Btag			shape	2.00       -	-	-
+Isr			shape	2.00       -	-	-
+bgNorm_TTj1b_MuJet  	lnN   	1.00       1.015	1.00	1.00
+bgNorm_TTj2b_MuJet  	lnN   	1.00       1.00	1.028	1.00
+bgNorm_TTj3b_MuJet  	lnN   	1.00       1.00	1.00	1.146
+bgShape1_MR0_TTj1b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape2_MR0_TTj2b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape3_Ntot_TTj1b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape4_Ntot_TTj2b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape5_R0_TTj1b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape6_R0_TTj2b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape7_b_TTj1b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape8_b_TTj2b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape9_f3_TTj2b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape10_n_TTj1b_MuJet	shape	-	   2.00	2.00	2.00
+bgShape11_n_TTj2b_MuJet	shape	-	   2.00	2.00	2.00
