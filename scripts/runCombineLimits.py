@@ -67,7 +67,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fi
     #outputfile.write("mkdir -p lib\n")
     #outputfile.write("source setup.sh\n")
     #outputfile.write("make clean; make -j 4\n")
-    s
+    
     outputfile.write("export NAME=\"%s\"\n"%model)
     boxes =  box.split("_")
     
