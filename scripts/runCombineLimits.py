@@ -19,7 +19,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fi
     outputfile = open(outputname,'w')
     
     label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
-             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
+             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
              "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
     
     tagHypo = ""
