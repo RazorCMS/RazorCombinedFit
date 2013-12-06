@@ -32,7 +32,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fi
     combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/%s/"%(user[0],user,model)
     
     outputfile.write('#!/usr/bin/env bash -x\n')
-    outputfile.write('mkdir -p %s'%combineDir)
+    outputfile.write('mkdir -p %s\n'%combineDir)
     outputfile.write('echo $SHELL\n')
     outputfile.write('pwd\n')
     outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit \n'%(user[0],user))
