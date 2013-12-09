@@ -8,33 +8,33 @@ from array import *
 from pdfShit import *
 import sys
 
-def getCutString(box, fitRegion):
+def getCutString(box, signalRegion):
     if box in ["Jet2b","MultiJet"]:
-        if fitRegion=="FULL":
+        if signalRegion=="FULL":
             return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))"
-        else:
+        elif signalRegion=="HighMR":
             return "(MR>=550.&&Rsq>=0.3)"
     else:
-        if fitRegion=="FULL":
+        if signalRegion=="FULL":
             return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))"
-        else:
+        elif signalRegion=="HighMR":
             return "(MR>=450.&&Rsq>=0.2)"
                 
-def passCut(MRVal, RsqVal, box, fitRegion):
+def passCut(MRVal, RsqVal, box, signalRegion):
     if box in ["Jet2b","MultiJet"]:
-        if fitRegion=="FULL":
+        if signalRegion=="FULL":
             if MRVal >= 400. and RsqVal >= 0.25 and (MRVal >= 450. or RsqVal >= 0.3): return True
-        else:
+        elif signalRegion=="HighMR":
             if MRVal >= 550. and RsqVal >= 0.3: return True
     else:
-        if fitRegion=="FULL":
+        if signalRegion=="FULL":
             if MRVal >= 300. and RsqVal >= 0.15 and (MRVal >= 350. or RsqVal >= 0.2): return True
-        else:
+        elif signalRegion=="HighMR":
             if MRVal >= 450. and RsqVal >= 0.2: return True
 
     return False
         
-def rebin3d(oldhisto, x, y, z, box, fitRegion):
+def rebin3d(oldhisto, x, y, z, box, signalRegion):
     newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -42,7 +42,7 @@ def rebin3d(oldhisto, x, y, z, box, fitRegion):
                 xold = oldhisto.GetXaxis().GetBinCenter(i)
                 yold = oldhisto.GetYaxis().GetBinCenter(j)
                 zold = oldhisto.GetZaxis().GetBinCenter(k)
-                if not passCut(xold, yold, box, fitRegion): continue
+                if not passCut(xold, yold, box, signalRegion): continue
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
     return newhisto
@@ -317,8 +317,8 @@ if __name__ == '__main__':
                   help="Number of sigmas to fluctuate systematic uncertainties")
     parser.add_option('-m','--model',dest="model", default="T2tt",type="string",
                   help="SMS model string")
-    parser.add_option('-f','--fit-region',dest="fitRegion", default="FULL",type="string",
-                  help="fit region = FULL, Sideband")
+    parser.add_option('-r','--signal-region',dest="signalRegion", default="FULL",type="string",
+                  help="signal region = FULL, HighMR")
 
     (options,args) = parser.parse_args()
     
@@ -345,7 +345,7 @@ if __name__ == '__main__':
     refXsec = options.refXsec
     outdir = options.outdir
     sigma = options.sigma
-    fitRegion = options.fitRegion
+    signalRegion = options.signalRegion
     
     other_parameters = cfg.getVariables(box, "other_parameters")
     w = rt.RooWorkspace()
@@ -443,7 +443,7 @@ if __name__ == '__main__':
     var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(workspace.set('variables'))]
         
     data_obs = data.reduce(MRRsqnBtag)
-    data_obs = data_obs.reduce(getCutString(box,fitRegion))
+    data_obs = data_obs.reduce(getCutString(box,signalRegion))
     data_obs.SetName("data_obs")
     
     data_obs.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
@@ -453,7 +453,7 @@ if __name__ == '__main__':
         for i in xrange(1,len(x)):
             for j in xrange(1,len(y)):
                 for k in xrange(1, len(z)):
-                    if not passCut(x[i-1],y[j-1], box, fitRegion): continue
+                    if not passCut(x[i-1],y[j-1], box, signalRegion): continue
                     bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                     if (bkg.find("1b")!=-1 and z[k-1]==1) :
                         histos[box,bkg].SetBinContent(i,j,k,bin_events)
@@ -479,7 +479,7 @@ if __name__ == '__main__':
                 for i in xrange(1,len(x)):
                     for j in xrange(1,len(y)):
                         for k in xrange(1,len(z)):
-                            if not passCut(x[i-1],y[j-1], box, fitRegion): continue
+                            if not passCut(x[i-1],y[j-1], box, signalRegion): continue
                             bin_events = getBinEvents(i,j,k,x,y,z,workspace)
                             if (bkg.find("1b")!=-1 and z[k-1]==1) :
                                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
@@ -518,8 +518,8 @@ if __name__ == '__main__':
     isrAbs.Multiply(wHisto)
     isrUp.Add(isrAbs,sign["Up"])
     isrDown.Add(isrAbs,sign["Down"])
-    histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, box, fitRegion)
-    histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, box, fitRegion)
+    histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, box, signalRegion)
+    histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, box, signalRegion)
     
     btagUp = wHisto.Clone("%s_%s_BtagUp_3d"%(box,model))
     btagUp.SetTitle("%s_%s_BtagUp_3d"%(box,model))
@@ -529,8 +529,8 @@ if __name__ == '__main__':
     btagAbs.Multiply(wHisto)
     btagUp.Add(btagAbs,sign["Up"])
     btagDown.Add(btagAbs,sign["Down"])
-    histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, fitRegion)
-    histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, fitRegion)
+    histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, signalRegion)
+    histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, signalRegion)
 
     jesUp = wHisto.Clone("%s_%s_JesUp_3d"%(box,model))
     jesUp.SetTitle("%s_%s_JesUp_3d"%(box,model))
@@ -540,8 +540,8 @@ if __name__ == '__main__':
     jesAbs.Multiply(wHisto)
     jesUp.Add(jesAbs,sign["Up"])
     jesDown.Add(jesAbs,sign["Down"])
-    histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, fitRegion)
-    histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, fitRegion)
+    histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, signalRegion)
+    histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, signalRegion)
     
     pdfUp = wHisto.Clone("%s_%s_PdfUp_3d"%(box,model))
     pdfUp.SetTitle("%s_%s_PdfUp_3d"%(box,model))
@@ -551,15 +551,15 @@ if __name__ == '__main__':
     pdfAbs.Multiply(wHisto)
     pdfUp.Add(pdfAbs,sign["Up"])
     pdfDown.Add(pdfAbs,sign["Down"])
-    histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, box, fitRegion)
-    histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, fitRegion)
+    histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, box, signalRegion)
+    histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, signalRegion)
     
     #set the per box eff value
     sigNorm = wHisto.Integral()
     sigEvents = sigNorm*lumi*refXsec
     print "\nINFO: now multiplying:  efficiency x lumi x refXsec = %f x %f x %f = %f"%(sigNorm,lumi,refXsec,sigEvents)
     
-    histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, box, fitRegion)
+    histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, box, signalRegion)
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
     histos[box,model].Scale(lumi*refXsec)
     
