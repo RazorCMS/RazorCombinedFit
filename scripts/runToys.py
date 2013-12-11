@@ -27,17 +27,13 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     # 'MuHad-Run2012ABCD':'%s/razor_output_MuHad-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box),
     # 'ElectronHad-Run2012ABCD':'%s/razor_output_ElectronHad-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box),
     # 'HT-HTMHT-Run2012ABCD':'%s/razor_output_HT-HTMHT-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box)}
-    fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets_%s_FULL.root'%(box)}
+    fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets3D_%s_FULL.root'%(box)}
 
-   ##  mRmin = 350.0
-##     rMin  = 0.22360679775
-   ## mRmin = 350.0
-   ## rMin  = 0.387298334621
-    mRmin = 400.0
-    rMin  = 0.5
+    mRmin = 350.0
+    rMin  = 0.282842712475
     
     label = "MR"+str(mRmin)+"_R"+str(rMin)
-    datasetMap = {'TTJets':'Datasets/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola-Summer12_DR53X-PU_S10_START53_V7C-v1-SUSY_MR%s_R%s_BTAG_%s.root'%(mRmin, rMin,box),
+    datasetMap = {'TTJets':'Datasets/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola-Summer12_DR53X-PU_S10_START53_V7C-v1-SUSY_MR%s_R%s_gt4jets_BTAG_%s.root'%(mRmin, rMin,box),
                   }
     print datasetMap
     resultDir = "/afs/cern.ch/work/l/lucieg/private/toys10k_%s_%s"%(datasetName,fitmode)

@@ -15,9 +15,9 @@ lumi = 1.0
 #sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
 from CalcBDT import CalcBDT
 
-MR_CUT_HAD  = 400.
+MR_CUT_HAD  = 500.
 MR_CUT_LEP  = 350.
-RSQ_CUT     = 0.25
+RSQ_CUT     = 0.08
 BDT_CUT     = -0.2
 
 class BJetBoxLS(object):
@@ -26,7 +26,7 @@ class BJetBoxLS(object):
         self.name = 'BJetLS'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >=2 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
+        return tree.nJet >=2  and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < BDT_CUT 
 
 class BJetBox(object):
@@ -35,15 +35,16 @@ class BJetBox(object):
         self.name = 'BJet'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >=4  and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0  and tree.hadTriggerFilter # and (tree.MR >= 550. or tree.RSQ >= 0.3)
+         return tree.nJet >=4  and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and tree.nMuonTight < 1 and tree.nElectronTight < 1 and not tree.isolatedTrack10Filter and tree.nMuonLoose < 1 and tree.nElectronLoose < 1 and tree.hadTriggerFilter  
 
+ 
 class BJetBoxHS(object):
     """The BJet search box used in the analysis"""
     def __init__(self, dumper):
         self.name = 'BJetHS'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >= 2 and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
+        return tree.nJet >= 2  and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= BDT_CUT 
 
 class MuBox(object):
@@ -52,7 +53,7 @@ class MuBox(object):
         self.name = 'Mu'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJetNoLeptons >=2 and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
+        return tree.nJetNoLeptons ==4 and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter 
 
 class EleBox(object):
@@ -61,9 +62,9 @@ class EleBox(object):
         self.name = 'Ele'
         self.dumper = dumper
     def __call__(self, tree):
-        return  tree.nJetNoLeptons ==4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter #and (tree.MR > 450. or tree.RSQ > 0.2) #tree.nJetNoLeptons == 4 and
+            return tree.nJetNoLeptons >4  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
 
+        
             
 class SelectBox(object):
     """Tells you which box this was"""
@@ -102,21 +103,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
     workspace.factory('W[0,0,+INF]')
-## #
-##     workspace.factory('Run[0,0,+INF]')
-##     workspace.factory('Lumi[0,0,+INF]')
-##     workspace.factory('Event[0,0,+INF]')
-##     #
-##     workspace.factory('nLepton[0,0,15.0]')
-##     workspace.factory('nElectron[0,0,15.0]')
-##     workspace.factory('nMuon[0,0,15.0]')
-##     workspace.factory('nTau[0,0,15.0]')
-##     workspace.factory('nVertex[1,0.,50.]')
-##     #workspace.factory('nJet[0,0,15.0]')
-##     workspace.factory('BDT[0,-INF,+INF]')
-##     workspace.factory('deltaPhiMET[0,-INF,+INF]')
-##     workspace.factory('genInfo[0,-INF,+INF]')
-    
+   
     if filter.dumper is not None:
         for h in filter.dumper.sel.headers_for_MVA():
             workspace.factory('%s[0,-INF,+INF]' % h)
@@ -146,12 +133,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     print entries
     for entry in xrange(entries):
         tree.GetEntry(entry)
-
-        ####First, apply a common selection
-        #take only events in the MR and R2 region
-      ##   if tree.MR > mRmax or tree.MR < mRmin or tree.RSQ < rsqMin or tree.RSQ > rsqMax:
-##             continue
-        
+      
         e = (tree.run,tree.lumi,tree.event)
         #filter out duplicate events in case there are any
         if e in events:
@@ -159,16 +141,16 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
             continue
         events.add(e)        
         
-       ##  if not tree.metFilter:
-##             metFilter += 1
-##             print 'met'
-##             continue
+        if not tree.metFilter:
+            metFilter += 1
+            print 'met'
+            continue
         
         dphi = deltaMet(tree)
-       ##  if dphi < 1.0:
-##             noiseFilter += 1
-##             print 'noise'
-##             continue
+        if dphi < 1.0:
+            noiseFilter += 1
+            print 'noise'
+            continue
         
         #apply the box based filter class
         if not filter(tree):
@@ -192,10 +174,6 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
         
-        ## a.setRealValue('Run',tree.run)
-##         a.setRealValue('Lumi',tree.lumi)
-##         a.setRealValue('Event',tree.event)
-        
         a.setRealValue('MR',tree.MR)
         a.setRealValue('Rsq',tree.RSQ)
         btagcutoff = 3
@@ -206,17 +184,8 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
 
         
         a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
-    ##     a.setRealValue('nElectron',tree.nElectronLoose)
-##         a.setRealValue('nMuon',tree.nMuonLoose)
-##         a.setRealValue('nTau',tree.nTauLoose)
-##         #a.setRealValue('nJet',tree.nJet)
-##         a.setRealValue('nVertex',tree.nVertex)        
         a.setRealValue('W',1.0)
-##         a.setRealValue('BDT',bdt)
-##         a.setRealValue('deltaPhiMET',dphi)
-        
- ##       a.setRealValue('genInfo',tree.genInfo)
-        
+
         if filter.dumper is not None:
             for h in filter.dumper.sel.headers_for_MVA():
                 a.setRealValue(h,getattr(filter.dumper.sel,h)())
@@ -285,13 +254,13 @@ if __name__ == '__main__':
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
 
-##    # if 'SingleMu' in fName or 'START' in fName:
-##    #     convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
+ ##    if 'SingleMu' in fName or 'START' in fName:
+##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
    
-    if 'MultiJet' in fName or 'START' in fName:
+##    if 'MultiJet' in fName or 'START' in fName:
 ##       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
 ##        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
-        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
- ##    if 'SingleElectron' in fName or 'START' in fName:
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
+##        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
+    if 'SingleElectron' in fName or 'START' in fName:
+        convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
     

@@ -13,7 +13,7 @@ rootfile = rt.TFile(filename)
 #outfile = open(sys.argv[2], "w")
 config = ConfigParser.ConfigParser()
 
-BoxName = ["MuMu", "MuEle", "Mu", "EleEle", "Ele", "Had", 'BJET', 'EleTau', "RazorMultiBoxSim_dir"]
+BoxName = ["MuMu", "MuEle", "Mu", "EleEle", "Ele", "Had", 'BJet', 'EleTau', "RazorMultiBoxSim_dir"]
 for Box in BoxName:
 
     boxDir = rootfile.Get(Box)

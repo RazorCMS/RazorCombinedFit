@@ -66,7 +66,7 @@ def convertTree2Dataset(tree, outputFile, outputBox, config, box, min, max, run,
     elif box in ['BJetHS','BJetLS']:
         boxCut = "nJet == 6 && hadBoxFilter && hadTriggerFilter && nCSVM > 0 && MR >= 350. && RSQ >= 0.05  && nMuonTight == 0 && nElectronTight == 0 && !isolatedTrack10Filter && nMuonLoose == 0 && nElectronLoose == 0 "#&& self.dumper.bdt() >= -0.2"
         
-    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f && %s' % (mRmin,mRmax,rsqMin,rsqMax,boxCut),'entrylist')
+    tree.Draw('>>elist','MR >= %f && MR <= %f && RSQ >= %f && RSQ <= %f' % (mRmin,mRmax,rsqMin,rsqMax),'entrylist')
     elist = rt.gDirectory.Get('elist')
     
     entry = -1;

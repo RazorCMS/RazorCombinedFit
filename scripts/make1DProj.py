@@ -691,44 +691,46 @@ if __name__ == '__main__':
     # TTj1b histograms
     hMRTTj1bList = [fitFile.Get("%s/histoToyTTj1b_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQTTj1bList = [fitFile.Get("%s/histoToyTTj1b_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    if fit3D:
+    if True :#fit3D:
         hBTAGTTj1bList = [fitFile.Get("%s/histoToyTTj1b_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-
+    
     # TTj2b histograms
     hMRTTj2bList = [fitFile.Get("%s/histoToyTTj2b_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQTTj2bList = [fitFile.Get("%s/histoToyTTj2b_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    if fit3D:
+    if True :#fit3D:
         hBTAGTTj2bList = [fitFile.Get("%s/histoToyTTj2b_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
 
     # Vpj histograms
     hMRVpjList = [fitFile.Get("%s/histoToyVpj_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQVpjList = [fitFile.Get("%s/histoToyVpj_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    if fit3D:
+    if True :#fit3D:
         hBTAGVpjList = [fitFile.Get("%s/histoToyVpj_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
 
     # Total Bkg histograms
     hMRTOTList = [fitFile.Get("%s/histoToy_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQTOTList = [fitFile.Get("%s/histoToy_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    if fit3D:
+    if True:#fit3D:
         hBTAGTOTList = [fitFile.Get("%s/histoToy_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-
+    else :
+        hBTAGTOTList = []
     # Data histograms    
     hMRDataList = [fitFile.Get("%s/histoData_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQDataList = [fitFile.Get("%s/histoData_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    if fit3D:
+    if True:#fit3D:
         hBTAGDataList = [fitFile.Get("%s/histoData_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
         
     # Signal histograms    
     hMRSignalList = [fitFile.Get("%s/histoToySignal_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQSignalList = [fitFile.Get("%s/histoToySignal_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    if fit3D:
+    if True:#fit3D:
         hBTAGSignalList = [fitFile.Get("%s/histoToySignal_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     
     for hMRTOT, hMRTTj1b, hMRTTj2b, hMRVpj, hMRData, hMRSignal, hRSQTOT, hRSQTTj1b, hRSQTTj2b, hRSQVpj, hRSQData, hRSQSignal, hBTAGTOT, hBTAGTTj1b, hBTAGTTj2b, hBTAGVpj, hBTAGData, hBTAGSignal, btagOpt, frLabel in zip(hMRTOTList, hMRTTj1bList, hMRTTj2bList, hMRVpjList, hMRDataList,  hMRSignalList, hRSQTOTList, hRSQTTj1bList, hRSQTTj2bList, hRSQVpjList, hRSQDataList, hRSQSignalList,  hBTAGTOTList, hBTAGTTj1bList, hBTAGTTj2bList, hBTAGVpjList, hBTAGDataList, hBTAGSignalList, btagToDo, frLabels):
 
         errMR = GetErrorsX(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
         errRSQ = GetErrorsY(len(MRbins),len(Rsqbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
-        errBTAG = GetErrorsZ(len(MRbins),len(Rsqbins),len(nBtagbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
+        if fit3D :
+            errBTAG = GetErrorsZ(len(MRbins),len(Rsqbins),len(nBtagbins),myTree,printPlots,outFolder,fit3D,btagOpt, frLabel)
         hMRTOTcopy = hMRTOT.Clone(hMRTOT.GetName()+"COPY")
         for i in range(1,len(errMR)+1):
             print hMRTOT.GetBinContent(i),errMR[i-1],hMRTOT.GetBinError(i)
@@ -741,7 +743,7 @@ if __name__ == '__main__':
             hRSQTOT.SetBinError(i,0.)
 
 
-        if btagOpt==0:
+        if btagOpt==0 and fit3D:
             hBTAGTOTcopy = hBTAGTOT.Clone(hBTAGTOT.GetName()+"COPY")
             for i in range(1,len(errBTAG)+1):
                 hBTAGTOTcopy.SetBinError(i,max(errBTAG[i-1],hBTAGTOT.GetBinError(i)))

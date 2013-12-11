@@ -16,6 +16,7 @@ def getBinning(boxName, varName, btag):
         elif varName == "Rsq" :
             if btag == "NoBtag": return [0.05,0.20,0.25,0.30,0.35,0.40,0.45,0.50]
             elif btag == "Btag": return [0.05,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
+
         
     if varName == "nBtag" :
         if btag == "NoBtag":        return [0,1]
@@ -314,9 +315,9 @@ class RazorBox(Box.Box):
         
     def plot(self, inputFile, store, box, data=None, fitmodel="none", frName="none"):
               
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=['FULL'],data=data,fitmodel=fitmodel)]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=['FULL'],data=data,fitmodel=fitmodel)]
-        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=['FULL'],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=[self.fitregion],data=data,fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=[self.fitregion],data=data,fitmodel=fitmodel)]
+        if self.fitMode == "3D": [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=[self.fitregion],data=data,fitmodel=fitmodel)]
      
     def plot1D(self, inputFile, varname, nbin=200, ranges=None, data=None, fitmodel="none", frName="none"):
 
@@ -752,8 +753,7 @@ class RazorBox(Box.Box):
 
         # project the data on the histograms
         data.fillHistogram(histoData,rt.RooArgList(self.workspace.var(varname)))
-        print varname
-        self.workspace.var(varname).Print()
+        data.Print('V')
         
         if N_Signal>1: toyDataSignal.fillHistogram(histoToySignal,rt.RooArgList(self.workspace.var(varname)))
         if N_Vpj>1: toyDataVpj.fillHistogram(histoToyVpj,rt.RooArgList(self.workspace.var(varname)))

@@ -236,9 +236,10 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 fit_range = boxes[box].fitregion
                 print 'Using the fit range: %s' % fit_range
                 
-               ##  boxes[box].fixPars('Ntot_TTj1b',True)
-##                 boxes[box].fixPars('Ntot_TTj2b',True)
-                boxes[box].fixPars('n_TTj2b',True)
+                #boxes[box].fixPars('Ntot_TTj1b',True)
+                #boxes[box].fixPars('Ntot_TTj2b',True)
+                if boxes[box].fitMode == '2D':
+                    boxes[box].fixPars('n_TTj2b',True)
                 
                 fr = boxes[box].fit(fileName,boxes[box].cut, rt.RooFit.PrintEvalErrors(-1),rt.RooFit.Extended(True), rt.RooFit.Range(fit_range))
 
@@ -248,7 +249,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 getattr(boxes[box].workspace,'import')(fr,'independentFR')
                 #store the name of the PDF used
                 getattr(boxes[box].workspace,'import')(rt.TObjString(boxes[box].fitmodel),'independentFRPDF')
-                #sys.exit()
+               
                 #make any plots required
                 boxes[box].plot(fileName, self, box, data=boxes[box].workspace.data('RMRTree'), fitmodel=boxes[box].fitmodel, frName='independentFR')
             else:

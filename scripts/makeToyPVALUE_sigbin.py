@@ -347,6 +347,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             else:
                 varName = "b%i_%i" %(i,j)
                 sumName = "b%i_%i+" %(i,j)
+                varNames = [varName]
             histoName = "Histo_%s" %varName
             # make an histogram of the expected yield
             myTree.Draw(sumName[:-1])
@@ -393,7 +394,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             c.SetLeftMargin(0.15)
             orighisto.Draw()
             if myhisto.GetEntries() != 0:
-                if switchToKDE and fit3D:
+                if switchToKDE :#and fit3D:
                     nExp = [rt.RooRealVar(iVar,iVar,0,maxX) for iVar in varNames]
                     nExpSet = rt.RooArgSet("nExpSet")
                     nExpList = rt.RooArgList("nExpList")
