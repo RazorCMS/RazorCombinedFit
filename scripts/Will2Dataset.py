@@ -26,7 +26,7 @@ class BJetBoxLS(object):
         self.name = 'BJetLS'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >=2  and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
+        return  tree.hadBoxFilter and tree.nJet >=6  and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < BDT_CUT 
 
 class BJetBox(object):
@@ -35,7 +35,7 @@ class BJetBox(object):
         self.name = 'BJet'
         self.dumper = dumper
     def __call__(self, tree):
-         return tree.nJet >=4  and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and tree.nMuonTight < 1 and tree.nElectronTight < 1 and not tree.isolatedTrack10Filter and tree.nMuonLoose < 1 and tree.nElectronLoose < 1 and tree.hadTriggerFilter  
+         return  tree.hadBoxFilter and tree.nJet >=6  and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and tree.nMuonTight < 1 and tree.nElectronTight < 1 and not tree.isolatedTrack10Filter and tree.nMuonLoose < 1 and tree.nElectronLoose < 1 and tree.hadTriggerFilter  
 
  
 class BJetBoxHS(object):
@@ -44,7 +44,7 @@ class BJetBoxHS(object):
         self.name = 'BJetHS'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJet >= 2  and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
+        return  tree.hadBoxFilter and  tree.nJet >= 6  and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_HAD and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= BDT_CUT 
 
 class MuBox(object):
@@ -53,7 +53,7 @@ class MuBox(object):
         self.name = 'Mu'
         self.dumper = dumper
     def __call__(self, tree):
-        return tree.nJetNoLeptons ==4 and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
+        return tree.muBoxFilter and tree.nJetNoLeptons ==4 and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter 
 
 class EleBox(object):
@@ -62,7 +62,7 @@ class EleBox(object):
         self.name = 'Ele'
         self.dumper = dumper
     def __call__(self, tree):
-            return tree.nJetNoLeptons >4  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
+            return tree.eleBoxFilter and tree.nJetNoLeptons >3  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
 
         
             
