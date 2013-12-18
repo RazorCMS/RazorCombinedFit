@@ -77,10 +77,10 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             txtfile.write("lumi			lnN	%.3f       1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00\n"%lepton_uncert)
             txtfile.write("trigger			lnN	%.3f       1.00\n"%trigger_uncert)
-            txtfile.write("Pdf			shape	%.2f       -\n"%(1./sigma))
-            txtfile.write("Jes			shape	%.2f       -\n"%(1./sigma))
-            txtfile.write("Btag			shape	%.2f       -\n"%(1./sigma))
-            txtfile.write("Isr			shape	%.2f       -\n"%(1./sigma))
+            txtfile.write("Pdf			shape	%.2f       -\n"%(1./1.))
+            txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
+            txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
+            txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
             normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
                           (bkgs[0],box,normErr))
@@ -99,10 +99,10 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             txtfile.write("lumi			lnN	%.3f       1.00 1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00 1.00\n"%lepton_uncert)
             txtfile.write("trigger			lnN	%.3f       1.00 1.00\n"%trigger_uncert)
-            txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./sigma))
-            txtfile.write("Jes			shape	%.2f       -	-\n"%(1./sigma))
-            txtfile.write("Btag			shape	%.2f       -	-\n"%(1./sigma))
-            txtfile.write("Isr			shape	%.2f       -	-\n"%(1./sigma))
+            txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./1.))
+            txtfile.write("Jes			shape	%.2f       -	-\n"%(1./1.))
+            txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
+            txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
             normErr = 1.
             normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
@@ -128,10 +128,10 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
             txtfile.write("lumi			lnN	%.3f       1.00	1.00 1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00	1.00 1.00\n"%lepton_uncert)
             txtfile.write("trigger			lnN	%.3f       1.00	1.00 1.00\n"%trigger_uncert)
-            txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./sigma))
-            txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./sigma))
-            txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./sigma))
-            txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./sigma))
+            txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./1.))
+            txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./1.))
+            txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
+            txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
             normErr = 1.
             normErr += workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal()
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
@@ -197,29 +197,47 @@ def getBinEvents(i, j, k, x, y, z, workspace):
     NTOT = workspace.var("Ntot_%s"%bkg).getVal()
     F3 = workspace.var("f3_%s"%bkg).getVal()
 
+    fr = workspace.obj("independentFR")
+    parList = fr.floatParsFinal()
+    
     xmin  = x[0]
     xmax  = x[-1]
     ymin  = y[0]
     ymax  = y[-1]
-    if Y0 > ymin-0.05: 
+    if Y0 > ymin: 
         print "ERROR: R0 has left range"
-        Y0 = ymin-0.05
-    if X0 > xmin-100.: 
+        for p in RootTools.RootIterator.RootIterator(parList):
+            if p.GetName()=="R0_%s"%bkg: Y0 = p.getVal()
+        print "       Setting to nominal R0 = %f"%Y0
+    if X0 > xmin: 
         print "ERROR: MR0 has left range"
-        X0 = xmin-100.
+        for p in RootTools.RootIterator.RootIterator(parList):
+            if p.GetName()=="MR0_%s"%bkg: X0 = p.getVal()
+        print "       Setting to nominal MR0 = %f"%X0
     if B < 0:
         print "ERROR: B has left range"
-        B = 0.01
+        for p in RootTools.RootIterator.RootIterator(parList):
+            if p.GetName()=="b_%s"%bkg: B = p.getVal()
+            if p.GetName()=="n_%s"%bkg: N = p.getVal()
+        print "       Setting to nominal B = %f"%B
+        print "       Setting to nominal N = %f"%N
     if N < 0:
         print "ERROR: N has left range"
-        N = 0.01
+        for p in RootTools.RootIterator.RootIterator(parList):
+            if p.GetName()=="b_%s"%bkg: B = p.getVal()
+            if p.GetName()=="n_%s"%bkg: N = p.getVal()
+        print "       Setting to nominal B = %f"%B
+        print "       Setting to nominal N = %f"%N
         
     total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
 
-    while total_integral==0 and N*B>500:
-        print "ERROR: N, B = (%.2f,%.2f) combination too big!"%(N,B)
-        N = N-1.
-        B = B-1.
+    if total_integral==0 or N*B>500:
+        print "ERROR: total integral is 0 or N, B = (%.2f,%.2f) combination too big!"%(N,B)
+        for p in RootTools.RootIterator.RootIterator(parList):
+            if p.GetName()=="b_%s"%bkg: B = p.getVal()
+            if p.GetName()=="n_%s"%bkg: N = p.getVal()
+        print "       Setting to nominal B = %f"%B
+        print "       Setting to nominal N = %f"%N
         total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
         
 
@@ -313,7 +331,9 @@ if __name__ == '__main__':
                   help="An input file to read fit results and workspaces from")
     parser.add_option('-x','--xsec',dest="refXsec", default=100,type="float",
                   help="Reference signal cross section in fb to define mu (signal strength)")
-    parser.add_option('-s','--sigma',dest="sigma", default=0.5,type="float",
+    parser.add_option('-f','--xsec-file',dest="refXsecFile", default=None,metavar='FILE',
+                  help="Reference signal cross section file")
+    parser.add_option('-s','--sigma',dest="sigma", default=1.0,type="float",
                   help="Number of sigmas to fluctuate systematic uncertainties")
     parser.add_option('-m','--model',dest="model", default="T2tt",type="string",
                   help="SMS model string")
@@ -342,7 +362,17 @@ if __name__ == '__main__':
     model = options.model
     infile = rt.TFile.Open(options.input,"READ")
     sigFile = rt.TFile.Open(args[0],"READ")
+    mGluino = float(args[0].split("_")[-6])
+    mLSP = float(args[0].split("_")[-4])
     refXsec = options.refXsec
+    refXsecFile = options.refXsecFile
+    if refXsecFile is not None:
+        print "INFO: Input ref xsec file!"
+        gluinoFile = rt.TFile.Open(refXsecFile,"READ")
+        gluinoHistName = refXsecFile.split("/")[-1].split(".")[0]
+        gluinoHist = gluinoFile.Get(gluinoHistName)
+        refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(mGluino))
+        print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb"%(gluinoHistName, mGluino, refXsec)
     outdir = options.outdir
     sigma = options.sigma
     signalRegion = options.signalRegion
@@ -502,44 +532,25 @@ if __name__ == '__main__':
                 else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
-    btag =  sigFile.Get('wHisto_btagerr_pe')
-    jes =  sigFile.Get('wHisto_JESerr_pe')
+    btagUp =  sigFile.Get('wHisto_btagerr_up')
+    btagDown =  sigFile.Get('wHisto_btagerr_down')
+    
+    jesUp =  sigFile.Get('wHisto_JESerr_up')
+    jesDown =  sigFile.Get('wHisto_JESerr_down')
+    isrUp =  sigFile.Get('wHisto_ISRerr_up')
+    isrDown =  sigFile.Get('wHisto_ISRerr_down')
+    
     pdf =  sigFile.Get('wHisto_pdferr_pe')
-    isr =  sigFile.Get('wHisto_ISRerr_pe')
 
     # adding signal shape systematics
     print "\nINFO: Now obtaining signal shape systematics\n"
     
-    isrUp = wHisto.Clone("%s_%s_IsrUp_3d"%(box,model))
-    isrUp.SetTitle("%s_%s_IsrUp_3d"%(box,model))
-    isrDown = wHisto.Clone("%s_%s_IsrDown_3d"%(box,model))
-    isrDown.SetTitle("%s_%s_IsrDown_3d"%(box,model))
-    isrAbs = isr.Clone("IsrAbs_3d")
-    isrAbs.Multiply(wHisto)
-    isrUp.Add(isrAbs,sign["Up"])
-    isrDown.Add(isrAbs,sign["Down"])
     histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, box, signalRegion)
     histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, box, signalRegion)
     
-    btagUp = wHisto.Clone("%s_%s_BtagUp_3d"%(box,model))
-    btagUp.SetTitle("%s_%s_BtagUp_3d"%(box,model))
-    btagDown = wHisto.Clone("%s_%s_BtagDown_3d"%(box,model))
-    btagDown.SetTitle("%s_%s_BtagDown_3d"%(box,model))
-    btagAbs = btag.Clone("BtagAbs_3d")
-    btagAbs.Multiply(wHisto)
-    btagUp.Add(btagAbs,sign["Up"])
-    btagDown.Add(btagAbs,sign["Down"])
     histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, signalRegion)
     histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, signalRegion)
 
-    jesUp = wHisto.Clone("%s_%s_JesUp_3d"%(box,model))
-    jesUp.SetTitle("%s_%s_JesUp_3d"%(box,model))
-    jesDown = wHisto.Clone("%s_%s_JesDown_3d"%(box,model))
-    jesDown.SetTitle("%s_%s_JesDown_3d"%(box,model))
-    jesAbs = jes.Clone("JesAbs_3d")
-    jesAbs.Multiply(wHisto)
-    jesUp.Add(jesAbs,sign["Up"])
-    jesDown.Add(jesAbs,sign["Down"])
     histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, signalRegion)
     histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, signalRegion)
     
@@ -549,8 +560,8 @@ if __name__ == '__main__':
     pdfDown.SetTitle("%s_%s_PdfDown_3d"%(box,model))
     pdfAbs = pdf.Clone("PdfAbs_3d")
     pdfAbs.Multiply(wHisto)
-    pdfUp.Add(pdfAbs,sign["Up"])
-    pdfDown.Add(pdfAbs,sign["Down"])
+    pdfUp.Add(pdfAbs,1.0)
+    pdfDown.Add(pdfAbs,-1.0)
     histos[(box,"%s_PdfUp"%(model))] = rebin3d(pdfUp,x,y,z, box, signalRegion)
     histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, signalRegion)
     

@@ -9,26 +9,26 @@ shapes * * razor_combine_MuMultiJet_T2tt.root $PROCESS $PROCESS_$SYSTEMATIC
 bin		bin1			bin1			bin1			bin1
 process		MuMultiJet_T2tt 	MuMultiJet_TTj1b	MuMultiJet_TTj2b	MuMultiJet_TTj3b
 process        	0          		1			2			3
-rate            51.925		1637.228		1025.269		146.617
+rate            3253.019		1683.333		1074.339		144.375
 ------------------------------------------------------------
-lumi			lnN	1.026       1.00	1.00 1.00
-lepton			lnN	1.030       1.00	1.00 1.00
-trigger			lnN	1.050       1.00	1.00 1.00
-Pdf			shape	2.00       -	-	-
-Jes			shape	2.00       -	-	-
-Btag			shape	2.00       -	-	-
-Isr			shape	2.00       -	-	-
+lumi			lnN	0.044       1.00	1.00 1.00
+lepton			lnN	0.030       1.00	1.00 1.00
+trigger			lnN	0.050       1.00	1.00 1.00
+Pdf			shape	1.00       -	-	-
+Jes			shape	1.00       -	-	-
+Btag			shape	1.00       -	-	-
+Isr			shape	1.00       -	-	-
 bgNorm_TTj1b_MuMultiJet  	lnN   	1.00       1.025	1.00	1.00
-bgNorm_TTj2b_MuMultiJet  	lnN   	1.00       1.00	1.029	1.00
-bgNorm_TTj3b_MuMultiJet  	lnN   	1.00       1.00	1.00	1.083
-bgShape00_MR0_TTj1b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape01_MR0_TTj2b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape02_Ntot_TTj1b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape03_Ntot_TTj2b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape04_R0_TTj1b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape05_R0_TTj2b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape06_b_TTj1b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape07_b_TTj2b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape08_f3_TTj2b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape09_n_TTj1b_MuMultiJet	shape	-	   2.00	2.00	2.00
-bgShape10_n_TTj2b_MuMultiJet	shape	-	   2.00	2.00	2.00
+bgNorm_TTj2b_MuMultiJet  	lnN   	1.00       1.00	1.031	1.00
+bgNorm_TTj3b_MuMultiJet  	lnN   	1.00       1.00	1.00	1.094
+bgShape00_MR0_TTj1b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape01_MR0_TTj2b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape02_Ntot_TTj1b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape03_Ntot_TTj2b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape04_R0_TTj1b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape05_R0_TTj2b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape06_b_TTj1b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape07_b_TTj2b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape08_f3_TTj2b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape09_n_TTj1b_MuMultiJet	shape	-	   1.00	1.00	1.00
+bgShape10_n_TTj2b_MuMultiJet	shape	-	   1.00	1.00	1.00
