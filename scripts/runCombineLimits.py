@@ -11,22 +11,18 @@ from array import *
 from getGChiPairs import *
 
     
-def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fitRegion,signalRegion,hypo,t,nToys):
+def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fitRegion,signalRegion,t,nToys):
     massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
     # prepare the script to run
     xsecstring = str(xsecpoint).replace(".","p")
-    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+fitRegion+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_xsec"+xsecstring+"_"+fitRegion+"_"+box+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
     
     label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
              "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
              "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
-    
-    tagHypo = ""
-    if hypo == "B":
-        tagHypo = "-e"
         
-    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+xsecstring+"_"+hypo
+    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_xsec"+xsecstring+"_"+fitRegion+"_"+box
     user = os.environ['USER']
     
     combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/%s/"%(user[0],user,model)
@@ -87,9 +83,9 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fi
         options = ["%s=razor_combine_%s_%s.txt"%(ibox,ibox,model) for ibox in boxes]
         option = " ".join(options)
         outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s.txt \n"%(user[0],user,option,box,model))
-        outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(user[0],user,massPoint,fitRegion,box,box))
+        outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}.txt\n"%(user[0],user,massPoint,xsecstring,fitRegion,box,t,box))
         if nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_%s_%s razor_combine_%s_${NAME}.txt\n"%(user[0],user,nToys,massPoint,fitRegion,box,box))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}.txt\n"%(user[0],user,nToys,massPoint,xsecstring,fitRegion,box,t,box))
         
     #outputfile.write("cp $WD/RazorCombinedFit/*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
@@ -121,7 +117,7 @@ if __name__ == '__main__':
     mg_upper = 2025
     refXsec = 100.
     refXsecFile = None
-    fitRegion="FULL"
+    fitRegion="Sideband"
     signalRegion="FULL"
     nToys = -1
     for i in xrange(5,len(sys.argv)):
@@ -156,23 +152,19 @@ if __name__ == '__main__':
     
     pwd = os.environ['PWD']
     
-    submitDir = "submit"
-    outputDir = "output"+fitRegion+box
+    submitDir = "submit"+model+fitRegion+box
+    outputDir = "output"+model+fitRegion+box
     
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))
 
-    hypotheses = ["SpB"]
-
     # for compting what jobs are left:
     doneFile = open(done)
-    outFileList = [outFile.replace("higgsCombine","").replace(".root\n","") for outFile in doneFile.readlines()]
-
-    # dictionary of src file to output file names
-    srcDict = {}
-    for i in xrange(0,nJobs):
-        srcDict[i] = ["0-0"]
-        
+    if nToys>0:
+        outFileList = [outFile.replace("higgsCombine","").replace(".HybridNew.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("HybridNew")!=-1]
+    else:
+        outFileList = [outFile.replace("higgsCombine","").replace(".Asymptotic.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("Asymptotic")!=-1]
+ 
     totalJobs = 0
     missingFiles = 0
     for gluinopoint, neutralinopoint in gchipairs:
@@ -184,24 +176,21 @@ if __name__ == '__main__':
         xsecRange = [refXsec]
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
-            for hypo in hypotheses:
-                for t in xrange(0,nJobs):
-                    xsecstring = str(xsecpoint).replace(".","p")
-                    massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
-                    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+fitRegion+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
-                    output0 = str(outputname.replace("submit/submit_","").replace("xsec",""))
-                    for i in xrange(0,nJobs):
-                        output0 = output0.replace("SpB_%i.src"%i,"SpB_%s"%srcDict[i][0])
-                    runJob = False
-                    if output0 not in outFileList: 
-                        missingFiles+=1
-                        runJob = True
-                    if not runJob: continue
-                    outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fitRegion,signalRegion,hypo,t,nToys)
-                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                    totalJobs+=1
-                    time.sleep(3)
-                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+            for t in xrange(0,nJobs):
+                xsecstring = str(xsecpoint).replace(".","p")
+                massPoint = "MG_%f_MCHI_%f"%(gluinopoint, neutralinopoint)
+                output0 = model+"_"+massPoint+"_xsec"+xsecstring+"_"+fitRegion+"_"+box+"_"+str(t)
+                os.system("echo higgsCombine"+output0+".Asymptotic.mH120.root >> twofiles.txt")
+                runJob = False
+                if output0 not in outFileList: 
+                    missingFiles+=1
+                    runJob = True
+                if not runJob: continue
+                outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,fitRegion,signalRegion,t,nToys)
+                os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                totalJobs+=1
+                #time.sleep(3)
+                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
