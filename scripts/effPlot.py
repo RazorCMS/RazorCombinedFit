@@ -37,7 +37,7 @@ if __name__ == '__main__':
         elif model in ["T2bb"]:
             effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 37, 100, 1025, 40, 0, 1000)
         elif model in ["T2tb"]:
-            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 29, 100, 825, 32, 0, 800)
+            effHistos[box] = rt.TH2D(model+"_"+box,model+"_"+box, 37, 100, 1025, 40, 0, 1000)
         for mg in xrange(100, 1625, 25):
             for mchi in [1]+range(25, 1625, 25):
                 fileName = "/afs/cern.ch/user/w/woodson/public/Razor2013/Signal/%s/%s_MG_%f_MCHI_%f_%s_%s.root"%(model,model,mg,mchi,label,box)
