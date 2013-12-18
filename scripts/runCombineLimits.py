@@ -130,8 +130,11 @@ if __name__ == '__main__':
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
-        if sys.argv[i].find("--xsec")!=-1: refXsec = float(sys.argv[i+1])
-        if sys.argv[i].find("--xsec-file")!=-1: refXsecFile = sys.argv[i+1]
+        if sys.argv[i].find("--xsec")!=-1: 
+            if sys.argv[i].find("--xsec-file")!=-1: 
+                refXsecFile = sys.argv[i+1]
+            else:
+                refXsec = float(sys.argv[i+1])
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
         if sys.argv[i].find("--signal-region")!=-1: signalRegion = sys.argv[i+1]
         if sys.argv[i].find("--toys")!=-1: nToys = int(sys.argv[i+1])
