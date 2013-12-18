@@ -9,11 +9,11 @@ shapes * * razor_combine_MuEle_T2tt.root $PROCESS $PROCESS_$SYSTEMATIC
 bin		bin1			bin1		
 process		MuEle_T2tt 	MuEle_TTj1b
 process        	0          		1
-rate            81.650		108.885	
+rate            0.081		108.885	
 ------------------------------------------------------------
-lumi			lnN	0.044       1.00
-lepton			lnN	0.030       1.00
-trigger			lnN	0.050       1.00
+lumi			lnN	1.026       1.00
+lepton			lnN	1.060       1.00
+trigger			lnN	1.050       1.00
 Pdf			shape	1.00       -
 Jes			shape	1.00       -
 Btag			shape	1.00       -

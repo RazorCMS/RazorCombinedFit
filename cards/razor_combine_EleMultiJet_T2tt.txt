@@ -9,11 +9,11 @@ shapes * * razor_combine_EleMultiJet_T2tt.root $PROCESS $PROCESS_$SYSTEMATIC
 bin		bin1			bin1			bin1			bin1
 process		EleMultiJet_T2tt 	EleMultiJet_TTj1b	EleMultiJet_TTj2b	EleMultiJet_TTj3b
 process        	0          		1			2			3
-rate            3828.967		2319.116		1147.984		101.258
+rate            3.809		2319.116		1147.984		101.258
 ------------------------------------------------------------
-lumi			lnN	0.044       1.00	1.00 1.00
-lepton			lnN	0.030       1.00	1.00 1.00
-trigger			lnN	0.050       1.00	1.00 1.00
+lumi			lnN	1.026       1.00	1.00 1.00
+lepton			lnN	1.030       1.00	1.00 1.00
+trigger			lnN	1.050       1.00	1.00 1.00
 Pdf			shape	1.00       -	-	-
 Jes			shape	1.00       -	-	-
 Btag			shape	1.00       -	-	-
