@@ -120,6 +120,7 @@ if __name__ == '__main__':
     mg_lower = 0
     mg_upper = 2025
     refXsec = 100.
+    refXsecFile = None
     fitRegion="FULL"
     signalRegion="FULL"
     nToys = -1
@@ -130,10 +131,18 @@ if __name__ == '__main__':
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--xsec")!=-1: refXsec = float(sys.argv[i+1])
+        if sys.argv[i].find("--xsec-file")!=-1: refXsecFile = sys.argv[i+1]
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
         if sys.argv[i].find("--signal-region")!=-1: signalRegion = sys.argv[i+1]
         if sys.argv[i].find("--toys")!=-1: nToys = int(sys.argv[i+1])
-    
+
+            
+    if refXsecFile is not None:
+        print "INFO: Input ref xsec file!"
+        gluinoFile = rt.TFile.Open(refXsecFile,"READ")
+        gluinoHistName = refXsecFile.split("/")[-1].split(".")[0]
+        gluinoHist = gluinoFile.Get(gluinoHistName)
+        
     nJobs = 1 # do 1 toy each job => 1 toy
     
     print box, model, queue
@@ -166,6 +175,9 @@ if __name__ == '__main__':
     for gluinopoint, neutralinopoint in gchipairs:
         if neutralinopoint < mchi_lower or neutralinopoint >= mchi_upper: continue
         if gluinopoint < mg_lower or gluinopoint >= mg_upper: continue
+        if refXsecFile is not None:
+            refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinopoint))
+            print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb"%(gluinoHist.GetName(), gluinopoint, refXsec)
         xsecRange = [refXsec]
         for xsecpoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinopoint, neutralinopoint,xsecpoint)
