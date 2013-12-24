@@ -58,7 +58,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,re
         option = " ".join(options)
         outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
         if nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations 3 razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/razor_combine_*.* %s \n"%combineDir)
@@ -118,7 +118,7 @@ if __name__ == '__main__':
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
     nJobs = 1 # 
-    nXsec = 7 # do 7 xsec points
+    nXsec = 5 # do 5 xsec points
     
     if asymptoticFile is not None:
         print "INFO: Input ref xsec file!"
@@ -146,11 +146,9 @@ if __name__ == '__main__':
         outFileList = []
         for outFile in doneFile.readlines():
             if outFile.find("higgsCombineGrid")!=-1:
-                outItem = outFile.replace(".root\n","")
+                outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
                 outItem = outItem.split(".")[:-1]
                 outItem = ".".join(outItem)
-                outItem = outItem.replace("higgsCombineGrid","").replace(".HybridNew.mH120","")
-                print outItem
                 outFileList.append(outItem)
  
     totalJobs = 0
@@ -164,13 +162,13 @@ if __name__ == '__main__':
             refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
             print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
             
+        xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(0,nXsec)]
         print "min Xsec =", minXsec
         print "max Xsec =", maxXsec
         print "ref Xsec =", refXsec
-        xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(-1,nXsec+1)]
         print "xsecRange =", xsecRange
         for xsecPoint in xsecRange:
-            if xsecPoint==0: continue
+            if xsecPoint<=0: continue
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinoPoint, neutralinoPoint, xsecPoint)
             for t in xrange(0,nJobs):
                 xsecString = str(xsecPoint).replace(".","p")
