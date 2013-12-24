@@ -145,7 +145,7 @@ if __name__ == '__main__':
     if nToys>0:
         outFileList = []
         for outFile in doneFile.readlines():
-            if outFile.find("higgsCombineGrid")!=-1:
+            if outFile.find("higgsCombineGrid%s"%model)!=-1:
                 outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
                 outItem = outItem.split(".")[:-1]
                 outItem = ".".join(outItem)
