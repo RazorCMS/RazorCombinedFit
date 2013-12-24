@@ -118,7 +118,7 @@ if __name__ == '__main__':
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
     nJobs = 1 # 
-    nXsec = 5 # do 5 xsec points
+    nXsec = 7 # do 7 xsec points
     
     if asymptoticFile is not None:
         print "INFO: Input ref xsec file!"
@@ -161,7 +161,7 @@ if __name__ == '__main__':
         print "min Xsec =", minXsec
         print "max Xsec =", maxXsec
         print "ref Xsec =", refXsec
-        xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(0,nXsec)]
+        xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(-1,nXsec+1)]
         print "xsecRange =", xsecRange
         for xsecPoint in xsecRange:
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinoPoint, neutralinoPoint, xsecPoint)
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                 os.system("mkdir -p %s/%s"%(pwd,ffDir))
                 totalJobs+=1
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #time.sleep(3)
+                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                time.sleep(3)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
