@@ -144,11 +144,12 @@ if __name__ == '__main__':
     doneFile = open(done)
     if nToys>0:
         outFileList = []
-        for outFile in doneFile.readlines() if outFile.find("higgsCombineGrid")!=-1:
-            outItem = outFile.replace(".root\n","")
-            outItem = outFile.split(".")[:-1].join(".")
-            outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","")
-            print outItem
+        for outFile in doneFile.readlines():
+            if outFile.find("higgsCombineGrid")!=-1:
+                outItem = outFile.replace(".root\n","")
+                outItem = outFile.split(".")[:-1].join(".")
+                outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","")
+                print outItem
  
     totalJobs = 0
     missingFiles = 0
