@@ -47,7 +47,7 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
     return newhisto
     
-def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert):
+def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert):
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -63,8 +63,8 @@ def writeDataCard(box,model,txtfileName,bkgs,paramNames,histos1d,workspace,sigma
         txtfile.write("observation	%i\n"%
                       histos1d[box,"data"].Integral())
         txtfile.write("------------------------------------------------------------\n")
-        txtfile.write("shapes * * razor_combine_%s_%s.root $PROCESS $PROCESS_$SYSTEMATIC\n"%
-                      (box,model))
+        txtfile.write("shapes * * razor_combine_%s_%s_%s.root $PROCESS $PROCESS_$SYSTEMATIC\n"%
+                      (box,model,massPoint))
         txtfile.write("------------------------------------------------------------\n")
         if box in ["MuEle","MuMu","EleEle"]:
             txtfile.write("bin		bin1			bin1		\n")
@@ -364,6 +364,7 @@ if __name__ == '__main__':
     sigFile = rt.TFile.Open(args[0],"READ")
     mGluino = float(args[0].split("_")[-6])
     mLSP = float(args[0].split("_")[-4])
+    massPoint = "MG_%f_MCHI_%f"%(mGluino, mLSP)
     refXsec = options.refXsec
     refXsecFile = options.refXsecFile
     if refXsecFile is not None:
@@ -581,7 +582,7 @@ if __name__ == '__main__':
             if histos[box,"%s_%s%s"%(model,paramName,syst)].Integral() > 0:
                 histos[box,"%s_%s%s"%(model,paramName,syst)].Scale( histos[box,model].Integral()/histos[box,"%s_%s%s"%(model,paramName,syst)].Integral())
                 
-    outFile = rt.TFile.Open("%s/razor_combine_%s_%s.root"%(outdir,box,model),"RECREATE")
+    outFile = rt.TFile.Open("%s/razor_combine_%s_%s_%s.root"%(outdir,box,model,massPoint),"RECREATE")
 
     #unroll histograms 3D -> 1D
     print "\nINFO: Now Unrolling 3D histograms\n" 
@@ -606,6 +607,6 @@ if __name__ == '__main__':
         histos1d[box,bkg].Write()
 
     print "\nINFO: Now writing data card\n"
-    writeDataCard(box,model,"%s/razor_combine_%s_%s.txt"%(outdir,box,model),initialBkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert)
-    os.system("cat %s/razor_combine_%s_%s.txt \n"%(outdir,box,model)) 
+    writeDataCard(box,model,massPoint,"%s/razor_combine_%s_%s_%s.txt"%(outdir,box,model,massPoint),initialBkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert)
+    os.system("cat %s/razor_combine_%s_%s_%s.txt \n"%(outdir,box,model,massPoint)) 
     outFile.Close()
