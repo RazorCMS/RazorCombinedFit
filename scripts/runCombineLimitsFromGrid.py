@@ -58,7 +58,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,re
         option = " ".join(options)
         outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
         if nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/razor_combine_*.* %s \n"%combineDir)
@@ -143,9 +143,12 @@ if __name__ == '__main__':
     # for compting what jobs are left:
     doneFile = open(done)
     if nToys>0:
-        outFileList = [outFile.replace("higgsCombine","").replace(".HybridNew.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("HybridNew")!=-1]
-    else:
-        outFileList = [outFile.replace("higgsCombine","").replace(".Asymptotic.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("Asymptotic")!=-1]
+        outFileList = []
+        for outFile in doneFile.readlines() if outFile.find("higgsCombineGrid")!=-1:
+            outItem = outFile.replace(".root\n","")
+            outItem = outFile.split(".")[:-1].join(".")
+            outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","")
+            print outItem
  
     totalJobs = 0
     missingFiles = 0
@@ -178,7 +181,7 @@ if __name__ == '__main__':
                 os.system("mkdir -p %s/%s"%(pwd,ffDir))
                 totalJobs+=1
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                time.sleep(3)
+                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                #time.sleep(3)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
