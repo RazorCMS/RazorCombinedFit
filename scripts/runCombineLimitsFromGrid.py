@@ -147,10 +147,11 @@ if __name__ == '__main__':
         for outFile in doneFile.readlines():
             if outFile.find("higgsCombineGrid")!=-1:
                 outItem = outFile.replace(".root\n","")
-                outItem = outFile.split(".")[:-1]
+                outItem = outItem.split(".")[:-1]
                 outItem = ".".join(outItem)
-                outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","")
+                outItem = outItem.replace("higgsCombineGrid","").replace(".HybridNew.mH120","")
                 print outItem
+                outFileList.append(outItem)
  
     totalJobs = 0
     missingFiles = 0
