@@ -170,6 +170,7 @@ if __name__ == '__main__':
         xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(-1,nXsec+1)]
         print "xsecRange =", xsecRange
         for xsecPoint in xsecRange:
+            if xsecPoint==0: continue
             print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinoPoint, neutralinoPoint, xsecPoint)
             for t in xrange(0,nJobs):
                 xsecString = str(xsecPoint).replace(".","p")
