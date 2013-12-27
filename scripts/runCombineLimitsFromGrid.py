@@ -11,7 +11,7 @@ from array import *
 from getGChiPairs import *
 
     
-def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys):
+def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations):
     massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
     # prepare the script to run
     xsecString = str(xsecPoint).replace(".","p")
@@ -58,7 +58,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,re
         option = " ".join(options)
         outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
         if nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations 3 razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,iterations,box,massPoint))
         
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/razor_combine_*.* %s \n"%combineDir)
@@ -94,12 +94,14 @@ if __name__ == '__main__':
     signalRegion="FULL"
     asymptoticFile="xsecUL_SMS_Razor.root"
     nToys = 3000
+    iterations = 1
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
+        if sys.argv[i].find("--iterations")!=-1: iterations = int(sys.argv[i+1])
         if sys.argv[i].find("--xsec")!=-1: 
             if sys.argv[i].find("--xsec-file")!=-1: 
                 refXsecFile = sys.argv[i+1]
@@ -179,7 +181,7 @@ if __name__ == '__main__':
                     missingFiles+=1
                     runJob = True
                 if not runJob: continue
-                outputname,ffDir = writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys)
+                outputname,ffDir = writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations)
                 os.system("mkdir -p %s/%s"%(pwd,ffDir))
                 totalJobs+=1
                 time.sleep(3)
