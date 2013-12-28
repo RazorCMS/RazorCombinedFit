@@ -57,7 +57,7 @@ def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegi
     outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.975 -n Expected975${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
     outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root -n Observed${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
 
-    outputfile.write("hadd -f higgsCombineToys${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineExpected025*.root higgsCombineExpected160*.root higgsCombineExpected500*.root higgsCombineExpected840*.root higgsCombineExpected975*.root\n"%(massPoint,fitRegion,box,t))
+    outputfile.write("hadd -f higgsCombineToys${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineExpected025*.root higgsCombineExpected160*.root higgsCombineExpected500*.root higgsCombineExpected840*.root higgsCombineExpected975*.root higgsCombineObserved*.root \n"%(massPoint,fitRegion,box,t))
     outputfile.write("cp $TWD/higgsCombineToys*.root %s \n"%combineDir)
     outputfile.write("cd; pwd; rm -rf $TWD\n")
     outputfile.close
