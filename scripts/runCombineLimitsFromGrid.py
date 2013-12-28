@@ -11,7 +11,57 @@ from array import *
 from getGChiPairs import *
 
     
-def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations):
+def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegion):
+    massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
+    t = 0
+    # prepare the script to run
+    outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+fitRegion+"_"+box+"_"+str(t)+".src"
+    outputfile = open(outputname,'w')
+
+    label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
+             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
+             "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
+    
+    ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+fitRegion+"_"+box
+    user = os.environ['USER']
+    
+    combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/%s/"%(user[0],user,model)
+    
+    outputfile.write('#!/usr/bin/env bash -x\n')
+    outputfile.write('mkdir -p %s\n'%combineDir)
+    outputfile.write('echo $SHELL\n')
+    outputfile.write('pwd\n')
+    outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit \n'%(user[0],user))
+    outputfile.write('pwd\n')
+    outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
+    outputfile.write('eval `scramv1 runtime -sh`\n')
+    outputfile.write('source setup.sh\n')
+    outputfile.write('cd - \n')
+    outputfile.write("export TWD=${PWD}/Razor2013_%s_%s_%s_%i\n"%(model,massPoint,box,t))
+    outputfile.write("mkdir -p $TWD\n")
+    outputfile.write("cd $TWD\n")
+    outputfile.write('pwd\n')
+    
+    outputfile.write("export NAME=\"%s\"\n"%model)
+    boxes =  box.split("_")
+    seed = -1
+    
+    outputfile.write("cp %s/higgsCombineGrid${NAME}_%s_xsec*_%s_%s_%i.HybridNew.mH120.*.root $PWD\n"%(combineDir,massPoint,fitRegion,box,t))
+    outputfile.write("cp %s/razor_combine_*_${NAME}_%s.* $PWD\n"%(combineDir,massPoint))
+    outputfile.write("hadd -f higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineGrid${NAME}_%s_xsec*_%s_%s_%i.HybridNew.mH120.*.root $PWD\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t))
+    
+    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.16 -n Expected16${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
+    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.50 -n Expected50${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
+    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.84 -n Expected84${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
+    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root -n Observed${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
+
+    outputfile.write("cp $TWD/higgsCombineExpected*.root %s \n"%combineDir)
+    outputfile.write("cp $TWD/higgsCombineObserved*.root %s \n"%combineDir)
+    outputfile.write("cd; pwd; rm -rf $TWD\n")
+    outputfile.close
+    return outputname,ffDir
+    
+def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations):
     massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
     # prepare the script to run
     xsecString = str(xsecPoint).replace(".","p")
@@ -83,7 +133,6 @@ if __name__ == '__main__':
     model = sys.argv[2]
     queue = sys.argv[3]
     done  = sys.argv[4]
-    t3 = False
     mchi_lower = 0
     mchi_upper = 2025
     mg_lower = 0
@@ -95,8 +144,9 @@ if __name__ == '__main__':
     asymptoticFile="xsecUL_SMS_Razor.root"
     nToys = 3000
     iterations = 1
+    step2 = False
     for i in xrange(5,len(sys.argv)):
-        if sys.argv[i].find("--t3")!=-1: t3 = True
+        if sys.argv[i].find("--step2")!=-1: step2 = True
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
@@ -144,8 +194,13 @@ if __name__ == '__main__':
 
     # for compting what jobs are left:
     doneFile = open(done)
-    if nToys>0:
-        outFileList = []
+    outFileList = []
+    if step2:
+        for outFile in doneFile.readlines():
+            if outFile.find("higgsCombineObserved%s"%model)!=-1:
+                outItem = outFile.replace("higgsCombineObserved","").replace(".HybridNew.mH120","").replace(".root\n","")
+                outFileList.append(outItem)
+    else:
         for outFile in doneFile.readlines():
             if outFile.find("higgsCombineGrid%s"%model)!=-1:
                 outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
@@ -156,36 +211,50 @@ if __name__ == '__main__':
     totalJobs = 0
     missingFiles = 0
     for gluinoPoint, neutralinoPoint in gchipairs:
-        minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
-        maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
+
         if neutralinoPoint < mchi_lower or neutralinoPoint >= mchi_upper: continue
         if gluinoPoint < mg_lower or gluinoPoint >= mg_upper: continue
-        if refXsecFile is not None:
-            refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
-            print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
-            
-        xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(0,nXsec)]
-        print "min Xsec =", minXsec
-        print "max Xsec =", maxXsec
-        print "ref Xsec =", refXsec
-        print "xsecRange =", xsecRange
-        for xsecPoint in xsecRange:
-            if xsecPoint<=0: continue
-            print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinoPoint, neutralinoPoint, xsecPoint)
-            for t in xrange(0,nJobs):
-                xsecString = str(xsecPoint).replace(".","p")
-                massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
-                output0 = model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box+"_"+str(t)
-                runJob = False
-                if output0 not in outFileList: 
+
+        massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
+
+        if step2:
+            t = 0
+            print "Now scanning mg = %.0f, mchi = %.0f"%(gluinoPoint, neutralinoPoint)
+            output0 = model+"_"+massPoint+"_"+fitRegion+"_"+box+"_"+str(t)
+            runJob = False
+            if output0 not in outFileList: 
                     missingFiles+=1
                     runJob = True
-                if not runJob: continue
-                outputname,ffDir = writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations)
-                os.system("mkdir -p %s/%s"%(pwd,ffDir))
-                totalJobs+=1
-                time.sleep(3)
-                os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+            if not runJob: continue
+            outputname,ffDir = writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegion)
+            os.system("mkdir -p %s/%s"%(pwd,ffDir))
+            totalJobs+=1
+            #time.sleep(3)
+            os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+            #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+        else:
+            minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
+            maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
+            if refXsecFile is not None:
+                refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
+                print "INFO: ref xsec taken to be: %s mass %d, ref xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
+            xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(0,nXsec)]
+            for xsecPoint in xsecRange:
+                if xsecPoint<=0: continue
+                xsecString = str(xsecPoint).replace(".","p")
+                print "Now scanning mg = %.0f, mchi = %.0f, xsec = %.4f"%(gluinoPoint, neutralinoPoint, xsecPoint)
+                for t in xrange(0,nJobs):
+                    output0 = model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box+"_"+str(t)
+                    runJob = False
+                    if output0 not in outFileList: 
+                        missingFiles+=1
+                        runJob = True
+                    if not runJob: continue
+                    outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations)
+                    os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                    totalJobs+=1
+                    #time.sleep(3)
+                    os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
