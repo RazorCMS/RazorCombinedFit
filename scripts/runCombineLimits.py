@@ -54,7 +54,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
         if significance and nToys<0:
             outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
         elif significance and nToys>0:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat PL --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
         elif nToys>0: 
             outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
         else:
@@ -66,7 +66,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
         if significance and nToys<0:
             outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         elif significance and nToys>0:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat PL --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         elif nToys>0: 
             outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         else:
@@ -146,8 +146,10 @@ if __name__ == '__main__':
 
     # for compting what jobs are left:
     doneFile = open(done)
-    if significance:
+    if significance and nToys<0:
         outFileList = [outFile.replace("higgsCombine","").replace(".ProfileLikelihood.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("ProfileLikelihood")!=-1]
+    elif significance and nToys>0:
+        outFileList = [outFile.replace("higgsCombineSignif","").replace(".HybridNew.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("HybridNew")!=-1]
     elif nToys>0:
         outFileList = [outFile.replace("higgsCombine","").replace(".HybridNew.mH120.root\n","") for outFile in doneFile.readlines() if outFile.find("HybridNew")!=-1]
     else:
@@ -177,7 +179,7 @@ if __name__ == '__main__':
                 os.system("mkdir -p %s/%s"%(pwd,ffDir))
                 totalJobs+=1
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                #time.sleep(3)
+                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                time.sleep(3)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
