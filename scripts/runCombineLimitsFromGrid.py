@@ -172,7 +172,7 @@ if __name__ == '__main__':
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
     nJobs = 1 # 
-    nXsec = 5 # do 5 xsec points
+    nXsec = 5 # do 5 xsec points + 2 lower values
     
     if asymptoticFile is not None:
         print "INFO: Input ref xsec file!"
@@ -231,9 +231,9 @@ if __name__ == '__main__':
             outputname,ffDir = writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegion)
             os.system("mkdir -p %s/%s"%(pwd,ffDir))
             totalJobs+=1
-            #time.sleep(3)
+            time.sleep(3)
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-            #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
         else:
             minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
             maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
@@ -241,6 +241,11 @@ if __name__ == '__main__':
                 refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
                 print "INFO: ref xsec taken to be: %s mass %d, ref xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
             xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(0,nXsec)]
+            xsecRange.reverse()
+            xsecRange.append(minXsec*(minXsec/(minXsec + maxXsec/float(nXsec-1))))
+            xsecRange.append(minXsec*pow(minXsec/(minXsec + maxXsec/float(nXsec-1)),2.0))
+            xsecRange.reverse()
+            print xsecRange
             for xsecPoint in xsecRange:
                 if xsecPoint<=0: continue
                 xsecString = str(xsecPoint).replace(".","p")
@@ -255,8 +260,8 @@ if __name__ == '__main__':
                     outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
-                    #time.sleep(3)
+                    time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
