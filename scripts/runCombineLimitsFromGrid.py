@@ -172,14 +172,17 @@ if __name__ == '__main__':
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
     nJobs = 1 # 
-    nXsec = 5 # do 5 xsec points + 2 lower values
+    nXsec = 5 # do 5 xsec points + 2 lower values + 1 higher value
     
     if asymptoticFile is not None:
         print "INFO: Input ref xsec file!"
         asymptoticRootFile = rt.TFile.Open(asymptoticFile,"READ")
         expMinus2 = asymptoticRootFile.Get("xsecUL_ExpMinus2_%s_%s"%(model,box))
         expPlus2 = asymptoticRootFile.Get("xsecUL_ExpPlus2_%s_%s"%(model,box))
-    
+        expMinus = asymptoticRootFile.Get("xsecUL_ExpMinus_%s_%s"%(model,box))
+        expPlus = asymptoticRootFile.Get("xsecUL_ExpPlus_%s_%s"%(model,box))
+        exp = asymptoticRootFile.Get("xsecUL_Exp_%s_%s"%(model,box))
+        
     print box, model, queue
 
     gchipairs = getGChiPairs(model)
@@ -237,13 +240,23 @@ if __name__ == '__main__':
         else:
             minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
             maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
+            print "expPlus2  = %f "%(1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint)))
+            print "expPlus   = %f "%(1.e3*expPlus.GetBinContent(expPlus.FindBin(gluinoPoint,neutralinoPoint)))
+            print "exp       = %f "%(1.e3*exp.GetBinContent(exp.FindBin(gluinoPoint,neutralinoPoint)))
+            print "expMinus  = %f "%(1.e3*expMinus.GetBinContent(expMinus.FindBin(gluinoPoint,neutralinoPoint)))
+            print "expMinus2 = %f "%(1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint)))
+            if maxXsec==0 and minXsec==0: continue
             if refXsecFile is not None:
                 refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
                 print "INFO: ref xsec taken to be: %s mass %d, ref xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
-            xsecRange = [minXsec + maxXsec*float(i)/float(nXsec-1) for i in range(0,nXsec)]
+            xsecRange = [minXsec + (maxXsec-minXsec)*float(i)/float(nXsec-1) for i in range(0,nXsec+1)]
+            print xsecRange
+            factorXsec = minXsec/(minXsec + (maxXsec-minXsec)/float(nXsec-1))
+            print "factorXsec is", factorXsec
             xsecRange.reverse()
-            xsecRange.append(minXsec*(minXsec/(minXsec + maxXsec/float(nXsec-1))))
-            xsecRange.append(minXsec*pow(minXsec/(minXsec + maxXsec/float(nXsec-1)),2.0))
+            xsecRange.append(minXsec*factorXsec)
+            #xsecRange.append(minXsec*pow(factorXsec,2.0))
+            xsecRange.append(minXsec*pow(factorXsec,4.0))
             xsecRange.reverse()
             print xsecRange
             for xsecPoint in xsecRange:
