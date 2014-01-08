@@ -4,7 +4,7 @@ kmax 21 number of nuisnace parameters
 ------------------------------------------------------------
 observation	3383
 ------------------------------------------------------------
-shapes * * razor_combine_EleJet_T2tt.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes * * razor_combine_EleJet_T2tt_MG_725.000000_MCHI_25.000000.root $PROCESS $PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
 bin		bin1			bin1			bin1			bin1
 process		EleJet_T2tt 	EleJet_TTj1b	EleJet_TTj2b	EleJet_TTj3b
