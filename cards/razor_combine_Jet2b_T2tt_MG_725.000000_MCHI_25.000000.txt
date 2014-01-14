@@ -22,7 +22,7 @@ bgNorm_TTj2b_Jet2b  	lnN   	1.00       1.042	1.00
 bgNorm_TTj3b_Jet2b  	lnN   	1.00       1.00	1.214
 bgShape00_MR0_TTj2b_Jet2b	shape	-	   1.00	1.00
 bgShape01_Ntot_TTj2b_Jet2b	shape	-	   1.00	1.00
-bgShape02_R0_TTj2b_Jet2b	shape	-	   1.00	1.00
-bgShape03_b_TTj2b_Jet2b	shape	-	   1.00	1.00
-bgShape04_f3_TTj2b_Jet2b	shape	-	   1.00	1.00
-bgShape05_n_TTj2b_Jet2b	shape	-	   1.00	1.00
+bgShape02_R0_TTj2b_Jet2b	shape	-	   2.00	2.00
+bgShape03_b_TTj2b_Jet2b	shape	-	   0.25	0.25
+bgShape04_f3_TTj2b_Jet2b	shape	-	   0.25	0.25
+bgShape05_n_TTj2b_Jet2b	shape	-	   0.25	0.25
