@@ -47,7 +47,7 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
     return newhisto
     
-def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert):
+def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,workspace,sign,lumi_uncert,trigger_uncert,lepton_uncert):
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -81,12 +81,14 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
-            normErr = 1.+(workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
+            normErr = 1.
+            normErr += (workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
                           (bkgs[0],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./sigma)))
+                #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./sign["Up",paramName])))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./1.)))
         elif box in ["Jet2b"]:
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
@@ -115,7 +117,8 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
                           (bkgs[1],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma)))
+                #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./sign["Up",paramName]),(1./sign["Up",paramName])))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.)))
         else:
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
@@ -148,12 +151,14 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
                           (bkgs[2],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./sigma),(1./sigma),(1./sigma)))
+                #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./sign["Up",paramName]),(1./sign["Up",paramName]),(1./sign["Up",paramName])))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.),(1./1.)))
         txtfile.close()
 
 def find68ProbRange(hToy, probVal=0.6827):
     minVal = 0.
     maxVal = 100000.
+
     if hToy.Integral()<=0: return hToy.GetBinCenter(hToy.GetMaximumBin()),max(minVal,0.),maxVal
     # get the bin contents
     probsList = []
@@ -185,7 +190,83 @@ def find68ProbRange(hToy, probVal=0.6827):
     range68 = (maxVal-max(minVal,0.))/2.
     return hToy.GetBinCenter(hToy.GetMaximumBin()),range68
 
+def checkValidParams(initialBkgs, workspace):
+    errorFlag = False
+    for bkg in initialBkgs:
+        if bkg=="TTj3b": continue
+        B = workspace.var("b_%s"%bkg).getVal()
+        N = workspace.var("n_%s"%bkg).getVal()
+        X0 = workspace.var("MR0_%s"%bkg).getVal()
+        Y0 = workspace.var("R0_%s"%bkg).getVal()
+        NTOT = workspace.var("Ntot_%s"%bkg).getVal()
+        F3 = workspace.var("f3_%s"%bkg).getVal()
+        fr = workspace.obj("independentFR")
+        parList = fr.floatParsFinal()
+        
+        for p in RootTools.RootIterator.RootIterator(parList):
+            if p.GetName()=="R0_%s"%bkg: Y0nom  = p.getVal()
+            if p.GetName()=="MR0_%s"%bkg: X0nom  = p.getVal()
+            if p.GetName()=="n_%s"%bkg: Nnom  = p.getVal()
+            if p.GetName()=="b_%s"%bkg: Bnom  = p.getVal()
+        xmin  = x[0]
+        xmax  = x[-1]
+        ymin  = y[0]
+        ymax  = y[-1]
+        while Y0 > ymin: 
+            errorFlag = True
+            print "ERROR: R0 has left range"
+            Y0 = (Y0nom+3.*Y0)/4.
+            print "       Setting to R0 = %f"%Y0
+            workspace.var("R0_%s"%bkg).setVal(Y0)
+        while X0 > xmin: 
+            errorFlag = True
+            print "ERROR: MR0 has left range"
+            X0 =  (X0nom+3.*X0)/4.
+            print "       Setting to MR0 = %f"%X0
+            workspace.var("MR0_%s"%bkg).setVal(X0)
+        while B < 0:
+            errorFlag = True
+            print "ERROR: B has left range"
+            #N = (Nnom+3.*N)/4.
+            B = (Bnom+3.*B)/4.
+            #print "       Setting to N = %f"%N
+            print "       Setting to B = %f"%B
+            #workspace.var("n_%s"%bkg).setVal(N)
+            workspace.var("b_%s"%bkg).setVal(B)
+        while N < 0:
+            errorFlag = True
+            print "ERROR: N has left range"
+            N = (Nnom+3.*N)/4.
+            #B = (Bnom+3.*B)/4.
+            print "       Setting to N = %f"%N
+            #print "       Setting to B = %f"%B
+            workspace.var("n_%s"%bkg).setVal(N)
+            #workspace.var("b_%s"%bkg).setVal(B)
+
+        try:
+            total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+        except: 
+            total_integral = 0.0
+        while total_integral <= 0:
+            errorFlag = True
+            print "ERROR: total integral is 0.0"
+            B = (Bnom+3.*B)/4.
+            N = (Nnom+3.*N)/4.
+            print "       Setting to B = %f"%B
+            print "       Setting to N = %f"%N
+            workspace.var("b_%s"%bkg).setVal(B)
+            workspace.var("n_%s"%bkg).setVal(N)
+            try:
+                total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+            except: 
+                total_integral = 0.0
+            print "NOW total integral is %e"%total_integral
+            
+    return errorFlag
+        
+    
 def getBinEvents(i, j, k, x, y, z, workspace):
+    errorFlag = False
     if z[k-1]==3:
         bkg = "TTj2b"
     else:
@@ -204,41 +285,47 @@ def getBinEvents(i, j, k, x, y, z, workspace):
     xmax  = x[-1]
     ymin  = y[0]
     ymax  = y[-1]
-    if Y0 > ymin: 
-        print "ERROR: R0 has left range"
-        for p in RootTools.RootIterator.RootIterator(parList):
-            if p.GetName()=="R0_%s"%bkg: Y0 = p.getVal()
-        print "       Setting to nominal R0 = %f"%Y0
-    if X0 > xmin: 
-        print "ERROR: MR0 has left range"
-        for p in RootTools.RootIterator.RootIterator(parList):
-            if p.GetName()=="MR0_%s"%bkg: X0 = p.getVal()
-        print "       Setting to nominal MR0 = %f"%X0
-    if B < 0:
-        print "ERROR: B has left range"
-        for p in RootTools.RootIterator.RootIterator(parList):
-            if p.GetName()=="b_%s"%bkg: B = p.getVal()
-            if p.GetName()=="n_%s"%bkg: N = p.getVal()
-        print "       Setting to nominal B = %f"%B
-        print "       Setting to nominal N = %f"%N
-    if N < 0:
-        print "ERROR: N has left range"
-        for p in RootTools.RootIterator.RootIterator(parList):
-            if p.GetName()=="b_%s"%bkg: B = p.getVal()
-            if p.GetName()=="n_%s"%bkg: N = p.getVal()
-        print "       Setting to nominal B = %f"%B
-        print "       Setting to nominal N = %f"%N
-        
+    # while Y0 > ymin: 
+    #     errorFlag = True
+    #     print "ERROR: R0 has left range"
+    #     for p in RootTools.RootIterator.RootIterator(parList):
+    #         if p.GetName()=="R0_%s"%bkg: Y0 = (p.getVal()+3.*Y0)/4.
+    #     print "       Setting to R0 = %f"%Y0
+    # while X0 > xmin: 
+    #     errorFlag = True
+    #     print "ERROR: MR0 has left range"
+    #     for p in RootTools.RootIterator.RootIterator(parList):
+    #         if p.GetName()=="MR0_%s"%bkg: X0 = (p.getVal()+3.*X0)/4.
+    #     print "       Setting to MR0 = %f"%X0
+    # while B < 0:
+    #     errorFlag = True
+    #     print "ERROR: B has left range"
+    #     for p in RootTools.RootIterator.RootIterator(parList):
+    #         if p.GetName()=="b_%s"%bkg: B = (p.getVal()+3.*B)/4.
+    #         #if p.GetName()=="n_%s"%bkg: N = (p.getVal()+3.*N)/4.
+    #     print "       Setting to B = %f"%B
+    #     #print "       Setting to N = %f"%N
+    # while N < 0:
+    #     errorFlag = True
+    #     print "ERROR: N has left range"
+    #     for p in RootTools.RootIterator.RootIterator(parList):
+    #         #if p.GetName()=="b_%s"%bkg: B = (p.getVal()+3.*B)/4.
+    #         if p.GetName()=="n_%s"%bkg: N = (p.getVal()+3.*N)/4.
+    #     #print "       Setting to B = %f"%B
+    #     print "       Setting to N = %f"%N
+
+    #print "(Y0, X0, B, N) = (%e, %e, %e, %e)"%(Y0,X0,B,N) 
     total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
 
-    if total_integral==0 or N*B>500:
-        print "ERROR: total integral is 0 or N, B = (%.2f,%.2f) combination too big!"%(N,B)
-        for p in RootTools.RootIterator.RootIterator(parList):
-            if p.GetName()=="b_%s"%bkg: B = p.getVal()
-            if p.GetName()=="n_%s"%bkg: N = p.getVal()
-        print "       Setting to nominal B = %f"%B
-        print "       Setting to nominal N = %f"%N
-        total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+    # while total_integral<=0 or N*B>700:
+    #     errorFlag = True
+    #     print "ERROR: total integral is 0 or N, B = (%.2f,%.2f) combination too big!"%(N,B)
+    #     for p in RootTools.RootIterator.RootIterator(parList):
+    #         if p.GetName()=="b_%s"%bkg: B = (p.getVal()+9.*B)/10.
+    #         if p.GetName()=="n_%s"%bkg: N = (p.getVal()+9.*N)/10.
+    #     print "       Setting to B = %f"%B
+    #     print "       Setting to N = %f"%N
+    #     total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
         
 
     xmin  = x[0]
@@ -260,11 +347,12 @@ def getBinEvents(i, j, k, x, y, z, workspace):
     elif (z[k-1]==3) : 
         bin_events =  F3*NTOT*integral/total_integral
 
-    if bin_events <0:
+    if bin_events <= 0:
+        errorFlag = True
         print "\nERROR: bin razor pdf integral =", integral
         print "\nERROR: total razor pdf integral =", total_integral
-        return 0.
-    return bin_events
+        return 0., errorFlag
+    return bin_events, errorFlag
 
 def getRandomPars(fr, workspace):
     zeroIntegral = True
@@ -277,8 +365,8 @@ def getRandomPars(fr, workspace):
     components = ['TTj1b','TTj2b','Vpj']
     componentsOn = [comp for comp in components if workspace.var('Ntot_%s'%comp).getVal()]
     while zeroIntegral:
-        argList = fr.randomizePars()
-        for p in RootTools.RootIterator.RootIterator(argList):
+        randomArgList = fr.randomizePars()
+        for p in RootTools.RootIterator.RootIterator(randomArgList):
             workspace.var(p.GetName()).setVal(p.getVal())
             workspace.var(p.GetName()).setError(p.getError())
             # check how many error messages we have before evaluating pdfs
@@ -299,8 +387,11 @@ def getRandomPars(fr, workspace):
                 badPars.append(B <= 0)
                 badPars.append(X0 >= xmin)
                 badPars.append(Y0 >= ymin)
-                total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
-                badPars.append(total_integral <= 0)
+                try: 
+                    total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+                except:
+                    total_integral = 0.0
+                badPars.append(total_integral <= 0.0)
                 # check how many error messages we have after evaluating pdfs
             zeroIntegral = any(badPars)
             if not zeroIntegral:
@@ -310,7 +401,7 @@ def getRandomPars(fr, workspace):
                     errorCountAfter = rt.RooMsgService.instance().errorCount()
                     zeroIntegral = (errorCountAfter>errorCountBefore) or any(badPars)
             randomizeAttempts+=1
-    return argList
+    return randomArgList
 
 def Gamma(a, x):
     return rt.TMath.Gamma(a) * rt.Math.inc_gamma_c(a,x)
@@ -357,7 +448,9 @@ if __name__ == '__main__':
     cfg = Config.Config(options.config)
     
     rt.gSystem.Load("../lib/libRazor")
-    
+
+    seed = 314159
+    rt.RooRandom.randomGenerator().SetSeed(seed)
     box = options.box
     model = options.model
     infile = rt.TFile.Open(options.input,"READ")
@@ -459,6 +552,7 @@ if __name__ == '__main__':
         variation.append([eigenVal[j]*eigenVect[i][j] for i in range(0,len(paramNames))])
         
     cen = [workspace.var(paramName).getVal() for paramName in paramNames]
+    err = [workspace.var(paramName).getError() for paramName in paramNames]
         
     MR = workspace.var("MR")
     Rsq = workspace.var("Rsq")
@@ -485,7 +579,7 @@ if __name__ == '__main__':
             for j in xrange(1,len(y)):
                 for k in xrange(1, len(z)):
                     if not passCut(x[i-1],y[j-1], box, signalRegion): continue
-                    bin_events = getBinEvents(i,j,k,x,y,z,workspace)
+                    bin_events, errorFlag = getBinEvents(i,j,k,x,y,z,workspace)
                     if (bkg.find("1b")!=-1 and z[k-1]==1) :
                         histos[box,bkg].SetBinContent(i,j,k,bin_events)
                     elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
@@ -494,43 +588,66 @@ if __name__ == '__main__':
                         histos[box,"TTj3b"].SetBinContent(i,j,k,bin_events)
 
     sign = {}
-    sign["Up"] = sigma
-    sign["Down"] = -sigma
-    for bkg in initialBkgs:
-        for p in range(0,len(paramNames)):
-            print "\nINFO: Now varying background shape parameters\n"
-            print "background shape variation #%02d"%p
-            variationName = paramNames[p]
+    for p in range(0,len(paramNames)):
+        print "\nINFO: Now varying background shape parameters\n"
+        print "background shape variation #%02d"%p
+        variationName = paramNames[p]
+        sign["Up",variationName] = sigma
+        sign["Down",variationName] = -sigma
+        numErrors = 0
+        firstTime = True
+        while numErrors>0 or firstTime:
+            firstTime = False
+            if numErrors>0:
+                sign["Up",variationName] = sign["Up",variationName]-0.25
+                sign["Down",variationName] = sign["Down",variationName]+0.25
+            numErrors = 0
             for syst in ["Up","Down"]:
                 for q in range(0,len(paramNames)):
                     paramName = paramNames[q]
-                    relErr = sign[syst]*variation[p][q]/(workspace.var(paramName).getError())
-                    print paramName, syst, " = ", cen[q]+sign[syst]*variation[p][q], " -> ", "%.2fsigma"%(relErr)
-                    workspace.var(paramName).setVal(cen[q]+sign[syst]*variation[p][q])
+                    relErr = sign[syst,variationName]*variation[p][q]/(err[q])
+                    print paramName, syst, " = ", cen[q]+sign[syst,variationName]*variation[p][q], " -> ", "%.2fsigma"%(relErr)
+                    workspace.var(paramName).setVal(cen[q]+sign[syst,variationName]*variation[p][q])
+                errorFlag = checkValidParams(initialBkgs,workspace)
                 for i in xrange(1,len(x)):
                     for j in xrange(1,len(y)):
                         for k in xrange(1,len(z)):
                             if not passCut(x[i-1],y[j-1], box, signalRegion): continue
-                            bin_events = getBinEvents(i,j,k,x,y,z,workspace)
-                            if (bkg.find("1b")!=-1 and z[k-1]==1) :
+                            bin_events, errorFlag = getBinEvents(i,j,k,x,y,z,workspace)
+                            if z[k-1]==1 :
+                                bkg = "TTj1b"
                                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
-                            elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
+                            elif z[k-1]==2 :
+                                bkg = "TTj2b"
                                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
-                            elif (bkg.find("3b")!=-1 and z[k-1]==3) : 
+                            elif z[k-1]==3 :
+                                bkg = "TTj3b"
                                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].SetBinContent(i,j,k,bin_events)
+                # SET ERROR TRUE
+                if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() < 1.: numErrors+=1
                 for q in range(0,len(paramNames)):
                     paramName = paramNames[q]
                     workspace.var(paramName).setVal(cen[q])
-                    
+            
+    print "INFO: final variations were", sign
+    
     for bkg in initialBkgs:
         for p in range(0,len(paramNames)):
-            print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
+            print "\nINFO: What is the norm of shape systematic histograms? \n"
             print "background shape variation #%02d"%p
             variationName = paramNames[p]
             for syst in ['Up','Down']:
-                if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
-                    histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
-                else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
+                print "INFO: histogram for %s_bgShape%02d_%s_%s%s has %e integral!"%(bkg,p,variationName,box,syst,histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
+    
+    # for bkg in initialBkgs:
+    #     for p in range(0,len(paramNames)):
+    #         print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
+    #         print "background shape variation #%02d"%p
+    #         variationName = paramNames[p]
+    #         for syst in ['Up','Down']:
+    #             if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
+    #                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
+    #             else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
@@ -607,6 +724,6 @@ if __name__ == '__main__':
         histos1d[box,bkg].Write()
 
     print "\nINFO: Now writing data card\n"
-    writeDataCard(box,model,massPoint,"%s/razor_combine_%s_%s_%s.txt"%(outdir,box,model,massPoint),initialBkgs,paramNames,histos1d,workspace,sigma,lumi_uncert,trigger_uncert,lepton_uncert)
+    writeDataCard(box,model,massPoint,"%s/razor_combine_%s_%s_%s.txt"%(outdir,box,model,massPoint),initialBkgs,paramNames,histos1d,workspace,sign,lumi_uncert,trigger_uncert,lepton_uncert)
     os.system("cat %s/razor_combine_%s_%s_%s.txt \n"%(outdir,box,model,massPoint)) 
     outFile.Close()

@@ -21,6 +21,10 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
     label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
              "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
              "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
+    
+    sigma = {"MuEle":1.75,"EleEle":1.5,"MuMu":1.25,
+             "EleJet":1.75,"EleMultiJet":1.0,"MuMultiJet":2.0,"MuJet":2.0,
+             "MultiJet":1.5,"Jet2b":1.5}
         
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box
     user = os.environ['USER']
@@ -49,7 +53,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD_2Nov2013.root $PWD\n")
     for ibox in boxes:
         outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_%s_%s.root $PWD\n"%(massPoint,label[ibox],ibox))
-        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s\n"%(user[0],user,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,xsecPoint,signalRegion))
+        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s --sigma %f \n"%(user[0],user,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,xsecPoint,signalRegion,sigma[ibox]))
     if len(boxes)==1: 
         if significance and nToys<0:
             outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
