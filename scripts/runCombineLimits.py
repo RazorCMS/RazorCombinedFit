@@ -22,9 +22,9 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
              "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
              "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
     
-    sigma = {"MuEle":1.75,"EleEle":1.5,"MuMu":1.25,
-             "EleJet":1.75,"EleMultiJet":1.0,"MuMultiJet":2.0,"MuJet":2.0,
-             "MultiJet":1.5,"Jet2b":1.5}
+    sigma = {"MuEle":0.5,"EleEle":0.5,"MuMu":0.5,
+             "EleJet":0.5,"EleMultiJet":0.5,"MuMultiJet":0.5,"MuJet":0.5,
+             "MultiJet":0.5,"Jet2b":0.5}
         
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box
     user = os.environ['USER']
