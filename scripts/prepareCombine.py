@@ -87,7 +87,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
                           (bkgs[0],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,4./(sign["Up",paramName]-sign["Down",paramName])))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName])))
                 #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./1.)))
         elif box in ["Jet2b"]:
             txtfile.write("bin		bin1			bin1			bin1\n")
@@ -117,7 +117,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
                           (bkgs[1],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,4./(sign["Up",paramName]-sign["Down",paramName]),4./(sign["Up",paramName]-sign["Down",paramName])))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
                 #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.)))
         else:
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
@@ -151,7 +151,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
                           (bkgs[2],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,4./(sign["Up",paramName]-sign["Down",paramName]),4./(sign["Up",paramName]-sign["Down",paramName]),4./(sign["Up",paramName]-sign["Down",paramName])))
+                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
                 #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.),(1./1.)))
         txtfile.close()
 
