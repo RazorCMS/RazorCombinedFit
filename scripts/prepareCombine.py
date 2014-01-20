@@ -51,14 +51,20 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
-            txtfile.write("jmax 1 number of backgrounds\n")
-            txtfile.write("kmax 13 number of nuisnace parameters\n")
+            nBkgd = 1
+            nNuis = 13-1
+            txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
+            txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
         elif box in ["Jet2b"]:
-            txtfile.write("jmax 2 number of backgrounds\n")
-            txtfile.write("kmax 15 number of nuisnace parameters\n")
+            nBkgd = 2
+            nNuis = 15-2
+            txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
+            txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
         else:
-            txtfile.write("jmax 3 number of backgrounds\n")
-            txtfile.write("kmax 21 number of nuisnace parameters\n")
+            nBkgd = 3
+            nNuis = 21-3
+            txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
+            txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
         txtfile.write("------------------------------------------------------------\n")
         txtfile.write("observation	%i\n"%
                       histos1d[box,"data"].Integral())
