@@ -52,17 +52,17 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
             nBkgd = 1
-            nNuis = 13-1
+            nNuis = 13
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
         elif box in ["Jet2b"]:
             nBkgd = 2
-            nNuis = 15-2
+            nNuis = 15
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
         else:
             nBkgd = 3
-            nNuis = 21-3
+            nNuis = 21
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
         txtfile.write("------------------------------------------------------------\n")
@@ -89,8 +89,8 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
             normErr = 1.
             normErr += (workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
-            #txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
-            #              (bkgs[0],box,normErr))
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
+                          (bkgs[0],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
                 txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName])))
@@ -113,14 +113,14 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
             normErr = 1.
             normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
-            #txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
-            #              (bkgs[0],box,normErr))
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
+                          (bkgs[0],box,normErr))
             normErr = 1.
             quadErr = rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) 
             quadErr += rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.)
             normErr += rt.TMath.Sqrt(quadErr)
-            #txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
-            #              (bkgs[1],box,normErr))
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
+                          (bkgs[1],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
                 txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
@@ -143,18 +143,18 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
             normErr = 1.
             normErr += workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal()
-            #txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
-            #              (bkgs[0],box,normErr))
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
+                          (bkgs[0],box,normErr))
             normErr = 1.
             normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
-            #txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
-            #              (bkgs[1],box,normErr))
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
+                          (bkgs[1],box,normErr))
             normErr = 1. 
             quadErr = rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.)
             quadErr += rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.)
             normErr += rt.TMath.Sqrt(quadErr)
-            #txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
-            #              (bkgs[2],box,normErr))
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
+                          (bkgs[2],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
                 txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
@@ -645,15 +645,15 @@ if __name__ == '__main__':
             for syst in ['Up','Down']:
                 print "INFO: histogram for %s_bgShape%02d_%s_%s%s has %e integral!"%(bkg,p,variationName,box,syst,histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
     
-    # for bkg in initialBkgs:
-    #     for p in range(0,len(paramNames)):
-    #         print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
-    #         print "background shape variation #%02d"%p
-    #         variationName = paramNames[p]
-    #         for syst in ['Up','Down']:
-    #             if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
-    #                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
-    #             else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
+    for bkg in initialBkgs:
+        for p in range(0,len(paramNames)):
+            print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
+            print "background shape variation #%02d"%p
+            variationName = paramNames[p]
+            for syst in ['Up','Down']:
+                if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
+                    histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
+                else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
