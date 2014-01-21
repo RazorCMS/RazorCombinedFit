@@ -63,7 +63,7 @@ def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegi
     outputfile.close
     return outputname,ffDir
     
-def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations):
+def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations):
     massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
     # prepare the script to run
     xsecString = str(xsecPoint).replace(".","p")
@@ -109,8 +109,8 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
         options = ["%s=razor_combine_%s_%s_%s.txt"%(ibox,ibox,model,massPoint) for ibox in boxes]
         option = " ".join(options)
         outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
-        if nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToys,massPoint,xsecString,fitRegion,box,t,iterations,box,massPoint))
+        if nToysPerJob>0: 
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToysPerJob,massPoint,xsecString,fitRegion,box,t,iterations,box,massPoint))
         
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/razor_combine_*.* %s \n"%combineDir)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     fitRegion="Sideband"
     signalRegion="FULL"
     asymptoticFile="xsecUL_SMS_Razor.root"
-    nToys = 3000
+    nToys = 9000
     iterations = 1
     step2 = False
     for i in xrange(5,len(sys.argv)):
@@ -171,7 +171,8 @@ if __name__ == '__main__':
         gluinoHistName = refXsecFile.split("/")[-1].split(".")[0]
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
-    nJobs = 1 # 
+    nJobs = 3 # split the toys over 3 jobs 
+    nToysPerJob = int(nToys/nJobs)
     nXsec = 5 # do 5 xsec points + 2 lower values + 1 higher value
     
     if asymptoticFile is not None:
@@ -270,7 +271,7 @@ if __name__ == '__main__':
                         missingFiles+=1
                         runJob = True
                     if not runJob: continue
-                    outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToys,iterations)
+                    outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     time.sleep(3)
