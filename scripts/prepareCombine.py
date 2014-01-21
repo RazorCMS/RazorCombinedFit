@@ -645,15 +645,15 @@ if __name__ == '__main__':
             for syst in ['Up','Down']:
                 print "INFO: histogram for %s_bgShape%02d_%s_%s%s has %e integral!"%(bkg,p,variationName,box,syst,histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
     
-    for bkg in initialBkgs:
-        for p in range(0,len(paramNames)):
-            print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
-            print "background shape variation #%02d"%p
-            variationName = paramNames[p]
-            for syst in ['Up','Down']:
-                if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
-                    histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
-                else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
+    # for bkg in initialBkgs:
+    #     for p in range(0,len(paramNames)):
+    #         print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
+    #         print "background shape variation #%02d"%p
+    #         variationName = paramNames[p]
+    #         for syst in ['Up','Down']:
+    #             if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
+    #                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
+    #             else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
