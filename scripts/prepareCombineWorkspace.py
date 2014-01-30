@@ -73,7 +73,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
                       (box,model,massPoint))
         txtfile.write("------------------------------------------------------------\n")
         if box in ["MuEle","MuMu","EleEle"]:
-            txtfile.write("bin		bin1			bin1		\n")
+            txtfile.write("bin		%s			%s		\n"(box,box))
             txtfile.write("process		%s_%s 	%s_%s\n"%
                           (box,model,box,bkgs[0]))
             txtfile.write("process        	0          		1\n")
@@ -95,7 +95,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
                 if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
                 txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), 2.*w.var("%s_%s"%(paramName,box)).getError()))
         elif box in ["Jet2b"]:
-            txtfile.write("bin		bin1			bin1			bin1\n")
+            txtfile.write("bin		%s			%s			%s\n"%(box,box,box))
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1]))
             txtfile.write("process        	0          		1			2\n")
@@ -125,7 +125,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
                 if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
                 txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), 2.*w.var("%s_%s"%(paramName,box)).getError()))
         else:
-            txtfile.write("bin		bin1			bin1			bin1			bin1\n")
+            txtfile.write("bin		%s			%s			%s			%s\n"%(box,box,box,box))
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1],box,bkgs[2]))
             txtfile.write("process        	0          		1			2			3\n")
