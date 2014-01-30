@@ -73,7 +73,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
                       (box,model,massPoint))
         txtfile.write("------------------------------------------------------------\n")
         if box in ["MuEle","MuMu","EleEle"]:
-            txtfile.write("bin		%s			%s		\n"(box,box))
+            txtfile.write("bin		%s			%s		\n"%(box,box))
             txtfile.write("process		%s_%s 	%s_%s\n"%
                           (box,model,box,bkgs[0]))
             txtfile.write("process        	0          		1\n")
