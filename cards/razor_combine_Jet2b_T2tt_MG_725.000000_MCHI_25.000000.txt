@@ -4,12 +4,12 @@ kmax 13 number of nuisance parameters
 ------------------------------------------------------------
 observation	728
 ------------------------------------------------------------
-shapes * * razor_combine_Jet2b_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
+shapes * * razor_combine_Jet2b_T2tt_MG_725.000000_MCHI_25.000000.root wJet2b:$PROCESS wJet2b:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
 bin		Jet2b			Jet2b			Jet2b
 process		Jet2b_T2tt 	Jet2b_TTj2b	Jet2b_TTj3b
 process        	0          		1			2
-rate            41.510		726.721		24.827
+rate            2.587		726.721		24.827
 ------------------------------------------------------------
 lumi			lnN	1.026       1.00 1.00
 lepton			lnN	1.000       1.00 1.00

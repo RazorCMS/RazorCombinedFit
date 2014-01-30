@@ -4,12 +4,12 @@ kmax 18 number of nuisance parameters
 ------------------------------------------------------------
 observation	3407
 ------------------------------------------------------------
-shapes * * razor_combine_EleMultiJet_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
+shapes * * razor_combine_EleMultiJet_T2tt_MG_725.000000_MCHI_25.000000.root wEleMultiJet:$PROCESS wEleMultiJet:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
 bin		EleMultiJet			EleMultiJet			EleMultiJet			EleMultiJet
 process		EleMultiJet_T2tt 	EleMultiJet_TTj1b	EleMultiJet_TTj2b	EleMultiJet_TTj3b
 process        	0          		1			2			3
-rate            61.118		2319.116		1249.242		101.258
+rate            3.809		2319.116		1249.242		101.258
 ------------------------------------------------------------
 lumi			lnN	1.026       1.00	1.00 1.00
 lepton			lnN	1.030       1.00	1.00 1.00

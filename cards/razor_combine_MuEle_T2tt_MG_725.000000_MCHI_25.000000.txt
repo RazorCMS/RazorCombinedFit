@@ -4,12 +4,12 @@ kmax 12 number of nuisance parameters
 ------------------------------------------------------------
 observation	106
 ------------------------------------------------------------
-shapes * * razor_combine_MuEle_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
+shapes * * razor_combine_MuEle_T2tt_MG_725.000000_MCHI_25.000000.root wMuEle:$PROCESS wMuEle:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
 bin		MuEle			MuEle		
 process		MuEle_T2tt 	MuEle_TTj1b
 process        	0          		1
-rate            1.303		108.885	
+rate            0.081		108.885	
 ------------------------------------------------------------
 lumi			lnN	1.026       1.00
 lepton			lnN	1.060       1.00
