@@ -70,8 +70,8 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
         txtfile.write("observation	%i\n"%
                       w.data("data_obs").sumEntries())
         txtfile.write("------------------------------------------------------------\n")
-        txtfile.write("shapes * * razor_combine_%s_%s_%s.root w:$PROCESS w:$PROCESS_$SYSTEMATIC\n"%
-                      (box,model,massPoint))
+        txtfile.write("shapes * * razor_combine_%s_%s_%s.root w%s:$PROCESS w%s:$PROCESS_$SYSTEMATIC\n"%
+                      (box,model,massPoint,box,box))
         txtfile.write("------------------------------------------------------------\n")
         if box in ["MuEle","MuMu","EleEle"]:
             txtfile.write("bin		%s			%s		\n"%(box,box))
