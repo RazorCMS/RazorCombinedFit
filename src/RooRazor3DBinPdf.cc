@@ -75,8 +75,7 @@ Double_t RooRazor3DBinPdf::evaluate() const
 {
   Double_t integral = 0.0;
   Double_t total_integral = 1.0;
-  Double_t bin_width = 1.0;
-
+  
 
   if(B <= 0. || N <= 0. || X0 >= xMin || Y0 >= yMin) return 0.0;
 
@@ -112,7 +111,6 @@ Double_t RooRazor3DBinPdf::evaluate() const
     integral = Gfun(xLow,yLow)-Gfun(xLow,yHigh)-Gfun(xHigh,yLow)+Gfun(xHigh,yHigh);
     total_integral = Gfun(xMin,yMin)-Gfun(xMin,yMax)-Gfun(xMax,yMin)+Gfun(xMax,yMax);
     //total_integral = 1.0;
-    bin_width = (yHigh-yLow)*(xHigh-xLow)*(zHigh-zLow);
   }
 
   if (total_integral>0.0) {
@@ -138,8 +136,7 @@ Double_t RooRazor3DBinPdf::analyticalIntegral(Int_t code, const char* rangeName)
 
    Double_t integral = 0.0;
    Double_t total_integral =  1.0;
-   Double_t bin_width = 1.0;
-   
+      
    //cout <<  "iBinMin = " << iBinMin << ",iBinMax = " << iBinMax << endl;
    Int_t nBins =  xBins*yBins*zBins;
 
@@ -166,7 +163,6 @@ Double_t RooRazor3DBinPdf::analyticalIntegral(Int_t code, const char* rangeName)
 	   Double_t yLow = Hnominal->GetYaxis()->GetBinLowEdge(yBin+1);
 	   Double_t yHigh = Hnominal->GetYaxis()->GetBinUpEdge(yBin+1);
 
-	   bin_width = (yHigh-yLow)*(xHigh-xLow)*(zHigh-zLow);
 	   if(xLow < xCut && yLow < yCut) integral += 0.0;
 	   else integral += Gfun(xLow,yLow)-Gfun(xLow,yHigh)-Gfun(xHigh,yLow)+Gfun(xHigh,yHigh);
 	 }
