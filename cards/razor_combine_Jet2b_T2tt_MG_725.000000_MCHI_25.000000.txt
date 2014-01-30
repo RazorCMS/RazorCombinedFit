@@ -6,7 +6,7 @@ observation	728
 ------------------------------------------------------------
 shapes * * razor_combine_Jet2b_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
-bin		bin1			bin1			bin1
+bin		Jet2b			Jet2b			Jet2b
 process		Jet2b_T2tt 	Jet2b_TTj2b	Jet2b_TTj3b
 process        	0          		1			2
 rate            41.510		726.721		24.827

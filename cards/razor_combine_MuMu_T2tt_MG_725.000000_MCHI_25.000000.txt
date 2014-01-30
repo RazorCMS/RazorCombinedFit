@@ -6,7 +6,7 @@ observation	376
 ------------------------------------------------------------
 shapes * * razor_combine_MuMu_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
-bin		bin1			bin1		
+bin		MuMu			MuMu		
 process		MuMu_T2tt 	MuMu_TTj1b
 process        	0          		1
 rate            2.873		381.090	
