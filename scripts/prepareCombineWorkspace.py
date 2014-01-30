@@ -256,10 +256,11 @@ if __name__ == '__main__':
     nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
     w = rt.RooWorkspace("w%s"%box)
-    
-    th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
-    th1xBins = array('d',range(0,nBins+1))
-    th1xRooBins = rt.RooBinning(nBins, th1xBins, "uniform")
+
+    nMaxBins = 432
+    th1x = rt.RooRealVar("th1x","th1x",0,0,nMaxBins)
+    th1xBins = array('d',range(0,nMaxBins+1))
+    th1xRooBins = rt.RooBinning(nMaxBins, th1xBins, "uniform")
     th1x.setBinning(th1xRooBins)
 
     th1xList = rt.RooArgList()
