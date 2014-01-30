@@ -62,16 +62,18 @@ protected:
    RooRealProxy xCut;        // X cut constant (set pdf to 0 for X < Xcut && Y < Ycut) 
    RooRealProxy yCut;        // Y cut constant (set pdf to 0 for X < Xcut && Y < Ycut) 
    RooRealProxy zCut;        // Z cut constant (set pdf to 0 unless Zut <= Z < Zcut)
-   TH3* Hnominal;        // 3d histogram to specify 3d bin edges (mapping bin number to X,Y,Z values)
    Int_t xBins;        // X bins
    Int_t yBins;        // Y bins
    Int_t zBins;        // Z bins
+   Double_t xArray[20]; // xArray[xBins+1]
+   Double_t yArray[20]; // yArray[yBins+1]
+   Double_t zArray[5]; // zArray[zBins+1]
    Double_t xMax;        // X max
    Double_t yMax;        // Y max
    Double_t zMax;        // Z max
    Double_t xMin;        // X min
    Double_t yMin;        // Y min
-   Double_t zMin;        // Z min`
+   Double_t zMin;        // Z min
 
    Double_t evaluate() const;
 private:
