@@ -248,7 +248,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w")
     
-    th1x = rt.RooRealVar("CMS_th1x","CMS_th1x",0,0,nBins)
+    th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
     th1xBins = array('d',range(0,nBins+1))
     th1xRooBins = rt.RooBinning(nBins, th1xBins, "uniform")
     th1x.setBinning(th1xRooBins)
@@ -258,11 +258,11 @@ if __name__ == '__main__':
     th1xSet = rt.RooArgSet()
     th1xSet.add(th1x)
 
-    channel = rt.RooCategory("CMS_channel","CMS_channel")
-    channel.defineType(box)
+    #channel = rt.RooCategory("channel","channel")
+    #channel.defineType(box)
 
     RootTools.Utils.importToWS(w,th1x)
-    RootTools.Utils.importToWS(w,channel)
+    #RootTools.Utils.importToWS(w,channel)
     
     histos = {}
     histos1d = {}
@@ -338,7 +338,7 @@ if __name__ == '__main__':
     #coefList = rt.RooArgList()
     if box not in ["Jet2b"]:
         razorPdf_TTj1b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj1b"),"razorPdf_%s_%s"%(box,"TTj1b"),
-                                             w.var("CMS_th1x"),
+                                             w.var("th1x"),
                                              w.var("MR0_%s_%s"%("TTj1b",box)),w.var("R0_%s_%s"%("TTj1b",box)),
                                              w.var("b_%s_%s"%("TTj1b",box)),w.var("n_%s_%s"%("TTj1b",box)),
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj1b")),
@@ -349,7 +349,7 @@ if __name__ == '__main__':
         #coefList.add(w.var("Ntot_%s_%s"%("TTj1b",box)))
     if box not in ["MuEle","EleEle","MuMu"]:
         razorPdf_TTj2b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj2b"),"razorPdf_%s_%s"%(box,"TTj2b"),
-                                             w.var("CMS_th1x"),
+                                             w.var("th1x"),
                                              w.var("MR0_%s_%s"%("TTj2b",box)),w.var("R0_%s_%s"%("TTj2b",box)),
                                              w.var("b_%s_%s"%("TTj2b",box)),w.var("n_%s_%s"%("TTj2b",box)),
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj2b")),
@@ -357,7 +357,7 @@ if __name__ == '__main__':
         
         RootTools.Utils.importToWS(w,razorPdf_TTj2b)
         razorPdf_TTj3b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj3b"),"razorPdf_%s_%s"%(box,"TTj3b"),
-                                             w.var("CMS_th1x"),
+                                             w.var("th1x"),
                                              w.var("MR0_%s_%s"%("TTj2b",box)),w.var("R0_%s_%s"%("TTj2b",box)),
                                              w.var("b_%s_%s"%("TTj2b",box)),w.var("n_%s_%s"%("TTj2b",box)),
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj3b")),
@@ -469,7 +469,8 @@ if __name__ == '__main__':
                     histos1d[box,bkg].SetBinContent(newbin,histo.GetBinContent(i,j,k))
                         
         if bkg=="data":
-            dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
+            #dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
+            dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
         else:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
 
