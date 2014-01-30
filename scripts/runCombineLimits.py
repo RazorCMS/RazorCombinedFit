@@ -11,8 +11,11 @@ from array import *
 from getGChiPairs import *
 
     
-def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fitRegion,signalRegion,t,nToys,significance):
+def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fitRegion,signalRegion,t,nToys,significance,workspaceFlag):
     massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
+    workspaceString = ""
+    if workspaceFlag:
+        workspaceString = "Workspace"
     # prepare the script to run
     xsecString = str(xsecPoint).replace(".","p")
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box+"_"+str(t)+".src"
@@ -53,7 +56,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD_2Nov2013.root $PWD\n")
     for ibox in boxes:
         outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_%s_%s.root $PWD\n"%(massPoint,label[ibox],ibox))
-        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s --sigma %f \n"%(user[0],user,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,xsecPoint,signalRegion,sigma[ibox]))
+        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine%s.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s --sigma %f \n"%(user[0],user,workspaceString,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,xsecPoint,signalRegion,sigma[ibox]))
     if len(boxes)==1: 
         if significance and nToys<0:
             outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
@@ -108,6 +111,7 @@ if __name__ == '__main__':
     fitRegion="Sideband"
     signalRegion="FULL"
     significance = False
+    workspaceFlag = True
     nToys = -1
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
@@ -124,7 +128,8 @@ if __name__ == '__main__':
         if sys.argv[i].find("--signal-region")!=-1: signalRegion = sys.argv[i+1]
         if sys.argv[i].find("--toys")!=-1: nToys = int(sys.argv[i+1])
         if sys.argv[i].find("--signif")!=-1: significance = True
-
+        if sys.argv[i].find("--work")!=-1: workspaceFlag = True
+        if sys.argv[i].find("--no-work")!=-1: workspaceFlag = False 
             
     if refXsecFile is not None:
         print "INFO: Input ref xsec file!"
@@ -179,7 +184,7 @@ if __name__ == '__main__':
                     missingFiles+=1
                     runJob = True
                 if not runJob: continue
-                outputname,ffDir = writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fitRegion,signalRegion,t,nToys,significance)
+                outputname,ffDir = writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fitRegion,signalRegion,t,nToys,significance,workspaceFlag)
                 os.system("mkdir -p %s/%s"%(pwd,ffDir))
                 totalJobs+=1
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
