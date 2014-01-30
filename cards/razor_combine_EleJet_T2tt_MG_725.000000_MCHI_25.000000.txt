@@ -6,7 +6,7 @@ observation	3383
 ------------------------------------------------------------
 shapes * * razor_combine_EleJet_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
-bin		bin1			bin1			bin1			bin1
+bin		EleJet			EleJet			EleJet			EleJet
 process		EleJet_T2tt 	EleJet_TTj1b	EleJet_TTj2b	EleJet_TTj3b
 process        	0          		1			2			3
 rate            22.366		2865.012		583.417		14.643

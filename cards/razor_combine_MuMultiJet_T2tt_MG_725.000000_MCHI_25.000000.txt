@@ -6,7 +6,7 @@ observation	2741
 ------------------------------------------------------------
 shapes * * razor_combine_MuMultiJet_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
-bin		bin1			bin1			bin1			bin1
+bin		MuMultiJet			MuMultiJet			MuMultiJet			MuMultiJet
 process		MuMultiJet_T2tt 	MuMultiJet_TTj1b	MuMultiJet_TTj2b	MuMultiJet_TTj3b
 process        	0          		1			2			3
 rate            51.925		1683.333		1218.714		144.375
