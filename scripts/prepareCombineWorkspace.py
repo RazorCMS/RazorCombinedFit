@@ -253,11 +253,12 @@ if __name__ == '__main__':
     y = array('d', cfg.getBinning(box)[1])
     z = array('d', cfg.getBinning(box)[2])
     
-    nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
+    #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
     w = rt.RooWorkspace("w%s"%box)
 
     nMaxBins = 432
+    nBins = nMaxBins
     th1x = rt.RooRealVar("th1x","th1x",0,0,nMaxBins)
     th1xBins = array('d',range(0,nMaxBins+1))
     th1xRooBins = rt.RooBinning(nMaxBins, th1xBins, "uniform")
@@ -464,13 +465,13 @@ if __name__ == '__main__':
     for index, histo in histos.iteritems():
         box, bkg = index
         print box, bkg
-        totalbins = (len(x)-1)*(len(y)-1)*(len(z)-1)
+        totalbins = nMaxBins
         if bkg=="data":
             histos1d[box,bkg] = rt.TH1D("data_obs","data_obs",totalbins, 0, totalbins)
         else:
             histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),totalbins, 0, totalbins)
             
-        totalbins = histos1d[box,bkg].GetNbinsX()
+        totalbins = nMaxBins
         newbin = 0
         for i in xrange(1,histo.GetNbinsX()+1):
             for j in xrange(1,histo.GetNbinsY()+1):
