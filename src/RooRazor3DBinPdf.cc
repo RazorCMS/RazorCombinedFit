@@ -26,7 +26,6 @@ RooRazor3DBinPdf::RooRazor3DBinPdf(const char *name, const char *title,
   xCut("xCut", "X Cut parameter",this, _xCut),
   yCut("yCut", "Y Cut parameter",this, _yCut),
   zCut("zCut", "Z Cut parameter",this, _zCut),
-  Hnominal(_Hnominal),
   xBins(0),
   yBins(0),
   zBins(0),
@@ -37,15 +36,27 @@ RooRazor3DBinPdf::RooRazor3DBinPdf(const char *name, const char *title,
   yMin(0),
   zMin(0)
 {
-  xBins = Hnominal->GetXaxis()->GetNbins();
-  yBins = Hnominal->GetYaxis()->GetNbins();
-  zBins = Hnominal->GetZaxis()->GetNbins();
-  xMin = Hnominal->GetXaxis()->GetBinLowEdge(1);
-  yMin = Hnominal->GetYaxis()->GetBinLowEdge(1);
-  zMin = Hnominal->GetZaxis()->GetBinLowEdge(1);
-  xMax = Hnominal->GetXaxis()->GetBinUpEdge(xBins);
-  yMax = Hnominal->GetYaxis()->GetBinUpEdge(yBins);
-  zMax = Hnominal->GetZaxis()->GetBinUpEdge(zBins);
+  xBins = _Hnominal->GetXaxis()->GetNbins();
+  yBins = _Hnominal->GetYaxis()->GetNbins();
+  zBins = _Hnominal->GetZaxis()->GetNbins();
+  xMin = _Hnominal->GetXaxis()->GetBinLowEdge(1);
+  yMin = _Hnominal->GetYaxis()->GetBinLowEdge(1);
+  zMin = _Hnominal->GetZaxis()->GetBinLowEdge(1);
+  xMax = _Hnominal->GetXaxis()->GetBinUpEdge(xBins);
+  yMax = _Hnominal->GetYaxis()->GetBinUpEdge(yBins);
+  zMax = _Hnominal->GetZaxis()->GetBinUpEdge(zBins);
+  memset(&xArray, 0, sizeof(xArray));
+  memset(&yArray, 0, sizeof(yArray));
+  memset(&zArray, 0, sizeof(zArray));
+  for (Int_t i=0; i<xBins+1; i++){
+    xArray[i] =  _Hnominal->GetXaxis()->GetBinLowEdge(i+1);
+  }
+  for (Int_t j=0; j<yBins+1; j++){
+    yArray[j] =  _Hnominal->GetYaxis()->GetBinLowEdge(j+1);
+  }
+  for (Int_t k=0; k<zBins+1; k++){
+    zArray[k] =  _Hnominal->GetZaxis()->GetBinLowEdge(k+1);
+  }
 }
 //---------------------------------------------------------------------------
 RooRazor3DBinPdf::RooRazor3DBinPdf(const RooRazor3DBinPdf& other, const char* name) :
@@ -58,7 +69,6 @@ RooRazor3DBinPdf::RooRazor3DBinPdf(const RooRazor3DBinPdf& other, const char* na
    xCut("xCut", this, other.xCut),
    yCut("yCut", this, other.yCut),
    zCut("zCut", this, other.zCut),
-   Hnominal(other.Hnominal),
    xBins(other.xBins),
    yBins(other.yBins),
    zBins(other.zBins),
@@ -69,6 +79,18 @@ RooRazor3DBinPdf::RooRazor3DBinPdf(const RooRazor3DBinPdf& other, const char* na
    yMin(other.yMin),
    zMin(other.zMin)
 {
+  //memset(&xArray, 0, sizeof(xArray));
+  //memset(&yArray, 0, sizeof(yArray));
+  //memset(&zArray, 0, sizeof(zArray));
+  for (Int_t i=0; i<xBins+1; i++){
+    xArray[i] = other.xArray[i];
+  }
+  for (Int_t j=0; j<yBins+1; j++){
+    yArray[j] =  other.yArray[j];
+  }
+  for (Int_t k=0; k<zBins+1; k++){
+    zArray[k] =  other.zArray[k];
+  }
 }
 //---------------------------------------------------------------------------
 Double_t RooRazor3DBinPdf::evaluate() const
@@ -95,13 +117,13 @@ Double_t RooRazor3DBinPdf::evaluate() const
   //cout << "in bin " << iBin << " which is in range" << endl;
   //cout << "(" << xBin+1 << "," << yBin+1 << "," << zBin+1 << ")" << endl;
 
-  Double_t zLow = Hnominal->GetZaxis()->GetBinLowEdge(zBin+1);
-  Double_t zHigh = Hnominal->GetZaxis()->GetBinUpEdge(zBin+1);
+  Double_t zLow = zArray[zBin];
+  Double_t zHigh = zArray[zBin+1];
   if (zCut >= zLow and zCut < zHigh){
-    Double_t xLow = Hnominal->GetXaxis()->GetBinLowEdge(xBin+1);
-    Double_t xHigh = Hnominal->GetXaxis()->GetBinUpEdge(xBin+1);
-    Double_t yLow = Hnominal->GetYaxis()->GetBinLowEdge(yBin+1);
-    Double_t yHigh = Hnominal->GetYaxis()->GetBinUpEdge(yBin+1);
+    Double_t xLow = xArray[xBin];
+    Double_t xHigh = xArray[xBin+1];
+    Double_t yLow = yArray[yBin];
+    Double_t yHigh = yArray[yBin+1];
 
     
     if(xLow < xCut && yLow < yCut) {
@@ -150,19 +172,18 @@ Double_t RooRazor3DBinPdf::analyticalIntegral(Int_t code, const char* rangeName)
        Int_t yBin = ( (iBin - zBin)/(zBins) ) % (yBins);
        Int_t xBin =  (iBin - zBin - yBin*zBins ) / (zBins*yBins);
  
-       Double_t zLow = Hnominal->GetZaxis()->GetBinLowEdge(zBin+1);
-       Double_t zHigh = Hnominal->GetZaxis()->GetBinUpEdge(zBin+1);
-
+       Double_t zLow = zArray[zBin];
+       Double_t zHigh = zArray[zBin+1];
+       
        if(iBin < 0 || iBin >= nBins) {
 	 integral += 0.0;
        }
        else{
 	 if (zCut >= zLow and zCut < zHigh){
-	   Double_t xLow = Hnominal->GetXaxis()->GetBinLowEdge(xBin+1);
-	   Double_t xHigh = Hnominal->GetXaxis()->GetBinUpEdge(xBin+1);
-	   Double_t yLow = Hnominal->GetYaxis()->GetBinLowEdge(yBin+1);
-	   Double_t yHigh = Hnominal->GetYaxis()->GetBinUpEdge(yBin+1);
-
+	   Double_t xLow = xArray[xBin];
+	   Double_t xHigh = xArray[xBin+1];
+	   Double_t yLow = yArray[yBin];
+	   Double_t yHigh = yArray[yBin+1];
 	   if(xLow < xCut && yLow < yCut) integral += 0.0;
 	   else integral += Gfun(xLow,yLow)-Gfun(xLow,yHigh)-Gfun(xHigh,yLow)+Gfun(xHigh,yHigh);
 	 }
