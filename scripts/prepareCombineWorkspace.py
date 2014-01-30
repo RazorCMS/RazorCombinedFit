@@ -49,7 +49,7 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
     return newhisto
     
 def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert):
-        errorMult = 10.
+        errorMult = 100.
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
