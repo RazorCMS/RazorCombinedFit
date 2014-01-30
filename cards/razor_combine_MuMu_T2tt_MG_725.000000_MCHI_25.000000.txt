@@ -1,15 +1,15 @@
 imax 1 number of channels
 jmax 1 number of backgrounds
-kmax 13 number of nuisnace parameters
+kmax 12 number of nuisance parameters
 ------------------------------------------------------------
 observation	376
 ------------------------------------------------------------
-shapes * * razor_combine_MuMu_T2tt_MG_725.000000_MCHI_25.000000.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes * * razor_combine_MuMu_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
 bin		bin1			bin1		
 process		MuMu_T2tt 	MuMu_TTj1b
 process        	0          		1
-rate            0.179		381.090	
+rate            2.873		381.090	
 ------------------------------------------------------------
 lumi			lnN	1.026       1.00
 lepton			lnN	1.060       1.00
@@ -18,9 +18,8 @@ Pdf			shape	1.00       -
 Jes			shape	1.00       -
 Btag			shape	1.00       -
 Isr			shape	1.00       -
-bgNorm_TTj1b_MuMu  	lnN   	1.00       1.061
-bgShape00_MR0_TTj1b_MuMu	shape	-	   1.00
-bgShape01_Ntot_TTj1b_MuMu	shape	-	   1.00
-bgShape02_R0_TTj1b_MuMu	shape	-	   1.00
-bgShape03_b_TTj1b_MuMu	shape	-	   1.00
-bgShape04_n_TTj1b_MuMu	shape	-	   1.00
+bgNorm_TTj1b_MuMu  	lnN   	1.00       1.145
+MR0_TTj1b_MuMu	param	-2.320775e+02    8.280167e+02
+R0_TTj1b_MuMu	param	-2.548109e-01    6.185683e-01
+b_TTj1b_MuMu	param	1.891191e-01    4.049829e-01
+n_TTj1b_MuMu	param	1.611379e+00    8.679531e-01

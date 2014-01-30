@@ -1,15 +1,15 @@
 imax 1 number of channels
 jmax 3 number of backgrounds
-kmax 21 number of nuisnace parameters
+kmax 18 number of nuisance parameters
 ------------------------------------------------------------
 observation	5485
 ------------------------------------------------------------
-shapes * * razor_combine_MuJet_T2tt_MG_725.000000_MCHI_25.000000.root $PROCESS $PROCESS_$SYSTEMATIC
+shapes * * razor_combine_MuJet_T2tt_MG_725.000000_MCHI_25.000000.root w:$PROCESS w:$PROCESS_$SYSTEMATIC
 ------------------------------------------------------------
 bin		bin1			bin1			bin1			bin1
 process		MuJet_T2tt 	MuJet_TTj1b	MuJet_TTj2b	MuJet_TTj3b
 process        	0          		1			2			3
-rate            3.651		4289.016		1264.006		42.451
+rate            58.577		4289.016		1306.457		42.451
 ------------------------------------------------------------
 lumi			lnN	1.026       1.00	1.00 1.00
 lepton			lnN	1.030       1.00	1.00 1.00
@@ -18,17 +18,14 @@ Pdf			shape	1.00       -	-	-
 Jes			shape	1.00       -	-	-
 Btag			shape	1.00       -	-	-
 Isr			shape	1.00       -	-	-
-bgNorm_TTj1b_MuJet  	lnN   	1.00       1.016	1.00	1.00
-bgNorm_TTj2b_MuJet  	lnN   	1.00       1.00	1.029	1.00
-bgNorm_TTj3b_MuJet  	lnN   	1.00       1.00	1.00	1.166
-bgShape00_MR0_TTj1b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape01_MR0_TTj2b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape02_Ntot_TTj1b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape03_Ntot_TTj2b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape04_R0_TTj1b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape05_R0_TTj2b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape06_b_TTj1b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape07_b_TTj2b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape08_f3_TTj2b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape09_n_TTj1b_MuJet	shape	-	   1.00	1.00	1.00
-bgShape10_n_TTj2b_MuJet	shape	-	   1.00	1.00	1.00
+bgNorm_TTj1b_MuJet  	lnN   	1.00       1.039	1.00	1.00
+bgNorm_TTj2b_MuJet  	lnN   	1.00       1.00	1.072	1.00
+bgNorm_TTj3b_MuJet  	lnN   	1.00       1.00	1.00	1.336
+MR0_TTj1b_MuJet	param	-1.641876e+02    1.729622e+02
+MR0_TTj2b_MuJet	param	-4.316195e+02    4.920962e+02
+R0_TTj1b_MuJet	param	-2.567018e-01    1.474491e-01
+R0_TTj2b_MuJet	param	-4.084442e-01    3.727149e-01
+b_TTj1b_MuJet	param	1.206092e+00    1.227226e+00
+b_TTj2b_MuJet	param	3.640107e+00    3.602159e+00
+n_TTj1b_MuJet	param	3.412816e+00    2.033623e+00
+n_TTj2b_MuJet	param	6.864292e+00    6.294692e+00
