@@ -49,6 +49,7 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
     return newhisto
     
 def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert):
+        errorMult = 10.
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -89,12 +90,12 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
             normErr = 1.
-            normErr += 2.*(w.var("Ntot_%s_%s"%("TTj1b",box)).getError()/w.var("Ntot_%s_%s"%("TTj1b",box)).getVal())
+            normErr += errorMult*(w.var("Ntot_%s_%s"%("TTj1b",box)).getError()/w.var("Ntot_%s_%s"%("TTj1b",box)).getVal())
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
                           (bkgs[0],box,normErr))
             for paramName in paramNames:
                 if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
-                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), 2.*w.var("%s_%s"%(paramName,box)).getError()))
+                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
         elif box in ["Jet2b"]:
             txtfile.write("bin		%s			%s			%s\n"%(box,box,box))
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
@@ -112,19 +113,19 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
             normErr = 1.
-            normErr += 2.*w.var("Ntot_%s_%s"%("TTj2b",box)).getError()/w.var("Ntot_%s_%s"%("TTj2b",box)).getVal()
+            normErr += errorMult*w.var("Ntot_%s_%s"%("TTj2b",box)).getError()/w.var("Ntot_%s_%s"%("TTj2b",box)).getVal()
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
                           (bkgs[0],box,normErr))
             normErr = 1.
             quadErr = rt.TMath.Power(w.var("Ntot_%s_%s"%("TTj2b",box)).getError()/w.var("Ntot_%s_%s"%("TTj2b",box)).getVal(),2.) 
             quadErr += rt.TMath.Power(w.var("f3_%s_%s"%("TTj2b",box)).getError()/w.var("f3_%s_%s"%("TTj2b",box)).getVal(),2.)
-            normErr += 2.*rt.TMath.Sqrt(quadErr)
+            normErr += errorMult*rt.TMath.Sqrt(quadErr)
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
                           (bkgs[1],box,normErr))
             
             for paramName in paramNames:
                 if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
-                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), 2.*w.var("%s_%s"%(paramName,box)).getError()))
+                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
         else:
             txtfile.write("bin		%s			%s			%s			%s\n"%(box,box,box,box))
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
@@ -143,22 +144,22 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
             normErr = 1.
-            normErr += 2.*w.var("Ntot_%s_%s"%("TTj1b",box)).getError()/w.var("Ntot_%s_%s"%("TTj1b",box)).getVal()
+            normErr += errorMult*w.var("Ntot_%s_%s"%("TTj1b",box)).getError()/w.var("Ntot_%s_%s"%("TTj1b",box)).getVal()
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
                           (bkgs[0],box,normErr))
             normErr = 1.
-            normErr += 2.*w.var("Ntot_%s_%s"%("TTj2b",box)).getError()/w.var("Ntot_%s_%s"%("TTj2b",box)).getVal()
+            normErr += errorMult*w.var("Ntot_%s_%s"%("TTj2b",box)).getError()/w.var("Ntot_%s_%s"%("TTj2b",box)).getVal()
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
                           (bkgs[1],box,normErr))
             normErr = 1.
             quadErr = rt.TMath.Power(w.var("Ntot_%s_%s"%("TTj2b",box)).getError()/w.var("Ntot_%s_%s"%("TTj2b",box)).getVal(),2.) 
             quadErr += rt.TMath.Power(w.var("f3_%s_%s"%("TTj2b",box)).getError()/w.var("f3_%s_%s"%("TTj2b",box)).getVal(),2.)
-            normErr += 2.*rt.TMath.Sqrt(quadErr)
+            normErr += errorMult*rt.TMath.Sqrt(quadErr)
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
                           (bkgs[2],box,normErr))
             for paramName in paramNames:
                 if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
-                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), 2.*w.var("%s_%s"%(paramName,box)).getError()))
+                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
             
         txtfile.close()
 
