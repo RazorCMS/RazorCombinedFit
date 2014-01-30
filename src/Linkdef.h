@@ -26,6 +26,7 @@
 #pragma link C++ defined_in "RooRazor2DTailBNN_SYS.h";
 #pragma link C++ defined_in "RooRazor2DTurnOn.h";
 #pragma link C++ defined_in "RooRazorLShape.h";
+#pragma link C++ defined_in "RooRazor3DBinPdf.h";
 #pragma link C++ defined_in "RooTwoBin.h";
 #pragma link C++ defined_in "RooDalglish.h";
 #pragma link C++ defined_in "MLMixedSample.h";
