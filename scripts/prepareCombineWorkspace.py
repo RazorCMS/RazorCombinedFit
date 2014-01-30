@@ -335,11 +335,14 @@ if __name__ == '__main__':
 
     w.factory("MRCut_%s[%i,%i,%i]"%(box,x[1],x[1],x[1]))
     w.factory("RCut_%s[%e,%e,%e]"%(box,y[1],y[1],y[1]))
+    w.var("MRCut_%s"%box).setConstant(True)
+    w.var("RCut_%s"%box).setConstant(True)
     
     zCut = 1
     BtagCut = {}
     for bkg in initialBkgs:
         w.factory("BtagCut_%s[%i,%i,%i]"%(bkg,zCut,zCut,zCut))
+        w.var("BtagCut_%s"%bkg).setConstant(True)
         zCut+=1
         
 
