@@ -6,6 +6,7 @@ import RootTools
 from RazorCombinedFit.Framework import Config
 from array import *
 from pdfShit import *
+import glob
 import sys
 
 def getCutString(box, signalRegion):
@@ -205,7 +206,15 @@ if __name__ == '__main__':
     
     cfg = Config.Config(options.config)
     
-    rt.gSystem.Load("../lib/libRazor")
+    if glob.glob("../../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so"):
+        rt.gSystem.Load("../../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
+    else: 
+        print "WARNING: NO HIGGS LIBRARY"
+    if glob.glob("lib/libRazor.so"):
+        rt.gSystem.Load("lib/libRazor.so")
+    else: 
+        print "WARNING: NO RAZOR LIBRARY"
+        
 
     seed = 314159
     rt.RooRandom.randomGenerator().SetSeed(seed)
@@ -246,7 +255,7 @@ if __name__ == '__main__':
     
     nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
-    w = rt.RooWorkspace("w")
+    w = rt.RooWorkspace("w%s"%box)
     
     th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
     th1xBins = array('d',range(0,nBins+1))
