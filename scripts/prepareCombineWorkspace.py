@@ -206,8 +206,8 @@ if __name__ == '__main__':
     
     cfg = Config.Config(options.config)
     
-    if glob.glob("../../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so"):
-        rt.gSystem.Load("../../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
+    if glob.glob("../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so"):
+        rt.gSystem.Load("../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
     else: 
         print "WARNING: NO HIGGS LIBRARY"
     if glob.glob("lib/libRazor.so"):
