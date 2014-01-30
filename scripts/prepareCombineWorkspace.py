@@ -49,7 +49,7 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
     return newhisto
     
 def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert):
-        errorMult = 100.
+        errorMult = 2.
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -206,16 +206,19 @@ if __name__ == '__main__':
     print 'INFO: input file is %s' % ', '.join(args)
     
     cfg = Config.Config(options.config)
-    
-    if glob.glob("../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so"):
-        rt.gSystem.Load("../../lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
-    else: 
+
+
+
+    loadVal = rt.gSystem.Load("${CMSSW_BASE}/lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
+    if loadVal == -1:
         print "WARNING: NO HIGGS LIBRARY"
-    if glob.glob("lib/libRazor.so"):
-        rt.gSystem.Load("lib/libRazor.so")
-    else: 
-        print "WARNING: NO RAZOR LIBRARY"
         
+    loadVal = rt.gSystem.Load("lib/libRazor.so")
+    if loadVal == -1:
+        loadVal = rt.gSystem.Load("${CMSSW_BASE}/src/RazorCombinedFit/lib/libRazor.so")
+        if loadVal == -1:
+            print "WARNING: NO RAZOR LIBRARY"
+                    
 
     seed = 314159
     rt.RooRandom.randomGenerator().SetSeed(seed)

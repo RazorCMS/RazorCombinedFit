@@ -38,7 +38,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
     outputfile.write('mkdir -p %s\n'%combineDir)
     outputfile.write('echo $SHELL\n')
     outputfile.write('pwd\n')
-    outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit \n'%(user[0],user))
+    outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit \n'%(user[0],user))
     outputfile.write('pwd\n')
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
     outputfile.write('eval `scramv1 runtime -sh`\n')
@@ -56,28 +56,28 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD_2Nov2013.root $PWD\n")
     for ibox in boxes:
         outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_%s_%s.root $PWD\n"%(massPoint,label[ibox],ibox))
-        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/scripts/prepareCombine%s.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s --sigma %f \n"%(user[0],user,workspaceString,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,xsecPoint,signalRegion,sigma[ibox]))
+        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombine%s.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s --sigma %f \n"%(user[0],user,workspaceString,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,xsecPoint,signalRegion,sigma[ibox]))
     if len(boxes)==1: 
         if significance and nToys<0:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
         elif significance and nToys>0:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat PL --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat PL --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
         elif nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
         else:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,ibox,t,ibox,massPoint))
     elif len(boxes)>1:
         options = ["%s=razor_combine_%s_%s_%s.txt"%(ibox,ibox,model,massPoint) for ibox in boxes]
         option = " ".join(options)
-        outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
+        outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
         if significance and nToys<0:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M ProfileLikelihood --significance -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         elif significance and nToys>0:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat PL --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat PL --fork 4 -T %i --significance -n Signif${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         elif nToys>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --saveHybridResult --testStat LHC -H Asymptotic --fork 4 -T %i -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,nToys,massPoint,xsecString,fitRegion,box,t,box,massPoint))
         else:
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_1/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,box,t,box,massPoint))
+            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M Asymptotic -n ${NAME}_%s_xsec%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,xsecString,fitRegion,box,t,box,massPoint))
 
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
     outputfile.write("cd; pwd; rm -rf $TWD\n")
