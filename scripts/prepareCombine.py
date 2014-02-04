@@ -87,9 +87,8 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
-            normErr = 1.
-            normErr += (workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal())
-            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
+            normErr = 2.
+            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f\n"%
                           (bkgs[0],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
@@ -111,15 +110,10 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Jes			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
-            normErr = 1.
-            normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
-            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
+            normErr = 2.
+            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00\n"%
                           (bkgs[0],box,normErr))
-            normErr = 1.
-            quadErr = rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.) 
-            quadErr += rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.)
-            normErr += rt.TMath.Sqrt(quadErr)
-            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
+            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f\n"%
                           (bkgs[1],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
@@ -141,18 +135,13 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
-            normErr = 1.
-            normErr += workspace.var("Ntot_TTj1b").getError()/workspace.var("Ntot_TTj1b").getVal()
+            normErr = 2.
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
                           (bkgs[0],box,normErr))
-            normErr = 1.
-            normErr += workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal()
+            normErr = 2.
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
                           (bkgs[1],box,normErr))
-            normErr = 1. 
-            quadErr = rt.TMath.Power(workspace.var("Ntot_TTj2b").getError()/workspace.var("Ntot_TTj2b").getVal(),2.)
-            quadErr += rt.TMath.Power(workspace.var("f3_TTj2b").getError()/workspace.var("f3_TTj2b").getVal(),2.)
-            normErr += rt.TMath.Sqrt(quadErr)
+            normErr = 2.
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
                           (bkgs[2],box,normErr))
             for i in range(0,len(paramNames)):
@@ -634,6 +623,7 @@ if __name__ == '__main__':
                 for q in range(0,len(paramNames)):
                     paramName = paramNames[q]
                     workspace.var(paramName).setVal(cen[q])
+                    workspace.var(paramName).setError(err[q])
             
     print "INFO: final variations were", sign
     
@@ -645,15 +635,15 @@ if __name__ == '__main__':
             for syst in ['Up','Down']:
                 print "INFO: histogram for %s_bgShape%02d_%s_%s%s has %e integral!"%(bkg,p,variationName,box,syst,histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
     
-    # for bkg in initialBkgs:
-    #     for p in range(0,len(paramNames)):
-    #         print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
-    #         print "background shape variation #%02d"%p
-    #         variationName = paramNames[p]
-    #         for syst in ['Up','Down']:
-    #             if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
-    #                 histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
-    #             else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
+    for bkg in initialBkgs:
+        for p in range(0,len(paramNames)):
+            print "\nINFO: Now renormalizing background shape systematic histograms to nominal\n"
+            print "background shape variation #%02d"%p
+            variationName = paramNames[p]
+            for syst in ['Up','Down']:
+                if histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral() > 0:
+                    histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
+                else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
     wHisto = sigFile.Get('wHisto_pdferr_nom')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
@@ -715,9 +705,9 @@ if __name__ == '__main__':
         print box, bkg
         totalbins = (len(x)-1)*(len(y)-1)*(len(z)-1)
         if bkg=="data":
-            histos1d[box,bkg] = rt.TH1D("data_obs","data_obs",totalbins, 1, totalbins+1)
+            histos1d[box,bkg] = rt.TH1D("data_obs","data_obs",totalbins, 0, totalbins)
         else:
-            histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),totalbins, 1, totalbins+1)
+            histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),totalbins, 0, totalbins)
             
         totalbins = histos1d[box,bkg].GetNbinsX()
         newbin = 0
