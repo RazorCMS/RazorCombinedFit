@@ -20,6 +20,7 @@
 #pragma link C++ defined_in "RooTwoSideGaussianWithOneXDependentExponentialWithInverseN.h"; 
 #pragma link C++ defined_in "RooRazor2DSignal.h";
 #pragma link C++ defined_in "RooRazor3DSignal.h";
+#pragma link C++ defined_in "RooRazor3DBinSignal.h";
 #pragma link C++ defined_in "RooRazor2DTail.h";
 #pragma link C++ defined_in "RooRazor2DTail_SYS.h";
 #pragma link C++ defined_in "RooRazor1DTail_SYS.h";
@@ -33,6 +34,7 @@
 #pragma link C++ defined_in "RooBTagMult.h";
 #pragma link C++ defined_in "VecbosBtagPdf.h";
 #pragma link C++ defined_in "StandardHypoTestInvDemo.h";
+#pragma link C++ defined_in "CombDataSetFactory.h";
 
 #endif
 
