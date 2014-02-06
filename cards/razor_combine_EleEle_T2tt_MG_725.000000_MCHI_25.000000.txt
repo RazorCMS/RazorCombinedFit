@@ -1,6 +1,6 @@
 imax 1 number of channels
 jmax 1 number of backgrounds
-kmax 12 number of nuisance parameters
+kmax 8 number of nuisance parameters
 ------------------------------------------------------------
 observation	289
 ------------------------------------------------------------
@@ -18,8 +18,4 @@ Pdf			shape	1.00       -
 Jes			shape	1.00       -
 Btag			shape	1.00       -
 Isr			shape	1.00       -
-bgNorm_TTj1b_EleEle  	lnN   	1.00       1.170
-MR0_TTj1b_EleEle	param	-8.559421e+02    3.371487e+03
-R0_TTj1b_EleEle	param	-8.911577e-01    3.007847e+00
-b_TTj1b_EleEle	param	2.276288e-01    1.562883e+00
-n_TTj1b_EleEle	param	1.783716e+00    3.102533e+00
+bgNorm_TTj1b_EleEle  	lnU   	1.00       2.000
