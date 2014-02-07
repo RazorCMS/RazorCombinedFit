@@ -18,4 +18,4 @@ Pdf			shape	1.00       -
 Jes			shape	1.00       -
 Btag			shape	1.00       -
 Isr			shape	1.00       -
-bgNorm_TTj1b_MuEle  	lnU   	1.00       2.000
+bgNorm_TTj1b_MuEle  	flatParam

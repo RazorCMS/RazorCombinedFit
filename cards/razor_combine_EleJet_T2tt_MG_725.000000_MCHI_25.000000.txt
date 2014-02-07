@@ -18,6 +18,6 @@ Pdf			shape	1.00       -	-	-
 Jes			shape	1.00       -	-	-
 Btag			shape	1.00       -	-	-
 Isr			shape	1.00       -	-	-
-bgNorm_TTj1b_EleJet  	lnU   	1.00       2.000	1.00	1.00
-bgNorm_TTj2b_EleJet  	lnU   	1.00       1.00	2.000	1.00
-bgNorm_TTj3b_EleJet  	lnU   	1.00       1.00	1.00	2.000
+bgNorm_TTj1b_EleJet  	flatParam
+bgNorm_TTj2b_EleJet  	flatParam
+bgNorm_TTj3b_EleJet  	flatParam
