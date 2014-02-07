@@ -1,6 +1,6 @@
 imax 1 number of channels
 jmax 3 number of backgrounds
-kmax 10 number of nuisance parameters
+kmax 18 number of nuisance parameters
 ------------------------------------------------------------
 observation	2589
 ------------------------------------------------------------
@@ -18,6 +18,14 @@ Pdf			shape	1.00       -	-	-
 Jes			shape	1.00       -	-	-
 Btag			shape	1.00       -	-	-
 Isr			shape	1.00       -	-	-
-bgNorm_TTj1b_MultiJet  	flatParam
-bgNorm_TTj2b_MultiJet  	flatParam
-bgNorm_TTj3b_MultiJet  	flatParam
+MR0_TTj1b_MultiJet  	flatParam
+MR0_TTj2b_MultiJet  	flatParam
+Ntot_TTj1b_MultiJet  	flatParam
+Ntot_TTj2b_MultiJet  	flatParam
+R0_TTj1b_MultiJet  	flatParam
+R0_TTj2b_MultiJet  	flatParam
+b_TTj1b_MultiJet  	flatParam
+b_TTj2b_MultiJet  	flatParam
+f3_TTj2b_MultiJet  	flatParam
+n_TTj1b_MultiJet  	flatParam
+n_TTj2b_MultiJet  	flatParam
