@@ -18,9 +18,9 @@ Pdf			shape	1.00       -	-
 Jes			shape	1.00       -	-
 Btag			shape	1.00       -	-
 Isr			shape	1.00       -	-
+Jet2b_TTj2b_norm  	flatParam
+Jet2b_TTj3b_norm  	flatParam
 MR0_TTj2b_Jet2b  	flatParam
-Ntot_TTj2b_Jet2b  	flatParam
 R0_TTj2b_Jet2b  	flatParam
 b_TTj2b_Jet2b  	flatParam
-f3_TTj2b_Jet2b  	flatParam
 n_TTj2b_Jet2b  	flatParam
