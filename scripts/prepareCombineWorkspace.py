@@ -377,7 +377,7 @@ if __name__ == '__main__':
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj1b")),
                                              w.obj("EmptyHist3D_%s"%(box)))
         w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj1b",w.var("Ntot_TTj1b_%s"%box).getVal()))
-        extRazorPdf_TTj1b = rt.RooExtendPdf("%s_%s"%(box,"TTj1b"),"extRazorPdf_%s_%s"%(box,"TTj1b"),razorPdf_TTj1b,w.var("%s_TTj1b_norm"%box))
+        extRazorPdf_TTj1b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj1b"),"extRazorPdf_%s_%s"%(box,"TTj1b"),razorPdf_TTj1b,w.var("%s_TTj1b_norm"%box))
         RootTools.Utils.importToWS(w,extRazorPdf_TTj1b)
         #pdfList.add(razorPdf_TTj1b)
         #coefList.add(w.var("Ntot_%s_%s"%("TTj1b",box)))
