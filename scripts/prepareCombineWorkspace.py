@@ -55,19 +55,19 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
         if box in ["MuEle","MuMu","EleEle"]:
             nBkgd = 1
             #nNuis = 12
-            nNuis = 8
+            nNuis = 7
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
         elif box in ["Jet2b"]:
             nBkgd = 2
             #nNuis = 13
-            nNuis = 9
+            nNuis = 7
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
         else:
             nBkgd = 3
             #nNuis = 18
-            nNuis = 10
+            nNuis = 7
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
         txtfile.write("------------------------------------------------------------\n")
@@ -92,11 +92,15 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f\n"%
-                          (bkgs[0],box,normErr))
-            # for paramName in paramNames:
-            #     if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+            #normErr = 2.
+            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f\n"%
+            #              (bkgs[0],box,normErr))
+            txtfile.write("%s_%s_norm  	flatParam\n"%
+                          (box,bkgs[0]))
+            for paramName in paramNames:
+                if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+                txtfile.write("%s_%s  	flatParam\n"%
+                              (paramName,box))
             #     txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
         elif box in ["Jet2b"]:
             txtfile.write("bin		%s			%s			%s\n"%(box,box,box))
@@ -114,14 +118,19 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Jes			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00\n"%
-                          (bkgs[0],box,normErr))
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f\n"%
-                          (bkgs[1],box,normErr))
-            
-            # for paramName in paramNames:
-            #     if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+            #normErr = 2.
+            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00\n"%
+            #              (bkgs[0],box,normErr))
+            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f\n"%
+            #              (bkgs[1],box,normErr))
+            txtfile.write("%s_%s_norm  	flatParam\n"%
+                          (box,bkgs[0]))
+            txtfile.write("%s_%s_norm  	flatParam\n"%
+                          (box,bkgs[1]))
+            for paramName in paramNames:
+                if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+                txtfile.write("%s_%s  	flatParam\n"%
+                              (paramName,box))
             #     txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
         else:
             txtfile.write("bin		%s			%s			%s			%s\n"%(box,box,box,box))
@@ -140,17 +149,24 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00	1.00\n"%
-                          (bkgs[0],box,normErr))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f	1.00\n"%
-                          (bkgs[1],box,normErr))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	1.00	%.3f\n"%
-                          (bkgs[2],box,normErr))
-            # for paramName in paramNames:
-            #     if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+            #normErr = 2.
+            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00	1.00\n"%
+            #              (bkgs[0],box,normErr))
+            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f	1.00\n"%
+            #              (bkgs[1],box,normErr))
+            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	1.00	%.3f\n"%
+            #              (bkgs[2],box,normErr))
+            
+            txtfile.write("%s_%s_norm  	flatParam\n"%
+                          (box,bkgs[0]))
+            txtfile.write("%s_%s_norm  	flatParam\n"%
+                          (box,bkgs[1]))
+            txtfile.write("%s_%s_norm  	flatParam\n"%
+                          (box,bkgs[2]))
+            for paramName in paramNames:
+                if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+                txtfile.write("%s_%s  	flatParam\n"%
+                              (paramName,box))
             #     txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
             
         txtfile.close()
@@ -199,15 +215,17 @@ if __name__ == '__main__':
     
     cfg = Config.Config(options.config)
 
-
-
-    loadVal = rt.gSystem.Load("${CMSSW_BASE}/lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
-    if loadVal == -1:
-        print "WARNING: NO HIGGS LIBRARY"
-        
-    loadVal = rt.gSystem.Load("lib/libRazor.so")
-    if loadVal == -1:
+    try: 
+        os.environ['CMSSW_BASE']
+        loadVal = rt.gSystem.Load("${CMSSW_BASE}/lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
+        if loadVal == -1:
+            print "WARNING: NO HIGGS LIBRARY"
         loadVal = rt.gSystem.Load("${CMSSW_BASE}/src/RazorCombinedFit/lib/libRazor.so")
+        if loadVal == -1:
+            print "WARNING: NO RAZOR LIBRARY"         
+    except: 
+        print "no CMSSW"
+        loadVal = rt.gSystem.Load("lib/libRazor.so")
         if loadVal == -1:
             print "WARNING: NO RAZOR LIBRARY"
                     
@@ -328,23 +346,27 @@ if __name__ == '__main__':
         w.factory("%s_%s[%e]"%(paramName,box,paramValue))
         w.var("%s_%s"%(paramName,box)).setError(workspace.var(paramName).getError())
         w.var("%s_%s"%(paramName,box)).setConstant(False)
+        if paramName.find("n_")!=-1 or paramName.find("b_")!=-1:
+            w.var("%s_%s"%(paramName,box)).setMin(0.0)
+        elif paramName.find("MR0_")!=-1:
+            w.var("%s_%s"%(paramName,box)).setMax(x[0])
+        elif paramName.find("R0_")!=-1:
+            w.var("%s_%s"%(paramName,box)).setMax(y[0])
+            
 
-
-    w.factory("MRCut_%s[%i,%i,%i]"%(box,x[1],x[1],x[1]))
-    w.factory("RCut_%s[%e,%e,%e]"%(box,y[1],y[1],y[1]))
+    w.factory("MRCut_%s[%i]"%(box,x[1]))
+    w.factory("RCut_%s[%e]"%(box,y[1]))
     w.var("MRCut_%s"%box).setConstant(True)
     w.var("RCut_%s"%box).setConstant(True)
     
     zCut = 1
     BtagCut = {}
     for bkg in initialBkgs:
-        w.factory("BtagCut_%s[%i,%i,%i]"%(bkg,zCut,zCut,zCut))
+        w.factory("BtagCut_%s[%i]"%(bkg,zCut))
         w.var("BtagCut_%s"%bkg).setConstant(True)
         zCut+=1
         
 
-
-        
     #pdfList = rt.RooArgList()
     #coefList = rt.RooArgList()
     if box not in ["Jet2b"]:
@@ -354,8 +376,9 @@ if __name__ == '__main__':
                                              w.var("b_%s_%s"%("TTj1b",box)),w.var("n_%s_%s"%("TTj1b",box)),
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj1b")),
                                              w.obj("EmptyHist3D_%s"%(box)))
-        
-        RootTools.Utils.importToWS(w,razorPdf_TTj1b)
+        w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj1b",w.var("Ntot_TTj1b_%s"%box).getVal()))
+        extRazorPdf_TTj1b = rt.RooExtendPdf("%s_%s"%(box,"TTj1b"),"extRazorPdf_%s_%s"%(box,"TTj1b"),razorPdf_TTj1b,w.var("%s_TTj1b_norm"%box))
+        RootTools.Utils.importToWS(w,extRazorPdf_TTj1b)
         #pdfList.add(razorPdf_TTj1b)
         #coefList.add(w.var("Ntot_%s_%s"%("TTj1b",box)))
     if box not in ["MuEle","EleEle","MuMu"]:
@@ -364,16 +387,22 @@ if __name__ == '__main__':
                                              w.var("MR0_%s_%s"%("TTj2b",box)),w.var("R0_%s_%s"%("TTj2b",box)),
                                              w.var("b_%s_%s"%("TTj2b",box)),w.var("n_%s_%s"%("TTj2b",box)),
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj2b")),
-                                             w.obj("EmptyHist3D_%s"%(box)))
+                                             w.obj("EmptyHist3D_%s"%(box)))        
+        val = w.var("Ntot_TTj2b_%s"%box).getVal() * (1.0 - w.var("f3_TTj2b_%s"%box).getVal())
+        w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj2b", val ))
+        extRazorPdf_TTj2b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj2b"),"extRazorPdf_%s_%s"%(box,"TTj2b"),razorPdf_TTj2b,w.var("%s_TTj2b_norm"%box))
+        RootTools.Utils.importToWS(w,extRazorPdf_TTj2b)
         
-        RootTools.Utils.importToWS(w,razorPdf_TTj2b)
         razorPdf_TTj3b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj3b"),"razorPdf_%s_%s"%(box,"TTj3b"),
                                              w.var("th1x"),
                                              w.var("MR0_%s_%s"%("TTj2b",box)),w.var("R0_%s_%s"%("TTj2b",box)),
                                              w.var("b_%s_%s"%("TTj2b",box)),w.var("n_%s_%s"%("TTj2b",box)),
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj3b")),
-                                             w.obj("EmptyHist3D_%s"%(box)))       
-        RootTools.Utils.importToWS(w,razorPdf_TTj3b)
+                                             w.obj("EmptyHist3D_%s"%(box)))
+        val = w.var("Ntot_TTj2b_%s"%box).getVal() * w.var("f3_TTj2b_%s"%box).getVal()
+        w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj3b",val))
+        extRazorPdf_TTj3b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj3b"),"extRazorPdf_%s_%s"%(box,"TTj3b"),razorPdf_TTj3b,w.var("%s_TTj3b_norm"%box))
+        RootTools.Utils.importToWS(w,extRazorPdf_TTj3b)
         
         #razorPdf_TTj23b = rt.RooAddPdf("razorPdf_TTj23b_%s"%(box),"razorPdf_TTj23b_%s"%(box),razorPdf_TTj3b,razorPdf_TTj2b,w.var("f3_%s_%s"%("TTj2b",box)))
         #pdfList.add(razorPdf_TTj23b)
@@ -417,6 +446,8 @@ if __name__ == '__main__':
     jesDown =  sigFile.Get('wHisto_JESerr_down')
     isrUp =  sigFile.Get('wHisto_ISRerr_up')
     isrDown =  sigFile.Get('wHisto_ISRerr_down')
+    
+    pdf =  sigFile.Get('wHisto_pdferr_pe')
 
     # adding signal shape systematics
     print "\nINFO: Now obtaining signal shape systematics\n"
@@ -429,6 +460,7 @@ if __name__ == '__main__':
 
     histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, signalRegion)
     histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, signalRegion)
+
     
     pdfUp = wHisto.Clone("%s_%s_PdfUp_3d"%(box,model))
     pdfUp.SetTitle("%s_%s_PdfUp_3d"%(box,model))
