@@ -160,12 +160,11 @@ class Box(object):
         """Makes a signal PDF from the input histograms"""
         
         rootFile = rt.TFile.Open(inputFile)
-        wHisto = rootFile.Get('wHisto_pdferr_nom')
+        wHisto = rootFile.Get('wHisto')#_pdferr_nom')
         btag =  rootFile.Get('wHisto_btagerr_pe')
         jes =  rootFile.Get('wHisto_JESerr_pe')
         pdf =  rootFile.Get('wHisto_pdferr_pe')
         isr =  rootFile.Get('wHisto_ISRerr_pe')
-        
         
         def renameAndImport(histo):
             #make a memory resident copy
@@ -221,7 +220,8 @@ class Box(object):
             opt.Add(rt.RooFit.SumW2Error(True))
         print "About to fit data %s with options:"%data.GetName()
         data.Print()
-        opt.Print("")
+        opt.Print("V")
+       
         result = pdf.fitTo(data, opt)
         return result 
 

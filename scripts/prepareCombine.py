@@ -48,7 +48,7 @@ def writeDataCard(box,model,txtfileName,bkgs,param_names,histos1d,workspace):
         if box in ["MuEle","MuMu","EleEle"]:
             txtfile.write("jmax 1 number of backgrounds\n")
             txtfile.write("kmax 13 number of nuisnace parameters\n")
-        elif box=="Jet2b":
+        elif box in ["Jet2b","Ele"]:
             txtfile.write("jmax 2 number of backgrounds\n")
             txtfile.write("kmax 15 number of nuisnace parameters\n")
         else:

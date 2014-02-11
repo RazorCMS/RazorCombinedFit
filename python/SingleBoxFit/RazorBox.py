@@ -14,8 +14,8 @@ def getBinning(boxName, varName, btag):
     else:
         if varName == "MR" : return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" :
-            if btag == "NoBtag": return [0.05,0.20,0.25,0.30,0.35,0.40,0.45,0.50]
-            elif btag == "Btag": return [0.05,0.20,0.30,0.41,0.52,0.64,0.80,1.5]
+            if btag == "NoBtag": return [0.08, 0.10, 0.15, 0.20,0.25,0.30,0.35,0.40,0.45,0.50]
+            elif btag == "Btag": return [0.08, 0.10, 0.15, 0.20,0.30,0.41,0.52,0.64,0.80,1.5]
 
         
     if varName == "nBtag" :
@@ -47,7 +47,7 @@ class RazorBox(Box.Box):
                           'TTj2b':['MuEle','EleEle','MuMu','TauTauJet','Jet1b'],
                           'Vpj':['MuEle','EleEle','MuMu','Mu','MuJet','MuMultiJet','EleJet','EleMultiJet','MuTau','EleTau','TauTauJet','MultiJet','Jet','Jet2b','Ele','BJetHS','BJetLS', 'BJet']}
                         
-        if fitregion=="Sideband": self.fitregion = "LowRsq,LowMR"
+        if fitregion=="Sideband": self.fitregion = "LowMR,LowRsq"#,LowMR"
         #if fitregion=="Sideband": self.fitregion = "fR1, fR2, fR3, fR4, fR5"
         # for CLs limit setting  remove the following line
         elif fitregion=="FULL": self.fitregion = "FULL"#"LowRsq,LowMR,HighMR"
@@ -252,6 +252,7 @@ class RazorBox(Box.Box):
         if data is None or not data:
             return None
         Ndata = data.reduce(self.getVarRangeCutNamed(ranges=self.fitregion.split(","))).sumEntries()
+
         # self.workspace.var("Ntot_TTj2b").setVal(Ndata*N_TTj2b/(N_TTj2b+N_TTj1b+N_Vpj))
         # self.workspace.var("Ntot_TTj1b").setVal(Ndata*N_TTj1b/(N_TTj2b+N_TTj1b+N_Vpj))
         # self.workspace.var("Ntot_Vpj").setVal(Ndata*N_Vpj/(N_TTj2b+N_TTj1b+N_Vpj))
@@ -292,7 +293,6 @@ class RazorBox(Box.Box):
         
         # compute the expected yield/(pb-1)
         self.workspace.var('sigma').setVal(signalXsec)
-        
         #set the MC efficiency relative to the number of events generated
         # compute the signal yield multiplying by the efficiency
         self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',sigma, lumi, eff, eff_value_%s)" %(modelName,self.name))
@@ -639,7 +639,7 @@ class RazorBox(Box.Box):
         if self.workspace.function("Ntot_Signal") != None:
             N_Signal = self.workspace.function("Ntot_Signal").getVal()
         else: N_Signal = 0.
-        print N_Signal
+        print 'N_signal', N_Signal
 
             
         # Generate a sample of signal

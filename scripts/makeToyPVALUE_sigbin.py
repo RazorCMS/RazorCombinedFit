@@ -273,17 +273,19 @@ def getPValueFromKDE(nObs,maxX,func):
 
 def getPValue(n, hToy):
     if hToy.Integral() <= 0.: return 0.
+    if n > hToy.GetXaxis().GetLast() : return 0.
     Prob_n = hToy.GetBinContent(hToy.FindBin(n))
     Prob = 0
     for i in range(1, hToy.GetNbinsX()+1):
         if hToy.GetBinContent(i)<= Prob_n: Prob += hToy.GetBinContent(i)
-    Prob = Prob/hToy.Integral()
+    Prob = Prob/hToy.Integral() #useless, toy histograms are normalized
     return Prob
 
 def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt):
     
     x = array("d",MRbins)
     y = array("d",Rsqbins)
+
     if btagOpt>0:
         h =  rt.TH2D("h_%ib"%btagOpt,"", len(MRbins)-1, x, len(Rsqbins)-1, y)
         hOBS =  rt.TH2D("hOBS_%ib"%btagOpt,"hOBS_%ib"%btagOpt, len(MRbins)-1, x, len(Rsqbins)-1, y)
@@ -299,7 +301,6 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     h.SetMinimum(0.)
 
     set2DStyle(hNS)
-    
     fileIn = rt.TFile.Open(fileName)
     myTree = fileIn.Get("myTree")
     nToys  = myTree.GetEntries()
@@ -356,10 +357,6 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             rms = htemp.GetRMS()
             numBin = array('f',[0])
             
-            maxX = int(max(10.0,mean+5.*rms))
-            minX = int(max(0.0,mean-5.*rms))
-            htemp.Scale(1./htemp.Integral())
-            
             # GET THE OBSERVED NUMBER OF EVENTS
             if fit3D:
                 if btagOpt==0:
@@ -367,18 +364,23 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 elif btagOpt==1:
                     data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i. && nBtag < %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1, 2))
                 elif btagOpt==23:
-                    data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 2))
+                    data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1))
             else:
                 data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nBtagbins[0]))
             nObs = data.numEntries()
             
-            switchToKDE = decideToUseKDE(minX,maxX,htemp)
+            maxX = int(max(10.0,mean+10.*rms))
+            minX = 0.0
+            htemp.Scale(1./htemp.Integral())
 
+            switchToKDE = decideToUseKDE(minX,maxX,htemp)
+            
             del htemp
     
             rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"myhisto\");")
             myhisto = rt.TH1D("myhisto", histoName, maxX, 0., maxX)
-            myTree.Project("myhisto", sumName[:-1])
+            myTree.Project("myhisto", sumName[:-1]) #get b_i_j_1 + b_i_j_2 + b_i_j_3
+
             myhisto.Scale(1./myhisto.Integral())
             
             rt.gROOT.ProcessLine("delete gDirectory->FindObject(\"orighisto\");")
@@ -420,14 +422,17 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 else:
                     medianVal = findMedian(myhisto)
                 if switchToKDE: pval = pvalKDE
-                else: pval = getPValue(nObs, myhisto)
-                    
+                else:
+                    pval = getPValue(nObs, myhisto)
+               
                 # the p-value cannot be one... And we have a limited number of toys
                 pvalmax = 1.-1./myhisto.GetEntries()
                 pvalmin = 0.+1./(10*myhisto.GetEntries())
-                if pval >pvalmax: pval = pvalmax 
+                if pval >pvalmax:
+                    pval = pvalmax 
                 # these are those bins where we see 0 and we expect 0
-                if pval == pvalmax and myhisto.GetMaximumBin() == 1: nsigma = 0.
+                if pval == pvalmax and myhisto.GetMaximumBin() == 1:
+                    nsigma = 0.
                 if pval==0: pval = pvalmin
                 # use the adjusted p-value 
                 h.SetBinContent(i+1, j+1, pval)
@@ -712,14 +717,13 @@ if __name__ == '__main__':
     nBtagbins = getBinning(Box, "nBtag", "Btag")
     
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []
-    
     if len(frLabels)<=1:
-        btagToDo = [23] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
+        btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
     if len(frLabels)==3:
         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
     if len(frLabels)==2:
-        btagToDo = [1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
-
+        btagToDo = [1,23]# THIS MEANS WE ARE DOING EACH BTAG REGION
+    btagToDo = [0]
     for btagOpt in btagToDo:
         h, hOBS, hEXP, hNS, pValHist = getHistogramsWriteTable(MRbins, Rsqbins, nBtagbins, fileName, dataFileName, Box, outFolder, printPlots, fit3D, btagOpt)
         hList.append(h)

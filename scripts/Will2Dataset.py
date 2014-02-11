@@ -10,7 +10,7 @@ cross_sections = {'SingleTop_s':4.21,'SingleTop_t':64.6,'SingleTop_tw':10.6,\
                                'TTj':157.5,'Zll':3048,'Znn':2*3048,'Wln':31314,\
                                'WW':43,'WZ':18.2,'ZZ':5.9,'Vgamma':173
                                }
-lumi = 1.0
+lumi = 19.3
 
 #sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
 from CalcBDT import CalcBDT
@@ -19,6 +19,8 @@ MR_CUT_HAD  = 500.
 MR_CUT_LEP  = 350.
 RSQ_CUT     = 0.08
 BDT_CUT     = -0.2
+
+#box cut = no more than 20 jets, at least [ HAD :5(6)jets above 30(20)] [ LEP : 3(4)jets above 30(20)], jet ID, 1 btag, 1 di-hemi
 
 class BJetBoxLS(object):
     """The BJet search box used in the analysis"""
@@ -56,13 +58,32 @@ class MuBox(object):
         return tree.muBoxFilter and tree.nJetNoLeptons ==4 and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and\
             tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter 
 
+class CRMuBVetoBox(object):
+    """The Mu search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CRMuBVeto'
+        self.dumper = dumper
+    def __call__(self, tree):
+            return tree.muBoxFilter and tree.nJetNoLeptons ==4  and tree.muTriggerFilter and tree.nCSVM == 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0 and not tree.isolatedTrack10LeptonFilter 
+
+
+
 class EleBox(object):
     """The Ele search box used in the analysis"""
     def __init__(self, dumper):
         self.name = 'Ele'
         self.dumper = dumper
     def __call__(self, tree):
-            return tree.eleBoxFilter and tree.nJetNoLeptons >3  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
+            return tree.eleBoxFilter and tree.nJetNoLeptons > 4  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
+
+        
+class CREleBVetoBox(object):
+    """The Ele search box used in the analysis"""
+    def __init__(self, dumper):
+        self.name = 'CREleBVeto'
+        self.dumper = dumper
+    def __call__(self, tree):
+            return tree.eleBoxFilter and tree.nJetNoLeptons >4  and tree.eleTriggerFilter and tree.nCSVM == 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
 
         
             
@@ -79,7 +100,7 @@ class SelectBox(object):
         
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
-    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_BTAG_'+outputBox,'RECREATE')
+    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_4jets_BTAG_'+outputBox,'RECREATE')
     print 'writing dataset to ', output.GetName()
     for d in data:
         d.Write()
@@ -107,7 +128,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
     if filter.dumper is not None:
         for h in filter.dumper.sel.headers_for_MVA():
             workspace.factory('%s[0,-INF,+INF]' % h)
-    
+
     args = workspace.allVars()
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
     
@@ -204,6 +225,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         pass
     
     rdata = data.reduce(rt.RooFit.EventRange(min,max))
+   
     if write:
         writeTree2DataSet([rdata], outputFile, '%s.root' % filter.name, rMin, mRmin)
        
@@ -254,13 +276,15 @@ if __name__ == '__main__':
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
 
- ##    if 'SingleMu' in fName or 'START' in fName:
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
+    if 'SingleMu' in fName or 'START' in fName:
+        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
+        convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
    
 ##    if 'MultiJet' in fName or 'START' in fName:
 ##       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
 ##        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
 ##        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
-    if 'SingleElectron' in fName or 'START' in fName:
-        convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
-    
+##     if 'SingleElectron' in fName or 'START' in fName:
+##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CREleBVetoBox(None),options.run)
+##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
+      

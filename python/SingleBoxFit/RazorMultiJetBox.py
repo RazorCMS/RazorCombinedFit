@@ -27,7 +27,7 @@ class RazorMultiJetBox(RazorBox.RazorBox):
             if varName == "Rsq": return [0.03,0.06, 0.1, 0.14, 0.19, 0.25,0.32,0.41,0.52,0.64,0.80,1.]
         else:
             if varName == "MR" : return [350, 420, 500, 600, 740, 900, 1200, 1600, 2500, 4000]
-            if varName == "Rsq": return [0.03,0.15,0.21,0.30,0.41,0.52,0.64,0.80,1.]
+            if varName == "Rsq": return [0.08,0.15,0.21,0.30,0.41,0.52,0.64,0.80,1.]
 
     def define(self, inputFile):
         

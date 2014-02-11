@@ -27,7 +27,6 @@ def getTree2D(MRbins,Rsqbins,listfileName):
             myTree.Branch(branchName, rt.AddressOf(s1,varName),'%s/F' %varName)
     
     treeName = "RMRTree"
-    
     listfile = open(listfileName)
     for line in listfile:
         filename = line.split('\n')[0]
@@ -85,6 +84,7 @@ def getTree3D(MRbins,Rsqbins,nBtagbins,listfileName):
     treeName = "RMRTree"
     
     listfile = open(listfileName)
+   
     for line in listfile:
         filename = line.split('\n')[0]
         myfile = rt.TFile(filename)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     Box = sys.argv[3]
     listfileName = sys.argv[4]
     noBtag = False
-    fit3D = False
+    fit3D = True
     
     # output file
     fileOut = rt.TFile.Open("%s" %label, "recreate")

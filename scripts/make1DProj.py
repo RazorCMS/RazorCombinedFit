@@ -651,8 +651,9 @@ if __name__ == '__main__':
         if sys.argv[i] == "--forPaper": Preliminary = ""
         if sys.argv[i] == "--printPlots": printPlots = True
         if sys.argv[i].find("--fit-region=") != -1:
-            frLabelString = sys.argv[i].replace("--fit-region=","")
-            frLabels = frLabelString.split(",")
+            frLabels = sys.argv[i]
+        ##      frLabelString = sys.argv[i].replace("--fit-region=","")
+##             frLabels = frLabelString.split(",")
         if sys.argv[i].find("-MC=") != -1:
             Preliminary = "Simulation"
             datasetName = sys.argv[i].replace("-MC=","")
@@ -678,22 +679,22 @@ if __name__ == '__main__':
     fitFile = rt.TFile.Open(fitfileName)
     print fitfileName
 
-    if frLabels == []: frLabels = ["FULL"]
+    if frLabels == []: frLabels = ["FULL"]#"LowMR,LowRsq"]#
     #if fit3D: frLabels.extend(["%ib"%btag for btag in nBtagbins[:-1]])
-   
+
     if len(frLabels)<=1:
         btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION
-    if len(frLabels)==3:
-        btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
-    if len(frLabels)==4:
-        btagToDo = [0,1,2,3] # THIS MEANS WE ARE DOING EACH BTAG REGION
+    ## if len(frLabels)==3:
+##         btagToDo = [0,1,23] # THIS MEANS WE ARE DOING EACH BTAG REGION
+##     if len(frLabels)==4:
+##         btagToDo = [0,1,2,3] # THIS MEANS WE ARE DOING EACH BTAG REGION
     
     # TTj1b histograms
     hMRTTj1bList = [fitFile.Get("%s/histoToyTTj1b_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQTTj1bList = [fitFile.Get("%s/histoToyTTj1b_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     if True :#fit3D:
         hBTAGTTj1bList = [fitFile.Get("%s/histoToyTTj1b_nBtag_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
-    
+
     # TTj2b histograms
     hMRTTj2bList = [fitFile.Get("%s/histoToyTTj2b_MR_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
     hRSQTTj2bList = [fitFile.Get("%s/histoToyTTj2b_Rsq_%s_ALLCOMPONENTS" %(Box,frLabel)) for frLabel in frLabels]
