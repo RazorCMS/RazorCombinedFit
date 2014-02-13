@@ -152,8 +152,10 @@ if __name__ == '__main__':
     iterations = 1
     step2 = False
     workspaceFlag = True
+    noSub = False
     for i in xrange(5,len(sys.argv)):
-        if sys.argv[i].find("--step2")!=-1: step2 = True
+        if sys.argv[i].find("--no-sub")!=-1: noSub = True
+        if sys.argv[i].find("--step2")!=-1: step2 = True        
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
@@ -180,7 +182,7 @@ if __name__ == '__main__':
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
     nToysPerJob = int(nToys/nJobs)
-    nXsec = 5 # do 5 xsec points + 2 lower values + 1 higher value
+    nXsec = 5 # do 5 xsec points + 0 lower values + 1 higher value
     
     if asymptoticFile is not None:
         print "INFO: Input ref xsec file!"
@@ -242,9 +244,10 @@ if __name__ == '__main__':
             outputname,ffDir = writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegion)
             os.system("mkdir -p %s/%s"%(pwd,ffDir))
             totalJobs+=1
-            time.sleep(3)
             os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+            if not noSub:
+                time.sleep(3)
+                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
         else:
             minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
             maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
@@ -261,11 +264,11 @@ if __name__ == '__main__':
             print xsecRange
             factorXsec = minXsec/(minXsec + (maxXsec-minXsec)/float(nXsec-1))
             print "factorXsec is", factorXsec
-            xsecRange.reverse()
-            xsecRange.append(minXsec*factorXsec)
+            #xsecRange.reverse()
+            #xsecRange.append(minXsec*factorXsec)
             #xsecRange.append(minXsec*pow(factorXsec,2.0))
-            xsecRange.append(minXsec*pow(factorXsec,4.0))
-            xsecRange.reverse()
+            #xsecRange.append(minXsec*pow(factorXsec,4.0))
+            #xsecRange.reverse()
             print xsecRange
             for xsecPoint in xsecRange:
                 if xsecPoint<=0: continue
@@ -281,8 +284,9 @@ if __name__ == '__main__':
                     outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations,workspaceFlag)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
-                    time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                    if not noSub:
+                        time.sleep(3)
+                        os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
