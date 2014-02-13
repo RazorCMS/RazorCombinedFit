@@ -71,7 +71,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
             txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
         txtfile.write("------------------------------------------------------------\n")
-        txtfile.write("observation	%i\n"%
+        txtfile.write("observation	%.3f\n"%
                       w.data("data_obs").sumEntries())
         txtfile.write("------------------------------------------------------------\n")
         txtfile.write("shapes * * razor_combine_%s_%s_%s.root w%s:$PROCESS w%s:$PROCESS_$SYSTEMATIC\n"%
@@ -198,6 +198,8 @@ if __name__ == '__main__':
                   help="SMS model string")
     parser.add_option('-r','--signal-region',dest="signalRegion", default="FULL",type="string",
                   help="signal region = FULL, HighMR")
+    parser.add_option('-e','--expected-a-priori',dest="expected_a_priori", default=False,action='store_true',
+                  help="expected a priori")
 
     (options,args) = parser.parse_args()
     
@@ -241,6 +243,7 @@ if __name__ == '__main__':
     massPoint = "MG_%f_MCHI_%f"%(mGluino, mLSP)
     refXsec = options.refXsec
     refXsecFile = options.refXsecFile
+    expected_a_priori = options.expected_a_priori
     if refXsecFile is not None:
         print "INFO: Input ref xsec file!"
         gluinoFile = rt.TFile.Open(refXsecFile,"READ")
@@ -251,6 +254,7 @@ if __name__ == '__main__':
     outdir = options.outdir
     sigma = options.sigma
     signalRegion = options.signalRegion
+    expected_a_priori = options.expected_a_priori
     
     other_parameters = cfg.getVariables(box, "other_parameters")
     temp = rt.RooWorkspace("temp")
@@ -367,7 +371,7 @@ if __name__ == '__main__':
         zCut+=1
         
 
-    #pdfList = rt.RooArgList()
+    pdfList = rt.RooArgList()
     #coefList = rt.RooArgList()
     if box not in ["Jet2b"]:
         razorPdf_TTj1b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj1b"),"razorPdf_%s_%s"%(box,"TTj1b"),
@@ -379,7 +383,7 @@ if __name__ == '__main__':
         w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj1b",w.var("Ntot_TTj1b_%s"%box).getVal()))
         extRazorPdf_TTj1b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj1b"),"extRazorPdf_%s_%s"%(box,"TTj1b"),razorPdf_TTj1b,w.var("%s_TTj1b_norm"%box))
         RootTools.Utils.importToWS(w,extRazorPdf_TTj1b)
-        #pdfList.add(razorPdf_TTj1b)
+        pdfList.add(extRazorPdf_TTj1b)
         #coefList.add(w.var("Ntot_%s_%s"%("TTj1b",box)))
     if box not in ["MuEle","EleEle","MuMu"]:
         razorPdf_TTj2b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj2b"),"razorPdf_%s_%s"%(box,"TTj2b"),
@@ -392,6 +396,7 @@ if __name__ == '__main__':
         w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj2b", val ))
         extRazorPdf_TTj2b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj2b"),"extRazorPdf_%s_%s"%(box,"TTj2b"),razorPdf_TTj2b,w.var("%s_TTj2b_norm"%box))
         RootTools.Utils.importToWS(w,extRazorPdf_TTj2b)
+        pdfList.add(extRazorPdf_TTj2b)
         
         razorPdf_TTj3b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj3b"),"razorPdf_%s_%s"%(box,"TTj3b"),
                                              w.var("th1x"),
@@ -405,10 +410,10 @@ if __name__ == '__main__':
         RootTools.Utils.importToWS(w,extRazorPdf_TTj3b)
         
         #razorPdf_TTj23b = rt.RooAddPdf("razorPdf_TTj23b_%s"%(box),"razorPdf_TTj23b_%s"%(box),razorPdf_TTj3b,razorPdf_TTj2b,w.var("f3_%s_%s"%("TTj2b",box)))
-        #pdfList.add(razorPdf_TTj23b)
+        pdfList.add(extRazorPdf_TTj3b)
         #coefList.add(w.var("Ntot_%s_%s"%("TTj2b",box)))
         
-    #razorPdf = rt.RooAddPdf("razorPdf_%s"%(box),"razorPdf_%s"%(box),pdfList,coefList)
+    razorPdf = rt.RooAddPdf("razorPdf_%s"%(box),"razorPdf_%s"%(box),pdfList)
     #RootTools.Utils.importToWS(w,razorPdf)
         
     print "\nINFO: %s box fit result!\n"%box
@@ -510,8 +515,15 @@ if __name__ == '__main__':
                     histos1d[box,bkg].SetBinContent(newbin,histo.GetBinContent(i,j,k))
                         
         if bkg=="data":
-            #dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
-            dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
+            if expected_a_priori:
+                asimovData = razorPdf.generateBinned(th1xSet,rt.RooFit.Asimov())
+                asimovData.SetName("data_obs")
+                asimovData.SetTitle("data_obs")
+                dataHist[box,bkg] = asimovData
+            else:
+                #dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
+                dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
+                
         else:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
 
