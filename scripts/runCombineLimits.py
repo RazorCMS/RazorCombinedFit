@@ -41,6 +41,7 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
     outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit \n'%(user[0],user))
     outputfile.write('pwd\n')
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
+    outputfile.write("export CMSSW_BASE=/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2\n"%(user[0],user))
     outputfile.write('eval `scramv1 runtime -sh`\n')
     outputfile.write('source setup.sh\n')
     outputfile.write('cd - \n')
@@ -113,7 +114,9 @@ if __name__ == '__main__':
     significance = False
     workspaceFlag = True
     nToys = -1
+    noSub = False
     for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--no-sub")!=-1: noSub = True
         if sys.argv[i].find("--t3")!=-1: t3 = True
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
@@ -188,7 +191,8 @@ if __name__ == '__main__':
                 os.system("mkdir -p %s/%s"%(pwd,ffDir))
                 totalJobs+=1
                 os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                time.sleep(3)
+                if not noSub:
+                    time.sleep(3)
+                    os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
