@@ -18,8 +18,8 @@ def writeBashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,fi
         workspaceString = "Workspace"
     aprioriString = ""
     if expected_a_priori:
-        aprioriString = "--expected_a_priori"
-        
+        aprioriString = "--expected-a-priori"
+    
     # prepare the script to run
     xsecString = str(xsecPoint).replace(".","p")
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box+"_"+str(t)+".src"
