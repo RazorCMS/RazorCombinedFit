@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from math import * 
 
 def getGChiPairs(model):
     if model=="T1bbbb":
