@@ -120,7 +120,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
                 txtfile.write("%s_%s_norm  	lnN   	1.00       %.3f	1.00\n"%
                               (box,bkgs[0],normErr))
                 normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[1])).getError()/w.var("%s_%s_norm"%(box,bkgs[1])).getVal()
-                txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
+                txtfile.write("%s_%s_norm  	lnN   	1.00       1.00	%.3f\n"%
                               (box,bkgs[1],normErr))
             else:
                 txtfile.write("%s_%s_norm  	flatParam\n"%
