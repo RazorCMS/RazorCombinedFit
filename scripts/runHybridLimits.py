@@ -17,8 +17,10 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     xsecstring = str(xsecpoint).replace(".","p")
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
-
-    label = "MR300.0_R0.387298334621"
+    
+    label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
+             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
+             "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
     
     tagHypo = ""
     if hypo == "B":
@@ -52,7 +54,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("make clean; make -j 4\n")
     
     outputfile.write("export NAME=\"%s\"\n"%model)
-    outputfile.write("export LABEL=\"%s\"\n"%label)
+    outputfile.write("export LABEL=\"%s\"\n"%label[box])
     
     outputfile.write("cp /home/jduarte/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
     outputfile.write("cp /home/jduarte/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
@@ -79,7 +81,9 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+box+"_xsec"+xsecstring+"_"+hypo+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
 
-    label = "MR300.0_R0.387298334621"
+    label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
+             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
+             "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
     
     tagHypo = ""
     if hypo == "B":
@@ -107,7 +111,7 @@ def writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hy
     outputfile.write("make clean; make -j 4\n")
     
     outputfile.write("export NAME=\"%s\"\n"%model)
-    outputfile.write("export LABEL=\"%s\"\n"%label)
+    outputfile.write("export LABEL=\"%s\"\n"%label[box])
     
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
@@ -145,20 +149,16 @@ if __name__ == '__main__':
     mchi_upper = 2025
     mg_lower = 0
     mg_upper = 2025
+    noSub = False
     for i in xrange(5,len(sys.argv)):
         if sys.argv[i].find("--t3")!=-1: t3 = True
-    for i in xrange(5,len(sys.argv)):
+        if sys.argv[i].find("--no-sub")!=-1: noSub = True
         if sys.argv[i].find("--mchi-lt")!=-1: mchi_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mchi-geq")!=-1: mchi_lower = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-lt")!=-1: mg_upper = float(sys.argv[i+1])
         if sys.argv[i].find("--mg-geq")!=-1: mg_lower = float(sys.argv[i+1])
     
-    if model in ["T6bbHH"]:
-        nJobs = 12 # do 250 toys each job => 3000 toys
-    if model in ["T2tt"]:
-        nJobs = 12 # do 250 toys each job => 3000 toys
-    else:
-        nJobs = 12 # do 250 toys each job => 3000 toys
+    nJobs = 12 # do 250 toys each job => 3000 toys
     
     print box, model, queue
 
@@ -224,17 +224,15 @@ if __name__ == '__main__':
                         queues = ",".join(queuelist)
                         
                         os.system("echo qsub -j y -q "+queues+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log "+pwd+"/"+outputname)
-                        os.system("qsub -j y -q "+queues+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log "+pwd+"/"+outputname)
-                        #os.system("source "+pwd+"/"+outputname)
+                        if not noSub:
+                            os.system("qsub -j y -q "+queues+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log "+pwd+"/"+outputname)
                     else:    
-                        #outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
-                        #os.system("mkdir -p %s/%s"%(pwd,ffDir))
+                        outputname,ffDir = writeBashScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hypo,t)
+                        os.system("mkdir -p %s/%s"%(pwd,ffDir))
                         totalJobs+=1
-                        #time.sleep(3)
-                        #os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
-                        #os.system("echo bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                        #os.system("bsub -q "+queue+" -o /dev/null source "+pwd+"/"+outputname)
-                        #os.system("source "+pwd+"/"+outputname)
+                        os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
+                        if not noSub:
+                            time.sleep(3)
+                            os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
     print "Missing files = ", missingFiles
     print "Total jobs = ", totalJobs
