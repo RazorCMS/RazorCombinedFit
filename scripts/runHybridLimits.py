@@ -56,7 +56,7 @@ def writeSgeScript(box,model,submitDir,neutralinopoint,gluinopoint,xsecpoint,hyp
     outputfile.write("export NAME=\"%s\"\n"%model)
     outputfile.write("export LABEL=\"%s\"\n"%label[box])
     
-    outputfile.write("cp /home/jduarte/public/Razor2013/Background/FULLFits2012ABCD.root $PWD\n")
+    outputfile.write("cp /home/jduarte/public/Razor2013/Background/FULLFits2012ABCD_2Nov2013.root $PWD\n")
     outputfile.write("cp /home/jduarte/public/Razor2013/Signal/${NAME}/${NAME}_%s_${LABEL}*.root $PWD\n"%massPoint)
     outputfile.write("cp /home/jduarte/public/Razor2013/Signal/NuisanceTreeISR.root $PWD\n")
         
