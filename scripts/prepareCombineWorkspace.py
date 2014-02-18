@@ -48,8 +48,7 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
                 newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
     return newhisto
     
-def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert):
-        errorMult = 2.
+def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert,penalty):
         txtfile = open(txtfileName,"w")
         txtfile.write("imax 1 number of channels\n")
         if box in ["MuEle","MuMu","EleEle"]:
@@ -57,19 +56,20 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             #nNuis = 12
             nNuis = 7
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
-            txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
+            #txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
         elif box in ["Jet2b"]:
             nBkgd = 2
             #nNuis = 13
             nNuis = 7
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
-            txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
+            #txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
         else:
             nBkgd = 3
             #nNuis = 18
             nNuis = 7
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
-            txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
+            #txtfile.write("kmax %i number of nuisance parameters\n"%nNuis)
+        txtfile.write("kmax * number of nuisance parameters\n")
         txtfile.write("------------------------------------------------------------\n")
         txtfile.write("observation	%.3f\n"%
                       w.data("data_obs").sumEntries())
@@ -83,7 +83,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
                           (box,model,box,bkgs[0]))
             txtfile.write("process        	0          		1\n")
             txtfile.write("rate            %.3f		%.3f	\n"%
-                          (w.data("%s_%s"%(box,model)).sumEntries(),w.var("Ntot_%s_%s"%("TTj1b",box)).getVal()))
+                          (w.data("%s_%s"%(box,model)).sumEntries(),w.var("%s_%s_norm"%(box,"TTj1b")).getVal()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			lnN	%.3f       1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00\n"%lepton_uncert)
@@ -92,24 +92,21 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
-            #normErr = 2.
-            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f\n"%
-            #              (bkgs[0],box,normErr))
-            txtfile.write("%s_%s_norm  	flatParam\n"%
-                          (box,bkgs[0]))
-            for paramName in paramNames:
-                if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
-                txtfile.write("%s_%s  	flatParam\n"%
-                              (paramName,box))
-            #     txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
+            if penalty:
+                normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[0])).getError()/w.var("%s_%s_norm"%(box,bkgs[0])).getVal()
+                txtfile.write("%s_%s_norm  	lnN   	1.00       %.3f\n"%
+                              (box,bkgs[0],normErr))
+            else:
+                txtfile.write("%s_%s_norm  	flatParam\n"%
+                              (box,bkgs[0]))
         elif box in ["Jet2b"]:
             txtfile.write("bin		%s			%s			%s\n"%(box,box,box))
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1]))
             txtfile.write("process        	0          		1			2\n")
             txtfile.write("rate            %.3f		%.3f		%.3f\n"%
-                          (w.data("%s_%s"%(box,model)).sumEntries(),w.var("Ntot_%s_%s"%("TTj2b",box)).getVal(),
-                           w.var("Ntot_%s_%s"%("TTj2b",box)).getVal()*w.var("f3_%s_%s"%("TTj2b",box)).getVal()))
+                          (w.data("%s_%s"%(box,model)).sumEntries(),w.var("%s_%s_norm"%(box,"TTj2b")).getVal(),
+                           w.var("%s_%s_norm"%(box,"TTj3b")).getVal()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			lnN	%.3f       1.00 1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00 1.00\n"%lepton_uncert)
@@ -118,29 +115,26 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Jes			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
-            #normErr = 2.
-            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00\n"%
-            #              (bkgs[0],box,normErr))
-            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f\n"%
-            #              (bkgs[1],box,normErr))
-            txtfile.write("%s_%s_norm  	flatParam\n"%
-                          (box,bkgs[0]))
-            txtfile.write("%s_%s_norm  	flatParam\n"%
-                          (box,bkgs[1]))
-            for paramName in paramNames:
-                if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
-                txtfile.write("%s_%s  	flatParam\n"%
-                              (paramName,box))
-            #     txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
+            if penalty:
+                normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[0])).getError()/w.var("%s_%s_norm"%(box,bkgs[0])).getVal()
+                txtfile.write("%s_%s_norm  	lnN   	1.00       %.3f	1.00\n"%
+                              (box,bkgs[0],normErr))
+                normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[1])).getError()/w.var("%s_%s_norm"%(box,bkgs[1])).getVal()
+                txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
+                              (box,bkgs[1],normErr))
+            else:
+                txtfile.write("%s_%s_norm  	flatParam\n"%
+                              (box,bkgs[0]))
+                txtfile.write("%s_%s_norm  	flatParam\n"%
+                              (box,bkgs[1]))
         else:
             txtfile.write("bin		%s			%s			%s			%s\n"%(box,box,box,box))
             txtfile.write("process		%s_%s 	%s_%s	%s_%s	%s_%s\n"%
                           (box,model,box,bkgs[0],box,bkgs[1],box,bkgs[2]))
             txtfile.write("process        	0          		1			2			3\n")
             txtfile.write("rate            %.3f		%.3f		%.3f		%.3f\n"%
-                          (w.data("%s_%s"%(box,model)).sumEntries(),w.var("Ntot_%s_%s"%("TTj1b",box)).getVal(),
-                           w.var("Ntot_%s_%s"%("TTj2b",box)).getVal(),
-                           w.var("Ntot_%s_%s"%("TTj2b",box)).getVal()*w.var("f3_%s_%s"%("TTj2b",box)).getVal()))
+                          (w.data("%s_%s"%(box,model)).sumEntries(),w.var("%s_%s_norm"%(box,"TTj1b")).getVal(),
+                           w.var("%s_%s_norm"%(box,"TTj2b")).getVal(),w.var("%s_%s_norm"%(box,"TTj3b")).getVal()))
             txtfile.write("------------------------------------------------------------\n")
             txtfile.write("lumi			lnN	%.3f       1.00	1.00 1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00	1.00 1.00\n"%lepton_uncert)
@@ -149,25 +143,31 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
             txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
-            #normErr = 2.
-            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00	1.00\n"%
-            #              (bkgs[0],box,normErr))
-            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f	1.00\n"%
-            #              (bkgs[1],box,normErr))
-            #txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	1.00	%.3f\n"%
-            #              (bkgs[2],box,normErr))
-            
-            txtfile.write("%s_%s_norm  	flatParam\n"%
-                          (box,bkgs[0]))
-            txtfile.write("%s_%s_norm  	flatParam\n"%
-                          (box,bkgs[1]))
-            txtfile.write("%s_%s_norm  	flatParam\n"%
-                          (box,bkgs[2]))
-            for paramName in paramNames:
-                if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+            if penalty:
+                normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[0])).getError()/w.var("%s_%s_norm"%(box,bkgs[0])).getVal()
+                txtfile.write("%s_%s_norm  	lnN   	1.00       %.3f	1.00	1.00\n"%
+                              (box,bkgs[0],normErr))
+                normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[1])).getError()/w.var("%s_%s_norm"%(box,bkgs[1])).getVal()
+                txtfile.write("%s_%s_norm  	lnN   	1.00       1.00	%.3f	1.00\n"%
+                              (box,bkgs[1],normErr))
+                normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[2])).getError()/w.var("%s_%s_norm"%(box,bkgs[2])).getVal()
+                txtfile.write("%s_%s_norm  	lnN   	1.00       1.00	1.00	%.3f\n"%
+                              (box,bkgs[2],normErr))
+            else:
+                txtfile.write("%s_%s_norm  	flatParam\n"%
+                              (box,bkgs[0]))
+                txtfile.write("%s_%s_norm  	flatParam\n"%
+                              (box,bkgs[1]))
+                txtfile.write("%s_%s_norm  	flatParam\n"%
+                              (box,bkgs[2]))
+        errorMult = 1.
+        for paramName in paramNames:
+            if paramName.find("Ntot")!=-1 or paramName.find("f3")!=-1: continue
+            if penalty: 
+                txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
+            else:
                 txtfile.write("%s_%s  	flatParam\n"%
                               (paramName,box))
-            #     txtfile.write("%s_%s	param	%e    %e\n"%(paramName,box,w.var("%s_%s"%(paramName,box)).getVal(), errorMult*w.var("%s_%s"%(paramName,box)).getError()))
             
         txtfile.close()
 
@@ -200,6 +200,8 @@ if __name__ == '__main__':
                   help="signal region = FULL, HighMR")
     parser.add_option('-e','--expected-a-priori',dest="expected_a_priori", default=False,action='store_true',
                   help="expected a priori")
+    parser.add_option('-p','--penalty',dest="penalty", default=False,action='store_true',
+                  help="multiply by penalty terms")
 
     (options,args) = parser.parse_args()
     
@@ -244,6 +246,7 @@ if __name__ == '__main__':
     refXsec = options.refXsec
     refXsecFile = options.refXsecFile
     expected_a_priori = options.expected_a_priori
+    penalty = options.penalty
     if refXsecFile is not None:
         print "INFO: Input ref xsec file!"
         gluinoFile = rt.TFile.Open(refXsecFile,"READ")
@@ -271,15 +274,17 @@ if __name__ == '__main__':
     y = array('d', cfg.getBinning(box)[1])
     z = array('d', cfg.getBinning(box)[2])
     
-    #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
     w = rt.RooWorkspace("w%s"%box)
 
     nMaxBins = 432
     nBins = nMaxBins
-    th1x = rt.RooRealVar("th1x","th1x",0,0,nMaxBins)
-    th1xBins = array('d',range(0,nMaxBins+1))
-    th1xRooBins = rt.RooBinning(nMaxBins, th1xBins, "uniform")
+    #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
+    
+    
+    th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
+    th1xBins = array('d',range(0,nBins+1))
+    th1xRooBins = rt.RooBinning(nBins, th1xBins, "uniform")
     th1x.setBinning(th1xRooBins)
 
     th1xList = rt.RooArgList()
@@ -362,13 +367,15 @@ if __name__ == '__main__':
     w.factory("RCut_%s[%e]"%(box,y[1]))
     w.var("MRCut_%s"%box).setConstant(True)
     w.var("RCut_%s"%box).setConstant(True)
-    
-    zCut = 1
-    BtagCut = {}
-    for bkg in initialBkgs:
-        w.factory("BtagCut_%s[%i]"%(bkg,zCut))
-        w.var("BtagCut_%s"%bkg).setConstant(True)
-        zCut+=1
+  
+    if box not in ["Jet2b"]:
+        w.factory("BtagCut_TTj1b[1]")
+        w.var("BtagCut_TTj1b").setConstant(True)
+    if box not in ["MuEle","EleEle","MuMu"]:
+        w.factory("BtagCut_TTj2b[2]")
+        w.var("BtagCut_TTj2b").setConstant(True)
+        w.factory("BtagCut_TTj3b[3]")
+        w.var("BtagCut_TTj3b").setConstant(True)
         
 
     pdfList = rt.RooArgList()
@@ -500,13 +507,11 @@ if __name__ == '__main__':
     for index, histo in histos.iteritems():
         box, bkg = index
         print box, bkg
-        totalbins = nMaxBins
         if bkg=="data":
-            histos1d[box,bkg] = rt.TH1D("data_obs","data_obs",totalbins, 0, totalbins)
+            histos1d[box,bkg] = rt.TH1D("data_obs","data_obs",nBins, 0, nBins)
         else:
-            histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),totalbins, 0, totalbins)
+            histos1d[box,bkg] = rt.TH1D("%s_%s"%(box,bkg),"%s_%s"%(box,bkg),nBins, 0, nBins)
             
-        totalbins = nMaxBins
         newbin = 0
         for i in xrange(1,histo.GetNbinsX()+1):
             for j in xrange(1,histo.GetNbinsY()+1):
@@ -523,6 +528,8 @@ if __name__ == '__main__':
             else:
                 #dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
                 dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
+                fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
+                fr_new.Print("v")
                 
         else:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
@@ -531,7 +538,7 @@ if __name__ == '__main__':
     print "\nINFO: Now writing data card\n"
 
     w.Print("v")
-    writeDataCard(box,model,massPoint,"%s/razor_combine_%s_%s_%s.txt"%(outdir,box,model,massPoint),initialBkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert)
+    writeDataCard(box,model,massPoint,"%s/razor_combine_%s_%s_%s.txt"%(outdir,box,model,massPoint),initialBkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert,penalty)
     os.system("cat %s/razor_combine_%s_%s_%s.txt \n"%(outdir,box,model,massPoint)) 
     
     outFile = rt.TFile.Open("%s/razor_combine_%s_%s_%s.root"%(outdir,box,model,massPoint),"RECREATE")
