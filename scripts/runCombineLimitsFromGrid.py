@@ -68,6 +68,7 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     workspaceString = ""
     if workspaceFlag:
         workspaceString = "Workspace"
+    penaltyString = ""
     if penalty:
         penaltyString = "--penalty"
     # prepare the script to run
