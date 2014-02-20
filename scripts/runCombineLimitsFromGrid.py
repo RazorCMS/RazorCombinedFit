@@ -46,9 +46,9 @@ def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegi
     boxes =  box.split("_")
     seed = -1
     
-    outputfile.write("cp %s/higgsCombineGrid${NAME}_%s_xsec*_%s_%s_%i.HybridNew.mH120.*.root $PWD\n"%(combineDir,massPoint,fitRegion,box,t))
+    outputfile.write("cp %s/higgsCombineGrid${NAME}_%s_xsec*_%s_%s_*.HybridNew.mH120.*.root $PWD\n"%(combineDir,massPoint,fitRegion,box))
     outputfile.write("cp %s/razor_combine_*_${NAME}_%s.* $PWD\n"%(combineDir,massPoint))
-    outputfile.write("hadd -f higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineGrid${NAME}_%s_xsec*_%s_%s_%i.HybridNew.mH120.*.root\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t))
+    outputfile.write("hadd -f higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineGrid${NAME}_%s_xsec*_%s_%s_*.HybridNew.mH120.*.root\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box))
     
     outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.025 -n Expected025${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
     outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.16 -n Expected160${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
