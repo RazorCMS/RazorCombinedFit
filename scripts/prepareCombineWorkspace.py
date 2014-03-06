@@ -277,7 +277,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 432
+    nMaxBins = 162
     nBins = nMaxBins
     #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
