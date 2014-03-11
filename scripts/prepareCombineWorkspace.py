@@ -22,20 +22,52 @@ def getCutString(box, signalRegion):
             return "(MR>=450.&&Rsq>=0.2)"
                 
 def passCut(MRVal, RsqVal, box, signalRegion):
+    passBool = False
     if box in ["Jet2b","MultiJet"]:
         if signalRegion=="FULL":
-            if MRVal >= 400. and RsqVal >= 0.25 and (MRVal >= 450. or RsqVal >= 0.3): return True
+            if MRVal >= 400. and RsqVal >= 0.25 and (MRVal >= 450. or RsqVal >= 0.3) and MRVal < 4000. and RsqVal < 1.5: passBool = True
         elif signalRegion=="HighMR":
-            if MRVal >= 550. and RsqVal >= 0.3: return True
+            if MRVal >= 550. and RsqVal >= 0.3 and MRVal < 4000. and RsqVal < 1.5: passBool = True
     else:
         if signalRegion=="FULL":
-            if MRVal >= 300. and RsqVal >= 0.15 and (MRVal >= 350. or RsqVal >= 0.2): return True
+            if MRVal >= 300. and RsqVal >= 0.15 and (MRVal >= 350. or RsqVal >= 0.2) and MRVal < 4000. and RsqVal < 1.5: passBool = True
         elif signalRegion=="HighMR":
-            if MRVal >= 450. and RsqVal >= 0.2: return True
+            if MRVal >= 450. and RsqVal >= 0.2 and MRVal < 4000. and RsqVal < 1.5: passBool = True
 
-    return False
-        
-def rebin3d(oldhisto, x, y, z, box, signalRegion):
+    return passBool
+
+
+def average3d(oldhisto, x, y):
+    newhisto = rt.TH3D(oldhisto.GetName()+"_average",oldhisto.GetTitle()+"_average",len(x)-1,x,len(y)-1,y,len(z)-1,z)
+    for i in range(1,oldhisto.GetNbinsX()+1):
+        for j in range(1,oldhisto.GetNbinsY()+1):
+            for k in range(1,oldhisto.GetNbinsZ()+1):
+                xold = oldhisto.GetXaxis().GetBinCenter(i)
+                yold = oldhisto.GetYaxis().GetBinCenter(j)
+                zold = oldhisto.GetZaxis().GetBinCenter(k)
+                oldbincontent = oldhisto.GetBinContent(i,j,k)
+
+                numCells = 9
+                totalweight = 0.
+                for deltaI in [-1, 0, 1]:
+                    for deltaJ in [-1, 0, 1]:
+                        xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
+                        ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
+                        if not passCut(xnew, ynew, box, signalRegion): numCells -= 1
+                        else: 
+                            if (deltaI, deltaJ) == (0, 0): totalweight += 8.
+                            else: totalweight += 1.
+                for deltaI in [-1, 0, 1]:
+                    for deltaJ in [-1, 0, 1]:
+                        if (deltaI, deltaJ) == (0, 0): weight = 8.
+                        else: weight = 1.
+                        xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
+                        ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
+                        if passCut(xnew, ynew, box, signalRegion): newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
+    return newhisto
+
+
+def rebin3d(oldhisto, x, y, z, box, signalRegion, average=True):
     newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -45,8 +77,13 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
                 zold = oldhisto.GetZaxis().GetBinCenter(k)
                 if not passCut(xold, yold, box, signalRegion): continue
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
-                newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
-    return newhisto
+                newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))
+    if average: 
+        print "AVERAGING!"
+        newhistoaverage = average3d(newhisto,x,y)
+        return newhistoaverage
+    else:
+        return newhisto
     
 def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert,penalty):
         txtfile = open(txtfileName,"w")
