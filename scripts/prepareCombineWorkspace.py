@@ -49,21 +49,33 @@ def average3d(oldhisto, x, y):
 
                 numCells = 9
                 totalweight = 0.
+                mindistance = 1000.
                 for deltaI in [-1, 0, 1]:
                     for deltaJ in [-1, 0, 1]:
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
-                        if not passCut(xnew, ynew, box, signalRegion): numCells -= 1
+                        if not passCut(xnew, ynew, box, signalRegion): 
+                            numCells -= 1
+                            continue
+                        if (deltaI, deltaJ) == (0, 0): 
+                            totalweight += 0 # adding in this weight later.
                         else: 
-                            if (deltaI, deltaJ) == (0, 0): totalweight += 8.
-                            else: totalweight += 1.
+                            distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2) 
+                            if distance < mindistance: mindistance = distance
+                            totalweight += 1./distance
+                totalweight += 3./mindistance # for (0,0) weight
+                
                 for deltaI in [-1, 0, 1]:
                     for deltaJ in [-1, 0, 1]:
-                        if (deltaI, deltaJ) == (0, 0): weight = 8.
-                        else: weight = 1.
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
-                        if passCut(xnew, ynew, box, signalRegion): newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
+                        if (deltaI, deltaJ) == (0, 0): 
+                            weight = 3./mindistance
+                        else: 
+                             distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2)
+                             weight = 1./distance
+                        if passCut(xnew, ynew, box, signalRegion): 
+                            newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
     return newhisto
 
 
