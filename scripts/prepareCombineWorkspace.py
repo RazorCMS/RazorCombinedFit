@@ -569,14 +569,16 @@ if __name__ == '__main__':
                     histos1d[box,bkg].SetBinContent(newbin,histo.GetBinContent(i,j,k))
                         
         if bkg=="data":
-            if expected_a_priori:
-                asimovData = razorPdf.generateBinned(th1xSet,rt.RooFit.Asimov())
-                asimovData.SetName("data_obs")
-                asimovData.SetTitle("data_obs")
-                dataHist[box,bkg] = asimovData
-            else:
-                #dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
-                dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
+            # replace data with expected asimov a priori
+            #asimovData = razorPdf.generateBinned(th1xSet,rt.RooFit.Asimov())
+            #asimovData.SetName("data_obs")
+            #asimovData.SetTitle("data_obs")
+            #dataHist[box,bkg] = asimovData
+
+            #dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Index(channel),rt.RooFit.Import(box,histos1d[box,bkg]))
+            dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
+                
+            if not expected_a_priori:
                 fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
                 fr_new.Print("v")
                 
