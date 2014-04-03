@@ -225,7 +225,7 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
     MCHI = float(outputFile[MCHIstringstart:MCHIstringend])
  
     histoFile = rt.TFile.Open(histoFileName)
-    
+    quarkTag = ""
     if outputFile.find("T2bw")!=-1:
         quarkTag = "BB"
     for i in xrange(1, ibinx+1):

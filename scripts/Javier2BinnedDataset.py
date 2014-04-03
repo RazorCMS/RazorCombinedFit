@@ -31,7 +31,10 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
 
     args.Print()
     histoFile = rt.TFile.Open(histoFileName)
-    smscount = histoFile.Get("SMSWALL")
+    if histoFileName.find("T2bw")!=-1:
+        smscount = histoFile.Get("SMSWALLBB")
+    else:
+        smscount = histoFile.Get("SMSWALL")
     for histo in [nominal, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:     
         histo.Scale(1./smscount.GetBinContent(smscount.FindBin(MG,MCHI)))
     
