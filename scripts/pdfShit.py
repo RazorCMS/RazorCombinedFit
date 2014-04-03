@@ -225,13 +225,16 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
     MCHI = float(outputFile[MCHIstringstart:MCHIstringend])
  
     histoFile = rt.TFile.Open(histoFileName)
+    
+    if outputFile.find("T2bw")!=-1:
+        quarkTag = "BB"
     for i in xrange(1, ibinx+1):
         for j in xrange(1, ibiny+1):
             w = []
             hw = []
             hw2 = []
             for k in xrange(0,45):
-                htemp = histoFile.Get("SMSWCTEQ_%i"%k)
+                htemp = histoFile.Get("SMSWCTEQ%s_%i"%(quarkTag,k))
                 w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
                 hw.append(hwCTEQ66[k].GetBinContent(i,j))
                 hw2.append(hwCTEQ66SQ[k].GetBinContent(i,j))
@@ -248,7 +251,7 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
             hw = []
             hw2 = []
             for k in xrange(0,31):
-                htemp = histoFile.Get("SMSWMRST_%i"%k)
+                htemp = histoFile.Get("SMSWMRST%s_%i"%(quarkTag,k))
                 w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
                 hw.append(hwMRST2006NNLO[k].GetBinContent(i,j))
                 hw2.append(hwMRST2006NNLOSQ[k].GetBinContent(i,j))

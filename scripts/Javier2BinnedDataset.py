@@ -131,9 +131,12 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
     elif outputFile.find("T2tt")!=-1:
         nB = 0
         nT = 2
+    elif outputFile.find("T2bw")!=-1:
+        nB = 2
+        nT = 0
         
-    #quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
-    quarkCut = "(MR>0.)"
+    quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
+    #quarkCut = "(MR>0.)"
     print quarkCut
 
     condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
