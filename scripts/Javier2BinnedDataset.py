@@ -107,36 +107,12 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
 
     nB = 0
     nT = 0
-    if outputFile.find("T1bbbb")!=-1:
-        nB = 4
-        nT = 0
-    elif outputFile.find("T1tbbb")!=-1:
-        nB = 3
-        nT = 1
-    elif outputFile.find("T1ttbb")!=-1:
-        nB = 2
-        nT = 2
-    elif outputFile.find("T1tttb")!=-1:
-        nB = 1
-        nT = 3
-    elif outputFile.find("T1tttt")!=-1:
-        nB = 0
-        nT = 4
-    elif outputFile.find("T2bb")!=-1:
+    if outputFile.find("T2bw")!=-1:
         nB = 2
         nT = 0
-    elif outputFile.find("T2tb")!=-1:
-        nB = 1
-        nT = 1
-    elif outputFile.find("T2tt")!=-1:
-        nB = 0
-        nT = 2
-    elif outputFile.find("T2bw")!=-1:
-        nB = 2
-        nT = 0
-        
-    quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
-    #quarkCut = "(MR>0.)"
+        quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
+    else:
+        quarkCut = "(MR>0.)"
     print quarkCut
 
     condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
