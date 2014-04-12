@@ -12,14 +12,14 @@ import sys
 def getCutString(box, signalRegion):
     if box in ["Jet2b","MultiJet"]:
         if signalRegion=="FULL":
-            return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))"
+            return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))&&Rsq<1.5&&MR<4000."
         elif signalRegion=="HighMR":
-            return "(MR>=550.&&Rsq>=0.3)"
+            return "(MR>=550.&&Rsq>=0.3)&&Rsq<1.5"
     else:
         if signalRegion=="FULL":
-            return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))"
+            return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))&&Rsq<1.5&&MR<4000."
         elif signalRegion=="HighMR":
-            return "(MR>=450.&&Rsq>=0.2)"
+            return "(MR>=450.&&Rsq>=0.2)&&Rsq<1.5&&MR<4000."
                 
 def passCut(MRVal, RsqVal, box, signalRegion):
     passBool = False
