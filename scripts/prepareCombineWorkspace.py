@@ -58,22 +58,26 @@ def average3d(oldhisto, x, y):
                             numCells -= 1
                             continue
                         if (deltaI, deltaJ) == (0, 0): 
-                            totalweight += 0 # adding in this weight later.
+                            #totalweight += 0 # adding in this weight later.
+                            totalweight += 4.
                         else: 
                             distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2) 
                             if distance < mindistance: mindistance = distance
-                            totalweight += 1./distance
-                totalweight += 3./mindistance # for (0,0) weight
-                
+                            #totalweight += 1./distance
+                            totalweight += 1.
+                #totalweight += 3./mindistance # for (0,0) weight
+            
                 for deltaI in [-1, 0, 1]:
                     for deltaJ in [-1, 0, 1]:
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
                         if (deltaI, deltaJ) == (0, 0): 
-                            weight = 3./mindistance
+                            #weight = 3./mindistance
+                            weight = 4.
                         else: 
                              distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2)
-                             weight = 1./distance
+                             #weight = 1./distance
+                             weight = 1.
                         if passCut(xnew, ynew, box, signalRegion): 
                             newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
     return newhisto
