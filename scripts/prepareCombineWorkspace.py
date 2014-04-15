@@ -49,6 +49,7 @@ def average3d(oldhisto, x, y):
                 numCells = 9.
                 totalweight = 0.
                 mindistance = 10000.
+                
                 for deltaI in [-3, -2, -1, 0, 1, 2, 3]:
                     for deltaJ in [-3, -2, -1, 0, 1, 2, 3]:
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
@@ -57,13 +58,17 @@ def average3d(oldhisto, x, y):
                             numCells -= 1. 
                             continue
                         if (deltaI, deltaJ) == (0, 0): 
-                            #totalweight += 8.
-                            totalweight += 30. # adding in this weight later.
-                        else:
-                            distance = rt.TMath.Power((xold-xnew)/(250),2) + rt.TMath.Power((yold-ynew)/(0.2),2)
+                            totalweight += 10.
+                            #totalweight += 100. # adding in this weight later.
+                        elif rt.TMath.Abs(deltaI)<=1 and rt.TMath.Abs(deltaJ)<=1:
+                            distance = rt.TMath.Power((xold-xnew)/(400.),2) + rt.TMath.Power((yold-ynew)/(0.3),2)
                             if distance < mindistance: mindistance = distance
-                            #totalweight += 1. 
-                            totalweight += rt.TMath.Exp(-distance)
+                            #totalweight += rt.TMath.Exp(-distance)
+                            totalweight += 1. 
+                        elif rt.TMath.Abs(deltaI)<=2 and rt.TMath.Abs(deltaJ)<=2:
+                            totalweight += 0.1
+                        else:
+                            totalweight += 0.01
                 #totalweight += 30./mindistance # for (0,0) weight
                             
                 for deltaI in [-3, -2, -1, 0, 1, 2, 3]:
@@ -72,16 +77,20 @@ def average3d(oldhisto, x, y):
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
                         if (deltaI, deltaJ) == (0, 0): 
-                            weight = 30.
+                            weight = 10.
                             #weight = 30./mindistance
+                        elif rt.TMath.Abs(deltaI)<=1 and rt.TMath.Abs(deltaJ)<=1:
+                            weight = 1.
+                        elif rt.TMath.Abs(deltaI)<=2 and rt.TMath.Abs(deltaJ)<=2:
+                            weight = 0.1
                         else: 
-                             distance = rt.TMath.Power((xold-xnew)/(250.),2) + rt.TMath.Power((yold-ynew)/(0.2),2)
-                             #weight = 1.
+                             distance = rt.TMath.Power((xold-xnew)/(400.),2) + rt.TMath.Power((yold-ynew)/(0.3),2)
+                             weight = 0.01
                              #weight = 1./distance
-                             weight = rt.TMath.Exp(-distance)
-                        newhisto.Fill(xnew, ynew, (weight/totalweight)*oldbincontent)
+                             #weight = rt.TMath.Exp(-distance)
+                        if passCut(xnew, ynew, box, signalRegion): 
+                            newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
     return newhisto
-
 
 def rebin3d(oldhisto, x, y, z, box, signalRegion, average=True):
     newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
@@ -330,7 +339,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 162
+    nMaxBins = 126
     nBins = nMaxBins
     #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
