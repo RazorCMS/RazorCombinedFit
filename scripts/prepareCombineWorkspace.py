@@ -14,7 +14,7 @@ def getCutString(box, signalRegion):
         if signalRegion=="FULL":
             return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))&&Rsq<1.5&&MR<4000."
         elif signalRegion=="HighMR":
-            return "(MR>=550.&&Rsq>=0.3)&&Rsq<1.5"
+            return "(MR>=550.&&Rsq>=0.3)&&Rsq<1.5&&MR<4000."
     else:
         if signalRegion=="FULL":
             return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))&&Rsq<1.5&&MR<4000."
@@ -35,7 +35,6 @@ def passCut(MRVal, RsqVal, box, signalRegion):
             if MRVal >= 450. and RsqVal >= 0.2 and MRVal < 4000. and RsqVal < 1.5: passBool = True
 
     return passBool
-
 
 def average3d(oldhisto, x, y):
     newhisto = rt.TH3D(oldhisto.GetName()+"_average",oldhisto.GetTitle()+"_average",len(x)-1,x,len(y)-1,y,len(z)-1,z)
@@ -59,7 +58,7 @@ def average3d(oldhisto, x, y):
                             continue
                         if (deltaI, deltaJ) == (0, 0): 
                             #totalweight += 0 # adding in this weight later.
-                            totalweight += 4.
+                            totalweight += 8.
                         else: 
                             distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2) 
                             if distance < mindistance: mindistance = distance
@@ -73,7 +72,7 @@ def average3d(oldhisto, x, y):
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
                         if (deltaI, deltaJ) == (0, 0): 
                             #weight = 3./mindistance
-                            weight = 4.
+                            weight = 8.
                         else: 
                              distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2)
                              #weight = 1./distance
@@ -503,7 +502,7 @@ if __name__ == '__main__':
 
 
     # SIGNAL HISTOGRAMS 
-    wHisto = sigFile.Get('wHisto_pdferr_nom')
+    wHisto = sigFile.Get('wHisto')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
     btagDown =  sigFile.Get('wHisto_btagerr_down')
     
