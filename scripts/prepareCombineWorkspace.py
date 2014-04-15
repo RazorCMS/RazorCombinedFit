@@ -46,39 +46,40 @@ def average3d(oldhisto, x, y):
                 zold = oldhisto.GetZaxis().GetBinCenter(k)
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
 
-                numCells = 9
+                numCells = 9.
                 totalweight = 0.
-                mindistance = 1000.
-                for deltaI in [-1, 0, 1]:
-                    for deltaJ in [-1, 0, 1]:
+                mindistance = 10000.
+                for deltaI in [-3, -2, -1, 0, 1, 2, 3]:
+                    for deltaJ in [-3, -2, -1, 0, 1, 2, 3]:
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
-                        if not passCut(xnew, ynew, box, signalRegion): 
-                            numCells -= 1
+                        if i+deltaI<=0 or j+deltaJ<=0 or i+deltaI>=oldhisto.GetNbinsX()+1 or j+deltaJ>=oldhisto.GetNbinsY()+1: 
+                            numCells -= 1. 
                             continue
                         if (deltaI, deltaJ) == (0, 0): 
-                            #totalweight += 0 # adding in this weight later.
-                            totalweight += 8.
-                        else: 
-                            distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2) 
+                            #totalweight += 8.
+                            totalweight += 30. # adding in this weight later.
+                        else:
+                            distance = rt.TMath.Power((xold-xnew)/(250),2) + rt.TMath.Power((yold-ynew)/(0.2),2)
                             if distance < mindistance: mindistance = distance
-                            #totalweight += 1./distance
-                            totalweight += 1.
-                #totalweight += 3./mindistance # for (0,0) weight
-            
-                for deltaI in [-1, 0, 1]:
-                    for deltaJ in [-1, 0, 1]:
+                            #totalweight += 1. 
+                            totalweight += rt.TMath.Exp(-distance)
+                #totalweight += 30./mindistance # for (0,0) weight
+                            
+                for deltaI in [-3, -2, -1, 0, 1, 2, 3]:
+                    for deltaJ in [-3, -2, -1, 0, 1, 2, 3]:
+                        if i+deltaI<=0 or j+deltaJ<=0 or i+deltaI>=oldhisto.GetNbinsX()+1 or j+deltaJ>=oldhisto.GetNbinsY()+1: continue
                         xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
                         ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
                         if (deltaI, deltaJ) == (0, 0): 
-                            #weight = 3./mindistance
-                            weight = 8.
+                            weight = 30.
+                            #weight = 30./mindistance
                         else: 
-                             distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2)
+                             distance = rt.TMath.Power((xold-xnew)/(250.),2) + rt.TMath.Power((yold-ynew)/(0.2),2)
+                             #weight = 1.
                              #weight = 1./distance
-                             weight = 1.
-                        if passCut(xnew, ynew, box, signalRegion): 
-                            newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
+                             weight = rt.TMath.Exp(-distance)
+                        newhisto.Fill(xnew, ynew, (weight/totalweight)*oldbincontent)
     return newhisto
 
 
