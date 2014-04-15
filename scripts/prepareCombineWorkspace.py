@@ -538,13 +538,14 @@ if __name__ == '__main__':
     histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, signalRegion)
     
     #set the per box eff value
-    sigNorm = wHisto.Integral()
+    pdfNom = rebin3d(sigFile.Get('wHisto_pdferr_nom'),x,y,z,box,signalRegion,False)
+    sigNorm = pdfNom.Integral()
     sigEvents = sigNorm*lumi*refXsec
     print "\nINFO: now multiplying:  efficiency x lumi x refXsec = %f x %f x %f = %f"%(sigNorm,lumi,refXsec,sigEvents)
     
     histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, box, signalRegion)
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
-    histos[box,model].Scale(lumi*refXsec)
+    histos[box,model].Scale(sigEvents/histos[box,model].Integral())
     
     for paramName in ["Jes","Isr","Btag","Pdf"]:
         print "\nINFO: Now renormalizing signal shape systematic histograms to nominal\n"

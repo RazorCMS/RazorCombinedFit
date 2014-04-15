@@ -11,30 +11,76 @@ import sys
 def getCutString(box, signalRegion):
     if box in ["Jet2b","MultiJet"]:
         if signalRegion=="FULL":
-            return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))"
+            return "(MR>=400.&&Rsq>=0.25&&(MR>=450.||Rsq>=0.3))&&Rsq<1.5&&MR<4000."
         elif signalRegion=="HighMR":
-            return "(MR>=550.&&Rsq>=0.3)"
+            return "(MR>=550.&&Rsq>=0.3)&&Rsq<1.5&&MR<4000."
     else:
         if signalRegion=="FULL":
-            return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))"
+            return "(MR>=300.&&Rsq>=0.15&&(MR>=350.||Rsq>=0.2))&&Rsq<1.5&&MR<4000."
         elif signalRegion=="HighMR":
-            return "(MR>=450.&&Rsq>=0.2)"
+            return "(MR>=450.&&Rsq>=0.2)&&Rsq<1.5&&MR<4000."
                 
 def passCut(MRVal, RsqVal, box, signalRegion):
+    passBool = False
     if box in ["Jet2b","MultiJet"]:
         if signalRegion=="FULL":
-            if MRVal >= 400. and RsqVal >= 0.25 and (MRVal >= 450. or RsqVal >= 0.3): return True
+            if MRVal >= 400. and RsqVal >= 0.25 and (MRVal >= 450. or RsqVal >= 0.3) and MRVal < 4000. and RsqVal < 1.5: passBool = True
         elif signalRegion=="HighMR":
-            if MRVal >= 550. and RsqVal >= 0.3: return True
+            if MRVal >= 550. and RsqVal >= 0.3 and MRVal < 4000. and RsqVal < 1.5: passBool = True
     else:
         if signalRegion=="FULL":
-            if MRVal >= 300. and RsqVal >= 0.15 and (MRVal >= 350. or RsqVal >= 0.2): return True
+            if MRVal >= 300. and RsqVal >= 0.15 and (MRVal >= 350. or RsqVal >= 0.2) and MRVal < 4000. and RsqVal < 1.5: passBool = True
         elif signalRegion=="HighMR":
-            if MRVal >= 450. and RsqVal >= 0.2: return True
+            if MRVal >= 450. and RsqVal >= 0.2 and MRVal < 4000. and RsqVal < 1.5: passBool = True
 
-    return False
+    return passBool
         
-def rebin3d(oldhisto, x, y, z, box, signalRegion):
+def average3d(oldhisto, x, y):
+    newhisto = rt.TH3D(oldhisto.GetName()+"_average",oldhisto.GetTitle()+"_average",len(x)-1,x,len(y)-1,y,len(z)-1,z)
+    for i in range(1,oldhisto.GetNbinsX()+1):
+        for j in range(1,oldhisto.GetNbinsY()+1):
+            for k in range(1,oldhisto.GetNbinsZ()+1):
+                xold = oldhisto.GetXaxis().GetBinCenter(i)
+                yold = oldhisto.GetYaxis().GetBinCenter(j)
+                zold = oldhisto.GetZaxis().GetBinCenter(k)
+                oldbincontent = oldhisto.GetBinContent(i,j,k)
+
+                numCells = 9
+                totalweight = 0.
+                mindistance = 1000.
+                for deltaI in [-1, 0, 1]:
+                    for deltaJ in [-1, 0, 1]:
+                        xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
+                        ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
+                        if not passCut(xnew, ynew, box, signalRegion): 
+                            numCells -= 1
+                            continue
+                        if (deltaI, deltaJ) == (0, 0): 
+                            #totalweight += 0 # adding in this weight later.
+                            totalweight += 8.
+                        else: 
+                            distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2) 
+                            if distance < mindistance: mindistance = distance
+                            #totalweight += 1./distance
+                            totalweight += 1.
+                #totalweight += 3./mindistance # for (0,0) weight
+            
+                for deltaI in [-1, 0, 1]:
+                    for deltaJ in [-1, 0, 1]:
+                        xnew = oldhisto.GetXaxis().GetBinCenter(i+deltaI)
+                        ynew = oldhisto.GetYaxis().GetBinCenter(j+deltaJ)
+                        if (deltaI, deltaJ) == (0, 0): 
+                            #weight = 3./mindistance
+                            weight = 8.
+                        else: 
+                             distance = rt.TMath.Power((xold-xnew)/(x[-1]-x[0]),2) + rt.TMath.Power((yold-ynew)/(y[-1]-y[0]),2)
+                             #weight = 1./distance
+                             weight = 1.
+                        if passCut(xnew, ynew, box, signalRegion): 
+                            newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
+    return newhisto
+
+def rebin3d(oldhisto, x, y, z, box, signalRegion, average=True):
     newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -44,8 +90,13 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion):
                 zold = oldhisto.GetZaxis().GetBinCenter(k)
                 if not passCut(xold, yold, box, signalRegion): continue
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
-                newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))                
-    return newhisto
+                newhisto.Fill(xold, yold, zold, max(0.,oldbincontent))
+    if average: 
+        print "AVERAGING!"
+        newhistoaverage = average3d(newhisto,x,y)
+        return newhistoaverage
+    else:
+        return newhisto
     
 def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,workspace,sign,lumi_uncert,trigger_uncert,lepton_uncert):
         txtfile = open(txtfileName,"w")
@@ -645,7 +696,7 @@ if __name__ == '__main__':
                     histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Scale( histos[box,"%s"%(bkg)].Integral()/histos[box,"%s_bgShape%02d_%s_%s%s"%(bkg,p,variationName,box,syst)].Integral())
                 else: print "ERROR: histogram for %s_bgShape%02d_%s_%s%s has zero integral!"%(bkg,p,variationName,box,syst)
         
-    wHisto = sigFile.Get('wHisto_pdferr_nom')
+    wHisto = sigFile.Get('wHisto')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
     btagDown =  sigFile.Get('wHisto_btagerr_down')
     
@@ -680,13 +731,14 @@ if __name__ == '__main__':
     histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, signalRegion)
     
     #set the per box eff value
-    sigNorm = wHisto.Integral()
+    pdfNom = rebin3d(sigFile.Get('wHisto_pdferr_nom'),x,y,z,box,signalRegion,False)
+    sigNorm = pdfNom.Integral()
     sigEvents = sigNorm*lumi*refXsec
     print "\nINFO: now multiplying:  efficiency x lumi x refXsec = %f x %f x %f = %f"%(sigNorm,lumi,refXsec,sigEvents)
     
     histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, box, signalRegion)
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
-    histos[box,model].Scale(lumi*refXsec)
+    histos[box,model].Scale(sigEvents/histos[box,model].Integral())
     
     for paramName in ["Jes","Isr","Btag","Pdf"]:
         print "\nINFO: Now renormalizing signal shape systematic histograms to nominal\n"
