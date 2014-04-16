@@ -92,7 +92,7 @@ def average3d(oldhisto, x, y):
                             newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
     return newhisto
 
-def rebin3d(oldhisto, x, y, z, box, signalRegion, average=True):
+def rebin3d(oldhisto, x, y, z, box, signalRegion, average=False):
     newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -230,7 +230,6 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             else:
                 txtfile.write("%s_%s  	flatParam\n"%
                               (paramName,box))
-            
         txtfile.close()
 
 def Gamma(a, x):
@@ -339,7 +338,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 126
+    nMaxBins = 144
     nBins = nMaxBins
     #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
     
@@ -417,8 +416,10 @@ if __name__ == '__main__':
         w.factory("%s_%s[%e]"%(paramName,box,paramValue))
         w.var("%s_%s"%(paramName,box)).setError(workspace.var(paramName).getError())
         w.var("%s_%s"%(paramName,box)).setConstant(False)
-        if paramName.find("n_")!=-1 or paramName.find("b_")!=-1:
-            w.var("%s_%s"%(paramName,box)).setMin(0.0)
+        if paramName.find("n_")!=-1:
+            w.var("%s_%s"%(paramName,box)).setMin(0.1)
+        if paramName.find("b_")!=-1:
+            w.var("%s_%s"%(paramName,box)).setMin(0.0001)
         elif paramName.find("MR0_")!=-1:
             w.var("%s_%s"%(paramName,box)).setMax(x[0])
         elif paramName.find("R0_")!=-1:
@@ -450,6 +451,7 @@ if __name__ == '__main__':
                                              w.var("MRCut_%s"%(box)),w.var("RCut_%s"%(box)),w.var("BtagCut_%s"%("TTj1b")),
                                              w.obj("EmptyHist3D_%s"%(box)))
         w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj1b",w.var("Ntot_TTj1b_%s"%box).getVal()))
+        w.var("%s_%s_norm"%(box,"TTj1b")).setError(w.var("Ntot_TTj1b_%s"%box).getError())
         extRazorPdf_TTj1b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj1b"),"extRazorPdf_%s_%s"%(box,"TTj1b"),razorPdf_TTj1b,w.var("%s_TTj1b_norm"%box))
         RootTools.Utils.importToWS(w,extRazorPdf_TTj1b)
         pdfList.add(extRazorPdf_TTj1b)
@@ -463,6 +465,7 @@ if __name__ == '__main__':
                                              w.obj("EmptyHist3D_%s"%(box)))        
         val = w.var("Ntot_TTj2b_%s"%box).getVal() * (1.0 - w.var("f3_TTj2b_%s"%box).getVal())
         w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj2b", val ))
+        w.var("%s_%s_norm"%(box,"TTj2b")).setError(w.var("Ntot_TTj2b_%s"%box).getError() *(1.0- w.var("f3_TTj2b_%s"%box).getVal()))
         extRazorPdf_TTj2b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj2b"),"extRazorPdf_%s_%s"%(box,"TTj2b"),razorPdf_TTj2b,w.var("%s_TTj2b_norm"%box))
         RootTools.Utils.importToWS(w,extRazorPdf_TTj2b)
         pdfList.add(extRazorPdf_TTj2b)
@@ -475,6 +478,7 @@ if __name__ == '__main__':
                                              w.obj("EmptyHist3D_%s"%(box)))
         val = w.var("Ntot_TTj2b_%s"%box).getVal() * w.var("f3_TTj2b_%s"%box).getVal()
         w.factory("%s_%s_norm[%f,0,1e6]"%(box,"TTj3b",val))
+        w.var("%s_%s_norm"%(box,"TTj3b")).setError(w.var("Ntot_TTj2b_%s"%box).getError() * w.var("f3_TTj2b_%s"%box).getVal())
         extRazorPdf_TTj3b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj3b"),"extRazorPdf_%s_%s"%(box,"TTj3b"),razorPdf_TTj3b,w.var("%s_TTj3b_norm"%box))
         RootTools.Utils.importToWS(w,extRazorPdf_TTj3b)
         
@@ -605,8 +609,13 @@ if __name__ == '__main__':
 
     w.Print("v")
     writeDataCard(box,model,massPoint,"%s/razor_combine_%s_%s_%s.txt"%(outdir,box,model,massPoint),initialBkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert,penalty)
+
+            
     os.system("cat %s/razor_combine_%s_%s_%s.txt \n"%(outdir,box,model,massPoint)) 
     
+    for bkg in initialBkgs:
+        w.var("%s_%s_norm"%(box,bkg)).setVal(1.0)
+        w.var("%s_%s_norm"%(box,bkg)).setMax(10.0)
     outFile = rt.TFile.Open("%s/razor_combine_%s_%s_%s.root"%(outdir,box,model,massPoint),"RECREATE")
     outFile.cd()
     w.Write()
