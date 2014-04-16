@@ -340,6 +340,7 @@ if __name__ == '__main__':
 
     nMaxBins = 1
     for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
+    #for testBox in ["MultiJet", "Jet2b"]:
         xTest = array('d', cfg.getBinning(testBox)[0])
         yTest = array('d', cfg.getBinning(testBox)[1])
         zTest = array('d', cfg.getBinning(testBox)[2])
@@ -431,8 +432,8 @@ if __name__ == '__main__':
             w.var("%s_%s"%(paramName,box)).setMax(y[0])
             
 
-    w.factory("MRCut_%s[%i]"%(box,x[1]))
-    w.factory("RCut_%s[%e]"%(box,y[1]))
+    w.factory("MRCut_%s[%i]"%(box,x[0]+50.))
+    w.factory("RCut_%s[%e]"%(box,y[0]+0.05))
     w.var("MRCut_%s"%box).setConstant(True)
     w.var("RCut_%s"%box).setConstant(True)
   
@@ -603,7 +604,7 @@ if __name__ == '__main__':
 
             # turn off prefit   
             #if not expected_a_priori:
-            plots = True
+            plots = False
             if plots:                
                 c = rt.TCanvas("c","c",500,500)
                 frame = th1x.frame()
