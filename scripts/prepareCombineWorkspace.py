@@ -338,10 +338,15 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 144
-    nBins = nMaxBins
-    #nBins = (len(x)-1)*(len(y)-1)*(len(z)-1)
-    
+    nMaxBins = 1
+    for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
+        xTest = array('d', cfg.getBinning(testBox)[0])
+        yTest = array('d', cfg.getBinning(testBox)[1])
+        zTest = array('d', cfg.getBinning(testBox)[2])
+        nTestBins = (len(xTest)-1)*(len(yTest)-1)*(len(zTest)-1)
+        if nTestBins  > nMaxBins: nMaxBins = nTestBins
+            
+    nBins = nMaxBins    
     
     th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
     th1xBins = array('d',range(0,nBins+1))
@@ -598,8 +603,23 @@ if __name__ == '__main__':
 
             # turn off prefit   
             #if not expected_a_priori:
-            #    fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
-            #    fr_new.Print("v")
+            plots = True
+            if plots:                
+                c = rt.TCanvas("c","c",500,500)
+                frame = th1x.frame()
+                dataHist[box,bkg].plotOn(frame)
+                razorPdf.plotOn(frame)
+                frame.Draw()
+                c.SaveAs("razor1DFit_%s_preFit.pdf"%box)
+                fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
+                fr_new.Print("v")
+                frame2 = th1x.frame()
+                dataHist[box,bkg].plotOn(frame2)
+                razorPdf.plotOn(frame2)
+                c = rt.TCanvas("c","c",500,500)
+                frame2.Draw()
+                c.SaveAs("razor1DFit_%s_postFit.pdf"%box)
+                
                 
         else:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
