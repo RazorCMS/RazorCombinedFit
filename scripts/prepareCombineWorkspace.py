@@ -137,9 +137,9 @@ def rebin3dCoarse(oldhisto, x, y, z, box, signalRegion):
             for k in range(1,oldhisto.GetNbinsZ()+1):
                 xold = oldhisto.GetXaxis().GetBinCenter(i)
                 yold = oldhisto.GetYaxis().GetBinCenter(j)
-                zold = oldhisto.GetYaxis().GetBinCenter(k)
+                zold = oldhisto.GetZaxis().GetBinCenter(k)
                 if not passCut(xold, yold, box, signalRegion): continue
-                oldbincontent = oldhisto.GetBinContent(i,j)
+                oldbincontent = oldhisto.GetBinContent(i,j,k)
                 newhistoCoarse.Fill(xold, yold, zold, max(0.,oldbincontent))
                 newhistoCounts.Fill(xold, yold, zold)
 
@@ -149,12 +149,11 @@ def rebin3dCoarse(oldhisto, x, y, z, box, signalRegion):
                 newhisto.SetBinContent(i,j,k,0.)
                 xold = oldhisto.GetXaxis().GetBinCenter(i)
                 yold = oldhisto.GetYaxis().GetBinCenter(j)
-                zold = oldhisto.GetYaxis().GetBinCenter(k)
+                zold = oldhisto.GetZaxis().GetBinCenter(k)
                 if not passCut(xold, yold, box, signalRegion): continue
                 newYield = newhistoCoarse.GetBinContent(newhistoCoarse.FindBin(xold,yold,zold))
                 numBins = newhistoCounts.GetBinContent(newhistoCounts.FindBin(xold,yold,zold))
                 newhisto.SetBinContent(i,j,k,newYield/numBins)
-                
                 
     return newhisto
     
@@ -621,6 +620,8 @@ if __name__ == '__main__':
         print "\nINFO: Now renormalizing signal shape systematic histograms to nominal\n"
         print "signal shape variation %s"%paramName
         for syst in ['Up','Down']:
+            
+            print "norm is %f"%histos[box,"%s_%s%s"%(model,paramName,syst)].Integral()
             if histos[box,"%s_%s%s"%(model,paramName,syst)].Integral() > 0:
                 histos[box,"%s_%s%s"%(model,paramName,syst)].Scale( histos[box,model].Integral()/histos[box,"%s_%s%s"%(model,paramName,syst)].Integral())
 
