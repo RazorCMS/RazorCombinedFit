@@ -736,10 +736,11 @@ if __name__ == '__main__':
                 c.SaveAs("razor1DFit_%s_postFit.pdf"%box)
                 
                 
-        else:
+            RootTools.Utils.importToWS(w,dataHist[box,bkg])
+        elif bkg.find("T2tt")!=-1:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
 
-        RootTools.Utils.importToWS(w,dataHist[box,bkg])
+            RootTools.Utils.importToWS(w,dataHist[box,bkg])
     print "\nINFO: Now writing data card\n"
 
     w.Print("v")
