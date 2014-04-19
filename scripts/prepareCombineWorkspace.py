@@ -14,10 +14,10 @@ import sys
 def getBinningData(box):
     if box in ["Jet2b", "MultiJet"]:
         MRbins =  [400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2500, 4000]
-        Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.0,1.1,1.25,1.5]
+        Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     else:        
         MRbins =  [300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2500, 4000]
-        Rsqbins = [0.15, 0.20, 0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.0,1.1,1.25,1.5]
+        Rsqbins = [0.15, 0.20, 0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     if box in ["Jet2b"]: 
         nBtagbins = [2.,3.,4.]
     elif box in ["MuEle","EleEle","MuMu"]: 
@@ -127,10 +127,14 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion, average=False):
     else:
         return newhisto
 
-def rebin3dCoarse(oldhisto, x, y, z, box, signalRegion):
-    newhistoCoarse = rt.TH3D(oldhisto.GetName()+"_coarse",oldhisto.GetTitle()+"_coarse",len(x)-1,x,len(y)-1,y,len(z)-1,z)
-    newhistoCounts = rt.TH3D(oldhisto.GetName()+"_counts",oldhisto.GetTitle()+"_counts",len(x)-1,x,len(y)-1,y,len(z)-1,z)
-    newhisto = oldhisto.Clone(oldhisto.GetName()+"_fine")
+def rebin3dCoarse(oldhisto, xCoarse, yCoarse, zCoarse, xFine, yFine, zFine, box, signalRegion):
+    print xCoarse
+    print xFine
+    print yCoarse
+    print yFine
+    newhistoCoarse = rt.TH3D(oldhisto.GetName()+"_coarse",oldhisto.GetTitle()+"_coarse",len(xCoarse)-1,xCoarse,len(yCoarse)-1,yCoarse,len(zCoarse)-1,zCoarse)
+    newhistoCounts = rt.TH3D(oldhisto.GetName()+"_counts",oldhisto.GetTitle()+"_counts",len(xCoarse)-1,xCoarse,len(yCoarse)-1,yCoarse,len(zCoarse)-1,zCoarse)
+    newhisto = rt.TH3D(oldhisto.GetName()+"_fine",oldhisto.GetTitle()+"_fine",len(xFine)-1,xFine,len(yFine)-1,yFine,len(zFine)-1,zFine)
     
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -143,16 +147,16 @@ def rebin3dCoarse(oldhisto, x, y, z, box, signalRegion):
                 newhistoCoarse.Fill(xold, yold, zold, max(0.,oldbincontent))
                 newhistoCounts.Fill(xold, yold, zold)
 
-    for i in range(1,oldhisto.GetNbinsX()+1):
-        for j in range(1,oldhisto.GetNbinsY()+1):
-            for k in range(1,oldhisto.GetNbinsZ()+1):
+    for i in range(1,newhisto.GetNbinsX()+1):
+        for j in range(1,newhisto.GetNbinsY()+1):
+            for k in range(1,newhisto.GetNbinsZ()+1):
                 newhisto.SetBinContent(i,j,k,0.)
-                xold = oldhisto.GetXaxis().GetBinCenter(i)
-                yold = oldhisto.GetYaxis().GetBinCenter(j)
-                zold = oldhisto.GetZaxis().GetBinCenter(k)
-                if not passCut(xold, yold, box, signalRegion): continue
-                newYield = newhistoCoarse.GetBinContent(newhistoCoarse.FindBin(xold,yold,zold))
-                numBins = newhistoCounts.GetBinContent(newhistoCounts.FindBin(xold,yold,zold))
+                xnew = newhisto.GetXaxis().GetBinCenter(i)
+                ynew = newhisto.GetYaxis().GetBinCenter(j)
+                znew = newhisto.GetZaxis().GetBinCenter(k)
+                if not passCut(xnew, ynew, box, signalRegion): continue
+                newYield = newhistoCoarse.GetBinContent(newhistoCoarse.FindBin(xnew,ynew,znew))
+                numBins = newhistoCounts.GetBinContent(newhistoCounts.FindBin(xnew,ynew,znew))
                 newhisto.SetBinContent(i,j,k,newYield/numBins)
                 
     return newhisto
@@ -388,7 +392,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 576
+    nMaxBins = 480
     #for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
     #    xTest = array('d', cfg.getBinning(testBox)[0])
     #    yTest = array('d', cfg.getBinning(testBox)[1])
@@ -585,14 +589,14 @@ if __name__ == '__main__':
     # adding signal shape systematics
     print "\nINFO: Now obtaining signal shape systematics\n"
     
-    histos[(box,"%s_IsrUp"%(model))] = rebin3dCoarse(isrUp,xSignal,ySignal,zSignal, box, signalRegion)
-    histos[(box,"%s_IsrDown"%(model))] = rebin3dCoarse(isrDown,xSignal,ySignal,zSignal, box, signalRegion)
+    histos[(box,"%s_IsrUp"%(model))] = rebin3dCoarse(isrUp,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
+    histos[(box,"%s_IsrDown"%(model))] = rebin3dCoarse(isrDown,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
     
-    histos[(box,"%s_BtagUp"%(model))] = rebin3dCoarse(btagUp,xSignal,ySignal,zSignal, box, signalRegion)
-    histos[(box,"%s_BtagDown"%(model))] = rebin3dCoarse(btagDown,xSignal,ySignal,zSignal, box, signalRegion)
+    histos[(box,"%s_BtagUp"%(model))] = rebin3dCoarse(btagUp,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
+    histos[(box,"%s_BtagDown"%(model))] = rebin3dCoarse(btagDown,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
 
-    histos[(box,"%s_JesUp"%(model))] = rebin3dCoarse(jesUp,xSignal,ySignal,zSignal, box, signalRegion)
-    histos[(box,"%s_JesDown"%(model))] = rebin3dCoarse(jesDown,xSignal,ySignal,zSignal, box, signalRegion)
+    histos[(box,"%s_JesUp"%(model))] = rebin3dCoarse(jesUp,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
+    histos[(box,"%s_JesDown"%(model))] = rebin3dCoarse(jesDown,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
 
     
     pdfUp = wHisto.Clone("%s_%s_PdfUp_3d"%(box,model))
@@ -603,16 +607,16 @@ if __name__ == '__main__':
     pdfAbs.Multiply(wHisto)
     pdfUp.Add(pdfAbs,1.0)
     pdfDown.Add(pdfAbs,-1.0)
-    histos[(box,"%s_PdfUp"%(model))] = rebin3dCoarse(pdfUp,xSignal,ySignal,zSignal, box, signalRegion)
-    histos[(box,"%s_PdfDown"%(model))] = rebin3dCoarse(pdfDown,xSignal,ySignal,zSignal, box, signalRegion)
+    histos[(box,"%s_PdfUp"%(model))] = rebin3dCoarse(pdfUp,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
+    histos[(box,"%s_PdfDown"%(model))] = rebin3dCoarse(pdfDown,xSignal,ySignal,zSignal, x, y, z, box, signalRegion)
     
     #set the per box eff value
-    pdfNom = rebin3d(sigFile.Get('wHisto_pdferr_nom'),x,y,z,box,signalRegion)
+    pdfNom = rebin3d(sigFile.Get('wHisto_pdferr_nom'),xSignal,ySignal,zSignal,box,signalRegion)
     sigNorm = pdfNom.Integral()
     sigEvents = sigNorm*lumi*refXsec
     print "\nINFO: now multiplying:  efficiency x lumi x refXsec = %f x %f x %f = %f"%(sigNorm,lumi,refXsec,sigEvents)
     
-    histos[box,model] = rebin3d(wHisto.Clone("%s_%s_3d"%(box,model)), x, y, z, box, signalRegion)
+    histos[box,model] = rebin3dCoarse(wHisto.Clone("%s_%s_3d"%(box,model)), xSignal, ySignal, zSignal, x, y, z, box, signalRegion)
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
     histos[box,model].Scale(sigEvents/histos[box,model].Integral())
     
@@ -690,5 +694,8 @@ if __name__ == '__main__':
         w.var("%s_%s_norm"%(box,bkg)).setMax(10.0)
     outFile = rt.TFile.Open("%s/razor_combine_%s_%s_%s.root"%(outdir,box,model,massPoint),"RECREATE")
     outFile.cd()
+    
+    for index, histo in histos.iteritems():
+        histo.Write()
     w.Write()
     outFile.Close()
