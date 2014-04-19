@@ -11,13 +11,55 @@ import sys
 
 
 
+def getBinEvents(i, j, k, x, y, z, workspace):
+    errorFlag = False
+    if z[k-1]==3:
+        bkg = "TTj2b"
+    else:
+        bkg = "TTj%ib"%z[k-1]
+    B = workspace.var("b_%s"%bkg).getVal()
+    N = workspace.var("n_%s"%bkg).getVal()
+    X0 = workspace.var("MR0_%s"%bkg).getVal()
+    Y0 = workspace.var("R0_%s"%bkg).getVal()
+    NTOT = workspace.var("Ntot_%s"%bkg).getVal()
+    F3 = workspace.var("f3_%s"%bkg).getVal()
+
+    fr = workspace.obj("independentFR")
+    parList = fr.floatParsFinal()
+    
+    xmin  = x[0]
+    xmax  = x[-1]
+    ymin  = y[0]
+    ymax  = y[-1]
+    total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+
+    xmin  = x[i-1]
+    xmax  = x[i]
+    ymin  = y[j-1]
+    ymax  = y[j]
+    integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
+
+    if (z[k-1]==1) :
+        bin_events =  NTOT*integral/total_integral
+    elif (z[k-1]==2) : 
+        bin_events = (1.-F3)*NTOT*integral/total_integral
+    elif (z[k-1]==3) : 
+        bin_events =  F3*NTOT*integral/total_integral
+
+    if bin_events <= 0:
+        errorFlag = True
+        print "\nERROR: bin razor pdf integral =", integral
+        print "\nERROR: total razor pdf integral =", total_integral
+        return 0., errorFlag
+    return bin_events, errorFlag
+
 def getBinningData(box):
     if box in ["Jet2b", "MultiJet"]:
         MRbins =  [400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2500, 4000]
-        Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
+        Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.25,1.5]
     else:        
         MRbins =  [300, 350, 400, 450, 500, 550, 600, 650, 700, 800, 900, 1000, 1200, 1600, 2000, 2500, 4000]
-        Rsqbins = [0.15, 0.20, 0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
+        Rsqbins = [0.15, 0.20, 0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.25,1.5]
     if box in ["Jet2b"]: 
         nBtagbins = [2.,3.,4.]
     elif box in ["MuEle","EleEle","MuMu"]: 
@@ -448,6 +490,23 @@ if __name__ == '__main__':
     
     histos[box,model] = rt.TH3D("%s_%s_3d"%(box,model),"%s_%s_3d"%(box,model),len(x)-1,x,len(y)-1,y,len(z)-1,z)
     histos[box,"data"] = rt.TH3D("%s_%s_3d"%(box,"data"),"%s_%s_3d"%(box,"data"),len(x)-1,x,len(y)-1,y,len(z)-1,z)
+
+    for bkg in bkgs:
+        histos[box,bkg] = rt.TH3D("%s_%s_3d"%(box,bkg),"%s_%s_3d"%(box,bkg),len(x)-1,x,len(y)-1,y,len(z)-1,z)
+    
+    for bkg in initialBkgs:
+        if bkg=="TTj3b": continue
+        for i in xrange(1,len(x)):
+            for j in xrange(1,len(y)):
+                for k in xrange(1, len(z)):
+                    if not passCut(x[i-1],y[j-1], box, signalRegion): continue
+                    bin_events, errorFlag = getBinEvents(i,j,k,x,y,z,workspace)
+                    if (bkg.find("1b")!=-1 and z[k-1]==1) :
+                        histos[box,bkg].SetBinContent(i,j,k,bin_events)
+                    elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
+                        histos[box,bkg].SetBinContent(i,j,k,bin_events)
+                    elif (bkg.find("2b")!=-1 and z[k-1]==3) : 
+                        histos[box,"TTj3b"].SetBinContent(i,j,k,bin_events)
 
     emptyHist3D = {}
     emptyHist3D[box] = rt.TH3D("EmptyHist3D_%s"%(box),"EmptyHist3D_%s"%(box),len(x)-1,x,len(y)-1,y,len(z)-1,z)
