@@ -6,11 +6,17 @@ from math import *
 import os
 from array import *
 from getGChiPairs import *
+from plotSignificance import plotSignificance
+from get2DContour import getModelSettings
 
-def getFileName(mg, mchi, box, model, directory,fitRegion,method):
-    hybridLimit = "higgsCombine"
-    modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
-    fileName = "%s/%s%s_%s_%s_%s.%s.mH120.root"%(directory,hybridLimit,model,modelPoint,fitRegion,box,method)
+def getFileName(hybridLimit, mg, mchi, box, model, directory,fitRegion,refXsec,method,t):
+    if hybridLimit == "higgsCombineToys":
+        modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
+        fileName = "%s/%s%s_%s_%s_%s_%i.%s.mH120.root"%(directory,hybridLimit,model,modelPoint,fitRegion,box,t,method)
+    else:
+        refXsecString = str(refXsec).replace(".","p")
+        modelPoint = "MG_%f_MCHI_%f"%(mg,mchi)
+        fileName = "%s/%s%s_%s_xsec%s_%s_%s_%i.%s.mH120.root"%(directory,hybridLimit,model,modelPoint,refXsecString,fitRegion,box,t,method)
     return fileName
 
 
@@ -70,23 +76,19 @@ if __name__ == '__main__':
     model = sys.argv[2]
     directory = sys.argv[3]
 
-    fitRegion="FULL"
+    fitRegion="Sideband"
     refXsec = 100 #fb
     doHybridNew = False
+    doSignificance = False
     refXsecFile = None
     for i in xrange(4,len(sys.argv)):
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
-        if sys.argv[i].find("--xsec")!=-1: refXsec = float(sys.argv[i+1])
-        if sys.argv[i].find("--xsec-file")!=-1: refXsecFile = sys.argv[i+1]
+        if sys.argv[i].find("--xsec")!=-1: 
+            if sys.argv[i].find("--xsec-file")!=-1: refXsecFile = sys.argv[i+1]
+            else: refXsec = float(sys.argv[i+1])
         if sys.argv[i].find("--toys")!=-1: doHybridNew = True
+        if sys.argv[i].find("--signif")!=-1: doSignificance = True
 
-    if refXsecFile is not None:
-        print "INFO: Input ref xsec file!"
-        gluinoFile = rt.TFile.Open(refXsecFile,"READ")
-        gluinoHistName = refXsecFile.split("/")[-1].split(".")[0]
-        gluinoHist = gluinoFile.Get(gluinoHistName)
-        refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(mGluino))
-        print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb"%(gluinoHistName, mGluino, refXsec)
         
     gchipairs = getGChiPairs(model)
         
@@ -96,14 +98,55 @@ if __name__ == '__main__':
     #rt.TTree("combine","combine")
 
     haddOutputs = []
-    for mg, mchi in gchipairs:
-        if not glob.glob(getFileName(mg,mchi,boxInput,model,directory,fitRegion,"Asymptotic")): continue
-        if doHybridNew and not glob.glob(getFileName(mg,mchi,boxInput,model,directory,fitRegion,"HybridNew")): continue
 
-        print getFileName(mg,mchi,boxInput,model,directory,fitRegion,"Asymptotic")
-        tFile = rt.TFile.Open(getFileName(mg,mchi,boxInput,model,directory,fitRegion,"Asymptotic"))
+    mgMin, mgMax, mchiMin, mchiMax, binWidth, nRebins, xsecMin, xsecMax, diagonalOffset, smoothing = getModelSettings(model)
+    sigHist = rt.TH2D("significance","significance",int((mgMax-mgMin)/binWidth),mgMin, mgMax,int((mchiMax-mchiMin)/binWidth), mchiMin, mchiMax)
+    
+    if refXsecFile is not None:
+        print "INFO: Input ref xsec file!"
+        gluinoFile = rt.TFile.Open(refXsecFile,"READ")
+    for mg, mchi in gchipairs:
+        if refXsecFile is not None:
+            gluinoHistName = refXsecFile.split("/")[-1].split(".")[0]
+            gluinoHist = gluinoFile.Get(gluinoHistName)
+            refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(mg))
+            #print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb"%(gluinoHistName, mg, refXsec)
+        
+        if doSignificance and doHybridNew:
+            if not glob.glob(getFileName("higgsCombineSignif",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"HybridNew",0)): continue
+            print "INFO: opening %s"%(getFileName("higgsCombineSignif",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"HybridNew",0))
+            tFile = rt.TFile.Open(getFileName("higgsCombineSignif",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"HybridNew",0))
+        elif doHybridNew: 
+            if not glob.glob(getFileName("higgsCombineToys",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"HybridNew",0)): continue
+            print "INFO: opening %s"%(getFileName("higgsCombineToys",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"HybridNew",0))
+            tFile = rt.TFile.Open(getFileName("higgsCombineToys",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"HybridNew",0))
+        elif doSignificance: 
+            if not glob.glob(getFileName("higgsCombine",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"ProfileLikelihood",0)): continue
+            print "INFO: opening %s"%(getFileName("higgsCombine",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"ProfileLikelihood",0))
+            tFile = rt.TFile.Open(getFileName("higgsCombine",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"ProfileLikelihood",0))
+        else:
+            if not glob.glob(getFileName("higgsCombine",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"Asymptotic",0)): continue
+            print "INFO: opening %s"%(getFileName("higgsCombine",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"Asymptotic",0))
+            tFile = rt.TFile.Open(getFileName("higgsCombine",mg,mchi,boxInput,model,directory,fitRegion,refXsec,"Asymptotic",0))
+            
         limit = tFile.Get("limit")
-        if limit.GetEntries() < 6: continue
+        try:
+            if limit.InheritsFrom("TTree") is False: 
+                tFile.cd()
+                tFile.Close()
+                continue
+        except:
+            tFile.cd()
+            tFile.Close()
+            continue
+        if doSignificance and limit.GetEntries() < 1: 
+            tFile.cd()
+            tFile.Close()
+            continue
+        if (not doSignificance) and limit.GetEntries() < 6: 
+            tFile.cd()
+            tFile.Close()
+            continue
         limit.Draw('>>elist','','entrylist')
         elist = rt.gDirectory.Get('elist')
         entry = elist.Next()
@@ -112,39 +155,26 @@ if __name__ == '__main__':
         while True:
             if entry == -1: break
             limit.GetEntry(entry)
-            limits.append(refXsec*(1.e-3)*limit.limit)
+            if doSignificance:
+                limits.append(max(0.0,limit.limit))
+            else:
+                limits.append(refXsec*(1.e-3)*limit.limit)
             entry = elist.Next()
-        if len(limits) < 6: continue
         tFile.cd()
         tFile.Close()
-
-        if doHybridNew:
-            print getFileName(mg,mchi,boxInput,model,directory,fitRegion,"HybridNew")
-            tFile = rt.TFile.Open(getFileName(mg,mchi,boxInput,model,directory,fitRegion,"HybridNew"))
-            limit = tFile.Get("limit")
-            if limit.GetEntries() < 1: continue
-            limit.Draw('>>elist','','entrylist')
-            elist = rt.gDirectory.Get('elist')
-            entry = elist.Next()
-            limit.GetEntry(entry)
-            hybridNew = 0
-            while True:
-                if entry == -1: break
-                limit.GetEntry(entry)
-                hybridNew = refXsec*(1.e-3)*limit.limit
-                entry = elist.Next()
-                tFile.cd()
-                tFile.Close()
-            limits[5] = hybridNew
             
         limits.reverse()
         print mg, mchi
         print limits
         
+        if doSignificance:
+            sigHist.SetBinContent(sigHist.FindBin(mg,mchi),limits[0])
+        else:
+            haddOutput = writeXsecTree(boxInput, directory, mg, mchi, [limits[0]],[limits[1]],[limits[2]],[limits[3]],[limits[4]],[limits[5]])
+            haddOutputs.append(haddOutput)
 
-        haddOutput = writeXsecTree(boxInput, directory, mg, mchi, [limits[0]],[limits[1]],[limits[2]],[limits[3]],[limits[4]],[limits[5]])
-        haddOutputs.append(haddOutput)
 
-    os.system("hadd -f %s/xsecUL_%s.root %s"%(directory,boxInput," ".join(haddOutputs)))
-
-    
+    if doSignificance:
+        c = plotSignificance(boxInput,model,sigHist,doHybridNew)
+    else:
+        os.system("hadd -f %s/xsecUL_%s.root %s"%(directory,boxInput," ".join(haddOutputs)))
