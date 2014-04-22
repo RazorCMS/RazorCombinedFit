@@ -737,7 +737,7 @@ if __name__ == '__main__':
                 
                 
             RootTools.Utils.importToWS(w,dataHist[box,bkg])
-        elif bkg.find("T2tt")!=-1:
+        elif bkg.find("TTj")==-1:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
 
             RootTools.Utils.importToWS(w,dataHist[box,bkg])
