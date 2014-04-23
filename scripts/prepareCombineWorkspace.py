@@ -58,7 +58,7 @@ def getBinningData(box):
         MRbins =  [400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
         Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     else:        
-        MRbins =  [300, 350, 400, 450, 500, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
+        MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
         Rsqbins = [0.15,0.20,0.25,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     if box in ["Jet2b"]: 
         nBtagbins = [2.,3.,4.]
@@ -434,7 +434,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 351
+    nMaxBins = 378
     #for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
     #    xTest = array('d', cfg.getBinning(testBox)[0])
     #    yTest = array('d', cfg.getBinning(testBox)[1])
