@@ -58,11 +58,11 @@ def getBinningData(box):
         MRbins =  [400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
         Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     elif box in ["MuEle","EleEle","MuMu"]:        
-        MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 800, 1200, 1600, 2000, 4000]
-        Rsqbins = [0.15,0.20,0.25,0.35,0.41,0.52,0.64,0.80,1.5]
+        MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 900, 1200, 1600, 2000, 3000, 4000]
+        Rsqbins = [0.15,0.20,0.25,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     else:        
-        MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
-        Rsqbins = [0.15,0.20,0.25,0.35,0.41,0.52,0.80,1.5]
+        MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 900, 1200, 1600, 2000, 3000, 4000]
+        Rsqbins = [0.15,0.20,0.25,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
     if box in ["Jet2b"]: 
         nBtagbins = [2.,3.,4.]
     elif box in ["MuEle","EleEle","MuMu"]: 
@@ -437,7 +437,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 336
+    nMaxBins = 432
     #for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
     #    xTest = array('d', cfg.getBinning(testBox)[0])
     #    yTest = array('d', cfg.getBinning(testBox)[1])
@@ -721,22 +721,22 @@ if __name__ == '__main__':
 
             # turn off prefit   
             #if not expected_a_priori:
-            plots = False
+            plots = True
             if plots:                
-                c = rt.TCanvas("c","c",500,500)
-                frame = th1x.frame()
-                dataHist[box,bkg].plotOn(frame)
-                razorPdf.plotOn(frame)
-                frame.Draw()
-                c.SaveAs("razor1DFit_%s_preFit.pdf"%box)
+                #c = rt.TCanvas("c","c",500,500)
+                #frame = th1x.frame()
+                #dataHist[box,bkg].plotOn(frame)
+                #razorPdf.plotOn(frame)
+                #frame.Draw()
+                #c.SaveAs("razor1DFit_%s_preFit.pdf"%box)
                 fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
                 fr_new.Print("v")
-                frame2 = th1x.frame()
-                dataHist[box,bkg].plotOn(frame2)
-                razorPdf.plotOn(frame2)
-                c = rt.TCanvas("c","c",500,500)
-                frame2.Draw()
-                c.SaveAs("razor1DFit_%s_postFit.pdf"%box)
+                #frame2 = th1x.frame()
+                #dataHist[box,bkg].plotOn(frame2)
+                #razorPdf.plotOn(frame2)
+                #c = rt.TCanvas("c","c",500,500)
+                #frame2.Draw()
+                #c.SaveAs("razor1DFit_%s_postFit.pdf"%box)
                 
                 
             RootTools.Utils.importToWS(w,dataHist[box,bkg])
