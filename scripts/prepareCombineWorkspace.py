@@ -721,7 +721,7 @@ if __name__ == '__main__':
 
             # turn off prefit   
             #if not expected_a_priori:
-            plots = True
+            plots = False
             if plots:                
                 #c = rt.TCanvas("c","c",500,500)
                 #frame = th1x.frame()
