@@ -437,7 +437,7 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 432
+    nMaxBins = 351
     #for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
     #    xTest = array('d', cfg.getBinning(testBox)[0])
     #    yTest = array('d', cfg.getBinning(testBox)[1])
