@@ -102,6 +102,9 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     
     outputfile.write("export NAME=\"%s\"\n"%model)
     boxes =  box.split("_")
+    sparticle = "stop"
+    if model.find("T1")!=-1:
+        sparticle = "gluino"
     seed = -1
     rSignal = float(xsecPoint/refXsec)
     
@@ -109,7 +112,7 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD_2Nov2013.root $PWD\n")
     for ibox in boxes:
         outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_%s_%s.root $PWD\n"%(massPoint,label[ibox],ibox))
-        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombine%s.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_combine.config --xsec %f --signal-region %s %s\n"%(user[0],user,workspaceString,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,refXsec,signalRegion,penaltyString))
+        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombine%s.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_%s.config --xsec %f --signal-region %s %s\n"%(user[0],user,workspaceString,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,sparticle,refXsec,signalRegion,penaltyString))
 
     if len(boxes)>1:
         options = ["%s=razor_combine_%s_%s_%s.txt"%(ibox,ibox,model,massPoint) for ibox in boxes]
