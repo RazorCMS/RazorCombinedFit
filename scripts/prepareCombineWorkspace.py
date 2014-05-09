@@ -55,15 +55,19 @@ def getBinEvents(i, j, k, x, y, z, workspace):
 
 def getBinningData(box, model):
     if box in ["Jet2b", "MultiJet"]:
-        MRbins =  [400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
-        Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
+        if model.find("T2")!=-1:  
+            MRbins =  [400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
+            Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
+        else:
+            MRbins =  [400, 450, 500, 550, 700, 900, 1200, 1600, 4000]
+            Rsqbins = [0.25,0.30,0.41,0.52,0.64,0.8,1.1,1.5]
     else:
         if model.find("T2")!=-1:  
             MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 900, 1200, 1600, 2500, 4000]
             Rsqbins = [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.1,1.5]
         else:
-            MRbins =  [300, 350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
-            Rsqbins = [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.5]          
+            MRbins =  [300, 350, 450, 550, 700, 900, 1200, 1600, 4000]
+            Rsqbins = [0.15,0.20,0.30,0.41,0.52,0.64,1.1,1.5]
     if box in ["Jet2b"]: 
         nBtagbins = [2.,3.,4.]
     elif box in ["MuEle","EleEle","MuMu"]: 
@@ -438,7 +442,10 @@ if __name__ == '__main__':
     
     w = rt.RooWorkspace("w%s"%box)
 
-    nMaxBins = 288
+    if model.find("T2")!=-1:  
+        nMaxBins = 288
+    else:
+        nMaxBins = 168
     #for testBox in ["MuEle", "EleEle", "MuMu", "MuMultiJet", "MuJet", "EleMultiJet", "EleJet", "MultiJet", "Jet2b"]:
     #    xTest = array('d', cfg.getBinning(testBox)[0])
     #    yTest = array('d', cfg.getBinning(testBox)[1])
@@ -638,7 +645,7 @@ if __name__ == '__main__':
 
 
     # SIGNAL HISTOGRAMS 
-    wHisto = sigFile.Get('wHisto')
+    wHisto = sigFile.Get('wHisto_pdferr_nom')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
     btagDown =  sigFile.Get('wHisto_btagerr_down')
     
