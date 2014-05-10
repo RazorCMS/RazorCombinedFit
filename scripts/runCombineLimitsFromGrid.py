@@ -205,7 +205,7 @@ if __name__ == '__main__':
         
     print box, model, queue
 
-    gchipairs = getGChiPairs(model)
+    gchipairs = getGChiPairs(model,fine=False)
 
     gchipairs = reversed(gchipairs)
     
