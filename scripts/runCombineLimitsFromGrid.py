@@ -4,7 +4,7 @@ import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
 import os.path
-import sys
+import sys, re
 import time
 from math import *
 from array import *
@@ -12,32 +12,32 @@ from getGChiPairs import *
 
     
 def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegion):
-    massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
+    massPoint = "%0.1f_%0.1f"%(gluinoPoint, neutralinoPoint)
+   
     t = 0
     # prepare the script to run
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_"+fitRegion+"_"+box+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
 
-    label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
-             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
-             "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
+    label = {"Mu":"MR350.0_R0.282842712475",
+             "Ele":"MR350.0_R0.282842712475"}
     
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+fitRegion+"_"+box
     user = os.environ['USER']
     
-    combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/%s/"%(user[0],user,model)
+    combineDir = "/afs/cern.ch/work/%s/%s/private/RAZORLIMITS_asym/Combine/%s/"%(user[0],user,model)
     
     outputfile.write('#!/usr/bin/env bash -x\n')
     outputfile.write('mkdir -p %s\n'%combineDir)
     outputfile.write('echo $SHELL\n')
     outputfile.write('pwd\n')
-    outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit \n'%(user[0],user))
+    outputfile.write('cd /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/ \n')
     outputfile.write('pwd\n')
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
     outputfile.write('eval `scramv1 runtime -sh`\n')
     outputfile.write('source setup.sh\n')
     outputfile.write('cd - \n')
-    outputfile.write("export TWD=${PWD}/Razor2013_%s_%s_%s_%i\n"%(model,massPoint,box,t))
+    outputfile.write("export TWD=/afs/cern.ch/work/l/lucieg/private//Razor2013%s_%s_%s_%i\n"%(model,massPoint,box,t))
     outputfile.write("mkdir -p $TWD\n")
     outputfile.write("cd $TWD\n")
     outputfile.write('pwd\n')
@@ -50,12 +50,12 @@ def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegi
     outputfile.write("cp %s/razor_combine_*_${NAME}_%s.* $PWD\n"%(combineDir,massPoint))
     outputfile.write("hadd -f higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineGrid${NAME}_%s_xsec*_%s_%s_*.HybridNew.mH120.*.root\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box))
     
-    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.025 -n Expected025${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
-    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.16 -n Expected160${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
-    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.50 -n Expected500${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
-    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.84 -n Expected840${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
-    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.975 -n Expected975${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
-    outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root -n Observed${NAME}_%s_%s_%s_%i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,massPoint))
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.025 -n Expected025${NAME}_%s_%s_%s_%i razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,njets,massPoint))
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.16 -n Expected160${NAME}_%s_%s_%s_%i razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,njets,massPoint))
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.50 -n Expected500${NAME}_%s_%s_%s_%i razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,njets,massPoint))
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.84 -n Expected840${NAME}_%s_%s_%s_%i razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,njets,massPoint))
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root --expectedFromGrid 0.975 -n Expected975${NAME}_%s_%s_%s_%i razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,njets,massPoint))
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew --frequentist --grid=higgsCombineGrid${NAME}_%s_%s_%s_%i.HybridNew.mH120.root -n Observed${NAME}_%s_%s_%s_%i razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(massPoint,fitRegion,box,t,massPoint,fitRegion,box,t,box,njets,massPoint))
 
     outputfile.write("hadd -f higgsCombineToys${NAME}_%s_%s_%s_%i.HybridNew.mH120.root higgsCombineExpected025*.root higgsCombineExpected160*.root higgsCombineExpected500*.root higgsCombineExpected840*.root higgsCombineExpected975*.root higgsCombineObserved*.root \n"%(massPoint,fitRegion,box,t))
     outputfile.write("cp $TWD/higgsCombineToys*.root %s \n"%combineDir)
@@ -63,8 +63,8 @@ def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegi
     outputfile.close
     return outputname,ffDir
     
-def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations,workspaceFlag,penalty):
-    massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
+def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations,workspaceFlag,penalty,njets):
+    massPoint = "%0.1f_%0.1f"%(gluinoPoint, neutralinoPoint)
     workspaceString = ""
     if workspaceFlag:
         workspaceString = "Workspace"
@@ -76,26 +76,53 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     outputname = submitDir+"/submit_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box+"_"+str(t)+".src"
     outputfile = open(outputname,'w')
     
-    label = {"MuEle":"MR300.0_R0.387298334621","EleEle":"MR300.0_R0.387298334621","MuMu":"MR300.0_R0.387298334621",
-             "EleJet":"MR300.0_R0.387298334621","EleMultiJet":"MR300.0_R0.387298334621","MuMultiJet":"MR300.0_R0.387298334621","MuJet":"MR300.0_R0.387298334621",
-             "MultiJet":"MR400.0_R0.5","Jet2b":"MR400.0_R0.5"}
-        
+    label = {"Mu":"MR350.0_R0.282842712475",
+             "Ele":"MR350.0_R0.282842712475"}
+
+    sigma = {150:80.268,
+             175:36.7994,
+             200:18.5245,
+             225:9.90959,
+             250:5.57596,
+             275:3.2781,
+             300:1.99608,
+             325:1.25277,
+             350:0.807323,
+             375:0.531443,
+             400:0.35683,
+             425:0.243755,
+             450:0.169688,
+             475:0.119275,
+             500:0.0855847,
+             525:0.0618641,
+             550:0.0452067,
+             575:0.0333988,
+             600:0.0248009,
+             625:0.0185257,
+             650:0.0139566,
+             675:0.0106123,
+             700:0.0081141,
+             725:0.00623244,
+             750:0.00480639,
+             775:0.00372717}
+    
+       
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box
     user = os.environ['USER']
     
-    combineDir = "/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/Combine/%s/"%(user[0],user,model)
-    
+    combineDir = "/afs/cern.ch/work/%s/%s/private/RAZORLIMITS_asym/Combine/%s/"%(user[0],user,model)
+   
     outputfile.write('#!/usr/bin/env bash -x\n')
     outputfile.write('mkdir -p %s\n'%combineDir)
     outputfile.write('echo $SHELL\n')
     outputfile.write('pwd\n')
-    outputfile.write('cd /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit \n'%(user[0],user))
+    outputfile.write('cd /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/ \n')
     outputfile.write('pwd\n')
     outputfile.write("export SCRAM_ARCH=slc5_amd64_gcc472\n")
     outputfile.write('eval `scramv1 runtime -sh`\n')
     outputfile.write('source setup.sh\n')
     outputfile.write('cd - \n')
-    outputfile.write("export TWD=${PWD}/Razor2013_%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecString,t))
+    outputfile.write("export TWD=/afs/cern.ch/work/l/lucieg/private/Razor2013%s_%s_%s_%s_%i\n"%(model,massPoint,box,xsecString,t))
     outputfile.write("mkdir -p $TWD\n")
     outputfile.write("cd $TWD\n")
     outputfile.write('pwd\n')
@@ -106,22 +133,17 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     if model.find("T1")!=-1:
         sparticle = "gluino"
     seed = -1
-    rSignal = float(xsecPoint/refXsec)
-    
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/FULLFits2012ABCD_2Nov2013.root $PWD\n")
-    outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Background/SidebandFits2012ABCD_2Nov2013.root $PWD\n")
-    for ibox in boxes:
-        outputfile.write("cp /afs/cern.ch/user/w/woodson/public/Razor2013/Signal/${NAME}/${NAME}_%s_%s_%s.root $PWD\n"%(massPoint,label[ibox],ibox))
-        outputfile.write("python /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombine%s.py --box %s --model ${NAME} -i %sFits2012ABCD_2Nov2013.root ${NAME}_%s_%s_%s.root -c /afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/src/RazorCombinedFit/config_summer2012/RazorInclusive2012_3D_%s.config --xsec %f --signal-region %s %s\n"%(user[0],user,workspaceString,ibox,fitRegion,massPoint,label[ibox],ibox,user[0],user,sparticle,refXsec,signalRegion,penaltyString))
+    rSignal = float(xsecPoint)#/refXsec)
 
-    if len(boxes)>1:
-        options = ["%s=razor_combine_%s_%s_%s.txt"%(ibox,ibox,model,massPoint) for ibox in boxes]
-        option = " ".join(options)
-        outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combineCards.py %s > razor_combine_%s_%s_%s.txt \n"%(user[0],user,option,box,model,massPoint))
-        if nToysPerJob>0: 
-            outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i --fullBToys -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToysPerJob,massPoint,xsecString,fitRegion,box,t,iterations,box,massPoint))
-    else:
-        outputfile.write("/afs/cern.ch/work/%s/%s/RAZORDMLIMITS/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i --fullBToys -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i razor_combine_%s_${NAME}_%s.txt\n"%(user[0],user,seed,rSignal,nToysPerJob,massPoint,xsecString,fitRegion,ibox,t,iterations,box,massPoint))
+    outputfile.write("cp /afs/cern.ch/user/l/lucieg/scratch1/Oct18/CMSSW_6_2_0/src/RazorCombinedFit/FitResults/razor_Single%s3D_%s_%s_%s.root $PWD\n"%(box,njets,box,fitRegion))
+    mLSP = int(float(re.split('_',massPoint)[-1]))
+    SMS = 'SMS-T2tt_mStop-Combo_mLSP_%s.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.282842712475'%mLSP
+    outputfile.write("cp /afs/cern.ch/work/l/lucieg/private/MC/%s%s%s/mLSP%s/%s_%s_%s.root $PWD/%s_%s_%s_%s.root \n"%(model, box, njets, mLSP, SMS, massPoint, box, SMS, njets, massPoint, box))
+
+    outputfile.write("python /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombineWorkspace.py --box %s_%s --model %s -i razor_Single%s3D_%s_%s_%s.root -c /afs/cern.ch/user/l/lucieg/scratch1/Oct18/CMSSW_6_2_0/src/RazorCombinedFit/config_summer2012/RazorMultiJet2013_3D_hybrid.config --xsec %f  --sigma %f %s_%s_%s_%s.root \n"%(box, njets, model, box, njets, box, fitRegion, xsecPoint, sigma[gluinoPoint]*1000, SMS, njets, massPoint, box))
+   
+    outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i --fullBToys -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i\
+    razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(seed,rSignal,nToysPerJob,massPoint,xsecString,fitRegion,box, t,iterations,box,njets,massPoint))
         
     outputfile.write("cp $TWD/higgsCombine*.root %s \n"%combineDir)
     outputfile.write("cp $TWD/razor_combine_*.* %s \n"%combineDir)
@@ -143,6 +165,10 @@ if __name__ == '__main__':
         print ""
         sys.exit()
     box = sys.argv[1]
+    name = re.split('_', box)
+    box   = name[0]
+    njets = name[1]
+   
     model = sys.argv[2]
     queue = sys.argv[3]
     done  = sys.argv[4]
@@ -152,9 +178,9 @@ if __name__ == '__main__':
     mg_upper = 2025
     refXsec = 100.
     refXsecFile = None
-    fitRegion="Sideband"
+    fitRegion="FULL"#Sideband
     signalRegion="FULL"
-    asymptoticFile="xsecUL_SMS_Razor.root"
+    asymptoticFile="asymptoticFile.root"
     nToys = 3000 # do 3000 total toys
     nJobs = 1 # split the toys over 1 jobs 
     iterations = 1
@@ -175,7 +201,7 @@ if __name__ == '__main__':
                 refXsecFile = sys.argv[i+1]
             else:
                 refXsec = float(sys.argv[i+1])
-        if sys.argv[i].find("--asymptotic-file")!=-1: asymptoticFile = sys.argv[i+1]
+        #if sys.argv[i].find("--asymptotic-file")!=-1: asymptoticFile = sys.argv[i+1]
         if sys.argv[i].find("--fit-region")!=-1: fitRegion = sys.argv[i+1]
         if sys.argv[i].find("--signal-region")!=-1: signalRegion = sys.argv[i+1]
         if sys.argv[i].find("--toys")!=-1: nToys = int(sys.argv[i+1])
@@ -211,8 +237,8 @@ if __name__ == '__main__':
     
     pwd = os.environ['PWD']
     
-    submitDir = "submit"+model+fitRegion+box
-    outputDir = "output"+model+fitRegion+box
+    submitDir = "submit_asym"+model+fitRegion+box
+    outputDir = "output_asym"+model+fitRegion+box
     
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))
@@ -228,19 +254,55 @@ if __name__ == '__main__':
     else:
         for outFile in doneFile.readlines():
             if outFile.find("higgsCombineGrid%s"%model)!=-1:
-                outItem = outFile.replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
+                outItem = outFile.replace("/afs/cern.ch/work/l/lucieg/private/RAZORLIMITS_asym/Combine/T2tt/","").replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
                 outItem = outItem.split(".")[:-1]
                 outItem = ".".join(outItem)
                 outFileList.append(outItem)
- 
+        
     totalJobs = 0
     missingFiles = 0
+
+    xsecRanges = {
+
+
+        150: [400., 450. ,500.],
+        175: [300., 325., 350.],
+        200: [200., 210., 220., 225.],
+        225: [150., 200., 210., 215.],
+        250: [130., 150., 160., 161.],
+        275: [110., 130., 135., 136., 137.],
+        300: [70.,100., 105., 105.5, 106.],#ok
+        325: [70., 80., 90., 91., 92.],#ok
+        350: [50., 60., 70., 79., 80.],#...
+        375: [50., 60., 70., 71.,72.],#0.08 - 0
+        400: [55., 60., 62., 63.],#0.07
+        425: [45., 50.,53., 56.],#ok
+        450: [40., 45., 50., 52.],#ok
+        475: [40., 45.,46.,48.,49., 49.2],#0.06
+        500: [30., 40., 45., 47.,47.5],#ok
+        525: [30., 40., 42., 43., 43.6],
+        550:[30., 40., 41., 42.],#ok
+        575:[30., 35., 40., 41.],#ok
+        600:[30., 35.,  38., 39.,39.8],
+        625:[30., 35., 37., 38., 38.5],#ok
+        650:[30., 35., 37., 37.5, 38.],
+        675:[30., 35., 36., 37., 38.],
+        700:[30., 32., 35., 36.],#ok
+        725:[30., 35., 36., 36.05, 36.1],
+        750:[30., 33., 35., 36., 36.05],
+        775:[30., 32., 35., 36.],#ok
+        }
+         
+
+    
     for gluinoPoint, neutralinoPoint in gchipairs:
 
         if neutralinoPoint < mchi_lower or neutralinoPoint >= mchi_upper: continue
         if gluinoPoint < mg_lower or gluinoPoint >= mg_upper: continue
-
-        massPoint = "MG_%f_MCHI_%f"%(gluinoPoint, neutralinoPoint)
+        if (gluinoPoint ==450 ):continue
+        if not(neutralinoPoint == 25):continue
+        
+        massPoint = "%.1f_%.1f"%(gluinoPoint, neutralinoPoint)
 
         if step2:
             t = 0
@@ -279,7 +341,7 @@ if __name__ == '__main__':
             #xsecRange.append(minXsec*pow(factorXsec,2.0))
             #xsecRange.append(minXsec*pow(factorXsec,4.0))
             #xsecRange.reverse()
-            print xsecRange
+            #for xsecPoint in xsecRanges[gluinoPoint]:
             for xsecPoint in xsecRange:
                 if xsecPoint<=0: continue
                 xsecString = str(xsecPoint).replace(".","p")
@@ -291,7 +353,7 @@ if __name__ == '__main__':
                         missingFiles+=1
                         runJob = True
                     if not runJob: continue
-                    outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations,workspaceFlag,penalty)
+                    outputname,ffDir = writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoint,refXsec,fitRegion,signalRegion,t,nToysPerJob,iterations,workspaceFlag,penalty,njets)
                     os.system("mkdir -p %s/%s"%(pwd,ffDir))
                     totalJobs+=1
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
