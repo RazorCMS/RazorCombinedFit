@@ -53,16 +53,22 @@ def getBinEvents(i, j, k, x, y, z, workspace):
         return 0., errorFlag
     return bin_events, errorFlag
 
-def getBinningData(box, model):
+def getBinningData(box, model,simple):
     if box in ["Jet2b", "MultiJet"]:
-        if model.find("T2")!=-1:  
+        if simple:
+            MRbins =  [400, 450, 700, 1200, 4000]
+            Rsqbins = [0.25,0.30,0.41,0.52,1.5]
+        elif model.find("T2")!=-1:  
             MRbins =  [400, 450, 500, 550, 600, 700, 800, 900, 1200, 1600, 2000, 3000, 4000]
             Rsqbins = [0.25,0.30,0.35,0.41,0.52,0.64,0.80,1.1,1.5]
         else:
             MRbins =  [400, 450, 500, 550, 700, 900, 1200, 1600, 4000]
             Rsqbins = [0.25,0.30,0.41,0.52,0.64,0.8,1.1,1.5]
     else:
-        if model.find("T2")!=-1:  
+        if simple:
+            MRbins =  [300, 350, 700, 1200, 4000]
+            Rsqbins = [0.15,0.20,0.30,0.52,1.5]
+        elif model.find("T2")!=-1:  
             MRbins =  [300, 350, 400, 450, 500, 550, 600, 700, 900, 1200, 1600, 2500, 4000]
             Rsqbins = [0.15,0.20,0.30,0.41,0.52,0.64,0.80,1.1,1.5]
         else:
@@ -364,6 +370,8 @@ if __name__ == '__main__':
                   help="expected a priori")
     parser.add_option('-p','--penalty',dest="penalty", default=False,action='store_true',
                   help="multiply by penalty terms")
+    parser.add_option('-l','--simple',dest="simple", default=False,action='store_true',
+                  help="simple binning")
 
     (options,args) = parser.parse_args()
     
@@ -420,6 +428,7 @@ if __name__ == '__main__':
     sigma = options.sigma
     signalRegion = options.signalRegion
     expected_a_priori = options.expected_a_priori
+    simple = options.simple
     
     other_parameters = cfg.getVariables(box, "other_parameters")
     temp = rt.RooWorkspace("temp")
@@ -436,13 +445,15 @@ if __name__ == '__main__':
     ySignal = array('d', cfg.getBinning(box)[1])
     zSignal = array('d', cfg.getBinning(box)[2])
 
-    x = array('d', getBinningData(box,model)[0])
-    y = array('d', getBinningData(box,model)[1])
-    z = array('d', getBinningData(box,model)[2])
+    x = array('d', getBinningData(box,model,simple)[0])
+    y = array('d', getBinningData(box,model,simple)[1])
+    z = array('d', getBinningData(box,model,simple)[2])
     
     w = rt.RooWorkspace("w%s"%box)
 
-    if model.find("T2")!=-1:  
+    if simple:
+        nMaxBins = 48
+    elif model.find("T2")!=-1:  
         nMaxBins = 288
     else:
         nMaxBins = 168
