@@ -373,13 +373,6 @@ def getBinEvents(i, j, k, x, y, z, workspace):
     #     print "       Setting to N = %f"%N
     #     total_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
         
-
-    xmin  = x[0]
-    xmax  = x[3]
-    ymin  = y[0]
-    ymax  = y[1]
-    excl_integral = (N/rt.TMath.Power(B*N,N))*(Gfun(xmin,ymin,X0,Y0,B,N)-Gfun(xmin,ymax,X0,Y0,B,N)-Gfun(xmax,ymin,X0,Y0,B,N)+Gfun(xmax,ymax,X0,Y0,B,N))
-
     xmin  = x[i-1]
     xmax  = x[i]
     ymin  = y[j-1]
