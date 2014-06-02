@@ -80,7 +80,7 @@ def average3d(oldhisto, x, y):
                             newhisto.Fill(xnew, ynew, zold, (weight/totalweight)*oldbincontent)
     return newhisto
 
-def rebin3d(oldhisto, x, y, z, box, signalRegion, average=True):
+def rebin3d(oldhisto, x, y, z, box, signalRegion, average=False):
     newhisto = rt.TH3D(oldhisto.GetName()+"_rebin",oldhisto.GetTitle()+"_rebin",len(x)-1,x,len(y)-1,y,len(z)-1,z)
     for i in range(1,oldhisto.GetNbinsX()+1):
         for j in range(1,oldhisto.GetNbinsY()+1):
@@ -105,17 +105,17 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             nBkgd = 1
             nNuis = 13
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
-            txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
+            txtfile.write("kmax * number of nuisnace parameters\n")
         elif box in ["Jet2b"]:
             nBkgd = 2
             nNuis = 15
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
-            txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
+            txtfile.write("kmax * number of nuisnace parameters\n")
         else:
             nBkgd = 3
             nNuis = 21
             txtfile.write("jmax %i number of backgrounds\n"%nBkgd)
-            txtfile.write("kmax %i number of nuisnace parameters\n"%nNuis)
+            txtfile.write("kmax * number of nuisnace parameters\n")
         txtfile.write("------------------------------------------------------------\n")
         txtfile.write("observation	%i\n"%
                       histos1d[box,"data"].Integral())
@@ -134,17 +134,17 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("lumi			lnN	%.3f       1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00\n"%lepton_uncert)
             txtfile.write("trigger			lnN	%.3f       1.00\n"%trigger_uncert)
-            txtfile.write("Pdf			shape	%.2f       -\n"%(1./1.))
-            txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
-            txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
-            txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f\n"%
+            #txtfile.write("Pdf			shape	%.2f       -\n"%(1./1.))
+            #txtfile.write("Jes			shape	%.2f       -\n"%(1./1.))
+            #txtfile.write("Btag			shape	%.2f       -\n"%(1./1.))
+            #txtfile.write("Isr			shape	%.2f       -\n"%(1./1.))
+            normErr = 1.1
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f\n"%
                           (bkgs[0],box,normErr))
-            for i in range(0,len(paramNames)):
-                paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName])))
-                #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./1.)))
+            #for i in range(0,len(paramNames)):
+            #    paramName = paramNames[i]
+            #    txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName])))
+            #    #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f\n"%(i,paramName,box,(1./1.)))
         elif box in ["Jet2b"]:
             txtfile.write("bin		bin1			bin1			bin1\n")
             txtfile.write("process		%s_%s 	%s_%s	%s_%s\n"%
@@ -157,14 +157,14 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("lumi			lnN	%.3f       1.00 1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00 1.00\n"%lepton_uncert)
             txtfile.write("trigger			lnN	%.3f       1.00 1.00\n"%trigger_uncert)
-            txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./1.))
-            txtfile.write("Jes			shape	%.2f       -	-\n"%(1./1.))
-            txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
-            txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
-            normErr = 2.
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       %.3f	1.00\n"%
+            #txtfile.write("Pdf			shape	%.2f       -	-\n"%(1./1.))
+            #txtfile.write("Jes			shape	%.2f       -	-\n"%(1./1.))
+            #txtfile.write("Btag			shape	%.2f       -	-\n"%(1./1.))
+            #txtfile.write("Isr			shape	%.2f       -	-\n"%(1./1.))
+            normErr = 1.1
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00\n"%
                           (bkgs[0],box,normErr))
-            txtfile.write("bgNorm_%s_%s  	lnU   	1.00       1.00	%.3f\n"%
+            txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
                           (bkgs[1],box,normErr))
             for i in range(0,len(paramNames)):
                 paramName = paramNames[i]
@@ -182,23 +182,23 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
             txtfile.write("lumi			lnN	%.3f       1.00	1.00 1.00\n"%lumi_uncert)
             txtfile.write("lepton			lnN	%.3f       1.00	1.00 1.00\n"%lepton_uncert)
             txtfile.write("trigger			lnN	%.3f       1.00	1.00 1.00\n"%trigger_uncert)
-            txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./1.))
-            txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./1.))
-            txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
-            txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
-            normErr = 2.
+            #txtfile.write("Pdf			shape	%.2f       -	-	-\n"%(1./1.))
+            #txtfile.write("Jes			shape	%.2f       -	-	-\n"%(1./1.))
+            #txtfile.write("Btag			shape	%.2f       -	-	-\n"%(1./1.))
+            #txtfile.write("Isr			shape	%.2f       -	-	-\n"%(1./1.))
+            normErr = 1.1
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       %.3f	1.00	1.00\n"%
                           (bkgs[0],box,normErr))
-            normErr = 2.
+            normErr = 1.1
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f	1.00\n"%
                           (bkgs[1],box,normErr))
-            normErr = 2.
+            normErr = 1.1
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	1.00	%.3f\n"%
                           (bkgs[2],box,normErr))
-            for i in range(0,len(paramNames)):
-                paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
-                #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.),(1./1.)))
+            #for i in range(0,len(paramNames)):
+            #    paramName = paramNames[i]
+            #    txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
+            #    #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.),(1./1.)))
         txtfile.close()
 
 def find68ProbRange(hToy, probVal=0.6827):
@@ -476,6 +476,8 @@ if __name__ == '__main__':
                   help="SMS model string")
     parser.add_option('-r','--signal-region',dest="signalRegion", default="FULL",type="string",
                   help="signal region = FULL, HighMR")
+    parser.add_option('-l','--simple',dest="simple", default=False,action='store_true',
+                  help="simple binning")
 
     (options,args) = parser.parse_args()
     
@@ -620,7 +622,7 @@ if __name__ == '__main__':
     data_obs.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
         
     for bkg in initialBkgs:
-        if bkgs=="TTj3b": continue
+        if bkg=="TTj3b": continue
         for i in xrange(1,len(x)):
             for j in xrange(1,len(y)):
                 for k in xrange(1, len(z)):
@@ -731,7 +733,7 @@ if __name__ == '__main__':
     histos[(box,"%s_PdfDown"%(model))] = rebin3d(pdfDown,x,y,z, box, signalRegion)
     
     #set the per box eff value
-    pdfNom = rebin3d(sigFile.Get('wHisto_pdferr_nom'),x,y,z,box,signalRegion,False)
+    pdfNom = sigFile.Get('wHisto_pdferr_nom')
     sigNorm = pdfNom.Integral()
     sigEvents = sigNorm*lumi*refXsec
     print "\nINFO: now multiplying:  efficiency x lumi x refXsec = %f x %f x %f = %f"%(sigNorm,lumi,refXsec,sigEvents)
