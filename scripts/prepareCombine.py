@@ -166,9 +166,9 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,histos1d,works
                           (bkgs[0],box,normErr))
             txtfile.write("bgNorm_%s_%s  	lnN   	1.00       1.00	%.3f\n"%
                           (bkgs[1],box,normErr))
-            for i in range(0,len(paramNames)):
-                paramName = paramNames[i]
-                txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
+            #for i in range(0,len(paramNames)):
+            #    paramName = paramNames[i]
+            #    txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,2./(sign["Up",paramName]-sign["Down",paramName]),2./(sign["Up",paramName]-sign["Down",paramName])))
                 #txtfile.write("bgShape%02d_%s_%s	shape	-	   %.2f	%.2f\n"%(i,paramName,box,(1./1.),(1./1.)))
         else:
             txtfile.write("bin		bin1			bin1			bin1			bin1\n")
