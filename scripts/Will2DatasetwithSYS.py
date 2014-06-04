@@ -5,7 +5,9 @@ import pickle
 import ROOT as rt
 import RootTools
 from RazorCombinedFit.Framework import Config
+from SingleBoxFit.RazorBox import *
 from BTagSFUtil import BTag
+from LepSFUtil import *
 from pdfUtil import *
 
 boxMap = {'MuEle':0,'MuMu':1,'EleEle':2,'Mu':3,'Ele':4,'Had':5,'BJet':6}
@@ -18,148 +20,7 @@ lumi = 1.0
 sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
 from CalcBDT import CalcBDT
 
-class BJetBoxLS(object):
-    """The BJet search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'BJetLS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
-
-class BJetBoxHS(object):
-    """The BJet search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'BJetHS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
-
-class CR6JBVetoBoxLS(object):
-    """The CR6JBVeto search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JBVetoLS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
-
-class CR6JBVetoBoxHS(object):
-    """The CR6JBVeto search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JBVetoHS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
-
-class CR6JSingleLeptonBVetoLS(object):
-    """The CR6JSingleLeptonBJet search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JSingleLeptonBVetoLS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.nJet >= 6  and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() < -0.1 
-
-class CR6JSingleLeptonBVetoHS(object):
-    """The BJet search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CR6JSingleLeptonBVetoHS'
-        self.dumper = dumper
-    def __call__(self, tree):
-        nLoose = tree.nMuonLoose + tree.nElectronLoose
-        return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVL == 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and nLoose > 0 and self.dumper.bdt() >= -0.1 
-
-class MuBox(object):
-    """The Mu search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'Mu'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVM > 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0
-
-class CRMuBVetoBox(object):
-    """The Mu search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CRMuBVeto'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.muBoxFilter and tree.muTriggerFilter and tree.nCSVL == 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 1 and tree.nElectronTight == 0 and tree.nMuonLoose == 1 and tree.nElectronLoose == 0            
-
-class EleBox(object):
-    """The Ele search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'Ele'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1
-
-class CREleBVetoBox(object):
-    """The Ele search box used in the analysis"""
-    def __init__(self, dumper):
-        self.name = 'CREleBVeto'
-        self.dumper = dumper
-    def __call__(self, tree):
-        return tree.nJetNoLeptons >= 4 and tree.metFilter and tree.eleBoxFilter and tree.eleTriggerFilter and tree.nCSVL == 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1
-
-
-class BJet:
-    def __init__(self, pt, eta, btagv, partonFlavour):
-        self.pt = pt
-        self.eta = eta
-        self.btagv = btagv
-        self.partonFlavour = partonFlavour
-
-# Find the probability of an event having at least one btag
-def findBTagWeight(jets, mcdir = 0, doLight = False, datadir = 0):
-    w_data = 1.
-    w_mc = 1.
-    for j in jets:
-        if j.pt < 30 or abs(j.eta) > 2.4 or j.btagv < 0:
-            continue
-        # Get the efficiencies and errors in efficiencies
-        # Efficiency is that of tagging a flavor i jet as a b
-        w_data_i, w_dataE_i = tagger.getEfficiencyData(j.btagv, j.pt, j.eta, j.partonFlavour)
-        # For the fastsim, we are taking the correction factors: eff_full / eff_fast
-        w_mc_i, w_mcE_i = tagger.getEfficiencyFastSim(j.btagv, j.pt, j.eta, j.partonFlavour)
-        #use errors
-        # If the function is called for calculating the upper or lower values of the weights,
-        # we calculate these values and assign them to w_mc_i and w_data_i
-        if mcdir:
-            #b,c are taken correlated and uncorrelated with the light jets
-            if (not doLight and abs(j.partonFlavour) in [4,5]) or (doLight and not abs(j.partonFlavour) in [4,5]):
-                w_mc_i = w_mc_i + (mcdir*w_mcE_i)
-                #project against bounds in eff
-                if w_mc_i > 1: w_mc_i = 1.0
-                if w_mc_i < 0: w_mc_i = 0.0
-                #if doLight: print w_data_i, w_dataE_i, w_mc_i, w_mcE_i
-        if datadir:
-            #print 'datadir',w_data_i, w_dataE_i, w_mc_i, w_mcE_i, j.pt(), j.eta(), j.partonFlavour(), j.btag(0)
-            w_data_i = w_data_i + (datadir*w_dataE_i)
-            #project against bounds in eff
-            if w_data_i > 1: w_data_i = 1.0
-            if w_data_i < 0: w_data_i = 0.0
-
-        w_data = w_data * (1 - w_data_i)
-        w_mc = w_mc * (1 - w_mc_i)
-
-    if w_data > 1: w_data = 1.
-    if w_mc > 1: w_mc = 0.0
-            
-    try:
-        tag_weight = (1-w_data)/(1-w_mc)
-    except ZeroDivisionError:
-        tag_weight = (1-w_data)
-    return tag_weight
-
+from Boxes import *
 
 # Find the probability of an event having at least one btag
 def findBTagProb(jets, efftype = 'data', SFerrdir = 0, doLight = False, CFerrdir = 0):
@@ -169,12 +30,9 @@ def findBTagProb(jets, efftype = 'data', SFerrdir = 0, doLight = False, CFerrdir
             continue
         eff_fast, eff_fastE = tagger.getEfficiencyFastSim(j.btagv, j.pt, j.eta, j.partonFlavour)
         #FF: full factor = SF*CF
-        #FF, FFerr = tagger.getBTagScale(j.btagv, j.pt, j.eta, j.partonFlavour)
         SF, SFerr = tagger.getBTagScaleFullSim(j.btagv, j.pt, j.eta, j.partonFlavour)
         CF, CFerr = tagger.getBTagScaleFastSim(j.btagv, j.pt, j.eta, j.partonFlavour)        
-        #if efftype == 'fast':
-            #print 'pt ', j.pt, j.eta, j.btagv, j.partonFlavour, SF, SFerr, CF, CFerr
-
+      
         if SFerrdir:
             if (not doLight and abs(j.partonFlavour) in [4,5]) or (doLight and not abs(j.partonFlavour) in [4,5]):
                 SF = SF + (SFerrdir*SFerr)
@@ -189,44 +47,76 @@ def findBTagProb(jets, efftype = 'data', SFerrdir = 0, doLight = False, CFerrdir
         if efftype == 'fast':
             eff = eff_fast
         pr_j = pr_j*(1 - eff)
-        #print 'eff, pr_j', eff, 1-eff, pr_j
-        #print 'SF, CF, FF', SF, CF, FF
-        #print efftype, i, eff, pr_j
+        
     pr_e = 1 - pr_j
-
-    #print ' ' , efftype, SFerrdir, CFerrdir, doLight, pr_e
-
     return pr_e
 
+# Find the probability of an event having one muon
+def findLeptonProb(flavor, pt = 0., eta = 0., errDir = 0):
+    if flavor == 'mu':
+        SFID, SFIso, SFTrigger  = muonScaling.getScaleFactor(pt, eta, errDir)
+    elif flavor == 'ele':
+        SFID = eleScaling.getScaleFactor(pt, eta, errDir)
+        SFIso = 1.
+        SFTrigger = 1.
+    else :
+        SFID = 1.
+        SFIso = 1.
+        SFTrigger = 1.
+  
+    return SFID, SFIso, SFTrigger
 
-def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin, mstop, mlsp):
-    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+str(mstop)+'_'+str(mlsp)+'_'+outputBox,'RECREATE')
-    print output.GetName()
-    for d in data:
-        d.Write()
+def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp):
+
+    # Load the file with the SMS number of total events per each point
+    file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
+    # Get the original event weight, which is 1/nevts for a given process
+    point  = (mstop, mlsp)
+    norms  = pickle.load(file)
+    weight = 1./(norms[point]) 
+    print weight
+
+    #for d in data:
+     
+    for histo in [nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down]:     
+        histo.Scale(weight)
+
+    print "signal efficiency from nominal     = %f"%nominal.Integral()
+    print "signal efficiency from pdf nominal = %f"%pdf_cen.Integral()
+    print "integral of pdf relative errors = %f"%pdf_pe.Integral()
+   
+    #clear underflow and overflow bins in b-tags
+    for histo in [jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down]:
+        for i in xrange(1,histo.GetXaxis().GetNbins()+1):
+            for j in xrange(1,histo.GetYaxis().GetNbins()+1):
+                #clear underflow and overflow bins in b-tags
+                k = 0
+                histo.SetBinContent(i,j,k,0)
+                k = histo.GetZaxis().GetNbins()+1
+                histo.SetBinContent(i,j,k,0)
+        
+    #histoFile.Close()
+    print "signal efficiency from nominal     = %f"%nominal.Integral()
+    print "signal efficiency from pdf nominal = %f"%pdf_cen.Integral()
+
+    output = rt.TFile.Open(outputDir +'/'+outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_'+str(mstop)+'_'+str(mlsp)+'_'+box+'.root','RECREATE')
+    print "writing dataset to", output.GetName()
+
+    data.Write()
+   
+
+    for histo in [jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down]:
+        histo.Write()
+    
     output.Close()
 
-def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, mlsp, write = True):
+def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, run, mstop, mlsp, write = True):
     """This defines the format of the RooDataSet"""
     
     box = filter.name
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
-    #
-    workspace.factory('Run[0,0,+INF]')
-    workspace.factory('Lumi[0,0,+INF]')
-    workspace.factory('Event[0,0,+INF]')
-    #
-    workspace.factory('nLepton[0,0,15.0]')
-    workspace.factory('nElectron[0,0,15.0]')
-    workspace.factory('nMuon[0,0,15.0]')
-    workspace.factory('nTau[0,0,15.0]')
-    workspace.factory('nVertex[1,0.,50.]')
-    workspace.factory('nJet[0,0,15.0]')
     workspace.factory('W[0,0,+INF]')
-    workspace.factory('BDT[0,-INF,+INF]')
-    workspace.factory('genInfo[0,-INF,+INF]')
-
     
     if filter.dumper is not None:
         for h in filter.dumper.sel.headers_for_MVA():
@@ -245,196 +135,99 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
     rMin = rt.TMath.Sqrt(rsqMin)
     rMax = rt.TMath.Sqrt(rsqMax)
 
-    nLooseElectrons = rt.TH2D('nLooseElectrons','nLooseElectrons',350,mRmin,mRmax,100,rsqMin,rsqMax)
-    nLooseMuons = rt.TH2D('nLooseMuons','nLooseMuons',350,mRmin,mRmax,100,rsqMin,rsqMax)
-    nLooseTaus = rt.TH2D('nLooseTaus','nLooseTaus',350,mRmin,mRmax,100,rsqMin,rsqMax)
-    
     events = {}
 
+    MRbins    = getBinning(box, 'MR'   , 'Btag')
+    Rsqbins   = getBinning(box, 'Rsq'  , 'Btag')
+    nBtagbins = getBinning(box, 'nBtag', 'Btag')
 
-    # Get the binning:
-
-    # define the loosest bin ranges
-    varBin = 0
-    #loose_bin = 'Had'
-    #if loose_bin not in boxes:
-    #    loose_bin = 'Had'
-
-    print box
-
-
-    binedgexLIST = []
-    binedgeyLIST = []
-    #either use a binning scheme defined here or take from the config
-    if not config.hasBinning(box):
-        # if the bin is fixed, do 50 GeV in mR
-        # and 0.1 in R^2
-        binwMR = 50.
-        binwR2 = 0.1
-        #use a fixed bin for mR
-        if varBin != 1: maxVal = mRmax
-        else: maxVal = 700.
-        mRedge = mRmin
-        while mRedge < maxVal: 
-            binedgexLIST.append(mRedge)
-            mRedge = mRedge + binwMR
-        binedgexLIST.append(maxVal)
-        if varBin == 1:
-            if mRmax> 800: binedgexLIST.append(800)
-            if mRmax> 900: binedgexLIST.append(900)
-            if mRmax> 1000: binedgexLIST.append(1000)
-            if mRmax> 1200: binedgexLIST.append(1200)
-            if mRmax> 1600: binedgexLIST.append(1600)
-            if mRmax> 2000: binedgexLIST.append(2000)
-            if mRmax> 2800: binedgexLIST.append(2800)
-            binedgexLIST.append(mRmax)
-
-            #use a fixed bin for R^2
-            if varBin != 1:
-                R2edge = rsqMin
-                while R2edge <rsqMax: 
-                    binedgexLIST.append(R2edge)
-                    R2edge = R2edge + binwR2
-                binedgeyLIST.append(rsqMax)
-            else: 
-               #use fixed binning 
-                binedgeyLIST = [rsqMin,0.18,0.2,0.3,0.4,0.5]
-    else:
-        #take from the config
-        binning = config.getBinning(box)
-        #MR and Rsq in that order
-        binedgexLIST.extend(binning[0])
-        binedgeyLIST.extend(binning[1])
-
-    nbinx =  len(binedgexLIST)-1
-    nbiny = len(binedgeyLIST)-1    
-
-    print binedgexLIST
-    print binedgeyLIST
-
-    binedgex = array('d',binedgexLIST)
-    binedgey = array('d',binedgeyLIST)
-
-
+    x = array("d",MRbins)
+    y = array("d",Rsqbins)
+    z = array("d",nBtagbins)
+    zprime = array("d",[0.,1.,2.,3.,4.])
+    
     # Book the histograms
-    wHisto = rt.TH2D("wHisto", "wHisto", nbinx, binedgex, nbiny, binedgey)
-    wHisto_JESup = rt.TH2D("wHisto_JESup", "wHisto_JESup", nbinx, binedgex, nbiny, binedgey)
-    wHisto_JESdown = rt.TH2D("wHisto_JESdown", "wHisto_JESdown", nbinx, binedgex, nbiny, binedgey)
-    wHisto_pdfcen = rt.TH2D("wHisto_pdfcen", "wHisto_pdfcen", nbinx, binedgex, nbiny, binedgey)
-    wHisto_pdferr = rt.TH2D("wHisto_pdferr", "wHisto_pdferr", nbinx, binedgex, nbiny, binedgey)
-    wHisto_btagup = rt.TH2D("wHisto_btagup", "wHisto_btagup", nbinx, binedgex, nbiny, binedgey)
-    wHisto_btagdown = rt.TH2D("wHisto_btagdown", "wHisto_btagdown", nbinx, binedgex, nbiny, binedgey)
+    jes_pe    = rt.TH3D("wHisto_JESerr_pe"   , "wHisto_JESerr_pe"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    btag_pe   = rt.TH3D("wHisto_btagerr_pe"  , "wHisto_btagerr_pe"  , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    isr_pe    = rt.TH3D("wHisto_ISRerr_pe"   , "wHisto_ISRerr_pe"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    lep_pe    = rt.TH3D("wHisto_LEPerr_pe"   , "wHisto_LEPerr_pe"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    pdf_pe    = rt.TH3D("wHisto_PDFerr_pe"   , "wHisto_PDFerr_pe"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+
+    jes_up    = rt.TH3D("wHisto_JESerr_up"   , "wHisto_JESerr_up"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    jes_down  = rt.TH3D("wHisto_JESerr_down" , "wHisto_JESerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    
+    btag_up   = rt.TH3D("wHisto_btagerr_up"  , "wHisto_btagerr_up"  , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    btag_down = rt.TH3D("wHisto_btagerr_down", "wHisto_btagerr_down", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins), zprime )
+    
+    isr_up    = rt.TH3D("wHisto_ISRerr_up"   , "wHisto_ISRerr_up"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    isr_down  = rt.TH3D("wHisto_ISRerr_down" , "wHisto_ISRerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+
+    lep_up    = rt.TH3D("wHisto_LEPerr_up"   , "wHisto_LEPerr_up"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    lep_down  = rt.TH3D("wHisto_LEPerr_down" , "wHisto_LEPerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+   
+    nominal   = rt.TH3D("wHisto"             , "wHisto"             , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+
+    pdf_cen   = rt.TH3D("pdf_cen"            , "pdf_cen"            , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    pdf_err   = rt.TH3D("pdf_err"            , "pdf_err"            , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+   
 
     # Book histograms for PDFs:
+    #---------------
+
     vwHisto_pdfCTEQ = []
     vwHisto_pdfNNPDF = []
 
     for icteq in range(45):
-        wHisto_pdfCTEQ = rt.TH2D("wHisto_pdfCTEQ_%s" % icteq, "wHisto_pdfCTEQ_%s" % icteq, \
-                                 nbinx, binedgex, nbiny, binedgey)
+        wHisto_pdfCTEQ = rt.TH3D("wHisto_pdfCTEQ_%s" % icteq  , "wHisto_pdfCTEQ_%s" % icteq         , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
         vwHisto_pdfCTEQ.append(wHisto_pdfCTEQ)
 
     for innpdf in range(101):
-        wHisto_pdfNNPDF = rt.TH2D("wHisto_pdfNNPDF_%s" % innpdf, "wHisto_pdfNNPDF_%s" % innpdf, \
-                                 nbinx, binedgex, nbiny, binedgey)
+        wHisto_pdfNNPDF = rt.TH3D("wHisto_pdfNNPDF_%s" % innpdf, "wHisto_pdfNNPDF_%s" % innpdf      , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
         vwHisto_pdfNNPDF.append(wHisto_pdfNNPDF)
-        
-    print 'x', len(vwHisto_pdfCTEQ)
-
-
-    # Load the file with the SMS number of total events per each point 
-    norms = pickle.load(file('/afs/cern.ch/user/w/wreece/public/Razor2012/SMS-T2tt_FineBin_Mstop-225to1200_mLSP-0to1000_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-PAT_CMG_V5_6_0_B.pkl'))
-
+      
     print 'Number of entries:', tree.GetEntries()
 
+        
     for entry in xrange(tree.GetEntries()):
         tree.GetEntry(entry)
-
+      
+        #if entry > 10000. : break
+        
         if (entry % 50000 ==  0): print entry
-
-#        if entry > 2000:
-#            break
-
-
 
         if (mstop != tree.mStop or mlsp != tree.mLSP):
             continue
-        #print tree.mStop, tree.mLSP
-
-        # Get the original event weight, which is 1/nevts for a given process
-        point = (tree.mStop, tree.mLSP)
-        weight = 1/(1.*norms[point])
-
-        #print tree.mStop, tree.mLSP, mstop, mlsp
-
-                
-        ####First, apply a common selection
-        
-        #take only events in the MR and R2 region
-        if tree.MR > mRmax or tree.MR < mRmin or tree.RSQ < rsqMin or tree.RSQ > rsqMax:
-            continue
 
         #apply the box based filter class
-        if not filter(tree): continue
+        if not filter(tree):
+            continue
         bdt = -9999.
         if filter.dumper is not None:
             bdt = filter.dumper.bdt()
-        
-        #veto events with multiple loose leptons
-        nLeptonLoose = tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose
-        if nLeptonLoose > 1: continue
-        
-        if tree.nElectronLoose > 0: nLooseElectrons.Fill(tree.MR,tree.RSQ)
-        if tree.nMuonLoose > 0: nLooseMuons.Fill(tree.MR,tree.RSQ)
-        if tree.nTauLoose > 0: nLooseTaus.Fill(tree.MR,tree.RSQ)
-        
-        try:
-            if tree.run <= run:
-                continue
-        except AttributeError:
-            pass
 
-
-        nBtag = tree.nCSVM
-
-
-        #set the RooArgSet and save
-        a = rt.RooArgSet(args)
-        
-        a.setRealValue('Run',tree.run)
-        a.setRealValue('Lumi',tree.lumi)
-        a.setRealValue('Event',tree.event)
-        e = (tree.run,tree.lumi,tree.event)
-        
         #filter out duplicate events in case there are any
+        e = (tree.run,tree.lumi,tree.event)
         if e in events:
             continue
         events[e] = None
-        
+       
+     ##    if filter.dumper is not None:
+##             for h in filter.dumper.sel.headers_for_MVA():
+##                 a.setRealValue(h,getattr(filter.dumper.sel,h)())
+##                 data.add(a)
+
+        a = rt.RooArgSet(args)
+         
         a.setRealValue('MR',tree.MR, True)
         a.setRealValue('Rsq',tree.RSQ, True)
-        a.setRealValue('nBtag',nBtag)
-        a.setRealValue('nLepton',tree.nMuonLoose + tree.nElectronLoose + tree.nTauLoose)
-        a.setRealValue('nElectron',tree.nElectronLoose)
-        a.setRealValue('nMuon',tree.nMuonLoose)
-        a.setRealValue('nTau',tree.nTauLoose)
-        a.setRealValue('nJet',tree.nJet)
-        a.setRealValue('nVertex',tree.nVertex)
-        a.setRealValue('W',1.0)
-        a.setRealValue('BDT',bdt)
-        
-        a.setRealValue('genInfo',tree.genInfo)
+        a.setRealValue('nBtag',tree.nCSVM)
+        a.setRealValue('nJet',tree.nJetNoLeptons)
 
-        
-        if filter.dumper is not None:
-            for h in filter.dumper.sel.headers_for_MVA():
-                a.setRealValue(h,getattr(filter.dumper.sel,h)())
-        
+        a.Print('V')
         data.add(a)
-
-
+       
+        #### systematics
         # Get the btag systematics
-
         jet_pt = tree.jet_pt
         jet_eta = tree.jet_eta
         jet_csv = tree.jet_csv
@@ -443,202 +236,204 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         jets = []
         for j in range(0, len(jet_pt)):
             tag = 0
-            #if jet_csv[j] >= 0.679:
-            #    tag = 1
             xjet = BJet(jet_pt[j], jet_eta[j], jet_csv[j], jet_fl[j])
             jets.append(xjet)
 
-        #btw_nominal = findBTagWeight(jets)
-        #btw_bc_mc_up = abs(btw_nominal - findBTagWeight(jets,mcdir=+1))
-        #btw_bc_mc_dw = abs(btw_nominal - findBTagWeight(jets,mcdir=-1))
-        #print 'btag bc mc', btw_nominal, btw_bc_mc_up, btw_bc_mc_dw
-
-        #btw_lt_mc_up = abs(btw_nominal - findBTagWeight(jets,mcdir=+1,doLight=True))
-        #btw_lt_mc_dw = abs(btw_nominal - findBTagWeight(jets,mcdir=-1,doLight=True))
-        #print 'btag light mc', btw_nominal, btw_lt_mc_up, btw_lt_mc_dw
-
-        #btw_data_up = abs(btw_nominal - findBTagWeight(jets,datadir=+1))
-        #btw_data_dw = abs(btw_nominal - findBTagWeight(jets,datadir=-1))
-
-        #btw_up = rt.TMath.Sqrt(btw_bc_mc_up**2 + min(btw_lt_mc_up, btw_lt_mc_dw)**2 + btw_data_dw**2)
-        #btw_dw = rt.TMath.Sqrt(btw_bc_mc_dw**2 + min(btw_lt_mc_up, btw_lt_mc_dw)**2 + btw_data_up**2)
-
-        #print btw_nominal, btw_up, btw_dw
-
         bt_prob_fast = findBTagProb(jets, efftype='fast')
 
-        btw_nominal = findBTagProb(jets, 'data')/bt_prob_fast
+        #DEBUG
+        btag_nominal = 1.+findBTagProb(jets, 'data')/bt_prob_fast
+             
+        btag_SF_bc_up  = findBTagProb(jets, efftype='data', SFerrdir=+1)/bt_prob_fast
+        btag_SF_bc_Eup = abs(btag_nominal - btag_SF_bc_up)
+        btag_SF_bc_dw  = findBTagProb(jets, efftype='data', SFerrdir=-1)/bt_prob_fast
+        btag_SF_bc_Edw = abs(btag_nominal - btag_SF_bc_dw)
+     
+        btag_SF_lt_up = findBTagProb(jets, efftype='data', SFerrdir=+1, doLight=True)/bt_prob_fast
+        btag_SF_lt_Eup = abs(btag_nominal - btag_SF_lt_up)
+        btag_SF_lt_dw = findBTagProb(jets, efftype='data', SFerrdir=-1, doLight=True)/bt_prob_fast
+        btag_SF_lt_Edw = abs(btag_nominal - btag_SF_lt_dw)
+     
+        btag_CF_up = findBTagProb(jets, efftype='data', CFerrdir=+1)/bt_prob_fast
+        btag_CF_Eup = abs(btag_nominal - btag_CF_up)
+        btag_CF_dw = findBTagProb(jets, efftype='data', CFerrdir=-1)/bt_prob_fast
+        btag_CF_Edw = abs(btag_nominal - btag_CF_dw)
+      
+        btag_Eup = rt.TMath.Sqrt(btag_SF_bc_Eup**2 + min(btag_SF_lt_Eup, btag_SF_lt_Edw)**2 + btag_CF_Edw**2)
+        btag_Edw = rt.TMath.Sqrt(btag_SF_bc_Edw**2 + min(btag_SF_lt_Eup, btag_SF_lt_Edw)**2 + btag_CF_Eup**2)
 
-        #print 'nominal', btw_nominal
+        btagw_up = btag_nominal + btag_Eup
+        btagw_dw = btag_nominal - btag_Edw
 
-        btw_SF_bc_up = findBTagProb(jets, efftype='data', SFerrdir=+1)/bt_prob_fast
-        btw_SF_bc_Eup = abs(btw_nominal - btw_SF_bc_up)
-        btw_SF_bc_dw = findBTagProb(jets, efftype='data', SFerrdir=-1)/bt_prob_fast
-        btw_SF_bc_Edw = abs(btw_nominal - btw_SF_bc_dw)
-        #print 'SF_bc', btw_SF_bc_Eup, btw_SF_bc_up, btw_SF_bc_Edw, btw_SF_bc_dw
+        # Get lepton systematics
+        pt = 0.
+        eta = 0.
+        if len(tree.muTight_pt) > 0 :
+            flavor = 'mu'
+            pt  = tree.muTight_pt[0]
+            eta = tree.muTight_eta[0]
+        elif len(tree.eleTight_pt) > 0 :
+            flavor = 'ele'
+            pt  = tree.eleTight_pt[0]
+            eta = tree.eleTight_eta[0]
+        else :
+            flavor = ''
 
-        btw_SF_lt_up = findBTagProb(jets, efftype='data', SFerrdir=+1, doLight=True)/bt_prob_fast
-        btw_SF_lt_Eup = abs(btw_nominal - btw_SF_lt_up)
-        btw_SF_lt_dw = findBTagProb(jets, efftype='data', SFerrdir=-1, doLight=True)/bt_prob_fast
-        btw_SF_lt_Edw = abs(btw_nominal - btw_SF_lt_dw)
-        #print 'SF_lt', btw_SF_lt_Eup, btw_SF_lt_up, btw_SF_lt_Edw, btw_SF_lt_dw
+        if flavor == 'ele' and abs(eta)>2.5:
+            continue
+        
+        SFID_nominal, SFIso_nominal, SFTrigger_nominal = findLeptonProb(flavor, pt, eta,  errDir = 0)
+        SFID_Up     , SFIso_Up     , SFTrigger_Up      = findLeptonProb(flavor, pt, eta,  errDir = 1 )
+        SFID_Down   , SFIso_Down   , SFTrigger_Down    = findLeptonProb(flavor, pt, eta,  errDir = -1)
 
-        btw_CF_up = findBTagProb(jets, efftype='data', CFerrdir=+1)/bt_prob_fast
-        btw_CF_Eup = abs(btw_nominal - btw_CF_up)
-        btw_CF_dw = findBTagProb(jets, efftype='data', CFerrdir=-1)/bt_prob_fast
-        btw_CF_Edw = abs(btw_nominal - btw_CF_dw)
-        #print 'CF', btw_CF_Eup, btw_CF_up, btw_CF_Edw, btw_CF_dw
+        EIDUp        = abs( SFID_nominal - SFID_Up )
+        EIsoUp       = abs( SFIso_nominal - SFIso_Up )
+        ETriggerUp   = abs( SFTrigger_nominal - SFTrigger_Up )
 
-        btw_Eup = rt.TMath.Sqrt(btw_SF_bc_Eup**2 + min(btw_SF_lt_Eup, btw_SF_lt_Edw)**2 + btw_CF_Edw**2)
-        btw_Edw = rt.TMath.Sqrt(btw_SF_bc_Edw**2 + min(btw_SF_lt_Eup, btw_SF_lt_Edw)**2 + btw_CF_Eup**2)
+        EIDDown      = abs( SFID_nominal - SFID_Down )
+        EIsoDown     = abs( SFIso_nominal - SFIso_Down )
+        ETriggerDown = abs( SFTrigger_nominal - SFTrigger_Down )
 
-        btw_up = btw_nominal + btw_Eup
-        btw_dw = btw_nominal - btw_Edw
+        lepw_Eup = rt.TMath.Sqrt( EIDUp*EIDUp + EIsoUp*EIsoUp + ETriggerUp*ETriggerUp )
+        lepw_Edw = rt.TMath.Sqrt( EIDDown*EIDDown + EIsoDown*EIsoDown + ETriggerDown*ETriggerDown )
 
-        #print 'btw', btw_nominal, '+', btw_Eup, btw_up, '-', btw_Edw, btw_dw
+        lepw_nominal = SFID_nominal*SFIso_nominal*SFTrigger_nominal
+        lepw_up      = lepw_nominal + lepw_Eup
+        lepw_dw      = lepw_nominal - lepw_Edw
 
+        #get isr
+        isrw_nominal = tree.isrWeight #/ isrWeightSum
+        isrw_up      = tree.isrWeightUp 
+        isrw_dw      = tree.isrWeightDown 
+        
         # Fill the histograms:
 
-        MR = tree.MR
+        MR  = tree.MR
         RSQ = tree.RSQ
 
-        print 'weight', weight
-
-        
-        wHisto.Fill(MR, RSQ, weight*btw_nominal)
-        wHisto_JESup.Fill(tree.MR_JES_UP, tree.RSQ_JES_DOWN, weight*btw_nominal)
-        wHisto_JESdown.Fill(tree.MR_JES_DOWN, tree.RSQ_JES_DOWN, weight*btw_nominal)
-        #wHisto_pdfcen.Fill(MR, RSQ, weight*btw_nominal)
-        #wHisto_pdfsys.Fill(MR, RSQ, weight*btw_nominal)
-        wHisto_btagup.Fill(MR, RSQ, weight*btw_up)
-        wHisto_btagdown.Fill(MR, RSQ, weight*btw_dw)
+        weight = 0.95
+       
+        nominal.Fill(MR, RSQ, btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal)
+        print 'btag dw', MR              , RSQ              , btagw_dw    , weight*btagw_dw*lepw_nominal*isrw_nominal
+        #err
+        jes_up.Fill   (tree.MR_JES_UP  , tree.RSQ_JES_UP  , btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal)
+        jes_down.Fill (tree.MR_JES_DOWN, tree.RSQ_JES_DOWN, btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal) 
+        btag_up.Fill  (MR              , RSQ              , btagw_up    , weight*btagw_up*lepw_nominal*isrw_nominal    )
+        btag_down.Fill(MR              , RSQ              , btagw_up    , weight*btagw_dw*lepw_nominal*isrw_nominal    )
+        isr_up.Fill   (MR              , RSQ              , btag_nominal, weight*isrw_up*btag_nominal*lepw_nominal     )   
+        isr_down.Fill (MR              , RSQ              , btag_nominal, weight*isrw_dw*btag_nominal*lepw_nominal     ) 
+        lep_up.Fill   (MR              , RSQ              , btag_nominal, weight*lepw_up*btag_nominal*isrw_nominal     )   
+        lep_down.Fill (MR              , RSQ              , btag_nominal, weight*lepw_dw*btag_nominal*isrw_nominal     ) 
+         
 
         # PDFs:
-
         CTEQ66_W = tree.CTEQ66_W
-        NNPDF_W = tree.MRST2006NNLO_W
+        NNPDF_W  = tree.MRST2006NNLO_W
 
         for icteq in range(45):
-            vwHisto_pdfCTEQ[icteq].Fill(MR, RSQ, weight*btw_nominal*CTEQ66_W[icteq])
+            vwHisto_pdfCTEQ[icteq].Fill(MR, RSQ, btag_nominal, weight*btag_nominal*lepw_nominal*CTEQ66_W[icteq])
         for innpdf in range(101):
-            vwHisto_pdfNNPDF[innpdf].Fill(MR, RSQ, weight*btw_nominal*NNPDF_W[innpdf])        
+           vwHisto_pdfNNPDF[innpdf].Fill(MR, RSQ, btag_nominal, weight*btag_nominal*lepw_nominal*NNPDF_W[innpdf])        
 
-        #print entry
-
-
+    #end of the tree loop
     # Make the overall PDF histograms:
 
     # evaluate CTEQ:
     # Following are the histogrrams storing +- % error on the PDF center:
-    for i in range(1, nbinx+1):
-        for j in range(1, nbiny+1):
-            pdfcenters = []
-            pdferrors = []
-            if wHisto.GetBinContent(i,j) != 0 and wHisto.Integral() != 0.:
-                w = []
-                for k in range(0,45):
-                    w.append(vwHisto_pdfCTEQ[k].GetBinContent(i,j))
-                pdfCTEQcen, pdfCTEQerr = GetPDFCenErr(w, 'CTEQ')
-                pdfcenters.append(pdfCTEQcen)
-                pdferrors.append(pdfCTEQerr)
-                #print 'orig central:', wHisto.GetBinContent(i,j), hw[0]
-                w = []
-                for k in range(0,101):
-                    w.append(vwHisto_pdfNNPDF[k].GetBinContent(i,j))
-                pdfNNPDFcen, pdfNNPDFerr = GetPDFCenErr(w, 'NNPDF')
-                pdfcenters.append(pdfNNPDFcen)
-                pdferrors.append(pdfNNPDFerr)
-                pdfcen, pdferr = GetPDFEnvelope(pdfcenters, pdferrors)
-                wHisto_pdfcen.SetBinContent(i,j,pdfcen)
-                wHisto_pdferr.SetBinContent(i,j,pdferr)
-                print 'pdfcen, pdferr, err/cen', pdfcen, pdferr, pdferr/pdfcen
+    for i in range(1, len(MRbins)+1):
+        for j in range(1, len(Rsqbins)+1):
+            for k in range(1, len(nBtagbins)+1):
+                pdfcenters = []
+                pdferrors = []
+                if nominal.GetBinContent(i,j,k) != 0 and nominal.Integral() != 0.:
+                    w = []
+                    for p in range(0,45):
+                         w.append(vwHisto_pdfCTEQ[p].GetBinContent(i,j, k))
+                    pdfCTEQcen, pdfCTEQerr = GetPDFCenErr(w, 'CTEQ')
+                    pdfcenters.append(pdfCTEQcen)
+                    pdferrors.append(pdfCTEQerr)
+                    #print 'orig central:', wHisto.GetBinContent(i,j), hw[0]
+                    w = []
+                    for p in range(0,101):
+                        w.append(vwHisto_pdfNNPDF[p].GetBinContent(i,j,k))
+                    pdfNNPDFcen, pdfNNPDFerr = GetPDFCenErr(w, 'NNPDF')
+                    pdfcenters.append(pdfNNPDFcen)
+                    pdferrors.append(pdfNNPDFerr)
+                    #print 'pdfcenters, pdferrors'
+                    print pdfcenters, pdferrors
+                    pdfcen, pdferr = GetPDFEnvelope(pdfcenters, pdferrors)
+                    pdf_cen.SetBinContent(i,j,k,pdfcen)
+                    pdf_err.SetBinContent(i,j,k,pdferr)
+                    #print 'pdfcen, pdferr, err/cen', pdfcen, pdferr#, pdferr/pdfcen
 
     # PDFs done
-
+   
     # Percent error histograms:
+    ###### JES ######
+    #using (UP - DOWN)/2:
+    jes_pe.Add(jes_up,0.5)
+    jes_pe.Add(jes_down,-0.5)
 
+    #divide by (UP + NOM + DOWN)/3:
+    jes_denom = rt.TH3D("wHisto_JESerr_denom", "wHisto_JESerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    jes_denom.Add(jes_up,1.0/3.0)
+    jes_denom.Add(pdf_cen,1.0/3.0)
+    jes_denom.Add(jes_down,1.0/3.0)
 
-    wHisto_JESup_pe = rt.TH2D("wHisto_JESup_pe", "wHisto_JESup_pe", nbinx, binedgex, nbiny, binedgey)
-    wHisto_JESdown_pe = rt.TH2D("wHisto_JESdown_pe", "wHisto_JESdown_pe", nbinx, binedgex, nbiny, binedgey)
-    wHisto_JESerr_pe = rt.TH2D("wHisto_JESerr_pe", "wHisto_JESerr_pe", nbinx, binedgex, nbiny, binedgey)    
-    wHisto_pdferr_pe = rt.TH2D("wHisto_pdferr_pe", "wHisto_pdferr_pe", nbinx, binedgex, nbiny, binedgey)
-    wHisto_btagup_pe = rt.TH2D("wHisto_btagup_pe", "wHisto_btagup_pe", nbinx, binedgex, nbiny, binedgey)
-    wHisto_btagdown_pe = rt.TH2D("wHisto_btagdown_pe", "wHisto_btagdown_pe", nbinx, binedgex, nbiny, binedgey)
-    wHisto_btagerr_pe = rt.TH2D("wHisto_btagerr_pe", "wHisto_btagerr_pe", nbinx, binedgex, nbiny, binedgey)
+    jes_pe.Divide(jes_denom)
 
-    for i in range(1, nbinx+1):
-        for j in range(1, nbiny+1):
-            nominal = wHisto.GetBinContent(i, j)
-            JESup = wHisto_JESup.GetBinContent(i, j)
-            JESdown = wHisto_JESdown.GetBinContent(i, j)
-            pdfcen = wHisto_pdfcen.GetBinContent(i, j)
-            pdferr = wHisto_pdferr.GetBinContent(i, j)
-            btagup = wHisto_btagup.GetBinContent(i, j)
-            btagdown = wHisto_btagdown.GetBinContent(i, j)
+    ###### BTAG ######
+    #using (UP - DOWN)/2:
+    btag_pe.Add(btag_up,0.5)
+    btag_pe.Add(btag_down,-0.5)
 
-            if nominal == 0:
-                JESup_pe = 0
-                wHisto_JESup_pe.SetBinContent(i, j, JESup_pe)
-                
-                JESdown_pe = 0
-                wHisto_JESdown_pe.SetBinContent(i, j, JESdown_pe)
+    #divide by (UP + NOM + DOWN)/3
+    btag_denom = rt.TH3D("wHisto_btagerr_denom", "wHisto_btagerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    btag_denom.Add(btag_up,1.0/3.0)
+    btag_denom.Add(pdf_cen,1.0/3.0)
+    btag_denom.Add(btag_down,1.0/3.0)
+    
+    btag_pe.Divide(btag_denom)
 
-                JESerr_pe = 0
-                wHisto_JESerr_pe.SetBinContent(i, j, JESerr_pe)
-                
-                pdferr_pe = 0
-                wHisto_pdferr_pe.SetBinContent(i, j, pdferr)
-                
-                btagup_pe = 0
-                wHisto_btagup_pe.SetBinContent(i, j, btagup_pe)
-                
-                btagdown_pe = 0
-                wHisto_btagdown_pe.SetBinContent(i, j, btagdown_pe)
+    
 
-                btagerr_pe = 0
-                wHisto_btagerr_pe.SetBinContent(i, j, btagerr_pe)
-                
-                continue
+    ###### ISR ######
+    #using (UP - DOWN)/2:
+    isr_pe.Add(isr_up,0.5)
+    isr_pe.Add(isr_down,-0.5)
 
+    #divide by (UP + NOM + DOWN)/3
+    isr_denom = rt.TH3D("wHisto_ISRerr_denom", "wHisto_ISRerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
+    isr_denom.Add(isr_up,1.0/3.0)
+    isr_denom.Add(pdf_cen,1.0/3.0)
+    isr_denom.Add(isr_down,1.0/3.0)
+    
+    isr_pe.Divide(isr_denom)
 
-            JESup_pe = abs(nominal - JESup) / nominal
-            wHisto_JESup_pe.SetBinContent(i, j, JESup_pe)
+    ####### PDF #######
+    pdf_up = pdf_err.Clone("wHisto_pdferr_up")
+    pdf_up.SetTitle("wHisto_pdferr_up") 
+    pdf_up.Multiply(pdf_cen)
+    pdf_up.Add(pdf_cen)
 
-            JESdown_pe = abs(nominal - JESdown) / nominal
-            wHisto_JESdown_pe.SetBinContent(i, j, JESdown_pe)
+    pdf_down = pdf_pe.Clone("wHisto_pdferr_down") 
+    pdf_down.SetTitle("wHisto_pdferr_down") 
+    pdf_down.Multiply(pdf_cen)
+    pdf_down.Scale(-1.0)
+    pdf_down.Add(pdf_cen)
 
-            #JESerr_pe = (JESup_pe + JESdown_pe) / 2.
-            JESerr_pe = (JESup - JESdown) / (2*nominal)
-            if abs(JESerr_pe) > 0.75:
-                JESerr_pe = 0.75*(JESerr_pe / abs(JESerr_pe))
-            #if JESerr_pe > 0.75: JESerr_pe = 0.75
-            wHisto_JESerr_pe.SetBinContent(i, j, JESerr_pe)
-            
-            pdferr_pe = pdferr / pdfcen
-            wHisto_pdferr_pe.SetBinContent(i, j, pdferr_pe)
-
-            btagup_pe = abs(nominal - btagup) / nominal
-            wHisto_btagup_pe.SetBinContent(i, j, btagup_pe)
-
-            btagdown_pe = abs(nominal - btagdown) / nominal
-            wHisto_btagdown_pe.SetBinContent(i, j, btagdown_pe)
-
-            btagerr_pe = (btagup_pe + btagdown_pe) / 2.
-            wHisto_btagerr_pe.SetBinContent(i, j, btagerr_pe)
-            
-            print btagdown_pe, btagup_pe, btagerr_pe, JESdown_pe, JESup_pe, JESerr_pe, pdferr_pe
-            
-
+    pdf_pe = pdf_err.Clone("wHisto_pdferr_pe")
+    pdf_pe.SetTitle("wHisto_pdferr_pe") 
+    pdf_pe.Divide(pdf_cen)
+   
     numEntries = data.numEntries()
     if Min < 0: Min = 0
     if Max < 0: Max = numEntries
+
+    label=""
+    writeTree2DataSet(data, outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp)
+
     
-    rdata = data.reduce(rt.RooFit.EventRange(Min,Max))
-    if write:
-        writeTree2DataSet([rdata,nLooseElectrons,nLooseMuons,nLooseTaus,
-                           wHisto, wHisto_JESup, wHisto_JESdown, wHisto_pdfcen, wHisto_pdferr, wHisto_btagup, wHisto_btagdown, wHisto_JESup_pe, wHisto_JESdown_pe, wHisto_JESerr_pe, wHisto_pdferr_pe, wHisto_btagup_pe, wHisto_btagdown_pe, wHisto_btagerr_pe],
-                          outputFile, '%s.root' % filter.name, rMin, mRmin, mstop, mlsp)
-    return rdata
 
 if __name__ == '__main__':
     
@@ -649,8 +444,8 @@ if __name__ == '__main__':
                   help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
                   help="The first event to take from the input Dataset")  
-    parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
-                  help="The maximum number of Btags to allow")     
+    parser.add_option('-b','--box',dest="box",type="string",default="",
+                  help="box to run")     
     parser.add_option('-e','--eff',dest="eff",default=False,action='store_true',
                   help="Calculate the MC efficiencies")
     parser.add_option('-f','--flavour',dest="flavour",default='TTj',
@@ -659,8 +454,8 @@ if __name__ == '__main__':
                   help="The minimum run number")
     parser.add_option('-d','--dir',dest="outdir",default="./",type="string",
                   help="Output directory to store datasets")
-    parser.add_option('-x','--box',dest="box",default=None,type="string",
-                  help="Specify only one box")
+ ##    parser.add_option('-x','--box',dest="box",default=None,type="string",
+##                   help="Specify only one box")
     parser.add_option('--name',dest="name",default='RMRTree',type="string",
                   help="The name of the TTree to use")
     parser.add_option('--mstop',dest="mstop",default=650,type=float,
@@ -676,6 +471,8 @@ if __name__ == '__main__':
         topDir = os.path.abspath(os.path.dirname(inspect.getsourcefile(convertTree2Dataset)))
         options.config = os.path.join(topDir,'boxConfig.cfg')    
     cfg = Config.Config(options.config)
+    box = options.box
+    outputDir = options.outdir
     
     print 'Input files are %s' % ', '.join(args)
     
@@ -693,16 +490,17 @@ if __name__ == '__main__':
 
     #for doing all the crap with btags and scale factors
     tagger = BTag('T2tt')
-
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxLS(CalcBDT(chain)),options.run)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxHS(CalcBDT(chain)),options.run)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoLS(CalcBDT(chain)),options.run)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoHS(CalcBDT(chain)),options.run)        
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CREleBVetoBox(None),options.run)
+    muonScaling = MuSFUtil()
+    eleScaling  = EleSFUtil()
+   
+    ## if box == "BJetHS" :
+##         convertTree2Dataset(chain, outputDir, fName, cfg, options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+##     elif box == "BJetLS" :
+##         convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+##     elif box == "Mu" :
+    convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
+##     else :
+##    convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
+   
 
 
