@@ -208,7 +208,7 @@ class CalcBDT(object):
         self.reader.AddSpectator('MR',self.mr_var)
         self.reader.AddSpectator('RSQ',self.rsq_var)
         self.reader.AddSpectator('nVertex',self.nvertex_var)
-        self.reader.BookMVA('BDT','/afs/cern.ch/user/w/wreece/public/Razor2012/BDT/Had/TMVAClassification_BDT.weights.xml')
+        self.reader.BookMVA('BDT','/home/uscms208/cms/CMSSW_6_1_2/src/RazorCombinedFit_lucieg_May29/TMVAClassification_BDT.weights.xml')
 
     def select(self):
         return self.sel.select()

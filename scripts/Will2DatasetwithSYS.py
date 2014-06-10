@@ -25,7 +25,7 @@ class BJetBoxLS(object):
         self.dumper = dumper
     def __call__(self, tree):
         return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.1 
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() < -0.2
 
 class BJetBoxHS(object):
     """The BJet search box used in the analysis"""
@@ -34,7 +34,7 @@ class BJetBoxHS(object):
         self.dumper = dumper
     def __call__(self, tree):
         return tree.nJet >= 6 and tree.metFilter and tree.hadBoxFilter and tree.hadTriggerFilter and tree.nCSVM > 0 and tree.MR >= 350 and tree.RSQ >= 0.03 and\
-            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.1 
+            tree.nMuonTight == 0 and tree.nElectronTight == 0 and not tree.isolatedTrack10Filter and tree.nMuonLoose == 0 and tree.nElectronLoose == 0 and self.dumper.bdt() >= -0.2
 
 class CR6JBVetoBoxLS(object):
     """The CR6JBVeto search box used in the analysis"""
@@ -306,14 +306,14 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         binedgexLIST.extend(binning[0])
         binedgeyLIST.extend(binning[1])
 
-    nbinx =  len(binedgexLIST)-1
-    nbiny = len(binedgeyLIST)-1    
+    nbinx = len(binedgexLIST)-1
+    nbiny = len(binedgeyLIST)-1
 
     print binedgexLIST
     print binedgeyLIST
 
-    binedgex = array('d',binedgexLIST)
-    binedgey = array('d',binedgeyLIST)
+    binedgex = array('d', binedgexLIST)
+    binedgey = array('d', binedgeyLIST)
 
 
     # Book the histograms
@@ -338,26 +338,27 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         wHisto_pdfNNPDF = rt.TH2D("wHisto_pdfNNPDF_%s" % innpdf, "wHisto_pdfNNPDF_%s" % innpdf, \
                                  nbinx, binedgex, nbiny, binedgey)
         vwHisto_pdfNNPDF.append(wHisto_pdfNNPDF)
-        
+
     print 'x', len(vwHisto_pdfCTEQ)
 
 
-    # Load the file with the SMS number of total events per each point 
-    norms = pickle.load(file('/afs/cern.ch/user/w/wreece/public/Razor2012/SMS-T2tt_FineBin_Mstop-225to1200_mLSP-0to1000_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-PAT_CMG_V5_6_0_B.pkl'))
+    # Load the file with the SMS number of total events per each point
+    norms = pickle.load(file(('/home/uscms208/cms/RazorCombinedFit_Git/T3/'
+                              'RMRTrees/T2tt/SMS-T2tt_mStop-Combo.0_8TeV-'
+                              'Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl')))
 
     print 'Number of entries:', tree.GetEntries()
 
     for entry in xrange(tree.GetEntries()):
         tree.GetEntry(entry)
 
-        if (entry % 50000 ==  0): print entry
+        if entry % 50000 == 0:
+            print entry
 
-#        if entry > 2000:
-#            break
+        # if entry > 20000:
+        #     break
 
-
-
-        if (mstop != tree.mStop or mlsp != tree.mLSP):
+        if mstop != tree.mStop or mlsp != tree.mLSP:
             continue
         #print tree.mStop, tree.mLSP
 
@@ -502,7 +503,7 @@ def convertTree2Dataset(tree, outputFile, config, Min, Max, filter, run, mstop, 
         MR = tree.MR
         RSQ = tree.RSQ
 
-        print 'weight', weight
+        # print 'weight', weight
 
         
         wHisto.Fill(MR, RSQ, weight*btw_nominal)
@@ -694,15 +695,14 @@ if __name__ == '__main__':
     #for doing all the crap with btags and scale factors
     tagger = BTag('T2tt')
 
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+    # convertTree2Dataset(chain, fName, cfg, options.min, options.max, BJetBoxLS(CalcBDT(chain)), options.run, options.mstop, options.mlsp)
+    convertTree2Dataset(chain, fName, cfg, options.min, options.max, BJetBoxHS(CalcBDT(chain)), options.run, options.mstop, options.mlsp)
+    # convertTree2Dataset(chain, fName, cfg, options.min, options.max, MuBox(None), options.run, options.mstop, options.mlsp)
+    # convertTree2Dataset(chain, fName, cfg, options.min, options.max, EleBox(None), options.run, options.mstop, options.mlsp)
+
     #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxLS(CalcBDT(chain)),options.run)
     #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JBVetoBoxHS(CalcBDT(chain)),options.run)
     #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoLS(CalcBDT(chain)),options.run)
-    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoHS(CalcBDT(chain)),options.run)        
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
+    #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CR6JSingleLeptonBVetoHS(CalcBDT(chain)),options.run)
     #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
-    convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run, options.mstop, options.mlsp)
     #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CREleBVetoBox(None),options.run)
-
-
