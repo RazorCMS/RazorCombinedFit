@@ -1,0 +1,6 @@
+src/*.o
+*.pyc
+src/FitMRDistribution
+src/rootdict.*
+T3
+lib/libRazor.so
