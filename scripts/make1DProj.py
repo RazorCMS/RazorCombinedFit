@@ -27,7 +27,7 @@ def GetErrorsX(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
         sumName = ""
         varNames = []
         for j in range(0,nbiny-1):
-            if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
+            #if j==0 and i==0: continue #WE ALWAYS SKIP THE BIN IN THE BOTTOM LEFT CORNER
             if frLabel=="HighMR" and (i<=1 or j<=0): continue #SKIP SIDEBAND FOR HIGHMR
             if fit3D:
                 if btagOpt == 0:
@@ -197,8 +197,8 @@ def GetErrorsY(nbinx, nbiny, myTree, printPlots, outFolder, fit3D, btagOpt, frLa
             funcFill68.Draw("same")
             tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
         else:
-            #tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
-            tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
+            tleg.AddEntry(myhisto,"68%% Range = [%.1f,%.1f]"%(xmin,xmax),"f")
+            #tleg.AddEntry(funcFill68,"%.1f%% Range = [%.1f,%.1f]"%(probRange*100,xmin,xmax),"f")
         tleg.SetFillColor(rt.kWhite)
         tleg.Draw("same")
         rt.gStyle.SetOptStat(0)
@@ -327,7 +327,7 @@ def goodPlot(varname, Box, outFolder, Label, Energy, Lumi, hMRTOTcopy, hMRTOT, h
     MRbins    = getBinning(Box, "MR"   , "Btag")
     Rsqbins   = getBinning(Box, "Rsq"  , "Btag")
     nBtagbins = getBinning(Box, "nBtag", "Btag")
-    
+
     binMap = {"MR":MRbins,"RSQ":Rsqbins,"BTAG":nBtagbins}
     print binMap
     print binMap[varname]
@@ -646,14 +646,15 @@ if __name__ == '__main__':
     printPlots = False
     frLabels = []
     for i in range(4,len(sys.argv)):
+        print i, sys.argv[i], sys.argv[i].find("--fit-region")
         if sys.argv[i] == "--noBtag": noBtag = True
         if sys.argv[i] == "--3D": fit3D = True
         if sys.argv[i] == "--forPaper": Preliminary = ""
         if sys.argv[i] == "--printPlots": printPlots = True
         if sys.argv[i].find("--fit-region=") != -1:
             frLabels = sys.argv[i]
-        ##      frLabelString = sys.argv[i].replace("--fit-region=","")
-##             frLabels = frLabelString.split(",")
+            frLabelString = sys.argv[i].replace("--fit-region=","")
+            frLabels = frLabelString.split(",")
         if sys.argv[i].find("-MC=") != -1:
             Preliminary = "Simulation"
             datasetName = sys.argv[i].replace("-MC=","")
@@ -678,9 +679,9 @@ if __name__ == '__main__':
     # file with output fit
     fitFile = rt.TFile.Open(fitfileName)
     print fitfileName
-
-    if frLabels == []: frLabels = ["FULL"]#"LowMR,LowRsq"]#
-    #if fit3D: frLabels.extend(["%ib"%btag for btag in nBtagbins[:-1]])
+    if frLabels == ['Sideband']: 
+        frLabels = ["LowMR,LowRsq"]
+     #if fit3D: frLabels.extend(["%ib"%btag for btag in nBtagbins[:-1]])
 
     if len(frLabels)<=1:
         btagToDo = [0] # THIS MEANS WE ARE INTEGRATING THE FULL BTAG REGION

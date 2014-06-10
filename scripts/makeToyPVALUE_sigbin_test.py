@@ -286,7 +286,6 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     x = array("d",MRbins)
     y = array("d",Rsqbins)
     numberOfBinsGt2Sigma = 0
-    numberOfBinsMn2Sigma = 0
     if btagOpt>0:
         h =  rt.TH2D("h_%ib"%btagOpt,"", len(MRbins)-1, x, len(Rsqbins)-1, y)
         hOBS =  rt.TH2D("hOBS_%ib"%btagOpt,"hOBS_%ib"%btagOpt, len(MRbins)-1, x, len(Rsqbins)-1, y)
@@ -308,9 +307,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     dataFile = rt.TFile.Open(dataFileName)
     workspace = dataFile.Get(Box+"/Box"+Box+"_workspace")
 #    alldata = workspace.obj("sigbkg")
-#    alldata = workspace.obj("RMRTree")
-    ##FOR TOYS
-    alldata = dataFile.Get("RMRTree")
+    alldata = workspace.obj("RMRTree")
     
     # p-values 1D plot
     pValHist = rt.TH1D("pVal_%ib_%s" %(btagOpt,Box), "pVal%s" %Box, 20, 0., 1.)
@@ -361,22 +358,16 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
             
             # GET THE OBSERVED NUMBER OF EVENTS
             if fit3D:
-# data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1))
-                    #FOR TOYS
-                
-                   
                 if btagOpt==0:
-                    data = alldata.GetEntries("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1))
+                    data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1))
                 elif btagOpt==1:
                     data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i. && nBtag < %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1, 2))
                 elif btagOpt==23:
                     data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i." %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], 1))
             else:
                 data = alldata.reduce("MR>= %f && MR < %f && Rsq >= %f && Rsq < %f && nBtag >= %i" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nBtagbins[0]))
-            #nObs = data.numEntries()
-            #for toys
-            nObs = data
-
+            nObs = data.numEntries()
+            
             maxX = int(max(10.0,mean+10.*rms))
             minX = 0.0
             htemp.Scale(1./htemp.Integral())
@@ -482,13 +473,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
                 if pval<0.15 :
                     table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
                 
-                if abs(nsigma) >= 2.95 :
-                    if nsigma >= 2.95 :
-                        numberOfBinsGt2Sigma+=1
-                    else :
-                        numberOfBinsMn2Sigma+=1
-                #if not (i==0 and j==0): table.write("$[%4.0f,%4.0f]$ & $[%5.4f,%5.4f]$ & %i & %3.1f & %3.1f & $%3.1f \\pm %3.1f$ & %4.2f & %4.1f \\\\ \n" %(MRbins[i], MRbins[i+1], Rsqbins[j], Rsqbins[j+1], nObs, modeVal, medianVal, (rangeMax+rangeMin)/2, (rangeMax-rangeMin)/2, pval, nsigma))
-
+               
                 # fill the pvalue plot for non-empty bins with expected 0.5 (spikes at 0)
                 if not (pval ==0.99 and modeVal == 0.5): pValHist.Fill(pval)
 
@@ -515,9 +500,7 @@ def getHistogramsWriteTable(MRbins, Rsqbins,nBtagbins, fileName, dataFileName, B
     table.write("\\end{document}\n")
     table.close()
     
-    count = open("%s/count.txt"%outFolder,"w")
-    count.write(str(numberOfBinsGt2Sigma)+" "+str(numberOfBinsMn2Sigma) )
-    count.close
+   
     return h, hOBS, hEXP, hNS, pValHist
 
 def writeFilesDrawHistos(MRbins, Rsqbins, h, hOBS, hEXP, hNS, pValHist, Box, outFolder, fit3D, btagOpt):
@@ -735,7 +718,7 @@ if __name__ == '__main__':
         
     from RazorBox import getBinning
     MRbins    = getBinning(Box, "MR"   , "Btag")
-    Rsqbins   = Rsqbins   = [0.08, 0.1, 0.15, 0.2, 0.3, 0.41, 0.52, 1.5]#getBinning(Box, "Rsq"  , "Btag")
+    Rsqbins   = [0.08, 0.1, 0.15, 0.2, 0.3, 0.41, 0.52, 1.5]#getBinning(Box, "Rsq"  , "Btag")
     nBtagbins = getBinning(Box, "nBtag", "Btag")
    
     hList, hOBSList, hEXPList, hNSList, pValHistList = [], [], [], [], []

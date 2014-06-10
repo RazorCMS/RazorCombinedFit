@@ -10,25 +10,16 @@ from array import *
 import time
 import glob
 
-def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob,njets,point):
+def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob,njets,point, datasetName):
     pwd = os.environ['PWD']
             
-    #fitResultsDir = "FitResults_%s"%fitmode
-    #fitResultsDir = "FitResults_NOTAU"
     fitResultsDir = "FitResults/"
-    config = "config_summer2012/RazorMultiJet2013_3D_hybrid.config"
-    #config = "test.config"
+    config = "config_summer2012/RazorMultiJet2013_3D_hybrid_"+datasetName+njets+sideband+"_.config"
     submitDir = "submit"
     
-    # fitResultMap = {'WJets':'%s/razor_output_WJets_%s_%s.root'%(fitResultsDir,sideband,box),
-    # 'TTJets':'%s/razor_output_TTJets_%s_%s.root'%(fitResultsDir,sideband,box),
-    # 'ZJetsToNuNu':'%s/razor_output_ZJetsToNuNu_%s_%s.root'%(fitResultsDir,sideband,box),
-    # 'SMCocktail':'%s/razor_output_SMCocktail_%s_%s.root'%(fitResultsDir,sideband,box),
-    # 'MuHad-Run2012ABCD':'%s/razor_output_MuHad-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box),
-    # 'ElectronHad-Run2012ABCD':'%s/razor_output_ElectronHad-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box),
-    # 'HT-HTMHT-Run2012ABCD':'%s/razor_output_HT-HTMHT-Run2012ABCD_%s_%s.root'%(fitResultsDir,sideband,box)}
-    fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets3D_%s_%s_%s_%s.root'%(njets,box,sideband,point),
-                    'SingleEle':fitResultsDir+'razor_SingleEle3D_%s_%s_%s.root'%(njets,box,sideband)}
+    fitResultMap = {'TTJets':fitResultsDir+'razor_TTJets3D_%s_%s_%s%s.root'%(njets,box,sideband,point),
+                    'SingleEle':fitResultsDir+'razor_SingleEle3D_%s_%s_%s.root'%(njets,box,sideband),
+                    'SingleMu':fitResultsDir+'razor_SingleMu3D_%s_%s_%s.root'%(njets,box,sideband)}
 
     mRmin = 350.0
     rMin  = 0.282842712475
@@ -36,13 +27,14 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     label = "MR"+str(mRmin)+"_R"+str(rMin)
     datasetMap = {'TTJets':'Datasets/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola-Summer12_DR53X-PU_S10_START53_V7C-v1-SUSY_MR%s_R%s_%s_BTAG_%s.root'%(mRmin, rMin,njets,box),
                   'SingleEle':'Datasets/SingleElectron-Run2012ABCD-22Jan2013-v1-SUSY_MR%s_R%s_%s_BTAG_%s.root'%(mRmin, rMin,njets,box),
+                  'SingleMu':'Datasets/SingleMu-Run2012ABCD-22Jan2013-v1-SUSY_MR%s_R%s_%s_BTAG_%s.root'%(mRmin, rMin,njets,box),
                   }
     print datasetMap
     resultDir = "/afs/cern.ch/work/l/lucieg/private/toys10k_%s_%s_%s_%s"%(njets,datasetName,fitmode,point)
     toyDir = resultDir+"/%s_%s"%(sideband,box)
     ffDir = toyDir+"_FF"
 
-    tagFR = "--fit-region "+sideband
+    tagFR = "--fit-region="+sideband
     tag3D = "--"+fitmode
 
     if sideband == "FULL":
@@ -60,17 +52,15 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
     outputfile.write('cd %s \n'%pwd)
     outputfile.write('echo $PWD \n')
     outputfile.write('eval `scramv1 runtime -sh` \n')
-   ##  outputfile.write('export PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/bin:${PATH}\" \n')
-##     outputfile.write('export LD_LIBRARY_PATH=\"/afs/cern.ch/sw/lcg/external/Python/2.6.5/x86_64-slc5-gcc43-opt/lib:${LD_LIBRARY_PATH}\" \n')
-##     outputfile.write('. /afs/cern.ch/sw/lcg/external/gcc/4.3.2/x86_64-slc5/setup.sh \n')
-##     outputfile.write('cd /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.07/x86_64-slc5-gcc43-opt/root;. ./bin/thisroot.sh; cd -\n')
     outputfile.write("source setup.sh\n")
- ##    outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
-##     if True:#doToys:
-##         outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b --fitmode %s\n"%(config,datasetMap[datasetName],fitregion,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob), fitmode))
-##     if doConvertToRoot:
-##         outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
-    if True:#doFinalJob:
+    outputfile.write("mkdir -p %s; mkdir -p %s; mkdir -p %s \n"%(resultDir,toyDir,ffDir))
+    doToys = False
+    if doToys:
+        outputfile.write("python scripts/runAnalysis.py -a SingleBoxFit -c %s %s --fit-region %s -i %s --save-toys-from-fit %s -t %i --toy-offset %i -b --fitmode %s\n"%(config,datasetMap[datasetName],fitregion,fitResultMap[datasetName],toyDir,int(nToysPerJob),int(t*nToysPerJob), fitmode))
+    if doConvertToRoot:
+        outputfile.write("python scripts/convertToyToROOT.py %s/frtoydata_%s --start=%i --end=%i -b \n" %(toyDir, box, int(t*nToysPerJob),int(t*nToysPerJob)+nToysPerJob))
+    doFinalJob = True    
+    if doFinalJob:
         outputfile.write("rm %s.txt \n" %(toyDir))
         outputfile.write("ls %s/frtoydata*.root > %s.txt \n" %(toyDir, toyDir))
         outputfile.write("python scripts/expectedYield_sigbin.py 1 %s/expected_sigbin_%s.root %s %s.txt %s %s -b \n"%(ffDir, box, box, toyDir,tagFR,tag3D))
@@ -78,7 +68,8 @@ def writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToR
         if datasetName.find("Run") != -1:
             outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,tagFR,tag3D,tagPrintPlots,datasetName,sideband,box))
         else:
-            outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots,datasetName,sideband,box))    
+            outputfile.write("python scripts/make1DProj.py %s %s/expected_sigbin_%s.root %s %s -MC=%s %s %s %s -Label=%s_%s_%s -b \n"%(box,ffDir,box,fitResultMap[datasetName],ffDir,datasetName,tagFR,tag3D,tagPrintPlots,datasetName,sideband,box))  
+            
             
             
     outputfile.close
@@ -107,15 +98,15 @@ if __name__ == '__main__':
     queue = "8nh"
     nToys = 1#0000
     nJobs = 1#00
-    njets = '4jets'
-    #point  = '175_25_10p0'
-    #point  = '175_25_100p0'
-    #point  = '175_25_5p0'
-    #point  = '450_25_0p1'
-    #point  = '450_25_0p3'
-    #point  = '450_25_5p0'
-    #point  = '725_25_0p02'
-    #point  = '725_25_0p07'
+    njets = 'gt4jets'
+    #point  = '_175_25_10p0'
+    #point  = '_175_25_100p0'
+    #point  = '_175_25_5p0'
+    #point  = '_450_25_0p1'
+    #point  = '_450_25_0p3'
+    #point  = '_450_25_5p0'
+    #point  = '_725_25_0p02'
+    #point  = '_700_25_1000'
     point  = ''
     
     
@@ -184,7 +175,7 @@ if __name__ == '__main__':
                     if "%s/frtoydata_%s_%i.root"%(toyDir,box,i) in missingRoot: doConvertToRoot = True
 
                 if True :#doFinalJob or doToys or doConvertToRoot:
-                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob, njets, point)
+                    outputname,ffDir,pwd = writeBashScript(box,sideband,fitmode,nToys,nToysPerJob,t,doToys,doConvertToRoot,doFinalJob, njets, point,datasetName)
                     totalJobs+=1
                     #time.sleep(3)
                     os.system("echo bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)

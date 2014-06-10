@@ -16,7 +16,7 @@ lumi = 19.3
 from CalcBDT import CalcBDT
 
 MR_CUT_HAD  = 500.
-MR_CUT_LEP  = 350.
+MR_CUT_LEP  = 450.
 RSQ_CUT     = 0.08
 BDT_CUT     = -0.2
 
@@ -100,7 +100,7 @@ class SelectBox(object):
         
 
 def writeTree2DataSet(data, outputFile, outputBox, rMin, mRmin):
-    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_4jets_BTAG_'+outputBox,'RECREATE')
+    output = rt.TFile.Open(outputFile+"_MR"+str(mRmin)+"_R"+str(rMin)+'_gt4jets_BTAG_'+outputBox,'RECREATE')
     print 'writing dataset to ', output.GetName()
     for d in data:
         d.Write()
@@ -159,6 +159,7 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         #filter out duplicate events in case there are any
         if e in events:
             print 'duplicate found'
+            raw_input()
             continue
         events.add(e)        
         
@@ -190,13 +191,12 @@ def convertTree2Dataset(tree, outputFile, config, min, max, filter, run, write =
         
         nBtag = tree.nCSVM
 
-        #a.setRealValue('nJet',tree.nJet)
-
         #set the RooArgSet and save
         a = rt.RooArgSet(args)
         
         a.setRealValue('MR',tree.MR)
         a.setRealValue('Rsq',tree.RSQ)
+        a.setRealValue('nJet',tree.nJetNoLeptons)
         btagcutoff = 3
         if tree.nCSVM >= btagcutoff:
             a.setRealValue('nBtag',btagcutoff)
@@ -276,15 +276,15 @@ if __name__ == '__main__':
         else:
             "File '%s' of unknown type. Looking for .root files only" % f
 
-    if 'SingleMu' in fName or 'START' in fName:
-        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
-        convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
+    #if 'SingleMu' in fName or 'START' in fName:
+   #     convertTree2Dataset(chain,fName, cfg,options.min,options.max,MuBox(None),options.run)
+        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,CRMuBVetoBox(None),options.run)
    
-##    if 'MultiJet' in fName or 'START' in fName:
-##       convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
+    if 'MultiJet' in fName or 'START' in fName:
+      ##  convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run)
 ##        #convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run)
-##        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
-##     if 'SingleElectron' in fName or 'START' in fName:
+        convertTree2Dataset(chain,fName, cfg,options.min,options.max,BJetBox(None),options.run)
+##    if 'SingleElectron' in fName or 'START' in fName:
 ##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,CREleBVetoBox(None),options.run)
-##         convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
+##        convertTree2Dataset(chain,fName, cfg,options.min,options.max,EleBox(None),options.run)
       
