@@ -14,8 +14,7 @@ def getBinning(boxName, varName, btag):
     else:
         if varName == "MR" : return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq" :
-            if btag == "NoBtag": return [0.08, 0.10, 0.15, 0.20,0.25,0.30,0.35,0.40,0.45,0.50]
-            elif btag == "Btag": return [0.08, 0.10, 0.15, 0.20,0.30,0.41,0.52,0.64,0.80,1.5]
+            return [0.08, 0.10, 0.15, 0.20,0.30,0.41,0.52,0.64,0.80,1.5]
 
         
     if varName == "nBtag" :
@@ -54,7 +53,7 @@ class RazorBox(Box.Box):
         else: self.fitregion = fitregion
         self.fitMode = fitMode
 
-        self.cut = 'MR>0.'
+        self.cut = 'Rsq > 0.0'
         
         
     def addTailPdf(self, flavour, doSYS):
@@ -290,12 +289,14 @@ class RazorBox(Box.Box):
         # signalModel is the 2D pdf [normalized to one]
         # nSig is the integral of the histogram given as input
         signalModel, nSig = self.makeRooRazor3DSignal(inputFile,modelName)
-        
+                 
         # compute the expected yield/(pb-1)
         self.workspace.var('sigma').setVal(signalXsec)
+       
         #set the MC efficiency relative to the number of events generated
         # compute the signal yield multiplying by the efficiency
         self.workspace.factory("expr::Ntot_%s('@0*@1*@2*@3',sigma, lumi, eff, eff_value_%s)" %(modelName,self.name))
+        self.workspace.Print("V")
         extended = self.workspace.factory("RooExtendPdf::eBinPDF_%s(%s, Ntot_%s)" % (modelName,signalModel,modelName))
         
         theRealFitModel = "fitmodel"

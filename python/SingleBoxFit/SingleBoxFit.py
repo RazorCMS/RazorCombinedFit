@@ -239,8 +239,8 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 fit_range = boxes[box].fitregion
                 print 'Using the fit range: %s' % fit_range
                 
-                #boxes[box].fixPars('Ntot_TTj1b',True)
-                #boxes[box].fixPars('Ntot_TTj2b',True)
+#                boxes[box].fixPars('Ntot_TTj1b',True)
+#                boxes[box].fixPars('Ntot_TTj2b',True)
                 if boxes[box].fitMode == '2D':
                     boxes[box].fixPars('n_TTj2b',True)
                 
@@ -302,7 +302,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
         boxes = self.getboxes(fileIndex)
         
         print 'boxes:', boxes
-      
+       
         workspace = rt.RooWorkspace('newws')
           
         #start by setting all box configs the same
@@ -311,7 +311,6 @@ class SingleBoxAnalysis(Analysis.Analysis):
             wsName = '%s/Box%s_workspace' % (box,box)
             print "Restoring the workspace from %s" % self.options.input
             boxes[box].restoreWorkspace(self.options.input, wsName)
-          
             variables = boxes[box].workspace.set('variables')
             data = boxes[box].workspace.data('RMRTree')
             fr_B = boxes[box].workspace.obj('independentFR')
@@ -321,19 +320,20 @@ class SingleBoxAnalysis(Analysis.Analysis):
             boxes[box].defineSet("other", self.config.getVariables(box, "other_parameters"), workspace = boxes[box].workspace)
             boxes[box].defineSet("poi", self.config.getVariables(box, "poi"), workspace = boxes[box].workspace)
             boxes[box].workspace.factory("expr::lumi('@0 * pow( (1+@1), @2)', lumi_value, lumi_uncert, lumi_prime)")
+            boxes[box].workspace.Print('V')
             boxes[box].workspace.factory("expr::eff('@0 * pow( (1+@1), @2)', eff_value, eff_uncert, eff_prime)")
-
+            
             for p in RootTools.RootIterator.RootIterator(boxes[box].workspace.set('nuisance')):
                 p.setVal(0.)
                 boxes[box].fixParsExact(p.GetName(),True)
           
             #add a signal model to the workspace
             signalModel = boxes[box].addSignalModel(fileIndex[box], self.options.signal_xsec)
-              
+           
             # get the signal+background toy (no nuisnaces)
             SpBModel = boxes[box].getFitPDF(name=boxes[box].signalmodel)
             boxes[box].workspace.var("sigma").setVal(self.options.signal_xsec)
-
+            
             # injecting signal 
             N_TTj1b = boxes[box].workspace.var("Ntot_TTj1b").getVal()
             N_TTj2b = boxes[box].workspace.var("Ntot_TTj2b").getVal()
@@ -346,7 +346,7 @@ class SingleBoxAnalysis(Analysis.Analysis):
             tot_toy = data.Clone()
             tot_toy.append(sig_toy)
             tot_toy.SetName("sigbkg")
-          
+            
             print "SpB Expected = %f" %SpBModel.expectedEvents(variables)
             print "SpB Yield = %f" %tot_toy.numEntries()
 
