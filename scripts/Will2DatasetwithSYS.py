@@ -157,7 +157,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     jes_down  = rt.TH3D("wHisto_JESerr_down" , "wHisto_JESerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     
     btag_up   = rt.TH3D("wHisto_btagerr_up"  , "wHisto_btagerr_up"  , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
-    btag_down = rt.TH3D("wHisto_btagerr_down", "wHisto_btagerr_down", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins), zprime )
+    btag_down = rt.TH3D("wHisto_btagerr_down", "wHisto_btagerr_down", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins), z)
     
     isr_up    = rt.TH3D("wHisto_ISRerr_up"   , "wHisto_ISRerr_up"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     isr_down  = rt.TH3D("wHisto_ISRerr_down" , "wHisto_ISRerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
@@ -319,7 +319,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
         jes_up.Fill   (tree.MR_JES_UP  , tree.RSQ_JES_UP  , btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal)
         jes_down.Fill (tree.MR_JES_DOWN, tree.RSQ_JES_DOWN, btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal) 
         btag_up.Fill  (MR              , RSQ              , btagw_up    , weight*btagw_up*lepw_nominal*isrw_nominal    )
-        btag_down.Fill(MR              , RSQ              , btagw_up    , weight*btagw_dw*lepw_nominal*isrw_nominal    )
+        btag_down.Fill(MR              , RSQ              , btagw_down  , weight*btagw_dw*lepw_nominal*isrw_nominal    )
         isr_up.Fill   (MR              , RSQ              , btag_nominal, weight*isrw_up*btag_nominal*lepw_nominal     )   
         isr_down.Fill (MR              , RSQ              , btag_nominal, weight*isrw_dw*btag_nominal*lepw_nominal     ) 
         lep_up.Fill   (MR              , RSQ              , btag_nominal, weight*lepw_up*btag_nominal*isrw_nominal     )   
