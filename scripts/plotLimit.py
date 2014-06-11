@@ -8,7 +8,7 @@ if __name__ == '__main__':
     parser = OptionParser()
     (options,args) = parser.parse_args()
     boxName = args[0]
-    
+
     masses = array('d',range(150, 800, 25))
     observedLimits = []
     expectedLimits = []
@@ -44,7 +44,8 @@ if __name__ == '__main__':
                             0.00372717])
     susy_xsecs_dict = dict(zip(masses, susy_xsecs))
     sideband = 'FULL'
-    njets = '_4jets'
+    # njets = '_4jets'
+    njets = '_gt6'
     model = 'T2tt'
     outfile = rt.TFile.Open('asymptoticFile.root','RECREATE')
     xsecUL_ExpMinus2 = rt.TH1F("xsecUL_ExpMinus2_%s_%s"%(model,boxName),"xsecUL_ExpMinus2_%s_%s"%(model,boxName),26, 150,800)
@@ -52,54 +53,57 @@ if __name__ == '__main__':
     xsecUL_Exp = rt.TH1F("xsecUL_Exp_%s_%s"%(model,boxName),"xsecUL_Exp_%s_%s"%(model,boxName),26, 150,800)
     xsecUL_ExpPlus = rt.TH1F("xsecUL_ExpPlus_%s_%s"%(model,boxName),"xsecUL_ExpPlus_%s_%s"%(model,boxName),26, 150,800)
     xsecUL_ExpPlus2 = rt.TH1F("xsecUL_ExpPlus2_%s_%s"%(model,boxName),"xsecUL_ExpPlus2_%s_%s"%(model,boxName),26, 150,800)
-     
 
-    
+
     for mass in range(150, 800, 25):
-        #file       = rt.TFile("/afs/cern.ch/work/l/lucieg/private/RAZORLIMITS_asym/Combine/T2tt/higgsCombineToysT2tt_%s.0_25.0_FULL_%s_0.HybridNew.mH120.root"%(mass, boxName))
-        file       = rt.TFile("combine_files%s_%s/higgsCombineT2tt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
-     
+
+        file = rt.TFile("combine_files%s_%s/higgsCombineT2tt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
+
+        print file
+
        # file       = rt.TFile("combineCards_25_%s/higgsCombineT2tt_%s_%s_25.Asymptotic.mH120.root"%(sideband, boxName, mass))
-        tree       = file.Get("limit")
-        tree.Draw(">>elist","","entrylist")
-        
-        if tree.GetEntries()< 6 :
+        tree = file.Get("limit")
+        tree.Draw(">>elist", "", "entrylist")
+        # tree.Draw(">>elist")
+
+        if tree.GetEntries() < 6:
             continue
         elist = rt.gDirectory.Get('elist')
         count = 0
         while True:
             entry = elist.Next()
-            if entry == -1: break
+            if entry == -1:
+                break
             tree.GetEntry(entry)
-            if count == 0 :
+            if count == 0:
                 expectedLimitsm2s.append(tree.limit*susy_xsecs_dict[mass])
                 xsecUL_ExpMinus2.Fill(mass,tree.limit*susy_xsecs_dict[mass]/1000.)
-            if count == 1 :
+            if count == 1:
                 expectedLimitsm1s.append(tree.limit*susy_xsecs_dict[mass])
                 xsecUL_ExpMinus.Fill(mass,tree.limit*susy_xsecs_dict[mass]/1000.)
-            if count == 2 :
+            if count == 2:
                 expectedLimits.append(tree.limit*susy_xsecs_dict[mass])
                 xsecUL_Exp.Fill(mass,tree.limit*susy_xsecs_dict[mass]/1000.)
-            if count == 3 :
+            if count == 3:
                 expectedLimitsp1s.append(tree.limit*susy_xsecs_dict[mass])
                 xsecUL_ExpPlus.Fill(mass,tree.limit*susy_xsecs_dict[mass]/1000.)
-            if count == 4 :
+            if count == 4:
                 expectedLimitsp2s.append(tree.limit*susy_xsecs_dict[mass])
                 xsecUL_ExpPlus2.Fill(mass,tree.limit*susy_xsecs_dict[mass]/1000.)
-            if count == 5 :
+            if count == 5:
                 observedLimits.append(tree.limit*susy_xsecs_dict[mass])
-            count +=1
+            count += 1
 
     outfile.Write()
     outfile.Close()
-    
-    observedLimits = array('d',observedLimits)
-    observedLimit_plot = rt.TGraph(len(masses),masses,observedLimits)
+
+    observedLimits = array('d', observedLimits)
+    observedLimit_plot = rt.TGraph(len(masses), masses, observedLimits)
     observedLimit_plot.SetLineColor(rt.kRed)
     observedLimit_plot.SetLineWidth(3)
 
-    expectedLimits = array('d',expectedLimits)
-    expectedLimit_plot = rt.TGraph(len(masses),masses,expectedLimits)
+    expectedLimits = array('d', expectedLimits)
+    expectedLimit_plot = rt.TGraph(len(masses), masses, expectedLimits)
     expectedLimit_plot.SetLineWidth(3)
     expectedLimit_plot.SetLineStyle(rt.kDashed)
 
