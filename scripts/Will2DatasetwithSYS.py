@@ -23,7 +23,7 @@ from CalcBDT import CalcBDT
 from Boxes import *
 
 # Find the probability of an event having at least one btag
-def findBTagProb(jets, efftype = 'data', SFerrdir = 0, doLight = False, CFerrdir = 0):
+def findBTagProb(jets, efftype='data', SFerrdir=0, doLight=False, CFerrdir=0):
     pr_j = 1
     for j in jets:
         if j.pt < 30 or abs(j.eta) > 2.4 or j.btagv < 0:
@@ -69,15 +69,16 @@ def findLeptonProb(flavor, pt = 0., eta = 0., errDir = 0):
 def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp):
 
     # Load the file with the SMS number of total events per each point
-    file = open(('T3/RMRTrees/'
-                 'T2tt/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
+    file = open(('/tmp/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
                  'V9_FSIM-v1-SUSY.pkl'), 'rb')
-    # file = open(('/tmp/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
+    # file = open(('T3/RMRTrees/'
+    #              'T2tt/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
     #              'V9_FSIM-v1-SUSY.pkl'), 'rb')
+    # file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
     # Get the original event weight, which is 1/nevts for a given process
-    point = (mstop, mlsp)
-    norms = pickle.load(file)
-    weight = 1./(norms[point])
+    point  = (mstop, mlsp)
+    norms  = pickle.load(file)
+    weight = 1./(norms[point]) 
     print weight
 
     #for d in data:
@@ -107,10 +108,11 @@ def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args,
     print "writing dataset to", output.GetName()
 
     data.Write()
+   
 
     for histo in [jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down]:
         histo.Write()
-
+    
     output.Close()
 
 def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, run, mstop, mlsp, write = True):
@@ -120,14 +122,14 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     workspace = rt.RooWorkspace(box)
     variables = config.getVariablesRange(box,"variables",workspace)
     workspace.factory('W[0,0,+INF]')
-
-    # if filter.dumper is not None:
-    #     for h in filter.dumper.sel.headers_for_MVA():
-    #         workspace.factory('%s[0,-INF,+INF]' % h)
-
+    
+    if filter.dumper is not None:
+        for h in filter.dumper.sel.headers_for_MVA():
+            workspace.factory('%s[0,-INF,+INF]' % h)
+    
     args = workspace.allVars()
     data = rt.RooDataSet('RMRTree','Selected R and MR',args)
-
+    
     #we cut away events outside our MR window
     mRmin = args['MR'].getMin()
     mRmax = args['MR'].getMax()
@@ -147,7 +149,8 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     x = array("d",MRbins)
     y = array("d",Rsqbins)
     z = array("d",nBtagbins)
-    zprime = array("d",[0.,1.,2.,3.,4.])
+    # zprime = array("d",[0.,1.,2.,3.,4.])
+    zprime = array("d",[0.,1.,2.,3.])
 
     # Book the histograms
     jes_pe    = rt.TH3D("wHisto_JESerr_pe"   , "wHisto_JESerr_pe"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
@@ -160,8 +163,10 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     jes_down  = rt.TH3D("wHisto_JESerr_down" , "wHisto_JESerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
 
     btag_up   = rt.TH3D("wHisto_btagerr_up"  , "wHisto_btagerr_up"  , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
-    btag_down = rt.TH3D("wHisto_btagerr_down", "wHisto_btagerr_down", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins), zprime )
-
+    # btag_down = rt.TH3D("wHisto_btagerr_down", "wHisto_btagerr_down", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins), z)
+    btag_down = rt.TH3D("wHisto_btagerr_down", "wHisto_btagerr_down", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, zprime)
+    print "GetNbinsZ=", btag_down.GetNbinsZ(), "nBtagbins=", nBtagbins
+    print "zprime array=", zprime
     isr_up    = rt.TH3D("wHisto_ISRerr_up"   , "wHisto_ISRerr_up"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
     isr_down  = rt.TH3D("wHisto_ISRerr_down" , "wHisto_ISRerr_down" , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
 
@@ -190,12 +195,10 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
     print 'Number of entries:', tree.GetEntries()
 
-
     for entry in xrange(tree.GetEntries()):
         tree.GetEntry(entry)
 
-        # if entry > 10000.:
-        #     break
+        #if entry > 10000. : break
 
         if entry % 50000 == 0:
             print entry
@@ -253,17 +256,17 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
         btag_SF_bc_Eup = abs(btag_nominal - btag_SF_bc_up)
         btag_SF_bc_dw  = findBTagProb(jets, efftype='data', SFerrdir=-1)/bt_prob_fast
         btag_SF_bc_Edw = abs(btag_nominal - btag_SF_bc_dw)
-     
+
         btag_SF_lt_up = findBTagProb(jets, efftype='data', SFerrdir=+1, doLight=True)/bt_prob_fast
         btag_SF_lt_Eup = abs(btag_nominal - btag_SF_lt_up)
         btag_SF_lt_dw = findBTagProb(jets, efftype='data', SFerrdir=-1, doLight=True)/bt_prob_fast
         btag_SF_lt_Edw = abs(btag_nominal - btag_SF_lt_dw)
-     
+
         btag_CF_up = findBTagProb(jets, efftype='data', CFerrdir=+1)/bt_prob_fast
         btag_CF_Eup = abs(btag_nominal - btag_CF_up)
         btag_CF_dw = findBTagProb(jets, efftype='data', CFerrdir=-1)/bt_prob_fast
         btag_CF_Edw = abs(btag_nominal - btag_CF_dw)
-      
+
         btag_Eup = rt.TMath.Sqrt(btag_SF_bc_Eup**2 + min(btag_SF_lt_Eup, btag_SF_lt_Edw)**2 + btag_CF_Edw**2)
         btag_Edw = rt.TMath.Sqrt(btag_SF_bc_Edw**2 + min(btag_SF_lt_Eup, btag_SF_lt_Edw)**2 + btag_CF_Eup**2)
 
@@ -308,8 +311,8 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
         #get isr
         isrw_nominal = tree.isrWeight #/ isrWeightSum
-        isrw_up      = tree.isrWeightUp 
-        isrw_dw      = tree.isrWeightDown 
+        isrw_up      = tree.isrWeightUp
+        isrw_dw      = tree.isrWeightDown
 
         # Fill the histograms:
 
@@ -319,12 +322,15 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
         weight = 0.95
 
         nominal.Fill(MR, RSQ, btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal)
-        # print 'btag dw', MR              , RSQ              , btagw_dw    , weight*btagw_dw*lepw_nominal*isrw_nominal
+        print 'btag dw', btagw_dw    , weight*btagw_dw*lepw_nominal*isrw_nominal
+        print 'btag nominal', btag_nominal
+        print 'btag up', btagw_up    , weight*btagw_up*lepw_nominal*isrw_nominal
+
         #err
         jes_up.Fill   (tree.MR_JES_UP  , tree.RSQ_JES_UP  , btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal)
         jes_down.Fill (tree.MR_JES_DOWN, tree.RSQ_JES_DOWN, btag_nominal, weight*btag_nominal*lepw_nominal*isrw_nominal)
         btag_up.Fill  (MR              , RSQ              , btagw_up    , weight*btagw_up*lepw_nominal*isrw_nominal    )
-        btag_down.Fill(MR              , RSQ              , btagw_up    , weight*btagw_dw*lepw_nominal*isrw_nominal    )
+        btag_down.Fill(MR              , RSQ              , btagw_dw  ,   weight*btagw_dw*lepw_nominal*isrw_nominal    )
         isr_up.Fill   (MR              , RSQ              , btag_nominal, weight*isrw_up*btag_nominal*lepw_nominal     )
         isr_down.Fill (MR              , RSQ              , btag_nominal, weight*isrw_dw*btag_nominal*lepw_nominal     )
         lep_up.Fill   (MR              , RSQ              , btag_nominal, weight*lepw_up*btag_nominal*isrw_nominal     )
@@ -332,7 +338,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
         # PDFs:
         CTEQ66_W = tree.CTEQ66_W
-        NNPDF_W = tree.MRST2006NNLO_W
+        NNPDF_W  = tree.MRST2006NNLO_W
 
         for icteq in range(45):
             vwHisto_pdfCTEQ[icteq].Fill(MR, RSQ, btag_nominal, weight*btag_nominal*lepw_nominal*CTEQ66_W[icteq])
@@ -371,18 +377,18 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
                     #print 'pdfcen, pdferr, err/cen', pdfcen, pdferr#, pdferr/pdfcen
 
     # PDFs done
-
+   
     # Percent error histograms:
     ###### JES ######
     #using (UP - DOWN)/2:
-    jes_pe.Add(jes_up, 0.5)
-    jes_pe.Add(jes_down, -0.5)
+    jes_pe.Add(jes_up,0.5)
+    jes_pe.Add(jes_down,-0.5)
 
     #divide by (UP + NOM + DOWN)/3:
     jes_denom = rt.TH3D("wHisto_JESerr_denom", "wHisto_JESerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
-    jes_denom.Add(jes_up, 1.0/3.0)
-    jes_denom.Add(pdf_cen, 1.0/3.0)
-    jes_denom.Add(jes_down, 1.0/3.0)
+    jes_denom.Add(jes_up,1.0/3.0)
+    jes_denom.Add(pdf_cen,1.0/3.0)
+    jes_denom.Add(jes_down,1.0/3.0)
 
     jes_pe.Divide(jes_denom)
 
@@ -399,10 +405,11 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
     btag_pe.Divide(btag_denom)
 
+
     ###### ISR ######
     #using (UP - DOWN)/2:
-    isr_pe.Add(isr_up, 0.5)
-    isr_pe.Add(isr_down, -0.5)
+    isr_pe.Add(isr_up,0.5)
+    isr_pe.Add(isr_down,-0.5)
 
     #divide by (UP + NOM + DOWN)/3
     isr_denom = rt.TH3D("wHisto_ISRerr_denom", "wHisto_ISRerr_denom", len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
@@ -414,7 +421,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
     ####### PDF #######
     pdf_up = pdf_err.Clone("wHisto_pdferr_up")
-    pdf_up.SetTitle("wHisto_pdferr_up")
+    pdf_up.SetTitle("wHisto_pdferr_up") 
     pdf_up.Multiply(pdf_cen)
     pdf_up.Add(pdf_cen)
 
@@ -427,28 +434,27 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     pdf_pe = pdf_err.Clone("wHisto_pdferr_pe")
     pdf_pe.SetTitle("wHisto_pdferr_pe") 
     pdf_pe.Divide(pdf_cen)
-
-    print "after PDF"
-
+   
     numEntries = data.numEntries()
     if Min < 0: Min = 0
     if Max < 0: Max = numEntries
 
-    label = ""
+    label=""
     writeTree2DataSet(data, outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp)
 
+    
 
 if __name__ == '__main__':
-
+    
     parser = OptionParser()
     parser.add_option('-c','--config',dest="config",type="string",default=None,
                   help="Name of the config file to use")
     parser.add_option('--max',dest="max",type="int",default=-1,
                   help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
-                  help="The first event to take from the input Dataset")
+                  help="The first event to take from the input Dataset")  
     parser.add_option('-b','--box',dest="box",type="string",default="",
-                  help="box to run")
+                  help="box to run")     
     parser.add_option('-e','--eff',dest="eff",default=False,action='store_true',
                   help="Calculate the MC efficiencies")
     parser.add_option('-f','--flavour',dest="flavour",default='TTj',
@@ -467,12 +473,12 @@ if __name__ == '__main__':
                   help="The name of the TTree to use")
 
 
-    (options,args) = parser.parse_args()
+    (options, args) = parser.parse_args()
 
     if options.config is None:
         import inspect, os
         topDir = os.path.abspath(os.path.dirname(inspect.getsourcefile(convertTree2Dataset)))
-        options.config = os.path.join(topDir,'boxConfig.cfg')
+        options.config = os.path.join(topDir, 'boxConfig.cfg')
     cfg = Config.Config(options.config)
     box = options.box
     outputDir = options.outdir
@@ -496,12 +502,19 @@ if __name__ == '__main__':
     muonScaling = MuSFUtil()
     eleScaling = EleSFUtil()
 
-    if box == "BJetLS":
-        convertTree2Dataset(chain, outputDir, fName, cfg, options.min, options.max, BJetBoxLS(CalcBDT(chain)), options.run, options.mstop, options.mlsp)
-    elif box == "BJetHS":
-        convertTree2Dataset(chain, outputDir, fName, cfg, options.min, options.max, BJetBoxHS(CalcBDT(chain)), options.run, options.mstop, options.mlsp)
+    if box == "BJetHS":
+        convertTree2Dataset(chain, outputDir, fName, cfg, options.min,
+                            options.max, BJetBoxHS(CalcBDT(chain)), options.run,
+                            options.mstop, options.mlsp)
+    elif box == "BJetLS":
+        convertTree2Dataset(chain, outputDir, fName, cfg, options.min,
+                            options.max, BJetBoxLS(CalcBDT(chain)), options.run,
+                            options.mstop, options.mlsp)
     elif box == "Mu":
-        convertTree2Dataset(chain, outputDir, fName, cfg, options.min, options.max, MuBox(None), options.run, options.mstop, options.mlsp)
+        convertTree2Dataset(chain, outputDir, fName, cfg, options.min,
+                            options.max, MuBox(None), options.run,
+                            options.mstop, options.mlsp)
     else:
-        convertTree2Dataset(chain, outputDir, fName, cfg, options.min, options.max, EleBox(None), options.run, options.mstop, options.mlsp)
-
+        convertTree2Dataset(chain, outputDir, fName, cfg, options.min,
+                            options.max, EleBox(None), options.run,
+                            options.mstop, options.mlsp)

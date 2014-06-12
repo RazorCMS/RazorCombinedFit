@@ -16,7 +16,7 @@ if __name__ == '__main__':
     BOX = OPTIONS.box
     OUT_DIR = OPTIONS.out_dir
 
-    for mLSP in range(50, 725, 25):  # 725
+    for mLSP in range(25, 50, 25):  # 725
         file_dir = OUT_DIR + "mLSP" + str(mLSP)
 
         # submit_dir is the same as file_dir

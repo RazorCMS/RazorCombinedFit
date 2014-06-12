@@ -96,8 +96,8 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion, average=True):
                 oldbincontent = oldhisto.GetBinContent(i, j, k)
                 newhisto.Fill(xold, yold, zold, max(0., oldbincontent))
     if average:
-        print "AVERAGING!"
         newhistoaverage = average3d(newhisto, x, y)
+        print "AVERAGING!", newhistoaverage.Integral()
         return newhistoaverage
     else:
         return newhisto
@@ -162,7 +162,7 @@ def writeDataCard(box, model, massPoint, txtfileName, bkgs, paramNames, w, lumi_
             txtfile.write("trigger      lnN %.3f          1.00      1.00     1.00\n"%trigger_uncert)
             txtfile.write("Pdf          shape   %.2f       -         -        -\n"%(1./1.))
             txtfile.write("Jes          shape   %.2f       -         -        -\n"%(1./1.))
-            txtfile.write("Btag         shape   %.2f       -         -        -\n"%(1./1.))
+            # txtfile.write("Btag         shape   %.2f       -         -        -\n"%(1./1.))
             txtfile.write("Isr          shape   %.2f       -         -        -\n"%(1./1.))
             if penalty:
                 normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[0])).getError()/w.var("%s_%s_norm"%(box,bkgs[0])).getVal()
@@ -460,8 +460,8 @@ if __name__ == '__main__':
     histos[(box,"%s_IsrUp"%(model))] = rebin3d(isrUp,x,y,z, box, signalRegion)
     histos[(box,"%s_IsrDown"%(model))] = rebin3d(isrDown,x,y,z, box, signalRegion)
 
-    histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, signalRegion)
-    histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, signalRegion)
+    # histos[(box,"%s_BtagUp"%(model))] = rebin3d(btagUp,x,y,z, box, signalRegion)
+    # histos[(box,"%s_BtagDown"%(model))] = rebin3d(btagDown,x,y,z, box, signalRegion)
 
     histos[(box,"%s_JesUp"%(model))] = rebin3d(jesUp,x,y,z, box, signalRegion)
     histos[(box,"%s_JesDown"%(model))] = rebin3d(jesDown,x,y,z, box, signalRegion)
@@ -487,10 +487,12 @@ if __name__ == '__main__':
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
     histos[box,model].Scale(lumi*refXsec)
 
-    for paramName in ["Jes", "Isr", "Btag", "Pdf"]:
+    # for paramName in ["Jes", "Isr", "Btag", "Pdf"]:
+    for paramName in ["Jes", "Isr", "Pdf"]:
         print "\nINFO: Now renormalizing signal shape systematic histograms to nominal\n"
         print "signal shape variation %s"%paramName
         for syst in ['Up','Down']:
+            print histos[box,"%s_%s%s"%(model,paramName,syst)].Integral()
             if histos[box,"%s_%s%s"%(model,paramName,syst)].Integral() > 0:
                 histos[box,"%s_%s%s"%(model,paramName,syst)].Scale( histos[box,model].Integral()/histos[box,"%s_%s%s"%(model,paramName,syst)].Integral())
 
