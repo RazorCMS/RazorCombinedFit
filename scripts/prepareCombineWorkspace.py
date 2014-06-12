@@ -656,7 +656,7 @@ if __name__ == '__main__':
 
 
     # SIGNAL HISTOGRAMS 
-    wHisto = sigFile.Get('wHisto_pdferr_nom')
+    wHisto = sigFile.Get('wHisto')
     btagUp =  sigFile.Get('wHisto_btagerr_up')
     btagDown =  sigFile.Get('wHisto_btagerr_down')
     
