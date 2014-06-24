@@ -234,7 +234,36 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
             hw = []
             hw2 = []
             for k in xrange(0,45):
-                htemp = histoFile.Get("SMSWCTEQ%s_%i"%(quarkTag,k))
+                htempTT = histoFile.Get("SMSWCTEQ_%i"%(k)).Clone("SMSWCTEQTT_%i"%(k))
+                htempBB = histoFile.Get("SMSWCTEQBB_%i"%(k))
+                htempTB = histoFile.Get("SMSWCTEQTB_%i"%(k))
+                htempTT.Add(htempBB,-1.0)
+                htempTT.Add(htempTB,-1.0)
+                if outputFile.find("T2tb_100_0")!=-1:
+                    htemp = htempTT.Clone("SMSWCTEQNEW_%i"%(k))
+                    htemp.Scale(1.0/0.25)
+                elif outputFile.find("T2tb_80_20")!=-1:
+                    htemp = htempTT.Clone("SMSWCTEQNEW_%i"%(k))
+                    htemp.Scale(0.64/0.25)
+                    htemp.Add(htempTB,0.32/0.50)
+                    htemp.Add(htempBB,0.04/0.25)
+                elif outputFile.find("T2tb_70_30")!=-1:
+                    htemp = htempTT.Clone("SMSWCTEQNEW_%i"%(k))
+                    htemp.Scale(0.49/0.25)
+                    htemp.Add(htempTB,0.42/0.50)
+                    htemp.Add(htempBB,0.09/0.25)
+                elif outputFile.find("T2tb_30_70")!=-1:
+                    htemp = htempTT.Clone("SMSWCTEQNEW_%i"%(k))
+                    htemp.Scale(0.09/0.25)
+                    htemp.Add(htempTB,0.42/0.50)
+                    htemp.Add(htempBB,0.49/0.25)
+                elif outputFile.find("T2tb_20_80")!=-1:
+                    htemp = htempTT.Clone("SMSWCTEQNEW_%i"%(k))
+                    htemp.Scale(0.04/0.25)
+                    htemp.Add(htempTB,0.32/0.50)
+                    htemp.Add(htempBB,0.64/0.25)
+                else:
+                    htemp = histoFile.Get("SMSWCTEQ%s_%i"%(quarkTag,k))
                 w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
                 hw.append(hwCTEQ66[k].GetBinContent(i,j))
                 hw2.append(hwCTEQ66SQ[k].GetBinContent(i,j))
@@ -251,7 +280,36 @@ def makePDFPlotCONDARRAY(tree, box, histo, ibinx, xarray, ibiny, yarray, conditi
             hw = []
             hw2 = []
             for k in xrange(0,31):
-                htemp = histoFile.Get("SMSWMRST%s_%i"%(quarkTag,k))
+                htempTT = histoFile.Get("SMSWMRST_%i"%(k)).Clone("SMSWMRSTTT_%i"%(k))
+                htempBB = histoFile.Get("SMSWMRSTBB_%i"%(k))
+                htempTB = histoFile.Get("SMSWMRSTTB_%i"%(k))
+                htempTT.Add(htempBB,-1.0)
+                htempTT.Add(htempTB,-1.0)
+                if outputFile.find("T2tb_100_0")!=-1:
+                    htemp = htempTT.Clone("SMSWMRSTNEW_%i"%(k))
+                    htemp.Scale(1.00/0.25)
+                elif outputFile.find("T2tb_80_20")!=-1:
+                    htemp = htempTT.Clone("SMSWMRSTNEW_%i"%(k))
+                    htemp.Scale(0.64/0.25)
+                    htemp.Add(htempTB,0.32/0.50)
+                    htemp.Add(htempBB,0.04/0.25)
+                elif outputFile.find("T2tb_70_30")!=-1:
+                    htemp = htempTT.Clone("SMSWMRSTNEW_%i"%(k))
+                    htemp.Scale(0.49/0.25)
+                    htemp.Add(htempTB,0.42/0.50)
+                    htemp.Add(htempBB,0.09/0.25)
+                elif outputFile.find("T2tb_30_70")!=-1:
+                    htemp = htempTT.Clone("SMSWMRSTNEW_%i"%(k))
+                    htemp.Scale(0.09/0.25)
+                    htemp.Add(htempTB,0.42/0.50)
+                    htemp.Add(htempBB,0.49/0.25)
+                elif outputFile.find("T2tb_20_80")!=-1:
+                    htemp = htempTT.Clone("SMSWMRSTNEW_%i"%(k))
+                    htemp.Scale(0.04/0.25)
+                    htemp.Add(htempTB,0.32/0.50)
+                    htemp.Add(htempBB,0.64/0.25)
+                else:
+                    htemp = histoFile.Get("SMSWMRST%s_%i"%(quarkTag,k))
                 w.append(htemp.GetBinContent(htemp.FindBin(MG,MCHI)))
                 hw.append(hwMRST2006NNLO[k].GetBinContent(i,j))
                 hw2.append(hwMRST2006NNLOSQ[k].GetBinContent(i,j))

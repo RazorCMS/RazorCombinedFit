@@ -31,8 +31,41 @@ def writeTree2DataSet(outputFile, outputBox, box, rMin, mRmin, label, args, hist
 
     args.Print()
     histoFile = rt.TFile.Open(histoFileName)
+    smscountBB = histoFile.Get("SMSWALLBB")
+    smscountTB = histoFile.Get("SMSWALLTB")
+    smscountTT = histoFile.Get("SMSWALL").Clone("SMSWALLTT")
+    smscountTT.Add(smscountBB,-1.0)
+    smscountTT.Add(smscountTB,-1.0)
     if histoFileName.find("T2bw")!=-1:
         smscount = histoFile.Get("SMSWALLBB")
+    elif outputFile.find("T2tb_100_0")!=-1:
+        smscount = smscountTT.Clone("SMSWALLNEW")
+        smscount.Scale(1.0/0.25)
+    elif outputFile.find("T2tb_80_20")!=-1:
+        smscount = smscountTT.Clone("SMSWALLNEW")
+        smscount.Scale(0.64/0.25)
+        smscount.Add(smscountTB,0.32/0.5)
+        smscount.Add(smscountBB,0.04/0.25)
+    elif outputFile.find("T2tb_70_30")!=-1:
+        smscount = smscountTT.Clone("SMSWALLNEW")
+        smscount.Scale(0.49/0.25)
+        smscount.Add(smscountTB,0.42/0.5)
+        smscount.Add(smscountBB,0.09/0.25)
+    elif outputFile.find("T2tb_50_50")!=-1:
+        smscount = smscountTT.Clone("SMSWALLNEW")
+        smscount.Scale(0.25/0.25)
+        smscount.Add(smscountTB,0.5/0.5)
+        smscount.Add(smscountBB,0.25/0.25)
+    elif outputFile.find("T2tb_30_70")!=-1:
+        smscount = smscountTT.Clone("SMSWALLNEW")
+        smscount.Scale(0.09/0.25)
+        smscount.Add(smscountTB,0.42/0.5)
+        smscount.Add(smscountBB,0.49/0.25)
+    elif outputFile.find("T2tb_20_80")!=-1:
+        smscount = smscountTT.Clone("SMSWALLNEW")
+        smscount.Scale(0.04/0.25)
+        smscount.Add(smscountTB,0.32/0.5)
+        smscount.Add(smscountBB,0.64/0.25)
     else:
         smscount = histoFile.Get("SMSWALL")
     for histo in [nominal, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down]:     
@@ -114,34 +147,46 @@ def getUpDownHistos(tree,mRmin,mRmax,rsqMin,rsqMax,btagcutoff, box,noiseCut,hist
         nB = 2
         nT = 0
         quarkCut = "N_B_gen==%i&&N_T_gen==%i"%(nB,nT)
+    elif outputFile.find("T2tb_100_0")!=-1:
+        quarkCut = "(1.0/0.25)*(N_T_gen==2)"
+    elif outputFile.find("T2tb_80_20")!=-1:
+        quarkCut = "(0.64/0.25)*(N_T_gen==2)+(0.32/0.5)*(N_T_gen==1)+(0.04/0.25)*(N_T_gen==0)"
+    elif outputFile.find("T2tb_70_30")!=-1:
+        quarkCut = "(0.49/0.25)*(N_T_gen==2)+(0.42/0.5)*(N_T_gen==1)+(0.09/0.25)*(N_T_gen==0)"
+    elif outputFile.find("T2tb_50_50")!=-1:
+        quarkCut = "(0.25/0.25)*(N_T_gen==2)+(0.5/0.5)*(N_T_gen==1)+(0.25/0.25)*(N_T_gen==0)"
+    elif outputFile.find("T2tb_30_70")!=-1:
+        quarkCut = "(0.09/0.25)*(N_T_gen==2)+(0.42/0.5)*(N_T_gen==1)+(0.49/0.25)*(N_T_gen==0)"
+    elif outputFile.find("T2tb_20_80")!=-1:
+        quarkCut = "(0.04/0.25)*(N_T_gen==2)+(0.32/0.5)*(N_T_gen==1)+(0.64/0.25)*(N_T_gen==0)"
     else:
         quarkCut = "(MR>0.)"
     print quarkCut
 
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESup>=%f && MR_JESup<=%f && RSQ_JESup>=%f && RSQ_JESup<=%f)*(%s)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_JESerr_up','%s:RSQ_JESup:MR_JESup'%(BTAGNOM),'(%s)' % (condition) )
 
     # BUG ALERT! WPU MISSING IN ALL THE FOLLOWING PROJECTIONS ORIGINALLY! SPOTTED 10/31/2013
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR_JESdown>=%f && MR_JESdown<=%f && RSQ_JESdown>=%f && RSQ_JESdown<=%f)*(%s)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_JESerr_down','%s:RSQ_JESdown:MR_JESdown'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)*(%s)' % (boxCut,noiseCut,BTAGUP,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_btagerr_up','%s:RSQ:MR'%(BTAGUP),'(%s)' % (condition) )
 
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)*(%s)' % (boxCut,noiseCut,BTAGDOWN,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_btagerr_down','%s:RSQ:MR'%(BTAGDOWN),'(%s)' % (condition) )
     
-    condition = '0.95*WISRUP*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISRUP*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)*(%s)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_ISRerr_up','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISRDOWN*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISRDOWN*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)*(%s)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto_ISRerr_down','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
     
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)*(%s)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     tree.Project('wHisto','%s:RSQ:MR'%(BTAGNOM),'(%s)' % (condition) )
 
     #BUG ALERT! condition should be the NOMINAL! SPOTTED 10/31/2013
-    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f && (%s))' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
+    condition = '0.95*WISR*WLEP*WPU*(%s && GOOD_PF && (%s) && %s >= 1 && MR>=%f && MR<=%f && RSQ>=%f && RSQ<=%f)*(%s)' % (boxCut,noiseCut,BTAGNOM,mRmin,mRmax,rsqMin,rsqMax,quarkCut)
     pdf_nom, pdf_pe = makePDFPlot(tree, box, nominal, condition, relative = True, BTAGNOM = BTAGNOM, histoFileName = histoFileName,outputFile = outputFile)
     
     pdf_up = pdf_pe.Clone("wHisto_pdferr_up") 
@@ -250,6 +295,8 @@ if __name__ == '__main__':
                   help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
                   help="The first event to take from the input Dataset")  
+    parser.add_option('--br',dest="br",type="int",default=-1,
+                  help="Br(~t -> t ~chi^0) in percentage points (rounded to integer)")  
     parser.add_option('-b','--btag',dest="btag",type="int",default=-1,
                   help="The maximum number of Btags to allow")
     parser.add_option('-e','--eff',dest="eff",default=False,action='store_true',
@@ -280,6 +327,8 @@ if __name__ == '__main__':
         if f.lower().endswith('.root'):
             input = rt.TFile.Open(f)
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
+            if options.br > 0:
+                decorator = decorator.replace("T2tb","T2tb_%i_%i"%(options.br,100-options.br))
             print decorator
             if not options.eff:
                 #dump the trees for the different datasets
