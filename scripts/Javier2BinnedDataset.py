@@ -328,7 +328,7 @@ if __name__ == '__main__':
             input = rt.TFile.Open(f)
             decorator = options.outdir+"/"+os.path.basename(f)[:-5]
             if options.br > 0:
-                decorator = decorator.replace("T2tb","T2tb_%i_%i"%(options.br,100-options.br))
+                decorator = decorator.replace("T2tb_MG","T2tb_%i_%i_MG"%(options.br,100-options.br))
             print decorator
             if not options.eff:
                 #dump the trees for the different datasets
