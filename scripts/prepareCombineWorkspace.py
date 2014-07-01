@@ -55,18 +55,13 @@ def getBinEvents(i, j, k, x, y, z, workspace):
 
 def getBinningData(box, model,simple):
     if box in ["Ele", "Mu"]:
-       # MRbins =  [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
-       # Rsqbins = [0.08, 0.10, 0.15, 0.20,0.30,0.41,0.52,0.64,0.80,1.5]
-       # MRbins = [350., 375., 400., 425., 450.,475., 500.,525., 550., 575., 600., 625., 650.,675., 700., 725.,750.,775., 800., 825.,850., 875.,900., 950.,1000., 1050., 1100., 1150., 1200., 1250., 1300., 1350., 1400., 1450.,1500., 1600., 1700., 1800., 1900., 2000., 2250.,2500., 2750.,3000., 3500.,4000.]
-       # Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.27, 0.30, 0.35, 0.40, 0.45, 0.50, 0.6,  0.7, 0.8, 0.9, 1.0, 1.1,   1.3, 1.5]
         MRbins = [350., 360., 370., 380., 390., 400., 410., 420., 430., 440., 450., 475., 500.,525., 550., 575., 600., 625., 650.,675., 700., 725.,750.,775., 800., 825.,850., 875.,900., 950.,1000., 1050., 1100., 1150., 1200., 1250., 1300., 1350., 1400., 1450.,1500., 1600., 1700., 1800., 1900., 2000., 2250.,2500., 2750.,3000., 3500.,4000.]
         Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24, 0.27, 0.30, 0.35, 0.40, 0.45, 0.50, 0.6,  0.7, 0.8, 0.9, 1.0, 1.1,   1.3, 1.5]
-        nBtagbins = [1.,2.,3.,4.]
-     # MRbins = [350., 400., 450., 500., 550., 600., 650., 700., 750., 800., 850., 900., 1000., 1100., 1200., 1300., 1400., 1500., 1750., 2000., 2500., 3000., 4000.]
-     # Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.15, 0.17, 0.19, 0.21, 0.24, 0.27, 0.30, 0.40, 0.50, 0.7, 0.9, 1.1, 1.3, 1.5]
-       # MRbins = [350., 375., 400., 425., 450.,475., 500.,525., 550., 575., 600., 625., 650.,675., 700., 725.,750.,775., 800., 825.,850., 875.,900., 950.,1000., 1050., 1100., 1150., 1200., 1250., 1300., 1350., 1400., 1450.,1500., 1600., 1700., 1800., 1900., 2000., 2250.,2500., 2750.,3000., 3500.,4000.]
-      #  Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20, 0.21, 0.22, 0.24,0.26, 0.28, 0.30, 0.35, 0.40, 0.45, 0.50,0.6, 0.7, 0.8,0.9, 1.0, 1.1, 1.2, 1.3, 1.4,1.5]
+    elif box in ["BJetHS", "BJetLS"]:
+        MRbins = [450, 600, 750, 900, 1200, 1600, 4000]
+        Rsqbins = [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
 
+    nBtagbins = [1.,2.,3.,4.]
 
     return MRbins, Rsqbins, nBtagbins
 
@@ -348,7 +343,7 @@ if __name__ == '__main__':
 
     cfg = Config.Config(options.config)
 
-    try: 
+    try:
         os.environ['CMSSW_BASE']
         loadVal = rt.gSystem.Load("${CMSSW_BASE}/lib/slc5_amd64_gcc472/libHiggsAnalysisCombinedLimit.so")
         if loadVal == -1:
@@ -396,7 +391,7 @@ if __name__ == '__main__':
     temp = rt.RooWorkspace("temp")
     for parameters in other_parameters:
         temp.factory(parameters)
-        
+
     lumi = temp.var("lumi_value").getVal()
     lumi_uncert = temp.var("lumi_uncert").getVal()
     trigger_uncert = temp.var("trigger_uncert").getVal()
@@ -407,16 +402,16 @@ if __name__ == '__main__':
     xSignal = array('d', getBinning(box, "MR"   , "Btag"))
     ySignal = array('d', getBinning(box, "Rsq"  , "Btag"))
     zSignal = array('d', getBinning(box, "nBtag", "Btag"))
-   
+
     x = array('d', getBinningData(box,model,simple)[0])
     y = array('d', getBinningData(box,model,simple)[1])
     z = array('d', getBinningData(box,model,simple)[2])
-    
+
     w = rt.RooWorkspace("w%s"%box)
 
     if simple:
         nMaxBins = 48
-    elif model.find("T2")!=-1:  
+    elif model.find("T2")!=-1:
         nMaxBins = 288
     else:
         nMaxBins = 168
@@ -426,9 +421,9 @@ if __name__ == '__main__':
     #    zTest = array('d', cfg.getBinning(testBox)[2])
     #    nTestBins = (len(xTest)-1)*(len(yTest)-1)*(len(zTest)-1)
     #    if nTestBins  > nMaxBins: nMaxBins = nTestBins
-            
-    nBins = nMaxBins    
-    
+
+    nBins = nMaxBins
+
     th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
     th1xBins = array('d',range(0,nBins+1))
     th1xRooBins = rt.RooBinning(nBins, th1xBins, "uniform")
@@ -454,7 +449,7 @@ if __name__ == '__main__':
         initialBkgs = ["TTj1b", "TTj2b", "Vpj"]
 
     print"\nINFO: retreiving %s box workspace\n"%box
-    workspace = infile.Get("%s/Box%s_workspace"%(box,box))
+    workspace = infile.Get("%s/Box%s_workspace"%(box, box))
     data = workspace.data("RMRTree")
     fr = workspace.obj("independentFR")
 
@@ -477,15 +472,19 @@ if __name__ == '__main__':
         histos[box,bkg] = rt.TH3D("%s_%s_3d"%(box,bkg),"%s_%s_3d"%(box,bkg),len(x)-1,x,len(y)-1,y,len(z)-1,z)
 
     for bkg in initialBkgs:
-        if bkg=="TTj3b": continue
+        if bkg=="TTj3b":
+            continue
         for i in xrange(1,len(x)):
             for j in xrange(1,len(y)):
                 for k in xrange(1, len(z)):
-                    if not passCut(x[i-1],y[j-1], box, signalRegion): continue
+                    if not passCut(x[i-1],y[j-1], box, signalRegion):
+                        continue
                     bin_events, errorFlag = getBinEvents(i,j,k,x,y,z,workspace)
-                    if (bkg.find("1b")!=-1 and z[k-1]==1) :
+                    if bkg.find("1b") != -1 and z[k-1] == 1:
                         histos[box,bkg].SetBinContent(i,j,k,bin_events)
-                    elif (bkg.find("2b")!=-1 and z[k-1]==2) : 
+                    elif bkg.find("2b") != -1 and z[k-1] == 2:
+                        histos[box,bkg].SetBinContent(i,j,k,bin_events)
+                    elif bkg.find("Vpj") != -1 and z[k-1] == 1:
                         histos[box,bkg].SetBinContent(i,j,k,bin_events)
 
 
@@ -606,7 +605,7 @@ if __name__ == '__main__':
     var_names = [v.GetName() for v in RootTools.RootIterator.RootIterator(workspace.set('variables'))]
 
     data_obs = data.reduce(MRRsqnBtag)
-    data_obs = data_obs.reduce(getCutString(box,signalRegion))
+    data_obs = data_obs.reduce(getCutString(box, signalRegion))
     data_obs.SetName("data_obs")
 
     data_obs.fillHistogram(histos[box,"data"],rt.RooArgList(MR,Rsq,nBtag))
@@ -697,16 +696,19 @@ if __name__ == '__main__':
 
             # turn off prefit
             #if not expected_a_priori:
-            plots = False
-            if plots:
-                #c = rt.TCanvas("c","c",500,500)
-                #frame = th1x.frame()
-                #dataHist[box,bkg].plotOn(frame)
-                #razorPdf.plotOn(frame)
-                #frame.Draw()
-                #c.SaveAs("razor1DFit_%s_preFit.pdf"%box)
-                fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
-                fr_new.Print("v")
+
+            # plots = True
+            # if plots:
+            #     c = rt.TCanvas("c","c",500,500)
+            #     frame = th1x.frame()
+            #     dataHist[box,bkg].plotOn(frame)
+            #     razorPdf.plotOn(frame)
+            #     frame.Draw()
+            #     c.SaveAs("razor1DFit_%s_preFit.pdf"%box)
+
+                # fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
+                # fr_new.Print("v")
+
                 #frame2 = th1x.frame()
                 #dataHist[box,bkg].plotOn(frame2)
                 #razorPdf.plotOn(frame2)
@@ -714,10 +716,13 @@ if __name__ == '__main__':
                 #frame2.Draw()
                 #c.SaveAs("razor1DFit_%s_postFit.pdf"%box)
 
+            print dataHist[box, bkg].sum(1)
+            RootTools.Utils.importToWS(w, dataHist[box, bkg])
 
-            RootTools.Utils.importToWS(w,dataHist[box,bkg])
-        elif bkg.find("TTj")==-1:
+        # elif bkg.find("TTj") == -1 or bkg.find("Vpj") == -1:
+        else:
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
+            print dataHist[box, bkg].sum(1)
 
             RootTools.Utils.importToWS(w,dataHist[box,bkg])
     print "\nINFO: Now writing data card\n"

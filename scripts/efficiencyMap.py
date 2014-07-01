@@ -2,33 +2,35 @@
 
 import ROOT as rt
 import os.path
-import sys, glob, re
+import sys, re
 
 
 if __name__ == '__main__':
     rt.gStyle.SetOptStat(0)
-    
-    box            = sys.argv[1]
-    directory      = sys.argv[2]
-    
-    efficiencyMap = rt.TH2F("effMap","efficiency map for "+box + " > 4 jets", 32, 0., 800., 32, 0., 800. )
 
-    for mLSP in range(25, 700, 25):#725, 25):
-        dir = directory+'/mLSP'+str(mLSP)+'/'
-        
-        for filename in os.listdir(dir) :
+    BOX = sys.argv[1]
+    DIRECTORY = sys.argv[2]
+
+    efficiencyMap = rt.TH2F("effMap", "efficiency map for " + BOX, 32, 0., 800.,
+                            4, 0., 100.)
+                            # 32, 0., 800.)
+
+    for mLSP in range(25, 50, 25):  # 725
+        DIR = DIRECTORY+'/mLSP'+str(mLSP)+'/'
+
+        for filename in os.listdir(DIR):
             print filename
-            box_result = re.search(str(box),str(filename))
-       
-            if box_result :
-                file = rt.TFile.Open(dir+'/'+filename)
-                massPoint = re.findall("[0-9]+.0_[0-9]+.0",filename)
+            BOX_result = re.search(str(BOX), str(filename))
+
+            if BOX_result:
+                IN_file = rt.TFile.Open(DIR+'/'+filename)
+                massPoint = re.findall("[0-9]+.0_[0-9]+.0", filename)
                 mStop, mLSP = re.split("_", massPoint[0])
-                wHisto = file.Get("wHisto")
+                wHisto = IN_file.Get("wHisto")
                 eff = wHisto.Integral()
                 #print massPoint, eff
                 efficiencyMap.Fill(float(mStop), float(mLSP), eff)
 
-c = rt.TCanvas("efficiencyMap"+str(box)+"gt4jets.png")
+c = rt.TCanvas("efficiencyMap" + str(BOX) + ".png")
 efficiencyMap.Draw("colz")
 c.SaveAs(c.GetName())

@@ -63,22 +63,25 @@ def findLeptonProb(flavor, pt = 0., eta = 0., errDir = 0):
         SFID = 1.
         SFIso = 1.
         SFTrigger = 1.
-  
+
     return SFID, SFIso, SFTrigger
 
 def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp):
 
     # Load the file with the SMS number of total events per each point
-    file = open(('/tmp/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
-                 'V9_FSIM-v1-SUSY.pkl'), 'rb')
+    file = open(('/tmp/SMS-T1tttt_mGluino-Combo_mLSP_25.0_8TeV-Pythia6Zstar-'
+                 'Summer12-START52_V9_FSIM-v1-SUSY.pkl'), 'rb')
+    # file = open(('/tmp/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
+    #              'V9_FSIM-v1-SUSY.pkl'), 'rb')
+
     # file = open(('T3/RMRTrees/'
     #              'T2tt/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
     #              'V9_FSIM-v1-SUSY.pkl'), 'rb')
     # file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
     # Get the original event weight, which is 1/nevts for a given process
-    point  = (mstop, mlsp)
-    norms  = pickle.load(file)
-    weight = 1./(norms[point]) 
+    point = (mstop, mlsp)
+    norms = pickle.load(file)
+    weight = 1./(norms[point])
     print weight
 
     #for d in data:
@@ -108,11 +111,10 @@ def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args,
     print "writing dataset to", output.GetName()
 
     data.Write()
-   
 
     for histo in [jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down]:
         histo.Write()
-    
+
     output.Close()
 
 def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, run, mstop, mlsp, write = True):
@@ -120,16 +122,16 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
     box = filter.name
     workspace = rt.RooWorkspace(box)
-    variables = config.getVariablesRange(box,"variables",workspace)
+    variables = config.getVariablesRange(box, "variables", workspace)
     workspace.factory('W[0,0,+INF]')
-    
+
     if filter.dumper is not None:
         for h in filter.dumper.sel.headers_for_MVA():
             workspace.factory('%s[0,-INF,+INF]' % h)
-    
+
     args = workspace.allVars()
-    data = rt.RooDataSet('RMRTree','Selected R and MR',args)
-    
+    data = rt.RooDataSet('RMRTree', 'Selected R and MR', args)
+
     #we cut away events outside our MR window
     mRmin = args['MR'].getMin()
     mRmax = args['MR'].getMax()
@@ -142,15 +144,15 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
     events = {}
 
-    MRbins    = getBinning(box, 'MR'   , 'Btag')
-    Rsqbins   = getBinning(box, 'Rsq'  , 'Btag')
+    MRbins = getBinning(box, 'MR', 'Btag')
+    Rsqbins = getBinning(box, 'Rsq', 'Btag')
     nBtagbins = getBinning(box, 'nBtag', 'Btag')
 
-    x = array("d",MRbins)
-    y = array("d",Rsqbins)
-    z = array("d",nBtagbins)
+    x = array("d", MRbins)
+    y = array("d", Rsqbins)
+    z = array("d", nBtagbins)
     # zprime = array("d",[0.,1.,2.,3.,4.])
-    zprime = array("d",[0.,1.,2.,3.])
+    zprime = array("d", [0., 1., 2., 3.])
 
     # Book the histograms
     jes_pe    = rt.TH3D("wHisto_JESerr_pe"   , "wHisto_JESerr_pe"   , len(MRbins)-1, x, len(Rsqbins)-1, y, len(nBtagbins)-1, z)
@@ -377,7 +379,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
                     #print 'pdfcen, pdferr, err/cen', pdfcen, pdferr#, pdferr/pdfcen
 
     # PDFs done
-   
+
     # Percent error histograms:
     ###### JES ######
     #using (UP - DOWN)/2:
@@ -434,7 +436,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     pdf_pe = pdf_err.Clone("wHisto_pdferr_pe")
     pdf_pe.SetTitle("wHisto_pdferr_pe") 
     pdf_pe.Divide(pdf_cen)
-   
+
     numEntries = data.numEntries()
     if Min < 0: Min = 0
     if Max < 0: Max = numEntries
@@ -442,19 +444,19 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
     label=""
     writeTree2DataSet(data, outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp)
 
-    
+
 
 if __name__ == '__main__':
-    
+
     parser = OptionParser()
     parser.add_option('-c','--config',dest="config",type="string",default=None,
                   help="Name of the config file to use")
     parser.add_option('--max',dest="max",type="int",default=-1,
                   help="The last event to take from the input Dataset")
     parser.add_option('--min',dest="min",type="int",default=0,
-                  help="The first event to take from the input Dataset")  
+                  help="The first event to take from the input Dataset")
     parser.add_option('-b','--box',dest="box",type="string",default="",
-                  help="box to run")     
+                  help="box to run")
     parser.add_option('-e','--eff',dest="eff",default=False,action='store_true',
                   help="Calculate the MC efficiencies")
     parser.add_option('-f','--flavour',dest="flavour",default='TTj',
@@ -498,7 +500,7 @@ if __name__ == '__main__':
 
 
     #for doing all the crap with btags and scale factors
-    tagger = BTag('T2tt')
+    tagger = BTag('T1tttt')
     muonScaling = MuSFUtil()
     eleScaling = EleSFUtil()
 
