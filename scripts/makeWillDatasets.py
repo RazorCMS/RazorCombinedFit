@@ -19,7 +19,8 @@ if __name__ == '__main__':
     OUT_DIR = OPTIONS.out_dir
     MODEL = OPTIONS.model
 
-    for mLSP in range(25, 50, 25):  # 725
+    for mLSP in [1]+range(50, 1625, 25):
+    # for mLSP in range(25, 725, 25):
         file_dir = OUT_DIR + "mLSP" + str(mLSP)
 
         # submit_dir is the same as file_dir
@@ -33,7 +34,9 @@ if __name__ == '__main__':
         pwd = os.environ['PWD']
 
         # for mStop in range(mLSP+100, 825, 25):
-        for mStop in range(825, 1425, 25):
+        for mStop in xrange(100, 1625, 25):
+
+        # for mStop in range(825, 1425, 25):
             print "Now creating (%s, %s)" % (mStop, mLSP)
 
             if MODEL == "T1tttt":
@@ -41,7 +44,7 @@ if __name__ == '__main__':
                        "--mlsp=%s --mstop=%s -d %s root://osg-se.cac.cornell."
                        "edu//"
                        "xrootd/path/cms/store/user/salvati/Razor/MultiJet2012/"
-                       "CMSSW_5_3_14/RMRTrees/T1tttt/SMS-T1tttt_"
+                       "CMSSW_5_3_14/RMRTrees/T1tttt_merged/SMS-T1tttt_"
                        "mGluino-Combo_mLSP_%s.0_8TeV-Pythia6Zstar-Summer12-"
                        "START52_V9_FSIM-v1-SUSY.root") % \
                         (BOX, CFG, mLSP, mStop, file_dir, mLSP)
@@ -91,10 +94,10 @@ if __name__ == '__main__':
             if MODEL == "T1tttt":
                 runScript.write('xrdcp root://osg-se.cac.cornell.edu//xrootd/'
                                 'path/cms/store/user/salvati/Razor/'
-                                'MultiJet2012/CMSSW_5_3_14/RMRTrees/T1tttt/'
-                                'SMS-T1tttt_mGluino-Combo_mLSP_25.0_8TeV-'
+                                'MultiJet2012/CMSSW_5_3_14/RMRTrees/T1tttt_merged/'
+                                'SMS-T1tttt_mGluino-Combo_8TeV-'
                                 'Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.'
-                                'pkl /tmp/SMS-T1tttt_mGluino-Combo_mLSP_25.0_8'
+                                'pkl /tmp/SMS-T1tttt_mGluino-Combo_8'
                                 'TeV-Pythia6Zstar-Summer12-START52_V9_FSIM-v1-'
                                 'SUSY.pkl\n')
                 runScript.write('python scripts/Will2DatasetwithSYS.py --box '
@@ -104,7 +107,7 @@ if __name__ == '__main__':
                                 'cac.cornell.edu//xrootd/path/cms/store/user/'
                                 'salvati/Razor/MultiJet2012/CMSSW_5_3_14/'
                                 'RMRTrees/'
-                                'T1tttt/SMS-T1tttt_mGluino-Combo_mLSP_%s.0_8TeV'
+                                'T1tttt_merged/SMS-T1tttt_mGluino-Combo_mLSP_%s.0_8TeV'
                                 '-Pythia6Zstar-Summer12-START52_V9_FSIM-v1'
                                 '-SUSY.root\n\n' % (BOX, CFG, mLSP, mStop,
                                                     mLSP))

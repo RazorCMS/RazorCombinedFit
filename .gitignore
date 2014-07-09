@@ -4,3 +4,5 @@ src/FitMRDistribution
 src/rootdict.*
 T3
 lib/libRazor.so
+Datasets/
+submit_script_*

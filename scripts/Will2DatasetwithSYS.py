@@ -69,7 +69,7 @@ def findLeptonProb(flavor, pt = 0., eta = 0., errDir = 0):
 def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp):
 
     # Load the file with the SMS number of total events per each point
-    file = open(('/tmp/SMS-T1tttt_mGluino-Combo_mLSP_25.0_8TeV-Pythia6Zstar-'
+    file = open(('/tmp/SMS-T1tttt_mGluino-Combo_8TeV-Pythia6Zstar-'
                  'Summer12-START52_V9_FSIM-v1-SUSY.pkl'), 'rb')
     # file = open(('/tmp/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_'
     #              'V9_FSIM-v1-SUSY.pkl'), 'rb')
@@ -221,10 +221,10 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
             continue
         events[e] = None
 
-     ##    if filter.dumper is not None:
-##             for h in filter.dumper.sel.headers_for_MVA():
-##                 a.setRealValue(h,getattr(filter.dumper.sel,h)())
-##                 data.add(a)
+        ##    if filter.dumper is not None:
+        ##             for h in filter.dumper.sel.headers_for_MVA():
+        ##                 a.setRealValue(h,getattr(filter.dumper.sel,h)())
+        ##                 data.add(a)
 
         a = rt.RooArgSet(args)
 
@@ -347,6 +347,7 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
         for innpdf in range(101):
            vwHisto_pdfNNPDF[innpdf].Fill(MR, RSQ, btag_nominal, weight*btag_nominal*lepw_nominal*NNPDF_W[innpdf])
 
+    #####################################
     #end of the tree loop
     # Make the overall PDF histograms:
 
