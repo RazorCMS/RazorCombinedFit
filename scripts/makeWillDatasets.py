@@ -19,7 +19,7 @@ if __name__ == '__main__':
     OUT_DIR = OPTIONS.out_dir
     MODEL = OPTIONS.model
 
-    for mLSP in [1]+range(50, 1625, 25):
+    for mLSP in [1]+range(25, 1625, 25):
     # for mLSP in range(25, 725, 25):
         file_dir = OUT_DIR + "mLSP" + str(mLSP)
 
@@ -35,8 +35,6 @@ if __name__ == '__main__':
 
         # for mStop in range(mLSP+100, 825, 25):
         for mStop in xrange(100, 1625, 25):
-
-        # for mStop in range(825, 1425, 25):
             print "Now creating (%s, %s)" % (mStop, mLSP)
 
             if MODEL == "T1tttt":
