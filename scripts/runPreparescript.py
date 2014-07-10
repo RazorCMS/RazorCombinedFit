@@ -8,7 +8,7 @@ if __name__ == '__main__':
     # njets = '4jets'
     # box   = 'Ele'
     # name = 'Ele_4jets'
-    box = 'BJetHS'
+    box = 'BJetLS'
     njets = 'gt6'
     susy_xsecs = {150:80.268,
                   175:36.7994,
