@@ -9,7 +9,6 @@ import sys, re
 if __name__ == '__main__':
     rt.gStyle.SetOptStat(0)
 
-    # BOX = sys.argv[1]
     MODEL = sys.argv[1]
     DIRECTORY = sys.argv[2]
     BOXES = ['BJetHS', 'BJetLS']
@@ -29,7 +28,8 @@ if __name__ == '__main__':
         #                         4, 0., 100.)
         #                         # 32, 0., 800.)
 
-        for mLSP in range(25, 725, 25):
+        for mLSP in [1]+range(25, 1425, 25):
+        # for mLSP in range(25, 725, 25):
             DIR = DIRECTORY+'/mLSP'+str(mLSP)+'/'
 
             for filename in os.listdir(DIR):
@@ -42,7 +42,6 @@ if __name__ == '__main__':
                     mStop, mLSP = re.split("_", massPoint[0])
                     wHisto = IN_file.Get("wHisto")
                     eff = wHisto.Integral()
-                    #print massPoint, eff
                     EFF_HISTOS[box].Fill(float(mStop), float(mLSP), eff)
                     wHisto.Delete()
                     IN_file.Close()
@@ -52,9 +51,3 @@ if __name__ == '__main__':
     for box in BOXES:
         EFF_HISTOS[box].Write()
     OUT_FILE.Close()
-
-# c = rt.TCanvas("efficiencyMap" + str(box) + ".png")
-# efficiencyMap.Draw("colz")
-# c.SaveAs(c.GetName())
-
-

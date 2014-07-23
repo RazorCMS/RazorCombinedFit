@@ -80,10 +80,10 @@ def getBinningSignal(box, model):
     Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
     nBtagbins = [1,2,3,4]
 
-    if box in ["BJetHS", "BJetLS"]:
-        nBtagbins = [1.,2.,3.,4.]
-        MRbins = [450, 600, 750, 900, 1200, 1600, 4000]
-        Rsqbins = [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
+    # if box in ["BJetHS", "BJetLS"]:
+    #     nBtagbins = [1.,2.,3.,4.]
+    #     MRbins = [450, 600, 750, 900, 1200, 1600, 4000]
+    #     Rsqbins = [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
 
 
     return MRbins, Rsqbins, nBtagbins
@@ -102,6 +102,11 @@ def getBinning(box, model,coarse=True):
             MRbins = [350., 390., 430., 470.,   510., 550,  600.,   700.,800.,   1000.,4000.]
             Rsqbins = [0.08,  0.10, 0.12,  0.14,  0.17,  0.20,  0.23, 0.26, 0.30,  0.40, 0.50,   0.7,  1.0,  1.5]
 
+        nBtagbins = [1,2,3,4]
+
+    elif box in ["BJetHS", "BJetLS"]:
+        MRbins = [450, 600, 750, 900, 1200, 1600, 4000]
+        Rsqbins = [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
         nBtagbins = [1,2,3,4]
 
     return MRbins, Rsqbins, nBtagbins
@@ -363,7 +368,7 @@ def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,
             txtfile.write("trigger      lnN %.3f          1.00      1.00     1.00      1.00\n"%trigger_uncert)
             txtfile.write("Pdf          shape   %.2f       -         -        -        -\n"%(1./1.))
             txtfile.write("Jes          shape   %.2f       -         -        -        -\n"%(1./1.))
-            # txtfile.write("Btag         shape   %.2f       -         -        -        -\n"%(1./1.))
+            txtfile.write("Btag         shape   %.2f       -         -        -        -\n"%(1./1.))
             txtfile.write("Isr          shape   %.2f       -         -        -        -\n"%(1./1.))
             if penalty:
                 normErr = 1.0+w.var("%s_%s_norm"%(box,bkgs[0])).getError()/w.var("%s_%s_norm"%(box,bkgs[0])).getVal()
@@ -629,10 +634,6 @@ if __name__ == '__main__':
                     histos[box, "Vpj"].SetBinContent(i, j, k, bin_events)
 
     #####
-    print "Thsese areeeeeee ##################"
-    print histos[box, "TTj1b"].GetSumOfWeights()
-    print histos[box, "Vpj"].GetSumOfWeights()
-
 
     #Building the Razor pdf : parameters, cuts, pdf -> TTj2b (from fit) turns into TTj2b (2 btags -> 1-f3), TTj3b (3 btags-> f3)
     emptyHist3D = {}
@@ -655,8 +656,9 @@ if __name__ == '__main__':
         elif paramName.find("R0_")!=-1:
             w.var("%s_%s"%(paramName,box)).setMax(y[0])
 
-    w.factory("%s_%s[%e]" % (workspace.var("n_Vpj").GetName(), box, workspace.var("n_Vpj").getVal()))
-    w.var("%s_%s" % (workspace.var("n_Vpj").GetName(), box)).setConstant(True)
+    if box in ["BJetHS", "BJetLS"]:
+        w.factory("%s_%s[%e]" % (workspace.var("n_Vpj").GetName(), box, workspace.var("n_Vpj").getVal()))
+        w.var("%s_%s" % (workspace.var("n_Vpj").GetName(), box)).setConstant(True)
 
     emptyHist3D = {}
     emptyHist3D[box] = rt.TH3D("EmptyHist3D_%s"%(box),"EmptyHist3D_%s"%(box),len(x)-1,x,len(y)-1,y,len(z)-1,z)
@@ -672,8 +674,9 @@ if __name__ == '__main__':
     w.var("BtagCut_TTj2b").setConstant(True)
     w.factory("BtagCut_TTj3b[3]")
     w.var("BtagCut_TTj3b").setConstant(True)
-    w.factory("BtagCut_Vpj[1]")
-    w.var("BtagCut_Vpj").setConstant(True)
+    if box in ["BJetHS", "BJetLS"]:
+        w.factory("BtagCut_Vpj[1]")
+        w.var("BtagCut_Vpj").setConstant(True)
 
     pdfList = rt.RooArgList()
     razorPdf_TTj1b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj1b"),"razorPdf_%s_%s"%(box,"TTj1b"),
@@ -721,6 +724,17 @@ if __name__ == '__main__':
    ##  RootTools.Utils.importToWS(w,razorPdf_TTj3b)
 
 ##     pdfList.add(razorPdf_TTj3b)
+
+    if box in ["BJetHS", "BJetLS"]:
+        razorPdf_Vpj = rt.RooRazor3DBinPdf("%s_%s" % (box, "Vpj"), "razorPdf_%s_%s"%(box, "Vpj"),
+                                           w.var("th1x"), w.var("MR0_%s_%s" % ("Vpj", box)), w.var("R0_%s_%s"%("Vpj", box)),
+                                           w.var("b_%s_%s"%("Vpj", box)), w.var("n_%s_%s"%("Vpj", box)),
+                                           w.var("MRCut_%s"%(box)), w.var("RCut_%s"%(box)), w.var("BtagCut_%s"%("Vpj")),
+                                           w.obj("EmptyHist3D_%s"%(box)))
+        w.factory("%s_%s_norm[%f,0,1e6]" % (box, "Vpj", w.var("Ntot_Vpj_%s" % box).getVal()))
+        extRazorPdf_Vpj = rt.RooExtendPdf("ext%s_%s"%(box, "Vpj"), "extRazorPdf_%s_%s" % (box, "Vpj"), razorPdf_Vpj, w.var("%s_Vpj_norm"%box))
+        RootTools.Utils.importToWS(w, extRazorPdf_Vpj)
+        pdfList.add(extRazorPdf_Vpj)
 
     razorPdf = rt.RooAddPdf("razorPdf_%s"%(box),"razorPdf_%s"%(box),pdfList)
     ####
@@ -779,8 +793,8 @@ if __name__ == '__main__':
     histos[box,model].SetTitle("%s_%s_3d"%(box,model))
     histos[box,model].Scale(sigEvents/histos[box,model].Integral())
 
-    # for paramName in ["Jes","Isr","Btag","Pdf"]:
-    for paramName in ["Jes","Isr","Pdf"]:
+    for paramName in ["Jes","Isr","Btag","Pdf"]:
+    # for paramName in ["Jes","Isr","Pdf"]:
         print "\nINFO: Now renormalizing signal shape systematic histograms to nominal\n"
         print "signal shape variation %s"%paramName
         for syst in ['Up','Down']:

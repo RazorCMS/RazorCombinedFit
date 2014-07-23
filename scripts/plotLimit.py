@@ -16,32 +16,37 @@ if __name__ == '__main__':
     expectedLimitsm1s = []
     expectedLimitsm2s = []
     expectedLimitsp2s = []
-    susy_xsecs = array('d',[80.268,
-                            36.7994,
-                            18.5245,
-                            9.90959,
-                            5.57596,
-                            3.2781,
-                            1.99608,
-                            1.25277,
-                            0.807323,
-                            0.531443,
-                            0.35683,
-                            0.243755,
-                            0.169688,
-                            0.119275,
-                            0.0855847,
-                            0.0618641,
-                            0.0452067,
-                            0.0333988,
-                            0.0248009,
-                            0.0185257,
-                            0.0139566,
-                            0.0106123,
-                            0.0081141,
-                            0.00623244,
-                            0.00480639,
-                            0.00372717])
+
+    if boxName == "T2tt":
+        susy_xsecs = array('d',[80.268,
+                                36.7994,
+                                18.5245,
+                                9.90959,
+                                5.57596,
+                                3.2781,
+                                1.99608,
+                                1.25277,
+                                0.807323,
+                                0.531443,
+                                0.35683,
+                                0.243755,
+                                0.169688,
+                                0.119275,
+                                0.0855847,
+                                0.0618641,
+                                0.0452067,
+                                0.0333988,
+                                0.0248009,
+                                0.0185257,
+                                0.0139566,
+                                0.0106123,
+                                0.0081141,
+                                0.00623244,
+                                0.00480639,
+                                0.00372717])
+
+    elif boxName == "T1tttt":
+        susy_xsecs = array('d', [])
     susy_xsecs_dict = dict(zip(masses, susy_xsecs))
     sideband = 'FULL'
     # njets = '_4jets'
@@ -110,15 +115,15 @@ if __name__ == '__main__':
     expectedLimits = array('d', expectedLimits)
     emasses = array('d', [0.]*len(masses))
 
-    expectedLimitsm1s = array('d', [ a - b for a,b in zip(expectedLimits, expectedLimitsm1s) ]) 
-    expectedLimitsp1s = array('d', [ a - b for a,b in zip(expectedLimitsp1s, expectedLimits) ]) 
+    expectedLimitsm1s = array('d', [ a - b for a,b in zip(expectedLimits, expectedLimitsm1s) ])
+    expectedLimitsp1s = array('d', [ a - b for a,b in zip(expectedLimitsp1s, expectedLimits) ])
     expectedLimit1s_plot = rt.TGraphAsymmErrors(len(masses), masses, expectedLimits, emasses , emasses, expectedLimitsm1s, expectedLimitsp1s  )
     expectedLimit1s_plot.SetFillColor(rt.kGreen)
     #expectedLimit1s_plot.SetFillStyle(3005)
     expectedLimit1s_plot.SetMinimum(0.0001)
 
-    expectedLimitsm2s = array('d', [ a - b for a,b in zip(expectedLimits, expectedLimitsm2s) ]) 
-    expectedLimitsp2s = array('d', [ a - b for a,b in zip(expectedLimitsp2s, expectedLimits) ]) 
+    expectedLimitsm2s = array('d', [ a - b for a,b in zip(expectedLimits, expectedLimitsm2s) ])
+    expectedLimitsp2s = array('d', [ a - b for a,b in zip(expectedLimitsp2s, expectedLimits) ])
     expectedLimit2s_plot = rt.TGraphAsymmErrors(len(masses), masses, expectedLimits, emasses , emasses, expectedLimitsm2s, expectedLimitsp2s  )
     expectedLimit2s_plot.SetFillColor(rt.kYellow)
     #expectedLimit2s_plot.SetFillStyle(3005)
@@ -155,6 +160,6 @@ if __name__ == '__main__':
     leg.Draw("SAME")
 
 
-    
+
     boxName = re.sub(' ', '', boxName)
     c.SaveAs("limitToyFromAsym"+boxName+sideband+njets+".png")

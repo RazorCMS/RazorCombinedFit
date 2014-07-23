@@ -20,6 +20,9 @@ lumi = 1.0
 sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'],'macros/multijet'))
 from CalcBDT import CalcBDT
 
+sys.path.append(os.path.join(os.environ['RAZORFIT_BASE'], 'python/SingleBoxFit'))
+from RazorBox import getBinning
+
 from Boxes import *
 
 # Find the probability for an event to have 0, 1, 2, or at least 3
@@ -158,10 +161,12 @@ def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args,
     # Load the file with the SMS number of total events per each point
     # file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
     #file = open('/afs/cern.ch/user/l/lucieg/scratch1/Oct18/CMSSW_6_2_0/src/RazorCombinedFit/scripts/SMS-T1tttt_mGluino-Combo_mLSP_25.0_8TeV-Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
-    # file = open('/tmp/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-'
-    #             'Summer12-START52_V9_FSIM-v1-SUSY.pkl')
-    file = open('/tmp/SMS-T1tttt_mGluino-Combo_8TeV-'
-                'Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.pkl')
+
+    file = open('T3/RMRTrees/T2tt/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-'
+                'Summer12-START52_V9_FSIM-v1-SUSY.pkl')
+    # file = open('/tmp/SMS-T1tttt_mGluino-Combo_8TeV-'
+    #             'Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.pkl')
+
  # Get the original event weight, which is 1/nevts for a given process
     point  = (mstop, mlsp)
     norms  = pickle.load(file)
@@ -230,11 +235,13 @@ def convertTree2Dataset(tree, outputDir, outputFile, config, Min, Max, filter, r
 
     events = {}
 
-    #MRbins    = getBinning(box, 'MR'   , 'Btag')
-    #Rsqbins   = getBinning(box, 'Rsq'  , 'Btag')
-    MRbins = [350., 370., 390.,  410.,  430., 450., 470.,  490., 510., 530., 550, 575., 600.,  625., 650.,700.,800.,  900., 1000.,4000.]#, 1100., 1200., 1300., 1400., 1500.,  1700.,  1900., 2100., 2500., 3000.,
-    Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
-    nBtagbins = [1,2,3,4] #getBinning(box, 'nBtag', 'Btag')
+    MRbins    = getBinning(box, 'MR'   , 'Btag')
+    Rsqbins   = getBinning(box, 'Rsq'  , 'Btag')
+    nBtagbins = getBinning(box, 'nBtag', 'Btag')
+
+    # MRbins = [350., 370., 390.,  410.,  430., 450., 470.,  490., 510., 530., 550, 575., 600.,  625., 650.,700.,800.,  900., 1000.,4000.]#, 1100., 1200., 1300., 1400., 1500.,  1700.,  1900., 2100., 2500., 3000.,
+    # Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
+    # nBtagbins = [1,2,3,4]
 
     x = array("d",MRbins)
     y = array("d",Rsqbins)
@@ -587,8 +594,8 @@ if __name__ == '__main__':
 
 
     #for doing all the crap with btags and scale factors
-    tagger = BTag('T1tttt')
-    # tagger = BTag('T2tt')
+    # tagger = BTag('T1tttt')
+    tagger = BTag('T2tt')
     muonScaling = MuSFUtil()
     eleScaling  = EleSFUtil()
 
