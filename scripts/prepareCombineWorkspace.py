@@ -54,27 +54,6 @@ def getBinEvents(i, j, k, x, y, z, workspace):
         return 0., errorFlag
     return bin_events, errorFlag
 
-def getBinningData(box, model,simple):
-    if box in ["Ele", "Mu"]:
-        if simple :#that is, fit binning
-            MRbins =  [350, 390, 450, 510, 600, 700., 900, 1000, 4000]
-            Rsqbins = [0.08, 0.10, 0.15, 0.20,0.30,0.40,0.50,0.7,1.0,1.5]
-        else :
-            #MRbins = [350., 370., 390.,  410.,  430., 450., 470.,  490., 510., 530., 550, 575., 600.,  625., 650.,700.,800.,  900., 1000.,4000.]
-            #Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
-            MRbins = [350., 390., 430., 470.,   510., 550,  600.,   700.,800.,   1000.,4000.]
-            Rsqbins = [0.08,  0.10, 0.12,  0.14,  0.17,  0.20,  0.23, 0.26, 0.30,  0.40, 0.50,   0.7,  1.0,  1.5]
-    
-        nBtagbins = [1,2,3,4] 
-        
-    return MRbins, Rsqbins, nBtagbins
-
-def getBinningSignal(box, model):
-    MRbins = [350., 370., 390.,  410.,  430., 450., 470.,  490., 510., 530., 550, 575., 600.,  625., 650.,700.,800.,  900., 1000.,4000.]
-    Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
-    nBtagbins = [1,2,3,4] 
-        
-    return MRbins, Rsqbins, nBtagbins
 
 def getBinning(box, model,coarse=True):
     if box in ["Ele", "Mu"]:
@@ -85,10 +64,10 @@ def getBinning(box, model,coarse=True):
             MRbins =  [350, 390, 450, 510, 600, 700., 900, 1000, 4000]
             Rsqbins = [0.08, 0.10, 0.15, 0.20,0.30,0.40,0.50,0.7,1.0,1.5]
         else :
-           # MRbins = [350., 370., 390.,  410.,  430., 450., 470.,  490., 510., 530., 550, 575., 600.,  625., 650.,700.,800.,  900., 1000.,4000.]
-            #Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
-            MRbins = [350., 390., 430., 470.,   510., 550,  600.,   700.,800.,   1000.,4000.]
-            Rsqbins = [0.08,  0.10, 0.12,  0.14,  0.17,  0.20,  0.23, 0.26, 0.30,  0.40, 0.50,   0.7,  1.0,  1.5]
+            MRbins = [350., 370., 390.,  410.,  430., 450., 470.,  490., 510., 530., 550, 575., 600.,  625., 650.,700.,800.,  900., 1000.,4000.]
+            Rsqbins = [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.17,  0.20,  0.23, 0.26, 0.30, 0.35, 0.40, 0.50,   0.7,  1.0,  1.5]
+            #MRbins = [350., 390., 430., 470.,   510., 550,  600.,   700.,800.,   1000.,4000.]
+            #Rsqbins = [0.08,  0.10, 0.12,  0.14,  0.17,  0.20,  0.23, 0.26, 0.30,  0.40, 0.50,   0.7,  1.0,  1.5]
     
         nBtagbins = [1,2,3,4] 
         
@@ -181,8 +160,6 @@ def rebin3d(oldhisto, x, y, z, box, signalRegion, average=False):
                 if not passCut(xold, yold, box, signalRegion):
                     continue
                 oldbincontent = oldhisto.GetBinContent(i,j,k)
-                if (oldhisto.GetName()).find("btagerr_down")!=-1 :
-                    print oldbincontent, k, zold
                     
                 newhisto.Fill(xold, yold, zold,max(0.,oldbincontent)) #-> effect for pdf_down, w/o max has neg values
 
@@ -244,41 +221,6 @@ def rebin3dCoarse(oldhisto, xCoarse, yCoarse, zCoarse, xFine, yFine, zFine, box,
                 newhisto.SetBinContent(i,j,k,newYield/numBins)
             
     return newhisto
-
-## def rebin3dCoarse(oldhisto, xCoarse, yCoarse, zCoarse, xFine, yFine, zFine, box, signalRegion):
-##     print xCoarse
-##     print xFine
-##     print yCoarse
-##     print yFine
-##     newhistoCoarse = rt.TH3D(oldhisto.GetName()+"_coarse",oldhisto.GetTitle()+"_coarse",len(xCoarse)-1,xCoarse,len(yCoarse)-1,yCoarse,len(zCoarse)-1,zCoarse)
-##     newhistoCounts = rt.TH3D(oldhisto.GetName()+"_counts",oldhisto.GetTitle()+"_counts",len(xCoarse)-1,xCoarse,len(yCoarse)-1,yCoarse,len(zCoarse)-1,zCoarse)
-##     newhisto = rt.TH3D(oldhisto.GetName()+"_fine",oldhisto.GetTitle()+"_fine",len(xFine)-1,xFine,len(yFine)-1,yFine,len(zFine)-1,zFine)
-    
-##     for i in range(1,oldhisto.GetNbinsX()+1):
-##         for j in range(1,oldhisto.GetNbinsY()+1):
-##             for k in range(1,oldhisto.GetNbinsZ()+1):
-##                 xold = oldhisto.GetXaxis().GetBinCenter(i)
-##                 yold = oldhisto.GetYaxis().GetBinCenter(j)
-##                 zold = oldhisto.GetZaxis().GetBinCenter(k)
-##                 if not passCut(xold, yold, box, signalRegion): continue
-##                 oldbincontent = oldhisto.GetBinContent(i,j,k)
-##                 newhistoCoarse.Fill(xold, yold, zold, max(0.,oldbincontent))
-##                 newhistoCounts.Fill(xold, yold, zold)
-
-##     for i in range(1,newhisto.GetNbinsX()+1):
-##         for j in range(1,newhisto.GetNbinsY()+1):
-##             for k in range(1,newhisto.GetNbinsZ()+1):
-##                 newhisto.SetBinContent(i,j,k,0.)
-##                 xnew = newhisto.GetXaxis().GetBinCenter(i)
-##                 ynew = newhisto.GetYaxis().GetBinCenter(j)
-##                 znew = newhisto.GetZaxis().GetBinCenter(k)
-##                 if not passCut(xnew, ynew, box, signalRegion): continue
-##                 newYield = newhistoCoarse.GetBinContent(newhistoCoarse.FindBin(xnew,ynew,znew))
-##                 numBins = newhistoCounts.GetBinContent(newhistoCounts.FindBin(xnew,ynew,znew))
-##                 newhisto.SetBinContent(i,j,k,newYield/numBins)
-                
-##     return newhisto
-
 
 def writeDataCard(box,model,massPoint,txtfileName,bkgs,paramNames,w,lumi_uncert,trigger_uncert,lepton_uncert,penalty):
         
@@ -448,56 +390,25 @@ if __name__ == '__main__':
     lumi_uncert    = temp.var("lumi_uncert").getVal()
     trigger_uncert = temp.var("trigger_uncert").getVal()
     lepton_uncert  = temp.var("lepton_uncert").getVal()
+
     ####
-
-    #getting the binning
-  ##   xSignal = array('d', getBinningSignal(box,model)[0])
-##     ySignal = array('d', getBinningSignal(box,model)[1])
-##     zSignal = array('d', getBinningSignal(box,model)[2])
-
-##     x = array('d', getBinningSignal(box,model)[0])
-##     y = array('d', getBinningSignal(box,model)[1])
-##     z = array('d', getBinningSignal(box,model)[2])
-
-   
-##    ##  x = array('d', getBinningData(box,model,simple)[0])
-## ##     y = array('d', getBinningData(box,model,simple)[1])
-## ##     z = array('d', getBinningData(box,model,simple)[2])
-
-##     print len(xSignal), xSignal
-##     print len(ySignal), ySignal
-##     print len(zSignal), zSignal
-##     print len(x), x
-##     print len(y), y
-##     print len(z), z
-##     print '........'
-##   #  raw_input()
-  
+    #get the binning -> signal : coarse binning for smoothening signal distributions
     xSignal = array('d', getBinning(box,model,True)[0])
     ySignal = array('d', getBinning(box,model, True)[1])
     zSignal = array('d', getBinning(box,model, True)[2])
 
-   
+    #data binning
     x = array('d', getBinning(box,model,False)[0])
     y = array('d', getBinning(box,model,False)[1])
     z = array('d', getBinning(box,model,False)[2])
-
-   ##  print len(xSignal), xSignal
-##     print len(ySignal), ySignal
-##     print len(zSignal), zSignal
-##     print len(x), x
-##     print len(y), y
-##     print len(z), z
-##     print '........'
-##     raw_input()
-  
+ 
     ####
     
     #define number of bins, 1D RooRealVar...
     if simple:
         nBins = 216
     elif model.find("T2")!=-1:
-        nBins = 390#1008#390#
+        nBins = (len(x)-1)*(len(y) -1)*(len(z) -1)
     
     th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
     th1xBins = array('d',range(0,nBins+1))
@@ -600,8 +511,6 @@ if __name__ == '__main__':
     extRazorPdf_TTj1b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj1b"),"extRazorPdf_%s_%s"%(box,"TTj1b"),razorPdf_TTj1b,w.var("%s_TTj1b_norm"%box))
     RootTools.Utils.importToWS(w,extRazorPdf_TTj1b)
     pdfList.add(extRazorPdf_TTj1b)
-    ## RootTools.Utils.importToWS(w,razorPdf_TTj1b)
-##     pdfList.add(razorPdf_TTj1b)
 
     razorPdf_TTj2b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj2b"),"razorPdf_%s_%s"%(box,"TTj2b"),
                                          w.var("th1x"),
@@ -615,8 +524,6 @@ if __name__ == '__main__':
     extRazorPdf_TTj2b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj2b"),"extRazorPdf_%s_%s"%(box,"TTj2b"),razorPdf_TTj2b,w.var("%s_TTj2b_norm"%box))
     RootTools.Utils.importToWS(w,extRazorPdf_TTj2b)
     pdfList.add(extRazorPdf_TTj2b)
-    ## RootTools.Utils.importToWS(w,razorPdf_TTj2b)
-##     pdfList.add(razorPdf_TTj2b)
 
     
     razorPdf_TTj3b = rt.RooRazor3DBinPdf("%s_%s"%(box,"TTj3b"),"razorPdf_%s_%s"%(box,"TTj3b"),
@@ -630,11 +537,7 @@ if __name__ == '__main__':
     w.var("%s_%s_norm"%(box,"TTj3b")).setError(w.var("Ntot_TTj2b_%s"%box).getError() * w.var("f3_TTj2b_%s"%box).getVal())
     extRazorPdf_TTj3b = rt.RooExtendPdf("ext%s_%s"%(box,"TTj3b"),"extRazorPdf_%s_%s"%(box,"TTj3b"),razorPdf_TTj3b,w.var("%s_TTj3b_norm"%box))
     RootTools.Utils.importToWS(w,extRazorPdf_TTj3b)
-
     pdfList.add(extRazorPdf_TTj3b)
-   ##  RootTools.Utils.importToWS(w,razorPdf_TTj3b)
-
-##     pdfList.add(razorPdf_TTj3b)
     
     razorPdf = rt.RooAddPdf("razorPdf_%s"%(box),"razorPdf_%s"%(box),pdfList)
     ####
@@ -668,17 +571,17 @@ if __name__ == '__main__':
 
     # adding signal shape systematics...May need to coarsen...
     print "\nINFO: Now obtaining signal shape systematics\n"
-    histos[(box,"%s_IsrUp"%(model))]   = rebin3dCoarse(isrUp, x, y ,z, x,y,z, box, signalRegion)
-    histos[(box,"%s_IsrDown"%(model))] = rebin3dCoarse(isrDown, x, y ,z, x,y,z, box, signalRegion)
+    histos[(box,"%s_IsrUp"%(model))]   = rebin3dCoarse(isrUp, xSignal, ySignal ,zSignal, x,y,z, box, signalRegion)
+    histos[(box,"%s_IsrDown"%(model))] = rebin3dCoarse(isrDown, xSignal, ySignal ,zSignal, x,y,z, box, signalRegion)
 
-    histos[(box,"%s_BtagUp"%(model))]  = rebin3dCoarse(btagUp, x, y ,z, x,y,z,box, signalRegion)
-    histos[(box,"%s_BtagDown"%(model))]= rebin3dCoarse(btagDown,x, y ,z, x,y,z,box, signalRegion)
+    histos[(box,"%s_BtagUp"%(model))]  = rebin3dCoarse(btagUp, xSignal, ySignal ,zSignal, x,y,z,box, signalRegion)
+    histos[(box,"%s_BtagDown"%(model))]= rebin3dCoarse(btagDown,xSignal, ySignal ,zSignal, x,y,z,box, signalRegion)
 
-    histos[(box,"%s_JesUp"%(model))]   = rebin3dCoarse(jesUp,x, y ,z, x,y,z, box, signalRegion)
-    histos[(box,"%s_JesDown"%(model))] = rebin3dCoarse(jesDown,x, y ,z, x,y,z, box, signalRegion)
+    histos[(box,"%s_JesUp"%(model))]   = rebin3dCoarse(jesUp,xSignal, ySignal ,zSignal, x,y,z, box, signalRegion)
+    histos[(box,"%s_JesDown"%(model))] = rebin3dCoarse(jesDown,xSignal, ySignal ,zSignal, x,y,z, box, signalRegion)
     
-    histos[(box,"%s_PdfUp"%(model))]   = rebin3dCoarse(pdfUp,x, y ,z, x,y,z,box, signalRegion)
-    histos[(box,"%s_PdfDown"%(model))] = rebin3dCoarse(pdfDown, x, y ,z, x,y,z,box, signalRegion)
+    histos[(box,"%s_PdfUp"%(model))]   = rebin3dCoarse(pdfUp,xSignal, ySignal ,zSignal, x,y,z,box, signalRegion)
+    histos[(box,"%s_PdfDown"%(model))] = rebin3dCoarse(pdfDown, xSignal, ySignal ,zSignal, x,y,z,box, signalRegion)
 
     #set the per box eff value
     #pdfNom    = rebin3d(sigFile.Get('wHisto'),x,y,z,box,signalRegion)
@@ -735,28 +638,9 @@ if __name__ == '__main__':
             dataHist[box,bkg] = rt.RooDataHist("data_obs", "data_obs", th1xList, rt.RooFit.Import(histos1d[box,bkg]))
             # turn off prefit
             #if not expected_a_priori:
-            plots = False
-            if plots:
-                #c = rt.TCanvas("c","c",500,500)
-                #frame = th1x.frame()
-                #dataHist[box,bkg].plotOn(frame)
-                #razorPdf.plotOn(frame)
-                #frame.Draw()
-                #c.SaveAs("razor1DFit_%s_preFit.pdf"%box)
-                fr_new = razorPdf.fitTo(dataHist[box,bkg],rt.RooFit.Extended(),rt.RooFit.Save())
-                fr_new.Print("v")
-                #frame2 = th1x.frame()
-                #dataHist[box,bkg].plotOn(frame2)
-                #razorPdf.plotOn(frame2)
-                #c = rt.TCanvas("c","c",500,500)
-                #frame2.Draw()
-                #c.SaveAs("razor1DFit_%s_postFit.pdf"%box)
-                
-                
             RootTools.Utils.importToWS(w,dataHist[box,bkg])
         elif bkg.find("TTj")==-1:# ? histos1d for sig do not have the same binning (coarser)
             dataHist[box,bkg] = rt.RooDataHist("%s_%s"%(box,bkg), "%s_%s"%(box,bkg), th1xList, rt.RooFit.Import(histos1d[box,bkg]))
-
             RootTools.Utils.importToWS(w,dataHist[box,bkg])
 
     
@@ -767,7 +651,6 @@ if __name__ == '__main__':
             
     os.system("cat %s/razor_combine_%s_%s_%s_%s.txt \n"%(outdir,box, njets,model,massPoint))
 
-    #why that ?
     for bkg in initialBkgs:
         w.var("%s_%s_norm"%(box,bkg)).setVal(1.0)
         w.var("%s_%s_norm"%(box,bkg)).setMax(10.0)
