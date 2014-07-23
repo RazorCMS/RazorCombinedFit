@@ -85,7 +85,7 @@ class EleBox(object):
         self.name = 'Ele'
         self.dumper = dumper
     def __call__(self, tree):
-            return tree.eleBoxFilter and tree.nJetNoLeptons == 4  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
+            return tree.eleBoxFilter and tree.nJetNoLeptons > 4  and tree.eleTriggerFilter and tree.nCSVM > 0 and tree.MR >= MR_CUT_LEP and tree.RSQ >= RSQ_CUT and tree.nMuonTight == 0 and tree.nElectronTight == 1 and tree.nMuonLoose == 0 and tree.nElectronLoose == 1 and not tree.isolatedTrack10LeptonFilter 
 
         
 
