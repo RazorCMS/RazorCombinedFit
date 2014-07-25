@@ -25,7 +25,7 @@ def writeStep2BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,fitRegi
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_"+fitRegion+"_"+box
     user = os.environ['USER']
     
-    combineDir = "/afs/cern.ch/work/%s/%s/private/RAZORLIMITS_asym/Combine/%s/"%(user[0],user,model)
+    combineDir = "/afs/cern.ch/work/%s/%s/private/RAZORLIMITS/Combine/%s/"%(user[0],user,model)
     
     outputfile.write('#!/usr/bin/env bash -x\n')
     outputfile.write('mkdir -p %s\n'%combineDir)
@@ -79,38 +79,10 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     label = {"Mu":"MR350.0_R0.282842712475",
              "Ele":"MR350.0_R0.282842712475"}
 
-    sigma = {150:80.268,
-             175:36.7994,
-             200:18.5245,
-             225:9.90959,
-             250:5.57596,
-             275:3.2781,
-             300:1.99608,
-             325:1.25277,
-             350:0.807323,
-             375:0.531443,
-             400:0.35683,
-             425:0.243755,
-             450:0.169688,
-             475:0.119275,
-             500:0.0855847,
-             525:0.0618641,
-             550:0.0452067,
-             575:0.0333988,
-             600:0.0248009,
-             625:0.0185257,
-             650:0.0139566,
-             675:0.0106123,
-             700:0.0081141,
-             725:0.00623244,
-             750:0.00480639,
-             775:0.00372717}
-    
-       
     ffDir = outputDir+"/logs_"+model+"_"+massPoint+"_xsec"+xsecString+"_"+fitRegion+"_"+box
     user = os.environ['USER']
     
-    combineDir = "/afs/cern.ch/work/%s/%s/private/RAZORLIMITS_asym/Combine/%s/"%(user[0],user,model)
+    combineDir = "/afs/cern.ch/work/%s/%s/private/RAZORLIMITS/Combine/%s/"%(user[0],user,model)
    
     outputfile.write('#!/usr/bin/env bash -x\n')
     outputfile.write('mkdir -p %s\n'%combineDir)
@@ -133,14 +105,14 @@ def writeStep1BashScript(box,model,submitDir,neutralinoPoint,gluinoPoint,xsecPoi
     if model.find("T1")!=-1:
         sparticle = "gluino"
     seed = -1
-    rSignal = float(xsecPoint)#/refXsec)
+    rSignal = float(xsecPoint)/refXsec
 
     outputfile.write("cp /afs/cern.ch/user/l/lucieg/scratch1/Oct18/CMSSW_6_2_0/src/RazorCombinedFit/FitResults/razor_Single%s3D_%s_%s_%s.root $PWD\n"%(box,njets,box,fitRegion))
     mLSP = int(float(re.split('_',massPoint)[-1]))
     SMS = 'SMS-T2tt_mStop-Combo_mLSP_%s.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.282842712475'%mLSP
-    outputfile.write("cp /afs/cern.ch/work/l/lucieg/private/MC/%s%s%s/mLSP%s/%s_%s_%s.root $PWD/%s_%s_%s_%s.root \n"%(model, box, njets, mLSP, SMS, massPoint, box, SMS, njets, massPoint, box))
+    outputfile.write("cp /afs/cern.ch/work/l/lucieg/private/MC_test/%s%s%s/mLSP%s/%s_%s_%s.root $PWD/%s_%s_%s_%s.root \n"%(model, box, njets, mLSP, SMS, massPoint, box, SMS, njets, massPoint, box))
 
-    outputfile.write("python /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombineWorkspace.py --box %s_%s --model %s -i razor_Single%s3D_%s_%s_%s.root -c /afs/cern.ch/user/l/lucieg/scratch1/Oct18/CMSSW_6_2_0/src/RazorCombinedFit/config_summer2012/RazorMultiJet2013_3D_hybrid.config --xsec %f  --sigma %f %s_%s_%s_%s.root \n"%(box, njets, model, box, njets, box, fitRegion, xsecPoint, sigma[gluinoPoint]*1000, SMS, njets, massPoint, box))
+    outputfile.write("python /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/scripts/prepareCombineWorkspace.py --box %s_%s --model %s -i razor_Single%s3D_%s_%s_%s.root -c /afs/cern.ch/user/l/lucieg/scratch1/Oct18/CMSSW_6_2_0/src/RazorCombinedFit/config_summer2012/RazorMultiJet2013_3D_hybrid.config --xsec %f  %s_%s_%s_%s.root \n"%(box, njets, model, box, njets, box, fitRegion, xsecPoint, SMS, njets, massPoint, box))
    
     outputfile.write("/afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/bin/slc5_amd64_gcc472/combine -M HybridNew -s %i --singlePoint %f --frequentist --saveHybridResult --saveToys --testStat LHC --fork 4 -T %i --fullBToys -n Grid${NAME}_%s_xsec%s_%s_%s_%i --clsAcc 0 --iterations %i\
     razor_combine_%s_%s_${NAME}_%s.txt --rMax 100000.\n"%(seed,rSignal,nToysPerJob,massPoint,xsecString,fitRegion,box, t,iterations,box,njets,massPoint))
@@ -176,15 +148,42 @@ if __name__ == '__main__':
     mchi_upper = 2025
     mg_lower = 0
     mg_upper = 2025
-    refXsec = 100.
+
+    refXsecs = {150:80.268,
+                175:36.7994,
+                200:18.5245,
+                225:9.90959,
+                250:5.57596,
+                275:3.2781,
+                300:1.99608,
+                325:1.25277,
+                350:0.807323,
+                375:0.531443,
+                400:0.35683,
+                425:0.243755,
+                450:0.169688,
+                475:0.119275,
+                500:0.0855847,
+                525:0.0618641,
+                550:0.0452067,
+                575:0.0333988,
+                600:0.0248009,
+                625:0.0185257,
+                650:0.0139566,
+                675:0.0106123,
+                700:0.0081141,
+                725:0.00623244,
+                750:0.00480639,
+                775:0.00372717}
+    
     refXsecFile = None
     fitRegion="FULL"#Sideband
     signalRegion="FULL"
-    asymptoticFile="asymptoticFile.root"
+    asymptoticFile=None#"asymptoticFileMugt4jets.root"
     nToys = 3000 # do 3000 total toys
     nJobs = 1 # split the toys over 1 jobs 
     iterations = 1
-    step2 = False
+    step2 = True
     workspaceFlag = True
     noSub = False
     penalty = False
@@ -210,16 +209,49 @@ if __name__ == '__main__':
         if sys.argv[i].find("--no-work")!=-1: workspaceFlag = False
         if sys.argv[i].find("--penalty")!=-1: penalty = True
 
-            
+    ###I'm not using this        
     if refXsecFile is not None:
-        print "INFO: Input ref xsec file!"
+        print "INFO: Input ref xsec file!", refXsecFile
         gluinoFile = rt.TFile.Open(refXsecFile,"READ")
         gluinoHistName = refXsecFile.split("/")[-1].split(".")[0]
         gluinoHist = gluinoFile.Get(gluinoHistName)
         
     nToysPerJob = int(nToys/nJobs)
     nXsec = 5 # do 5 xsec points + 0 lower values + 1 higher value
-    
+    #instead I had tried :
+    xsecRanges = {
+
+
+        150: [],
+        175: [],
+        200: [],
+        225: [72.],
+        250: [60.],
+        275: [],
+        300: [],
+        325: [],
+        350: [],
+        375: [],
+        400: [],
+        425: [],
+        450: [],
+        475: [],
+        500: [],
+        525: [23.],
+        550:[],
+        575:[],
+        600:[],
+        625:[],
+        650:[],
+        675:[],
+        700:[],
+        725:[],
+        750:[],
+        775:[],
+        }
+    ###
+
+    ###Getting asymptotic limits as input
     if asymptoticFile is not None:
         print "INFO: Input ref xsec file!"
         asymptoticRootFile = rt.TFile.Open(asymptoticFile,"READ")
@@ -228,6 +260,7 @@ if __name__ == '__main__':
         expMinus = asymptoticRootFile.Get("xsecUL_ExpMinus_%s_%s"%(model,box))
         expPlus = asymptoticRootFile.Get("xsecUL_ExpPlus_%s_%s"%(model,box))
         exp = asymptoticRootFile.Get("xsecUL_Exp_%s_%s"%(model,box))
+    ###
         
     print box, model, queue
 
@@ -237,13 +270,13 @@ if __name__ == '__main__':
     
     pwd = os.environ['PWD']
     
-    submitDir = "submit_asym"+model+fitRegion+box
-    outputDir = "output_asym"+model+fitRegion+box
+    submitDir = "submit"+model+fitRegion+box
+    outputDir = "output"+model+fitRegion+box
     
     os.system("mkdir -p %s"%(submitDir))
     os.system("mkdir -p %s"%(outputDir))
 
-    # for compting what jobs are left:
+    # for compting what jobs are left: 
     doneFile = open(done)
     outFileList = []
     if step2:
@@ -254,52 +287,19 @@ if __name__ == '__main__':
     else:
         for outFile in doneFile.readlines():
             if outFile.find("higgsCombineGrid%s"%model)!=-1:
-                outItem = outFile.replace("/afs/cern.ch/work/l/lucieg/private/RAZORLIMITS_asym/Combine/T2tt/","").replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
+                outItem = outFile.replace("/afs/cern.ch/work/l/lucieg/private/RAZORLIMITS/Combine/T2tt/","").replace("higgsCombineGrid","").replace(".HybridNew.mH120","").replace(".root\n","")
                 outItem = outItem.split(".")[:-1]
                 outItem = ".".join(outItem)
                 outFileList.append(outItem)
         
     totalJobs = 0
     missingFiles = 0
-
-    xsecRanges = {
-
-
-        150: [400., 450. ,500.],
-        175: [300., 325., 350.],
-        200: [200., 210., 220., 225.],
-        225: [150., 200., 210., 215.],
-        250: [130., 150., 160., 161.],
-        275: [110., 130., 135., 136., 137.],
-        300: [70.,100., 105., 105.5, 106.],#ok
-        325: [70., 80., 90., 91., 92.],#ok
-        350: [50., 60., 70., 79., 80.],#...
-        375: [50., 60., 70., 71.,72.],#0.08 - 0
-        400: [55., 60., 62., 63.],#0.07
-        425: [45., 50.,53., 56.],#ok
-        450: [40., 45., 50., 52.],#ok
-        475: [40., 45.,46.,48.,49., 49.2],#0.06
-        500: [30., 40., 45., 47.,47.5],#ok
-        525: [30., 40., 42., 43., 43.6],
-        550:[30., 40., 41., 42.],#ok
-        575:[30., 35., 40., 41.],#ok
-        600:[30., 35.,  38., 39.,39.8],
-        625:[30., 35., 37., 38., 38.5],#ok
-        650:[30., 35., 37., 37.5, 38.],
-        675:[30., 35., 36., 37., 38.],
-        700:[30., 32., 35., 36.],#ok
-        725:[30., 35., 36., 36.05, 36.1],
-        750:[30., 33., 35., 36., 36.05],
-        775:[30., 32., 35., 36.],#ok
-        }
-         
-
-    
+  
     for gluinoPoint, neutralinoPoint in gchipairs:
 
         if neutralinoPoint < mchi_lower or neutralinoPoint >= mchi_upper: continue
         if gluinoPoint < mg_lower or gluinoPoint >= mg_upper: continue
-        if (gluinoPoint ==450 ):continue
+        #if not(gluinoPoint ==550 ):continue
         if not(neutralinoPoint == 25):continue
         
         massPoint = "%.1f_%.1f"%(gluinoPoint, neutralinoPoint)
@@ -321,27 +321,38 @@ if __name__ == '__main__':
                 time.sleep(3)
                 os.system("bsub -q "+queue+" -o "+pwd+"/"+ffDir+"/log_"+str(t)+".log source "+pwd+"/"+outputname)
         else:
-            minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
-            maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
-            print "expPlus2  = %f "%(1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint)))
-            print "expPlus   = %f "%(1.e3*expPlus.GetBinContent(expPlus.FindBin(gluinoPoint,neutralinoPoint)))
-            print "exp       = %f "%(1.e3*exp.GetBinContent(exp.FindBin(gluinoPoint,neutralinoPoint)))
-            print "expMinus  = %f "%(1.e3*expMinus.GetBinContent(expMinus.FindBin(gluinoPoint,neutralinoPoint)))
-            print "expMinus2 = %f "%(1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint)))
-            if maxXsec==0 and minXsec==0: continue
-            if refXsecFile is not None:
-                refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
-                print "INFO: ref xsec taken to be: %s mass %d, ref xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
-            xsecRange = [minXsec + (maxXsec-minXsec)*float(i)/float(nXsec-1) for i in range(0,nXsec+1)]
-            print xsecRange
-            factorXsec = minXsec/(minXsec + (maxXsec-minXsec)/float(nXsec-1))
-            print "factorXsec is", factorXsec
+            if asymptoticFile is not None :
+                minXsec = 1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint))
+                maxXsec = 1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint))
+                print "expPlus2  = %f "%(1.e3*expPlus2.GetBinContent(expPlus2.FindBin(gluinoPoint,neutralinoPoint)))
+                print "expPlus   = %f "%(1.e3*expPlus.GetBinContent(expPlus.FindBin(gluinoPoint,neutralinoPoint)))
+                print "exp       = %f "%(1.e3*exp.GetBinContent(exp.FindBin(gluinoPoint,neutralinoPoint)))
+                print "expMinus  = %f "%(1.e3*expMinus.GetBinContent(expMinus.FindBin(gluinoPoint,neutralinoPoint)))
+                print "expMinus2 = %f "%(1.e3*expMinus2.GetBinContent(expMinus2.FindBin(gluinoPoint,neutralinoPoint)))
+                if maxXsec==0 and minXsec==0: continue
+                if refXsecFile is not None:
+                    refXsec = 1.e3*gluinoHist.GetBinContent(gluinoHist.FindBin(gluinoPoint))
+                    print "INFO: ref xsec taken to be: %s mass %d, ref xsec = %f fb"%(gluinoHist.GetName(), gluinoPoint, refXsec)
+                else :
+                    refXsec = 1.#refXsecs[gluinoPoint]
+
+               ##  xsecRange = [minXsec + (maxXsec-minXsec)*float(i)/float(nXsec-1) for i in range(0,nXsec+1)]
+##                 print '1   ',xsecRange 
+##                 xsecRange = [(maxXsec - (maxXsec-minXsec)*float(i)/float(nXsec-1))*0.1 for i in range(0,nXsec+1)]
+##                 print '2   ',xsecRange 
+                xsecRange = [(maxXsec - (maxXsec-minXsec)*float(i)/float(nXsec-1))*0.05 for i in range(0,nXsec+1)]
+                print '3   ',xsecRange 
+               
+            else :
+                refXsec = 1.
+                xsecRange = xsecRanges[gluinoPoint]
+            #factorXsec = minXsec/(minXsec + (maxXsec-minXsec)/float(nXsec-1))
+            #print "factorXsec is", factorXsec
             #xsecRange.reverse()
             #xsecRange.append(minXsec*factorXsec)
             #xsecRange.append(minXsec*pow(factorXsec,2.0))
             #xsecRange.append(minXsec*pow(factorXsec,4.0))
             #xsecRange.reverse()
-            #for xsecPoint in xsecRanges[gluinoPoint]:
             for xsecPoint in xsecRange:
                 if xsecPoint<=0: continue
                 xsecString = str(xsecPoint).replace(".","p")
