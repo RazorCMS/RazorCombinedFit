@@ -3,13 +3,50 @@ from optparse import OptionParser
 import ROOT as rt
 from array import array
 
+
+def get_xsec(model):
+    """Return the xsec for a given mass and model"""
+    if model == 'T2tt':
+        ref_xsec_file = './stop.root'
+    elif model == 'T1tttt':
+        ref_xsec_file = './gluino.root'
+
+    print "INFO: Input ref xsec file!"
+    gluino_file = rt.TFile.Open(ref_xsec_file, "READ")
+    gluino_hist_name = ref_xsec_file.split("/")[-1].split(".")[0]
+    gluino_hist = gluino_file.Get(gluino_hist_name)
+
+    susy_xsecs_array = array('d', [])
+    if model == "T2tt":
+        masses = range(150, 800, 25)
+    else:
+        masses = range(400, 1425, 25)
+
+    for mass in masses:
+        susy_xsecs_array.append(1.e3*gluino_hist.GetBinContent(gluino_hist.FindBin(mass)))
+
+    return susy_xsecs_array
+
+
 if __name__ == '__main__':
 
     parser = OptionParser()
     (options,args) = parser.parse_args()
     boxName = args[0]
+    MODEL = args[1]
 
-    masses = array('d',range(150, 800, 25))
+    if MODEL == 'T1tttt':
+        masses = array('d', [])  #range(400, 1425, 25))
+        njets = '_gt6'
+        for mass in range(400, 1425, 25):
+            file = rt.TFile("combine_files%s_%s/higgsCombineT1tttt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
+            if not file.Get("limit"):
+                continue
+            masses.append(mass)
+
+
+    else:
+        masses = array('d',range(150, 800, 25))
     observedLimits = []
     expectedLimits = []
     expectedLimitsp1s = []
@@ -17,42 +54,45 @@ if __name__ == '__main__':
     expectedLimitsm2s = []
     expectedLimitsp2s = []
 
-    if boxName == "T2tt":
-        susy_xsecs = array('d',[80.268,
-                                36.7994,
-                                18.5245,
-                                9.90959,
-                                5.57596,
-                                3.2781,
-                                1.99608,
-                                1.25277,
-                                0.807323,
-                                0.531443,
-                                0.35683,
-                                0.243755,
-                                0.169688,
-                                0.119275,
-                                0.0855847,
-                                0.0618641,
-                                0.0452067,
-                                0.0333988,
-                                0.0248009,
-                                0.0185257,
-                                0.0139566,
-                                0.0106123,
-                                0.0081141,
-                                0.00623244,
-                                0.00480639,
-                                0.00372717])
+    # if boxName == "T2tt" or boxName == "BJetHS":
+    #     susy_xsecs = array('d',[80.268,
+    #                             36.7994,
+    #                             18.5245,
+    #                             9.90959,
+    #                             5.57596,
+    #                             3.2781,
+    #                             1.99608,
+    #                             1.25277,
+    #                             0.807323,
+    #                             0.531443,
+    #                             0.35683,
+    #                             0.243755,
+    #                             0.169688,
+    #                             0.119275,
+    #                             0.0855847,
+    #                             0.0618641,
+    #                             0.0452067,
+    #                             0.0333988,
+    #                             0.0248009,
+    #                             0.0185257,
+    #                             0.0139566,
+    #                             0.0106123,
+    #                             0.0081141,
+    #                             0.00623244,
+    #                             0.00480639,
+    #                             0.00372717])
 
-    elif boxName == "T1tttt":
-        susy_xsecs = array('d', [])
+    susy_xsecs = get_xsec(MODEL)
+
+    # elif boxName == "T1tttt":
+    #     susy_xsecs = array('d', [])
     susy_xsecs_dict = dict(zip(masses, susy_xsecs))
     sideband = 'FULL'
     # njets = '_4jets'
     njets = '_gt6'
-    model = 'T2tt'
-    outfile = rt.TFile.Open('asymptoticFile.root','RECREATE')
+    # model = 'T2tt'
+    model = MODEL
+    outfile = rt.TFile.Open('asymptoticFile_%s_%s.root' % (model, boxName),'RECREATE')
     xsecUL_ExpMinus2 = rt.TH1F("xsecUL_ExpMinus2_%s_%s"%(model,boxName),"xsecUL_ExpMinus2_%s_%s"%(model,boxName),26, 150,800)
     xsecUL_ExpMinus = rt.TH1F("xsecUL_ExpMinus_%s_%s"%(model,boxName),"xsecUL_ExpMinus_%s_%s"%(model,boxName),26, 150,800)
     xsecUL_Exp = rt.TH1F("xsecUL_Exp_%s_%s"%(model,boxName),"xsecUL_Exp_%s_%s"%(model,boxName),26, 150,800)
@@ -60,14 +100,20 @@ if __name__ == '__main__':
     xsecUL_ExpPlus2 = rt.TH1F("xsecUL_ExpPlus2_%s_%s"%(model,boxName),"xsecUL_ExpPlus2_%s_%s"%(model,boxName),26, 150,800)
 
 
-    for mass in range(150, 800, 25):
+    # for mass in range(150, 800, 25):
+    for mass in range(400, 1425, 25):
 
-        file = rt.TFile("combine_files%s_%s/higgsCombineT2tt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
+        file = rt.TFile("combine_files%s_%s/higgsCombineT1tttt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
+        # file = rt.TFile("combineCards_25/higgsCombineT2tt_All_%s_25.Asymptotic.mH120.root"%str(mass))
+        if not file.Get("limit"):
+            continue
+
 
         print file
 
        # file       = rt.TFile("combineCards_25_%s/higgsCombineT2tt_%s_%s_25.Asymptotic.mH120.root"%(sideband, boxName, mass))
         tree = file.Get("limit")
+
         tree.Draw(">>elist", "", "entrylist")
         # tree.Draw(">>elist")
 
@@ -121,6 +167,8 @@ if __name__ == '__main__':
     expectedLimit1s_plot.SetFillColor(rt.kGreen)
     #expectedLimit1s_plot.SetFillStyle(3005)
     expectedLimit1s_plot.SetMinimum(0.0001)
+    if model == "T1tttt":
+        expectedLimit1s_plot.SetMinimum(10)
 
     expectedLimitsm2s = array('d', [ a - b for a,b in zip(expectedLimits, expectedLimitsm2s) ])
     expectedLimitsp2s = array('d', [ a - b for a,b in zip(expectedLimitsp2s, expectedLimits) ])
@@ -128,6 +176,8 @@ if __name__ == '__main__':
     expectedLimit2s_plot.SetFillColor(rt.kYellow)
     #expectedLimit2s_plot.SetFillStyle(3005)
     expectedLimit2s_plot.SetMinimum(0.0001)
+    if model == "T1tttt":
+        expectedLimit2s_plot.SetMinimum(10)
 
 
     susy_limit = rt.TGraph(len(masses),masses,susy_xsecs)
@@ -142,6 +192,9 @@ if __name__ == '__main__':
     final_plot.Add(expectedLimit_plot,"L")
     final_plot.Add(susy_limit,"L")
     final_plot.SetMinimum(0.0001)
+    if model == "T1tttt":
+        final_plot.SetMinimum(10)
+
     # final_plot.SetTitle("Toy based limit, T2tt(mLSP=25GeV), %s, 3D fit;mStop(GeV);upper xsec"%boxName)
     final_plot.SetTitle("Asymptotic limit, T2tt(mLSP=25GeV), %s, 3D fit;mStop(GeV);upper xsec"%boxName)
     c = rt.TCanvas("c")
@@ -162,4 +215,4 @@ if __name__ == '__main__':
 
 
     boxName = re.sub(' ', '', boxName)
-    c.SaveAs("limitToyFromAsym"+boxName+sideband+njets+".png")
+    c.SaveAs("limitToyFromAsym"+model+boxName+sideband+njets+".png")

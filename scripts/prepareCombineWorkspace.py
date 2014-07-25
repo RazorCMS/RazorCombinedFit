@@ -447,7 +447,7 @@ if __name__ == '__main__':
     #define number of bins, 1D RooRealVar...
     if simple:
         nBins = 216
-    elif model.find("T2")!=-1:
+    elif model.find("T2") != -1 or model.find("T1") != -1:
         nBins = (len(x)-1)*(len(y) -1)*(len(z) -1)
 
     th1x = rt.RooRealVar("th1x","th1x",0,0,nBins)
