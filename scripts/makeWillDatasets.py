@@ -1,6 +1,24 @@
 """This script is to create all the datasets for the signal"""
 from optparse import OptionParser
 import os
+import sys
+import pickle as pkl
+
+
+def read_pkl_file(pklfile):
+    """Simple function to read a pickle file"""
+
+    pickle_file = pkl.load(open(pklfile, 'rb'))
+    return pickle_file
+
+
+def check_mass(mstop, mlsp, pklfile):
+    """Check if we have events in the SMS for a given mass point"""
+    masses = (mstop, mlsp)
+    if masses in pklfile:
+        return True
+    return False
+
 
 if __name__ == '__main__':
     PARSER = OptionParser()
@@ -12,30 +30,53 @@ if __name__ == '__main__':
                       default="BJetHS", help="box")
     PARSER.add_option('-m', '--model', dest="model", type="string",
                       default="T2tt", help="Signal SMS")
+    PARSER.add_option('-p', '--pickle', dest="pk_file", type="string",
+                      default=None, help="Pickle file")
 
     (OPTIONS, ARGS) = PARSER.parse_args()
     CFG = OPTIONS.config
     BOX = OPTIONS.box
     OUT_DIR = OPTIONS.out_dir
     MODEL = OPTIONS.model
+    PKL = OPTIONS.pk_file
 
-    for mLSP in [1]+range(25, 1625, 25):
-    # for mLSP in range(25, 725, 25):
-        file_dir = OUT_DIR + "mLSP" + str(mLSP)
+    AVAILABLE_MASSES = read_pkl_file(PKL)
 
-        # submit_dir is the same as file_dir
+    if MODEL == "T1tttt":
+        LSP_MASSES = [1] + range(25, 1625, 25)
+        STOP_MASSES = range(100, 1625, 25)
+    else:
+        LSP_MASSES = range(25, 725, 25)
+        STOP_MASSES = range(125, 825, 25)
+
+
+    for mLSP in LSP_MASSES:
+        file_dir = OUT_DIR + "mLSP_" + str(mLSP)
+        script_dir = file_dir + "_sh"
         log_dir = file_dir + "_log"
 
         if not os.path.isdir(file_dir):
             os.mkdir(file_dir)
+        if not os.path.isdir(script_dir):
+            os.mkdir(script_dir)
         if not os.path.isdir(log_dir):
             os.mkdir(log_dir)
 
         pwd = os.environ['PWD']
 
-        # for mStop in range(mLSP+100, 825, 25):
-        for mStop in xrange(100, 1625, 25):
-            print "Now creating (%s, %s)" % (mStop, mLSP)
+        for mStop in STOP_MASSES:
+
+            if check_mass(mStop, mLSP, AVAILABLE_MASSES):
+                print "We have this mass:", (mStop, mLSP)
+            else:
+                continue
+
+            if not os.path.isdir(file_dir):
+                os.mkdir(file_dir)
+            if not os.path.isdir(script_dir):
+                os.mkdir(script_dir)
+            if not os.path.isdir(log_dir):
+                os.mkdir(log_dir)
 
             if MODEL == "T1tttt":
                 print ("python scripts/Will2DatasetwithSYS.py --box %s -c %s "
@@ -75,8 +116,8 @@ if __name__ == '__main__':
                               'Summer12-START52_V9_FSIM-v1-SUSY_MR450.0_'
                               'R0.316227766017_%s.0_%s.0_%s.root') %\
                              (mLSP, mStop, mLSP, BOX))
-            runScriptName = file_dir + "/submit_script_%s_%s.sh" % (str(mStop),\
-                                                                   str(mLSP))
+            runScriptName = script_dir + "/submit_script_%s_%s.sh"\
+                                        % (str(mStop), str(mLSP))
             runScript = open(runScriptName, 'w')
             runScript.write('#$ -S /bin/sh\n')
             runScript.write('#$ -l arch=lx24-amd65\n')
@@ -92,7 +133,8 @@ if __name__ == '__main__':
             if MODEL == "T1tttt":
                 runScript.write('xrdcp root://osg-se.cac.cornell.edu//xrootd/'
                                 'path/cms/store/user/salvati/Razor/'
-                                'MultiJet2012/CMSSW_5_3_14/RMRTrees/T1tttt_merged/'
+                                'MultiJet2012/CMSSW_5_3_14/RMRTrees/'
+                                'T1tttt_merged/'
                                 'SMS-T1tttt_mGluino-Combo_8TeV-'
                                 'Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.'
                                 'pkl /tmp/SMS-T1tttt_mGluino-Combo_8'

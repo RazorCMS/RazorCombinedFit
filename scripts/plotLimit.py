@@ -31,22 +31,21 @@ def get_xsec(model):
 if __name__ == '__main__':
 
     parser = OptionParser()
-    (options,args) = parser.parse_args()
+    (options, args) = parser.parse_args()
     boxName = args[0]
     MODEL = args[1]
 
     if MODEL == 'T1tttt':
-        masses = array('d', [])  #range(400, 1425, 25))
+        masses = array('d', [])
         njets = '_gt6'
         for mass in range(400, 1425, 25):
             file = rt.TFile("combine_files%s_%s/higgsCombineT1tttt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
             if not file.Get("limit"):
                 continue
             masses.append(mass)
-
-
     else:
-        masses = array('d',range(150, 800, 25))
+        masses = array('d', range(150, 800, 25))
+
     observedLimits = []
     expectedLimits = []
     expectedLimitsp1s = []
@@ -54,45 +53,16 @@ if __name__ == '__main__':
     expectedLimitsm2s = []
     expectedLimitsp2s = []
 
-    # if boxName == "T2tt" or boxName == "BJetHS":
-    #     susy_xsecs = array('d',[80.268,
-    #                             36.7994,
-    #                             18.5245,
-    #                             9.90959,
-    #                             5.57596,
-    #                             3.2781,
-    #                             1.99608,
-    #                             1.25277,
-    #                             0.807323,
-    #                             0.531443,
-    #                             0.35683,
-    #                             0.243755,
-    #                             0.169688,
-    #                             0.119275,
-    #                             0.0855847,
-    #                             0.0618641,
-    #                             0.0452067,
-    #                             0.0333988,
-    #                             0.0248009,
-    #                             0.0185257,
-    #                             0.0139566,
-    #                             0.0106123,
-    #                             0.0081141,
-    #                             0.00623244,
-    #                             0.00480639,
-    #                             0.00372717])
-
     susy_xsecs = get_xsec(MODEL)
 
-    # elif boxName == "T1tttt":
-    #     susy_xsecs = array('d', [])
     susy_xsecs_dict = dict(zip(masses, susy_xsecs))
     sideband = 'FULL'
     # njets = '_4jets'
     njets = '_gt6'
     # model = 'T2tt'
     model = MODEL
-    outfile = rt.TFile.Open('asymptoticFile_%s_%s.root' % (model, boxName),'RECREATE')
+    # outfile = rt.TFile.Open('asymptoticFile_%s_%s.root' % (model, boxName),'RECREATE')
+    outfile = rt.TFile.Open('toysFile_%s_%s.root' % (model, boxName),'RECREATE')
     xsecUL_ExpMinus2 = rt.TH1F("xsecUL_ExpMinus2_%s_%s"%(model,boxName),"xsecUL_ExpMinus2_%s_%s"%(model,boxName),26, 150,800)
     xsecUL_ExpMinus = rt.TH1F("xsecUL_ExpMinus_%s_%s"%(model,boxName),"xsecUL_ExpMinus_%s_%s"%(model,boxName),26, 150,800)
     xsecUL_Exp = rt.TH1F("xsecUL_Exp_%s_%s"%(model,boxName),"xsecUL_Exp_%s_%s"%(model,boxName),26, 150,800)
@@ -101,9 +71,19 @@ if __name__ == '__main__':
 
 
     # for mass in range(150, 800, 25):
-    for mass in range(400, 1425, 25):
+    for mass in range(300, 625, 25):
+    # for mass in range(400, 1425, 25):
 
-        file = rt.TFile("combine_files%s_%s/higgsCombineT1tttt_%s_25_%s%s.Asymptotic.mH120.root"%(njets, boxName, mass, boxName, njets))
+        ## Asymptotic
+        # file = rt.TFile("combine_files%s_%s/higgsCombineT1tttt_%s_25_%s%s"
+        #                 ".Asymptotic.mH120.root" %\
+        #                 (njets, boxName, mass, boxName, njets))
+
+        ## Toys
+        file = rt.TFile("Combine/T2tt/step2/mLSP25/higgsCombineToys%s_%s"
+                        ".0_25.0_FULL_%s_0.HybridNew.mH120.root" %\
+                        (model, mass, boxName))
+
         # file = rt.TFile("combineCards_25/higgsCombineT2tt_All_%s_25.Asymptotic.mH120.root"%str(mass))
         if not file.Get("limit"):
             continue
@@ -118,6 +98,7 @@ if __name__ == '__main__':
         # tree.Draw(">>elist")
 
         if tree.GetEntries() < 6:
+            print "Wait, we'got less than 6 entries in this tree"
             continue
         elist = rt.gDirectory.Get('elist')
         count = 0
@@ -195,16 +176,15 @@ if __name__ == '__main__':
     if model == "T1tttt":
         final_plot.SetMinimum(10)
 
-    # final_plot.SetTitle("Toy based limit, T2tt(mLSP=25GeV), %s, 3D fit;mStop(GeV);upper xsec"%boxName)
-    final_plot.SetTitle("Asymptotic limit, T2tt(mLSP=25GeV), %s, 3D fit;mStop(GeV);upper xsec"%boxName)
+    final_plot.SetTitle("Toy based limit, T2tt(mLSP=25GeV), %s, 3D fit;mStop(GeV);upper xsec"%boxName)
+    # final_plot.SetTitle("Asymptotic limit, T2tt(mLSP=25GeV), %s, 3D fit;mStop(GeV);upper xsec"%boxName)
     c = rt.TCanvas("c")
     c.SetLogy()
     final_plot.Draw("a4")
 
-    leg = rt.TLegend(0.6,0.65,0.899,0.89)
+    leg = rt.TLegend(0.6, 0.65, 0.899, 0.89)
     leg.SetFillColor(0)
     leg.SetLineColor(0)
-    #leg.SetHeader("The Legend Title")
     leg.AddEntry(expectedLimit1s_plot,"expected +/- 1 #sigma","f")
     leg.AddEntry(expectedLimit2s_plot,"expected +/- 2 #sigma","f")
     leg.AddEntry(expectedLimit_plot,"expected","l")
@@ -215,4 +195,4 @@ if __name__ == '__main__':
 
 
     boxName = re.sub(' ', '', boxName)
-    c.SaveAs("limitToyFromAsym"+model+boxName+sideband+njets+".png")
+    c.SaveAs("limitToyFromToys"+model+boxName+sideband+njets+".png")

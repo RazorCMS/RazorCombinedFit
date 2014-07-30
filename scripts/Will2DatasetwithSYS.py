@@ -69,13 +69,14 @@ def findLeptonProb(flavor, pt = 0., eta = 0., errDir = 0):
 def writeTree2DataSet(data,outputDir, outputFile, box, rMin, mRmin, label, args, jes_pe, pdf_pe, btag_pe, isr_pe, lep_pe, nominal, pdf_cen, jes_up, jes_down, pdf_up, pdf_down, btag_up, btag_down, isr_up, isr_down, lep_up, lep_down, mstop, mlsp):
 
     # Load the file with the SMS number of total events per each point
-    file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
+    # file = open('/afs/cern.ch/work/l/lucieg/public/forRazorStop/SMS-T2tt_mStop-Combo_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY.pkl','rb')
     # file = open('T3/RMRTrees/T2tt/SMS-T2tt_mStop-Combo.0_8TeV-Pythia6Z-'
     #             'Summer12-START52_V9_FSIM-v1-SUSY.pkl')
-    # file = open('/tmp/SMS-T1tttt_mGluino-Combo_8TeV-'
+    file = open('/tmp/SMS-T1tttt_mGluino-Combo_8TeV-'
+                'Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.pkl')
+    # file = open('T3/RMRTrees/T1tttt_merged/SMS-T1tttt_mGluino-Combo_8TeV-'
     #             'Pythia6Zstar-Summer12-START52_V9_FSIM-v1-SUSY.pkl')
 
- #
     # Get the original event weight, which is 1/nevts for a given process
     point = (mstop, mlsp)
     norms = pickle.load(file)
@@ -489,14 +490,19 @@ if __name__ == '__main__':
 
 
     #for doing all the crap with btags and scale factors
-    tagger = BTag('T2tt')
+
+    tagger = BTag('T1tttt')
     muonScaling = MuSFUtil()
     eleScaling = EleSFUtil()
-   
-    ## if box == "BJetHS" :
-## convertTree2Dataset(chain, outputDir, fName, cfg, options.min,options.max,BJetBoxLS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
-## elif box == "BJetLS" :
-## convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,BJetBoxHS(CalcBDT(chain)),options.run, options.mstop, options.mlsp)
+
+    if box == "BJetHS":
+        convertTree2Dataset(chain, outputDir, fName, cfg, options.min,
+                            options.max, BJetBoxHS(CalcBDT(chain)),
+                            options.run, options.mstop, options.mlsp)
+    elif box == "BJetLS":
+        convertTree2Dataset(chain, outputDir, fName, cfg, options.min,
+                            options.max, BJetBoxLS(CalcBDT(chain)), options.run,
+                            options.mstop, options.mlsp)
     if box == "Mu" :
         convertTree2Dataset(chain, outputDir, fName, cfg,options.min,options.max,MuBox(None),options.run, options.mstop, options.mlsp)
     elif box == "Ele":
