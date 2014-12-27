@@ -13,11 +13,11 @@
 ClassImp(RooRazor3DBinPdf)
 //---------------------------------------------------------------------------
 RooRazor3DBinPdf::RooRazor3DBinPdf(const char *name, const char *title,
-				   RooAbsReal& _th1x,  
-				   RooAbsReal& _x0, RooAbsReal& _y0, 
+				   RooAbsReal& _th1x,
+				   RooAbsReal& _x0, RooAbsReal& _y0,
 				   RooAbsReal& _b, RooAbsReal& _n,
 				   RooAbsReal& _xCut, RooAbsReal& _yCut, RooAbsReal& _zCut,
-				   TH3* _Hnominal) : RooAbsPdf(name, title), 
+				   TH3* _Hnominal) : RooAbsPdf(name, title),
   th1x("th1x", "th1x Observable", this, _th1x),
   X0("X0", "X Offset", this, _x0),
   Y0("Y0", "Y Offset", this, _y0),
@@ -60,8 +60,8 @@ RooRazor3DBinPdf::RooRazor3DBinPdf(const char *name, const char *title,
 }
 //---------------------------------------------------------------------------
 RooRazor3DBinPdf::RooRazor3DBinPdf(const RooRazor3DBinPdf& other, const char* name) :
-   RooAbsPdf(other, name), 
-   th1x("th1x", this, other.th1x),  
+   RooAbsPdf(other, name),
+   th1x("th1x", this, other.th1x),
    X0("X0", this, other.X0),
    Y0("Y0", this, other.Y0),
    B("B", this, other.B),
@@ -97,7 +97,7 @@ Double_t RooRazor3DBinPdf::evaluate() const
 {
   Double_t integral = 0.0;
   Double_t total_integral = 1.0;
-  
+
 
   if(B <= 0. || N <= 0. || X0 >= xMin || Y0 >= yMin) return 0.0;
 
@@ -105,17 +105,17 @@ Double_t RooRazor3DBinPdf::evaluate() const
 
   Int_t iBin = (Int_t) th1x;
   if(iBin < 0 || iBin >= nBins) {
-    //cout << "in bin " << iBin << " which is outside of range" << endl;
+    cout << "in bin " << iBin << " which is outside of range " << nBins << endl;
     return 0.0;
   }
 
-  
+
   Int_t zBin = iBin % zBins;
   Int_t yBin = ( (iBin - zBin)/(zBins) ) % (yBins);
   Int_t xBin =  (iBin - zBin - yBin*zBins ) / (zBins*yBins);
 
-  //cout << "in bin " << iBin << " which is in range" << endl;
-  //cout << "(" << xBin+1 << "," << yBin+1 << "," << zBin+1 << ")" << endl;
+  // cout << "in bin " << iBin << " which is in range" << endl;
+  // cout << "(" << xBin+1 << "," << yBin+1 << "," << zBin+1 << ")" << endl;
 
   Double_t zLow = zArray[zBin];
   Double_t zHigh = zArray[zBin+1];
@@ -125,7 +125,7 @@ Double_t RooRazor3DBinPdf::evaluate() const
     Double_t yLow = yArray[yBin];
     Double_t yHigh = yArray[yBin+1];
 
-    
+
     if(xLow < xCut && yLow < yCut) {
       return 0.0;
     }
@@ -153,28 +153,28 @@ Double_t RooRazor3DBinPdf::analyticalIntegral(Int_t code, const char* rangeName)
    Double_t th1xMin = th1x.min(rangeName); Double_t th1xMax = th1x.max(rangeName);
    Int_t iBinMin = (Int_t) th1xMin; Int_t iBinMax = (Int_t) th1xMax;
 
-   
+
    if(B <= 0. || N <= 0. || X0 >= xMin || Y0 >= yMin) return 1.;
 
    Double_t integral = 0.0;
    Double_t total_integral =  1.0;
-      
+
    //cout <<  "iBinMin = " << iBinMin << ",iBinMax = " << iBinMax << endl;
    Int_t nBins =  xBins*yBins*zBins;
 
    if (code==1 && iBinMin==0 && iBinMax>=nBins){
      integral = -Gfun(xMin,yMax)-Gfun(xMax,yMin)+Gfun(xMax,yMax)+Gfun(xMin,yCut)+Gfun(xCut,yMin)-Gfun(xCut,yCut);
    }
-   else if(code==1) { 
+   else if(code==1) {
      total_integral = Gfun(xMin,yMin)-Gfun(xMin,yMax)-Gfun(xMax,yMin)+Gfun(xMax,yMax);
      for (Int_t iBin=iBinMin; iBin<iBinMax; iBin++){
        Int_t zBin = iBin % zBins;
        Int_t yBin = ( (iBin - zBin)/(zBins) ) % (yBins);
        Int_t xBin =  (iBin - zBin - yBin*zBins ) / (zBins*yBins);
- 
+
        Double_t zLow = zArray[zBin];
        Double_t zHigh = zArray[zBin+1];
-       
+
        if(iBin < 0 || iBin >= nBins) {
 	 integral += 0.0;
        }
@@ -196,7 +196,7 @@ Double_t RooRazor3DBinPdf::analyticalIntegral(Int_t code, const char* rangeName)
    }
 
    if (total_integral>0.0) {
-     
+
      return integral;
    } else return 1.0;
 }

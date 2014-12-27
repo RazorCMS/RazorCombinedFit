@@ -9,7 +9,7 @@ class Marker(object):
 def defineParser():
     parser = OptionParser()
     parser.add_option('-b','--batch',dest="batch",action="store_true", default=True,
-                  help="Run in batch mode for plotting")    
+                  help="Run in batch mode for plotting")
     parser.add_option('-a','--analysis',dest="analysis",type="string",
                   help="Name of the analysis to run")
     parser.add_option('-c','--config',dest="config",type="string",default=None,
@@ -69,7 +69,7 @@ def defineParser():
     parser.add_option('--btag',dest="btag",action="store_true",default=True,
                   help="Include the btag dimension in the fits")
     parser.add_option('--run-cls',dest="runCLS",action="store_true",default=False,
-                  help="Run the 2012 profile style CLS code")        
+                  help="Run the 2012 profile style CLS code")
 
     return parser
 

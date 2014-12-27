@@ -77,7 +77,7 @@ protected:
 
    Double_t evaluate() const;
 private:
-  ClassDef(RooRazor3DBinPdf,1) // Razor2DTail_SYS function
+  ClassDef(RooRazor3DBinPdf,2) // Razor2DTail_SYS function
     
 };
 //---------------------------------------------------------------------------

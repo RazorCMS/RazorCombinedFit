@@ -12,7 +12,7 @@ if __name__ == '__main__':
     DONE_FILES = []
 
     SEARCH_DIR = ("/home/uscms208/cms/CMSSW_6_1_2/src/RazorCombinedFit_lucieg_"
-                  "May29/Combine/%s/mLSP%s/" % (MODEL, LSP))
+                  "May29/Combine/%s/step1/mLSP%s/" % (MODEL, LSP))
 
     ALL_FILES = os.listdir(SEARCH_DIR)
     for root_file in ALL_FILES:
@@ -29,7 +29,7 @@ if __name__ == '__main__':
             elif limit.GetEntries() == 0:
                 continue
             else:
-                DONE_FILES.append(SEARCH_DIR + root_file)
+                DONE_FILES.append(root_file)
 
     print '\n'.join(DONE_FILES)
 

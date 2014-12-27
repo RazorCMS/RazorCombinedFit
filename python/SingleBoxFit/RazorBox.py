@@ -4,35 +4,28 @@ import ROOT as rt
 from array import *
 
 
-#this is global, to be reused in the plot making
+# this is global, to be reused in the plot making
 def getBinning(boxName, varName, btag):
+    """This is the signal binning"""
     if boxName in ["BJetHS", "BJetLS"]:
         if varName == "MR":
-            return [450, 600, 750, 900, 1200, 1600, 4000]
-            # return [450, 550, 700, 900, 1200, 1600, 2500, 4000]
+            return [450., 600., 750., 900., 1200., 1600., 4000.]
         elif varName == "Rsq":
-            return [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
-            # return [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
+            # return [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
+            # return [0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 1.5]
+            return [0.10, 0.11, 0.13, 0.15]
 
+    # ##### original binning
+    # return [450, 500, 600, 750, 900, 1200, 1600, 2500, 4000]
+    # return [0.10, 0.13, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
 
-# Ele
-    # if varName == "MR" : return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
-    # elif varName == "Rsq" :
-    #     if btag == "NoBtag": return [0.08, 0.10, 0.15, 0.20,0.25,0.30,0.35,0.40,0.45,0.50]
-    #     elif btag == "Btag": return [0.08, 0.10, 0.15, 0.20,0.30,0.41,0.52,0.64,0.80,1.5]
-
-
-
-    if varName == "nBtag":
-        if btag == "NoBtag":
-            return [0, 1]
-        elif btag == "Btag":
-            return [1, 2, 3, 4]
-    if varName == "nJet":
-        if btag == "NoJet":
-            return [0, 1]
-        elif btag == "Jet":
-            return [1, 2, 3, 4]
+    elif boxName in ['Ele', 'Mu']:
+        if varName == "MR":
+            return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
+        elif varName == "Rsq":
+            # return [0.08, 0.10, 0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
+            return [0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
+            # return [0.08, 0.10, 0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
 
 
 def FindLastBin(h):
@@ -47,27 +40,29 @@ class RazorBox(Box.Box):
 
     def __init__(self, name, variables, fitMode='3D', btag=True, fitregion=""):
         super(RazorBox, self).__init__(name, variables)
-        #data
+        # data
         if not btag:
             self.btag = "NoBtag"
-            self.zeros = {'TTj1b': [], 'TTj2b': [], 'Vpj': []}
+            self.zeros = {'TTj1b': [],
+                          'TTj2b': [],
+                          'Vpj': ['Mu', 'Ele']}
         else:
             self.btag = "Btag"
             self.njet = "Jet"
-            self.zeros = {'TTj1b': ['Jet2b'],
-                          'TTj2b': ['BVetoHS'],
-                          'Vpj': ['Mu', 'Ele', 'BVetoHS']}
+            self.zeros = {'TTj1b': [],
+                          'TTj2b': [],
+                          'Vpj': ['Mu', 'Ele']}
 
         if fitregion == "Sideband":
             self.fitregion = "LowRsq,LowMR"
-        # for CLs limit setting  remove the following line
         elif fitregion == "FULL":
             self.fitregion = "FULL"
         else:
             self.fitregion = fitregion
         self.fitMode = fitMode
 
-        self.cut = 'MR>=450. && Rsq>=0.10 && nBtag>0'
+        # self.cut = 'MR>=450. && Rsq>=0.10 && Rsq<0.15 && nBtag>=1'
+        self.cut = 'MR>=350. && Rsq>=0.15 && nBtag>=1'
 
     def addTailPdf(self, flavour, doSYS):
         label = '_%s' % flavour
@@ -95,52 +90,26 @@ class RazorBox(Box.Box):
                 self.workspace.var("n%s" % label).setConstant(rt.kFALSE)
             else:
                 self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" % (label, label, label, label, label))
-                #tail-systematic parameter fixed to 1.0
+                # tail-systematic parameter fixed to 1.0
                 self.workspace.var("n%s" % label).setVal(1.0)
                 self.workspace.var("n%s" % label).setConstant(rt.kTRUE)
 
-            ## define the nB pdf
+            # define the nB pdf
             self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s)" % (label, label, label, label))
-            ## the total PDF is the product of the two
+            # the total PDF is the product of the two
             self.workspace.factory("PROD::PDF%s(RazPDF%s,BtagPDF%s)" % (label, label, label))
-            ##associate the yields to the pdfs through extended PDFs
+            # associate the yields to the pdfs through extended PDFs
             self.workspace.factory("RooExtendPdf::ePDF%s(PDF%s, Ntot%s)" % (label, label, label))
             # to force numerical integration and use default precision 1e-7
-            #self.workspace.pdf("RazPDF%s"%label).forceNumInt(rt.kTRUE)
-            #rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-7)
-            #rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-7)
-
-        # 4D fit
-        elif self.fitMode == "4D":
-            # define the R^2 vs MR
-            if doSYS is True:
-                self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" % (label, label, label, label, label))
-                # tail-systematic parameter
-                self.workspace.var("n%s" % label).setConstant(rt.kFALSE)
-            else:
-                self.workspace.factory("RooRazor2DTail_SYS::RazPDF%s(MR,Rsq,MR0%s,R0%s,b%s,n%s)" % (label, label, label, label, label))
-                #tail-systematic parameter fixed to 1.0
-                self.workspace.var("n%s" % label).setVal(1.0)
-                self.workspace.var("n%s" % label).setConstant(rt.kTRUE)
-            ## define the nB pdf
-            self.workspace.factory("RooBTagMult::BtagPDF%s(nBtag,f1%s,f2%s,f3%s)" % (label, label, label, label))
-            ## for each charge, the 4D PDF is the product of the two * the charge
-            self.workspace.factory("PROD::PDF%sPlus(RazPDF%s,BtagPDF%s,PlusPDF)" % (label, label, label))
-            self.workspace.factory("PROD::PDF%sMinus(RazPDF%s,BtagPDF%s,MinusPDF)" % (label, label, label))
-            #define the plus and minus yields
-            self.workspace.factory("expr::N_minus%s('@0*(1-@1)',Ntot%s,fplus%s)" % (label, label, label))
-            self.workspace.factory("expr::N_plus%s('@0*@1',Ntot%s,fplus%s)" % (label, label, label))
-            ##associate the yields to the pdfs through extended PDFs
-            self.workspace.factory("RooExtendPdf::ePDFPlus%s(PDF%sPlus, N_plus%s)" % (label, label, label))
-            self.workspace.factory("RooExtendPdf::ePDFMinus%s(PDF%sMinus, N_minus%s)" % (label, label, label))
-            # thisPDFlist = rt.RooArgList(self.workspace.pdf("ePDFPlus%s" % label), self.workspace.pdf("ePDFMinus%s" % label))
-            # model = rt.RooAddPdf("ePDF%s" % label, "ePDF%s" % label, thisPDFlist)
+            # self.workspace.pdf("RazPDF%s"%label).forceNumInt(rt.kTRUE)
+            # rt.RooAbsReal.defaultIntegratorConfig().setEpsAbs(1e-7)
+            # rt.RooAbsReal.defaultIntegratorConfig().setEpsRel(1e-7)
 
     def switchOff(self, species):
         self.workspace.var("Ntot_"+species).setVal(0.)
         self.workspace.var("Ntot_"+species).setConstant(rt.kTRUE)
 
-    #add penalty terms and float
+    # add penalty terms and float
     def floatComponentWithPenalty(self, flavour):
         self.fixParsPenalty("R0_%s" % flavour)
         self.fixPars("R0_%s_s" % flavour)
@@ -186,11 +155,6 @@ class RazorBox(Box.Box):
 
         self.workspace.factory("expr::MRnorm('@0*(1/4000.)',MR)")
 
-        # charge +1 pdf
-        if self.fitMode == "4D":
-            self.workspace.factory("RooTwoBin::PlusPDF(CHARGE,plusOne[1.])")
-            self.workspace.factory("RooTwoBin::MinusPDF(CHARGE,minusOne[-1.])")
-
         # add only relevant components (for generating toys)
         myPDFlist = rt.RooArgList()
         for z in self.zeros:
@@ -204,7 +168,7 @@ class RazorBox(Box.Box):
 
         # import the model in the workspace.
         self.importToWS(model)
-        self.workspace.Print("v")
+        # self.workspace.Print("v")
 
         # fix all pdf parameters (except the n) to the initial value
         self.fixPars("MR0_")
@@ -213,14 +177,12 @@ class RazorBox(Box.Box):
         self.fixPars("f1")
         self.fixPars("f2")
         self.fixPars("f3")
-        #self.fixPars("f4")
 
         def floatSomething(z):
             """Switch on or off whatever you want here"""
             # float BTAG
             if(self.btag == "Btag") and z == "TTj2b":
                 self.floatBTagf3(z)
-            #self.floatComponentWithPenalty(z)
             self.floatComponent(z)
             self.floatYield(z)
 
@@ -303,10 +265,11 @@ class RazorBox(Box.Box):
 
     def plot(self, inputFile, store, box, data=None, fitmodel="none", frName="none"):
 
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
-        [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
-        if self.fitMode == "3D":
-            [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
+        # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "MR", 64, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
+        # [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "Rsq", 50, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
+        [store.store(s, dir=box) for s in self.plot3DHisto(inputFile, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
+        # if self.fitMode == "3D":
+        #     [store.store(s, dir=box) for s in self.plot1DHistoAllComponents(inputFile, "nBtag", 3, ranges=[self.fitregion], data=data, fitmodel=fitmodel)]
 
     def plot1D(self, inputFile, varname, nbin=200, ranges=None, data=None, fitmodel="none", frName="none"):
 
@@ -1060,12 +1023,12 @@ class RazorBox(Box.Box):
         return histToReturn
 
     def plot2DHisto(self, inputFile, ranges=None, data=None, fitmodel=None):
-        #Preliminary = "Preliminary"
+        # Preliminary = "Preliminary"
         Preliminary = "Simulation"
         Energy = 8.0
-        rangeNone = False
+        # rangeNone = False
         if ranges is None:
-            rangeNone = True
+            # rangeNone = True
             ranges = ['']
 
         rangeCut = self.getVarRangeCutNamed(ranges=ranges)
@@ -1074,7 +1037,7 @@ class RazorBox(Box.Box):
         print ''
 
         if data is None:
-            data = RootTools.getDataSet(inputFile,'RMRTree', self.cut)
+            data = RootTools.getDataSet(inputFile, 'RMRTree', self.cut)
             data = data.reduce(rangeCut)
         data = data.reduce(self.cut)
         data = data.reduce(rangeCut)
@@ -1088,15 +1051,15 @@ class RazorBox(Box.Box):
             N_Vpj = self.workspace.var("Ntot_Vpj").getVal()
         if self.workspace.function("Ntot_Signal") != None:
             N_Signal = self.workspace.function("Ntot_Signal").getVal()
-        else: N_Signal = 0.
-
+        else:
+            N_Signal = 0.
 
         # Generate a sample of signal
         effCutSignal = 1
         self.workspace.var("Ntot_Vpj").setVal(0.)
         self.workspace.var("Ntot_TTj1b").setVal(0.)
         self.workspace.var("Ntot_TTj2b").setVal(0.)
-        if N_Signal>1:
+        if N_Signal > 1:
             toyDataSignal = self.workspace.pdf(self.signalmodel).generate(self.workspace.set('variables'), int(1000*(N_Signal)))
             beforeCutSignal = float(toyDataSignal.sumEntries())
             toyDataSignal = toyDataSignal.reduce(rangeCut)
@@ -1108,7 +1071,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_Vpj").setVal(N_Vpj)
         self.workspace.var("Ntot_TTj1b").setVal(0.)
         self.workspace.var("Ntot_TTj2b").setVal(0.)
-        if N_Vpj>1:
+        if N_Vpj > 1:
             toyDataVpj = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(1000*(N_Vpj)))
             beforeCutVpj = float(toyDataVpj.sumEntries())
             toyDataVpj = toyDataVpj.reduce(rangeCut)
@@ -1120,7 +1083,7 @@ class RazorBox(Box.Box):
         self.workspace.var("Ntot_Vpj").setVal(0.)
         self.workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
         self.workspace.var("Ntot_TTj2b").setVal(0.)
-        if N_TTj1b>1 :
+        if N_TTj1b > 1:
             toyDataTTj1b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(1000*(N_TTj1b)))
             beforeCutTTj1b = float(toyDataTTj1b.sumEntries())
             toyDataTTj1b = toyDataTTj1b.reduce(rangeCut)
@@ -1128,13 +1091,13 @@ class RazorBox(Box.Box):
             effCutTTj1b = afterCutTTj1b / beforeCutTTj1b
 
         # Generate a sample of TTj2b
-        print "f1_TTj2b = %f"%self.workspace.var("f1_TTj2b").getVal()
-        print "f3_TTj2b = %f"%self.workspace.var("f3_TTj2b").getVal()
+        print "f1_TTj2b = %f" % self.workspace.var("f1_TTj2b").getVal()
+        print "f3_TTj2b = %f" % self.workspace.var("f3_TTj2b").getVal()
         effCutTTj2b = 1
         self.workspace.var("Ntot_Vpj").setVal(0.)
         self.workspace.var("Ntot_TTj1b").setVal(0.)
         self.workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
-        if N_TTj2b>1 :
+        if N_TTj2b > 1:
             toyDataTTj2b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(1000*(N_TTj2b)))
             beforeCutTTj2b = float(toyDataTTj2b.sumEntries())
             toyDataTTj2b = toyDataTTj2b.reduce(rangeCut)
@@ -1144,9 +1107,9 @@ class RazorBox(Box.Box):
         # set the event yields back to their original values
         # NOTE: these original values REFER TO THE FULL RANGE OF VARIABLES MR and Rsq and nBtag!
         print "EFFICIENCIES for this rangeCut"
-        print "TTj1b %f"%effCutTTj1b
-        print "TTj2b %f"%effCutTTj2b
-        print "Vpj %f"%effCutVpj
+        print "TTj1b %f" % effCutTTj1b
+        print "TTj2b %f" % effCutTTj2b
+        print "Vpj %f" % effCutVpj
         self.workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
         self.workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
         self.workspace.var("Ntot_Vpj").setVal(N_Vpj)
@@ -1154,9 +1117,8 @@ class RazorBox(Box.Box):
         # variable binning for plots
         MRbins = getBinning(self.name, "MR", self.btag)
         Rsqbins = getBinning(self.name, "Rsq", self.btag)
-        x = array('d',MRbins)
-        y = array('d',Rsqbins)
-
+        x = array('d', MRbins)
+        y = array('d', Rsqbins)
 
         # define 2D histograms
         histoData = self.setPoissonErrors(rt.TH2D("histo2DData","", len(MRbins)-1, x, len(Rsqbins)-1, y))
@@ -1173,14 +1135,11 @@ class RazorBox(Box.Box):
         histoToyTTj2bFineBin = self.setPoissonErrors(rt.TH2D("histo2DToyTTj2bFine","", 100, x[0],x[-1],100,y[0],y[-1]))
 
         def setName(h):
-            h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(),'MRRsq','_'.join(ranges)) )
-            # axis labels
+            h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(), 'MRRsq', '_'.join(ranges)))
             h.GetXaxis().SetTitleSize(0.065)
             h.GetYaxis().SetTitleSize(0.065)
             h.GetXaxis().SetLabelSize(0.065)
             h.GetYaxis().SetLabelSize(0.065)
-            #h.GetXaxis().SetTitleOffset(0.90)
-            #h.GetYaxis().SetTitleOffset(0.93)
             h.GetXaxis().SetMoreLogLabels()
             h.GetXaxis().SetNoExponent()
 
@@ -1188,12 +1147,10 @@ class RazorBox(Box.Box):
             h.GetYaxis().SetTitle("R^{2}")
             h.GetXaxis().SetTitle("M_{R}[GeV]")
 
-
-
         def SetErrors(histo):
-            for i in range(1,histo.GetNbinsX()+1):
-                for j in range(1,histo.GetNbinsY()+1):
-                    histo.SetBinError(i,j, rt.TMath.Sqrt(histo.GetBinContent(i, j)))
+            for i in range(1, histo.GetNbinsX()+1):
+                for j in range(1, histo.GetNbinsY()+1):
+                    histo.SetBinError(i, j, rt.TMath.Sqrt(histo.GetBinContent(i, j)))
 
         # project the data on the histograms
         MRRsqList = rt.RooArgList()
@@ -1201,37 +1158,37 @@ class RazorBox(Box.Box):
         MRRsqList.add(self.workspace.var('Rsq'))
 
         data.reduce(rangeCut)
-        data.fillHistogram(histoData,MRRsqList)
-        data.fillHistogram(histoDataFineBin,MRRsqList)
+        data.fillHistogram(histoData, MRRsqList)
+        data.fillHistogram(histoDataFineBin, MRRsqList)
 
-        if N_Signal>1:
-            toyDataSignal.fillHistogram(histoToySignal,MRRsqList)
-            toyDataSignal.fillHistogram(histoToySignalFineBin,MRRsqList)
-        if N_Vpj>1:
-            toyDataVpj.fillHistogram(histoToyVpj,MRRsqList)
-            toyDataVpj.fillHistogram(histoToyVpjFineBin,MRRsqList)
-        if N_TTj1b>1 :
-            toyDataTTj1b.fillHistogram(histoToyTTj1b,MRRsqList)
-            toyDataTTj1b.fillHistogram(histoToyTTj1bFineBin,MRRsqList)
-        if N_TTj2b>1 :
-            toyDataTTj2b.fillHistogram(histoToyTTj2b,MRRsqList)
-            toyDataTTj2b.fillHistogram(histoToyTTj2bFineBin,MRRsqList)
+        if N_Signal > 1:
+            toyDataSignal.fillHistogram(histoToySignal, MRRsqList)
+            toyDataSignal.fillHistogram(histoToySignalFineBin, MRRsqList)
+        if N_Vpj > 1:
+            toyDataVpj.fillHistogram(histoToyVpj, MRRsqList)
+            toyDataVpj.fillHistogram(histoToyVpjFineBin, MRRsqList)
+        if N_TTj1b > 1:
+            toyDataTTj1b.fillHistogram(histoToyTTj1b, MRRsqList)
+            toyDataTTj1b.fillHistogram(histoToyTTj1bFineBin, MRRsqList)
+        if N_TTj2b > 1:
+            toyDataTTj2b.fillHistogram(histoToyTTj2b, MRRsqList)
+            toyDataTTj2b.fillHistogram(histoToyTTj2bFineBin, MRRsqList)
         # make the total
-        if self.workspace.var("Ntot_Vpj") != None and N_Vpj>1:
+        if self.workspace.var("Ntot_Vpj") != None and N_Vpj > 1:
             histoToy.Add(histoToyVpj, +1)
             histoToyFineBin.Add(histoToyVpjFineBin, +1)
-        if self.workspace.var("Ntot_TTj1b") != None and N_TTj1b>1 :
+        if self.workspace.var("Ntot_TTj1b") != None and N_TTj1b > 1:
             histoToy.Add(histoToyTTj1b, +1)
             histoToyFineBin.Add(histoToyTTj1bFineBin, +1)
-        if self.workspace.var("Ntot_TTj2b") != None and N_TTj2b>1:
+        if self.workspace.var("Ntot_TTj2b") != None and N_TTj2b > 1:
             histoToy.Add(histoToyTTj2b, +1)
             histoToyFineBin.Add(histoToyTTj2bFineBin, +1)
 
         # We shouldn't scale to the data, we should scale to our prediction
-        print "DATA NORM %f"%histoData.Integral()
-        print "FIT NORM  %f"%(N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)
+        print "DATA NORM %f" % histoData.Integral()
+        print "FIT NORM  %f" % (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)
         scaleFactor = (N_TTj2b*effCutTTj2b+N_Vpj*effCutVpj+N_TTj1b*effCutTTj1b)/histoToy.Integral()
-        print "scaleFactor = %f"%scaleFactor
+        print "scaleFactor = %f" % scaleFactor
 
         histoToySignal.Scale(0.001)
         histoToySignalFineBin.Scale(0.001)
@@ -1304,8 +1261,6 @@ class RazorBox(Box.Box):
         #histoToyFineBin.SetMaximum(50)
         #histoToyFineBin.Draw("colz")
 
-
-
         pt = rt.TPaveText(0.5,0.65,0.93,0.88,"ndc")
         pt.SetBorderSize(0)
         pt.SetTextSize(0.04)
@@ -1337,8 +1292,6 @@ class RazorBox(Box.Box):
                     tlatexList.append(tlatex)
 
         #for tlatex in tlatexList: tlatex.Draw()
-
-
 
         # the real log labels
         tlabels = []
@@ -1389,7 +1342,6 @@ class RazorBox(Box.Box):
 
         col1 = rt.gROOT.GetColor(rt.kGray+1)
         #col1.SetAlpha(0.3)
-
 
         fGreenGraphs = []
         if fitLabel=="Sideband":
@@ -1509,13 +1461,13 @@ class RazorBox(Box.Box):
         c.cd()
 
         histToReturn = [histoToy, histoData, c]
-        #histToReturn.append(histoToyVpj)
-        #histToReturn.append(histoToyTTj1b)
-        #histToReturn.append(histoToyTTj2b)
-        #histToReturn.append(histoToySignal)
+        # histToReturn.append(histoToyVpj)
+        # histToReturn.append(histoToyTTj1b)
+        # histToReturn.append(histoToyTTj2b)
+        # histToReturn.append(histoToySignal)
 
-
-        c.Print("razor_canvas_%s_%s_%s_%s.pdf"%(self.name,fitLabel,'_'.join(ranges), 'MR_Rsq'))
+        c.Print("razor_canvas_%s_%s_%s_%s.pdf" % (self.name, fitLabel,
+                '_'.join(ranges), 'MR_Rsq'))
 
         return histToReturn
 
@@ -2131,3 +2083,446 @@ class RazorBox(Box.Box):
 
         histoToy.extend(histoData)
         return [h for h in histoToy]
+
+    def plot3DHisto(self, inputFile, ranges=None, data=None, fitmodel=None):
+        # Preliminary = "Preliminary"
+        Preliminary = "Simulation"
+        Energy = 8.0
+        if ranges is None:
+            ranges = ['']
+
+        rangeCut = self.getVarRangeCutNamed(ranges=ranges)
+        print ''
+        print 'rangeCut', rangeCut
+        print ''
+
+        if data is None:
+            data = RootTools.getDataSet(inputFile, 'RMRTree', self.cut)
+            data = data.reduce(rangeCut)
+        data = data.reduce(self.cut)
+        data = data.reduce(rangeCut)
+
+        # save original event yields
+        if self.workspace.var("Ntot_TTj2b") != None:
+            N_TTj2b = self.workspace.var("Ntot_TTj2b").getVal()
+        if self.workspace.var("Ntot_TTj1b") != None:
+            N_TTj1b = self.workspace.var("Ntot_TTj1b").getVal()
+        if self.workspace.var("Ntot_Vpj") != None:
+            N_Vpj = self.workspace.var("Ntot_Vpj").getVal()
+        if self.workspace.function("Ntot_Signal") != None:
+            N_Signal = self.workspace.function("Ntot_Signal").getVal()
+        else:
+            N_Signal = 0.
+
+        # Generate a sample of signal
+        effCutSignal = 1
+        self.workspace.var("Ntot_Vpj").setVal(0.)
+        self.workspace.var("Ntot_TTj1b").setVal(0.)
+        self.workspace.var("Ntot_TTj2b").setVal(0.)
+        if N_Signal > 1:
+            toyDataSignal = self.workspace.pdf(self.signalmodel).generate(self.workspace.set('variables'), int(1000*(N_Signal)))
+            beforeCutSignal = float(toyDataSignal.sumEntries())
+            toyDataSignal = toyDataSignal.reduce(rangeCut)
+            afterCutSignal = float(toyDataSignal.sumEntries())
+            effCutSignal = afterCutSignal / beforeCutSignal
+
+        # Generate a sample of Vpj
+        effCutVpj = 1
+        self.workspace.var("Ntot_Vpj").setVal(N_Vpj)
+        self.workspace.var("Ntot_TTj1b").setVal(0.)
+        self.workspace.var("Ntot_TTj2b").setVal(0.)
+        if N_Vpj > 1:
+            toyDataVpj = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(1000*(N_Vpj)))
+            beforeCutVpj = float(toyDataVpj.sumEntries())
+            toyDataVpj = toyDataVpj.reduce(rangeCut)
+            afterCutVpj = float(toyDataVpj.sumEntries())
+            effCutVpj = afterCutVpj / beforeCutVpj
+
+        # Generate a sample of TTj1b
+        effCutTTj1b = 1
+        self.workspace.var("Ntot_Vpj").setVal(0.)
+        self.workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
+        self.workspace.var("Ntot_TTj2b").setVal(0.)
+        if N_TTj1b > 1:
+            toyDataTTj1b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(1000*(N_TTj1b)))
+            beforeCutTTj1b = float(toyDataTTj1b.sumEntries())
+            toyDataTTj1b = toyDataTTj1b.reduce(rangeCut)
+            afterCutTTj1b = float(toyDataTTj1b.sumEntries())
+            effCutTTj1b = afterCutTTj1b / beforeCutTTj1b
+
+        # Generate a sample of TTj2b
+        print "f1_TTj2b = %f" % self.workspace.var("f1_TTj2b").getVal()
+        print "f3_TTj2b = %f" % self.workspace.var("f3_TTj2b").getVal()
+        effCutTTj2b = 1
+        self.workspace.var("Ntot_Vpj").setVal(0.)
+        self.workspace.var("Ntot_TTj1b").setVal(0.)
+        self.workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
+        if N_TTj2b > 1:
+            toyDataTTj2b = self.workspace.pdf(fitmodel).generate(self.workspace.set('variables'), int(1000*(N_TTj2b)))
+            beforeCutTTj2b = float(toyDataTTj2b.sumEntries())
+            toyDataTTj2b = toyDataTTj2b.reduce(rangeCut)
+            afterCutTTj2b = float(toyDataTTj2b.sumEntries())
+            effCutTTj2b = afterCutTTj2b / beforeCutTTj2b
+
+        # set the event yields back to their original values
+        # NOTE: these original values REFER TO THE FULL RANGE OF VARIABLES MR and Rsq and nBtag!
+        print "EFFICIENCIES for this rangeCut"
+        print "TTj1b %f" % effCutTTj1b
+        print "TTj2b %f" % effCutTTj2b
+        print "Vpj %f" % effCutVpj
+        self.workspace.var("Ntot_TTj2b").setVal(N_TTj2b)
+        self.workspace.var("Ntot_TTj1b").setVal(N_TTj1b)
+        self.workspace.var("Ntot_Vpj").setVal(N_Vpj)
+
+        # variable binning for plots
+        MRbins = getBinning(self.name, "MR", self.btag)
+        Rsqbins = getBinning(self.name, "Rsq", self.btag)
+        nBtagbins = [1., 2., 3., 4]
+        x = array('d', MRbins)
+        y = array('d', Rsqbins)
+        z = array('d', nBtagbins)
+
+        # define 2D histograms
+        histoData = self.setPoissonErrors(rt.TH3D("histo3DData", "",
+                                          len(MRbins)-1, x,
+                                          len(Rsqbins)-1, y,
+                                          len(nBtagbins)-1, z))
+        histoToy = self.setPoissonErrors(rt.TH3D("histo3DToy", "",
+                                         len(MRbins)-1, x,
+                                         len(Rsqbins)-1, y,
+                                         len(nBtagbins)-1, z))
+        histoToySignal = self.setPoissonErrors(rt.TH3D("histo3DToySignal", "",
+                                               len(MRbins)-1, x,
+                                               len(Rsqbins)-1, y,
+                                               len(nBtagbins)-1, z))
+        histoToyVpj = self.setPoissonErrors(rt.TH3D("histo3DToyVpj", "",
+                                            len(MRbins)-1, x,
+                                            len(Rsqbins)-1, y,
+                                            len(nBtagbins)-1, z))
+        histoToyTTj1b = self.setPoissonErrors(rt.TH3D("histo3DToyTTj1b", "",
+                                              len(MRbins)-1, x,
+                                              len(Rsqbins)-1, y,
+                                              len(nBtagbins)-1, z))
+        histoToyTTj2b = self.setPoissonErrors(rt.TH3D("histo3DToyTTj2b", "",
+                                              len(MRbins)-1, x,
+                                              len(Rsqbins)-1, y,
+                                              len(nBtagbins)-1, z))
+
+        def setName(h):
+            h.SetName('%s_%s_%s_ALLCOMPONENTS' % (h.GetName(), 'MRRsqBtag',
+                      '_'.join(ranges)))
+            h.GetXaxis().SetTitleSize(0.065)
+            h.GetYaxis().SetTitleSize(0.065)
+            h.GetZaxis().SetTitleSize(0.065)
+            h.GetXaxis().SetLabelSize(0.065)
+            h.GetYaxis().SetLabelSize(0.065)
+            h.GetZaxis().SetLabelSize(0.065)
+            h.GetXaxis().SetMoreLogLabels()
+            h.GetXaxis().SetNoExponent()
+            h.GetYaxis().SetTitle("R^{2}")
+            h.GetXaxis().SetTitle("M_{R}[GeV]")
+            h.GetZaxis().SetTitle("N b-tags")
+
+        def SetErrors(histo):
+            for i in range(1, histo.GetNbinsX()+1):
+                for j in range(1, histo.GetNbinsY()+1):
+                    for k in range(1, histo.GetNbinsZ()+1):
+                        histo.SetBinError(i, j, k,
+                                          rt.TMath.Sqrt(histo.GetBinContent(i, j, k)))
+
+        # project the data on the histograms
+        MRRsqnBtagList = rt.RooArgList()
+        MRRsqnBtagList.add(self.workspace.var('MR'))
+        MRRsqnBtagList.add(self.workspace.var('Rsq'))
+        MRRsqnBtagList.add(self.workspace.var('nBtag'))
+
+        data.reduce(rangeCut)
+        data.fillHistogram(histoData, MRRsqnBtagList)
+
+        if N_Signal > 1:
+            toyDataSignal.fillHistogram(histoToySignal, MRRsqnBtagList)
+        if N_Vpj > 1:
+            toyDataVpj.fillHistogram(histoToyVpj, MRRsqnBtagList)
+        if N_TTj1b > 1:
+            toyDataTTj1b.fillHistogram(histoToyTTj1b, MRRsqnBtagList)
+        if N_TTj2b > 1:
+            toyDataTTj2b.fillHistogram(histoToyTTj2b, MRRsqnBtagList)
+        # make the total
+        if self.workspace.var("Ntot_Vpj") is not None and N_Vpj > 1:
+            histoToy.Add(histoToyVpj, +1)
+        if self.workspace.var("Ntot_TTj1b") is not None and N_TTj1b > 1:
+            histoToy.Add(histoToyTTj1b, +1)
+        if self.workspace.var("Ntot_TTj2b") is not None and N_TTj2b > 1:
+            histoToy.Add(histoToyTTj2b, +1)
+
+        # We shouldn't scale to the data, we should scale to our prediction
+        print "DATA NORM %f" % histoData.Integral()
+        print "FIT NORM  %f" % (N_TTj2b * effCutTTj2b + N_Vpj * effCutVpj +
+                                N_TTj1b * effCutTTj1b)
+        scaleFactor = (N_TTj2b * effCutTTj2b + N_Vpj * effCutVpj +
+                       N_TTj1b * effCutTTj1b) / histoToy.Integral()
+        print "scaleFactor = %f" % scaleFactor
+
+        histoToySignal.Scale(0.001)
+        histoToyTTj2b.Scale(0.001)
+        histoToyVpj.Scale(0.001)
+        histoToyTTj1b.Scale(0.001)
+        SetErrors(histoToyTTj2b)
+        SetErrors(histoToyVpj)
+        SetErrors(histoToyTTj1b)
+        setName(histoToyTTj2b)
+        setName(histoToyVpj)
+        setName(histoToyTTj1b)
+
+        histoToy.Scale(0.001)
+        SetErrors(histoToy)
+        setName(histoData)
+        setName(histoToy)
+        setName(histoToySignal)
+
+        rt.gStyle.SetOptStat(0000)
+        rt.gStyle.SetOptTitle(0)
+
+        # showTTj2b = (N_TTj2b > 0)
+        # showVpj = (N_Vpj > 0)
+        # showTTj1b = (N_TTj1b > 0)
+        # showSignal = (N_Signal > 0)
+
+        c = rt.TCanvas("c", "c", 600, 400)
+        c.SetLeftMargin(0.15)
+        c.SetBottomMargin(0.15)
+        c.SetLogy()
+        c.SetLogx()
+        c.Update()
+
+        ncontours = 999
+        stops = [0.00, 0.1, 0.25, 0.65, 1.00]
+        red = [1.0, 0.95, 0.95, 0.65, 0.15]
+        green = [1.0, 0.85, 0.7, 0.5, 0.3]
+        blue = [0.95, 0.6, 0.3, 0.45, 0.65]
+        s = array('d', stops)
+        r = array('d', red)
+        g = array('d', green)
+        b = array('d', blue)
+        npoints = len(s)
+        # rt.TColor.CreateGradientColorTable(npoints, s, r, g, b, ncontours)
+        rt.gStyle.SetNumberContours(ncontours)
+
+        rt.gStyle.cd()
+
+        Red = array('d', [0.00, 0.70, 0.90, 1.00, 1.00, 1.00, 1.00])
+        Green = array('d', [0.00, 0.70, 0.90, 1.00, 0.90, 0.70, 0.00])
+        Blue = array('d', [1.00, 1.00, 1.00, 1.00, 0.90, 0.70, 0.00])
+        Length = array('d', [0.00, 0.10, 0.25, 0.333, 0.5, 0.85, 1.00])  # colors get darker faster at 4sigma
+        # rt.TColor.CreateGradientColorTable(7,Length,Red,Green,Blue,999)
+        rt.gStyle.SetNumberContours(999)
+
+        histoDivide = histoData.Clone("histoDivide")
+        histoDivide.SetMaximum(3.)
+        histoDivide.Divide(histoToy)
+        # histoDivide.Draw("colz")
+        # histoToySignal.Draw("colz")
+
+        pt = rt.TPaveText(0.5, 0.65, 0.93, 0.88, "ndc")
+        pt.SetBorderSize(0)
+        pt.SetTextSize(0.04)
+        pt.SetFillColor(0)
+        pt.SetFillStyle(0)
+        pt.SetLineColor(0)
+        pt.SetTextAlign(21)
+        pt.SetTextFont(42)
+        text = pt.AddText("CMS %s #sqrt{s} = %i TeV" %
+                          (Preliminary, int(Energy)))
+        Lumi = 19.3
+        text = pt.AddText("Razor %s Box #int L = %3.1f fb^{-1}" %
+                          (self.name, Lumi))
+        text = pt.AddText("pp#rightarrowt#bar{t}+jets,  #sigma = 234 pb")
+        # text = pt.AddText("Razor pdf")
+        # text = pt.AddText("")
+        text = pt.AddText("pp#rightarrow#tilde{g}#tilde{g}, #tilde{g}#rightarrow b#bar{b}#tilde{#chi}^{0}, #sigma = 0.01 pb")
+        pt.Draw("same")
+
+        # tlatexList = []
+        # for iBinX in range(1, histoToy.GetNbinsX()+1):
+        #     for iBinY in range(1, histoToy.GetNbinsY()+1):
+        #         binCont = histoToy.GetBinContent(iBinX, iBinY)
+        #         datCont = histoData.GetBinContent(iBinX, iBinY)
+        #         if binCont >= 1. or datCont >= 1.:
+        #             xBin = histoToy.GetXaxis().GetBinLowEdge(iBinX) + .25 * histoToy.GetXaxis().GetBinWidth(iBinX)
+        #             yBin = histoToy.GetYaxis().GetBinLowEdge(iBinY) + .3 * histoToy.GetYaxis().GetBinWidth(iBinY)
+        #             tlatex = rt.TLatex(xBin, yBin, "#frac{%.0f}{%.0f}"
+        #                                % (datCont, binCont))
+        #             tlatex.SetTextSize(0.05)
+        #             tlatex.SetTextFont(42)
+        #             tlatexList.append(tlatex)
+        # for tlatex in tlatexList: tlatex.Draw()
+
+        # the real log labels
+        tlabels = []
+        if self.name == "MultiJet" or self.name == "TauTauJet" or self.name == "Jet2b":
+            tlabels.append(rt.TLatex(330, 0.76, "0.8"))
+            tlabels.append(rt.TLatex(330, 0.47, "0.5"))
+            tlabels.append(rt.TLatex(330, 0.285, "0.3"))
+        else:
+            tlabels.append(rt.TLatex(240, 0.75, "0.8"))
+            tlabels.append(rt.TLatex(240, 0.375, "0.4"))
+            tlabels.append(rt.TLatex(240, 0.19, "0.2"))
+
+        for tlabel in tlabels:
+            tlabel.SetTextSize(0.065)
+            tlabel.SetTextFont(42)
+            tlabel.Draw()
+
+        # the gray lines
+        xLines = []
+        yLines = []
+
+        lastX = len(x)-1
+        lastY = len(y)-1
+
+        for i in range(1, lastY):
+            xLines.append(rt.TLine(x[0], y[i], x[lastX], y[i]))
+            xLines[i-1].SetLineStyle(2)
+            xLines[i-1].SetLineColor(rt.kGray)
+
+        for i in range(1, lastX):
+            yLines.append(rt.TLine(x[i], y[0], x[i], y[lastY]))
+            yLines[i-1].SetLineStyle(2)
+            yLines[i-1].SetLineColor(rt.kGray)
+
+        fitLabel = '_'.join(self.fitregion.split(","))
+        if self.fitregion == "LowRsq,LowMR,HighMR":
+            fitLabel = "FULL"
+        elif self.fitregion == "LowRsq,LowMR":
+            fitLabel = "Sideband"
+
+        col1 = rt.gROOT.GetColor(rt.kGray+1)
+        # col1.SetAlpha(0.3)
+
+        fGreenGraphs = []
+        if fitLabel == "Sideband":
+            predColor = rt.kGreen
+            yLines.append(rt.TLine(x[2], y[1], x[2], y[-1]))
+            yLines[-1].SetLineStyle(2)
+            yLines[-1].SetLineWidth(2)
+            yLines[-1].SetLineColor(predColor)
+            xLines.append(rt.TLine(x[2], y[1], x[-1], y[1]))
+            xLines[-1].SetLineStyle(2)
+            xLines[-1].SetLineWidth(2)
+            xLines[-1].SetLineColor(predColor)
+            col2 = rt.gROOT.GetColor(predColor-10)
+            # col2.SetAlpha(0.5)
+
+            fGreen = rt.TGraph(5)
+            fGreen.SetPoint(0, x[0], y[1])
+            fGreen.SetPoint(1, x[2], y[1])
+            fGreen.SetPoint(2, x[2], y[-1])
+            fGreen.SetPoint(3, x[0], y[-1])
+            fGreen.SetPoint(4, x[0], y[1])
+            fGreen.SetFillColor(predColor-10)
+            fGreenGraphs.append(fGreen)
+
+            fGreen = rt.TGraph(5)
+            fGreen.SetPoint(0, x[1], y[0])
+            fGreen.SetPoint(1, x[-1], y[0])
+            fGreen.SetPoint(2, x[-1], y[1])
+            fGreen.SetPoint(3, x[1], y[1])
+            fGreen.SetPoint(4, x[1], y[0])
+            fGreen.SetFillColor(predColor-10)
+            fGreenGraphs.append(fGreen)
+
+        elif fitLabel == "LowRsq":
+            predColor = rt.kMagenta
+            xLines.append(rt.TLine(x[1], y[1], x[-1], y[1]))
+            xLines[-1].SetLineStyle(2)
+            xLines[-1].SetLineWidth(2)
+            xLines[-1].SetLineColor(predColor)
+            col2 = rt.gROOT.GetColor(predColor-10)
+            # col2.SetAlpha(0.5)
+
+            fGreen = rt.TGraph(5)
+            fGreen.SetPoint(0, x[1], y[0])
+            fGreen.SetPoint(1, x[-1], y[0])
+            fGreen.SetPoint(2, x[-1], y[1])
+            fGreen.SetPoint(3, x[1], y[1])
+            fGreen.SetPoint(4, x[1], y[0])
+            fGreen.SetFillColor(predColor-10)
+            fGreenGraphs.append(fGreen)
+        elif fitLabel == "LowMR":
+            predColor = rt.kCyan
+            yLines.append(rt.TLine(x[2], y[1], x[2], y[-1]))
+            yLines[-1].SetLineStyle(2)
+            yLines[-1].SetLineWidth(2)
+            yLines[-1].SetLineColor(predColor)
+            col2 = rt.gROOT.GetColor(predColor-10)
+            # col2.SetAlpha(0.5)
+
+            fGreen = rt.TGraph(5)
+            fGreen.SetPoint(0, x[0], y[1])
+            fGreen.SetPoint(1, x[2], y[1])
+            fGreen.SetPoint(2, x[2], y[-1])
+            fGreen.SetPoint(3, x[0], y[-1])
+            fGreen.SetPoint(4, x[0], y[1])
+            fGreen.SetFillColor(predColor-10)
+            fGreenGraphs.append(fGreen)
+        elif fitLabel == "FULL":
+            predColor = rt.kBlue
+            col2 = rt.gROOT.GetColor(predColor-10)
+            # col2.SetAlpha(0.5)
+
+            fGreen = rt.TGraph(5)
+            fGreen.SetPoint(0,x[0],y[1])
+            fGreen.SetPoint(1,x[1],y[1])
+            fGreen.SetPoint(2,x[1],y[-1])
+            fGreen.SetPoint(3,x[0],y[-1])
+            fGreen.SetPoint(4,x[0],y[1])
+            fGreen.SetFillColor(predColor-10)
+            fGreenGraphs.append(fGreen)
+
+            fGreen = rt.TGraph(5)
+            fGreen.SetPoint(0,x[1],y[0])
+            fGreen.SetPoint(1,x[-1],y[0])
+            fGreen.SetPoint(2,x[-1],y[-1])
+            fGreen.SetPoint(3,x[1],y[-1])
+            fGreen.SetPoint(4,x[1],y[0])
+            fGreen.SetFillColor(predColor-10)
+            fGreenGraphs.append(fGreen)
+
+        fGrayGraphs = []
+        fGray = rt.TGraph(5)
+
+        if fitLabel=="LowMR":
+            fGray.SetPoint(0,x[0],y[0])
+            fGray.SetPoint(1,x[0],y[1])
+            fGray.SetPoint(2,x[-1],y[1])
+            fGray.SetPoint(3,x[-1],y[0])
+            fGray.SetPoint(4,x[0],y[0])
+        else:
+            fGray.SetPoint(0,x[0],y[0])
+            fGray.SetPoint(1,x[0],y[1])
+            fGray.SetPoint(2,x[1],y[1])
+            fGray.SetPoint(3,x[1],y[0])
+            fGray.SetPoint(4,x[0],y[0])
+        fGray.SetFillColor(rt.kGray+1)
+        fGrayGraphs.append(fGray)
+
+        for i in range(0,len(xLines)): xLines[i].Draw()
+        for i in range(0,len(yLines)): yLines[i].Draw()
+
+        for fGreen in fGreenGraphs: fGreen.Draw("F")
+        for fGray in fGrayGraphs: fGray.Draw("F")
+
+        c.Update()
+
+        c.cd()
+
+        histToReturn = [histoToy, histoData]  # , c]
+        histToReturn.append(histoToyVpj)
+        histToReturn.append(histoToyTTj1b)
+        histToReturn.append(histoToyTTj2b)
+        # histToReturn.append(histoToySignal)
+
+        # c.Print("razor_canvas_%s_%s_%s_%s.pdf" % (self.name, fitLabel,
+        #         '_'.join(ranges), 'MR_Rsq'))
+
+        return histToReturn

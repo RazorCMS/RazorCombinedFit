@@ -1,7 +1,10 @@
 """Script to run prepareCombineWorkspace.py on a mLSP strip"""
-import sys, os
+import sys
+import os
 import ROOT as rt
 import os.path
+from optparse import OptionParser
+
 
 def get_xsec(model, susy_mass):
     """Return the xsec for a given mass and model"""
@@ -14,8 +17,8 @@ def get_xsec(model, susy_mass):
     gluino_file = rt.TFile.Open(ref_xsec_file, "READ")
     gluino_hist_name = ref_xsec_file.split("/")[-1].split(".")[0]
     gluino_hist = gluino_file.Get(gluino_hist_name)
-    ref_xsec = 1.e3*gluino_hist.GetBinContent(gluino_hist.FindBin(susy_mass))
-    print "INFO: ref xsec taken to be: %s mass %d, xsec = %f fb" % \
+    ref_xsec = gluino_hist.GetBinContent(gluino_hist.FindBin(susy_mass))
+    print "INFO: ref xsec taken to be: %s mass %d, xsec = %f pb" % \
         (gluino_hist_name, susy_mass, ref_xsec)
 
     return ref_xsec
@@ -23,87 +26,111 @@ def get_xsec(model, susy_mass):
 
 if __name__ == '__main__':
 
-    MODEL = sys.argv[1]
+    PARSER = OptionParser()
+    PARSER.add_option('--fitMode', dest='fitMode', default='3D', type='string',
+                      help='2D or 3D fit')
+    PARSER.add_option('--totalPDF', dest='pdfMode', default='split',
+                      type='string',
+                      help='limit on the total bkg PDF, or on the individual '
+                      'bkg components')
 
-    strengthMod = ''
-    # njets = '4jets'
-    # box   = 'Ele'
-    # name = 'Ele_4jets'
-    box = 'BJetHS'
-    njets = 'gt6'
-    susy_xsecs = {150:80.268,
-                  175:36.7994,
-                  200:18.5245,
-                  225:9.90959,
-                  250:5.57596,
-                  275:3.2781,
-                  300:1.99608,
-                  325:1.25277,
-                  350:0.807323,
-                  375:0.531443,
-                  400:0.35683,
-                  425:0.243755,
-                  450:0.169688,
-                  475:0.119275,
-                  500:0.0855847,
-                  525:0.0618641,
-                  550:0.0452067,
-                  575:0.0333988,
-                  600:0.0248009,
-                  625:0.0185257,
-                  650:0.0139566,
-                  675:0.0106123,
-                  700:0.0081141,
-                  725:0.00623244,
-                  750:0.00480639,
-                  775:0.00372717}
+    (options, args) = PARSER.parse_args()
 
-    for mass in range(400, 1425, 25):
-    # for mass in range(150, 800, 25):
+    MODEL = args[0]
+    box = args[1]
+    smsdir = args[2]
+    fitMode = options.fitMode
+    pdfMode = options.pdfMode
 
-        if not os.path.isfile("Datasets/T1tttt/mLSP25/SMS-T1tttt_mGluino-"
-                              "Combo_mLSP_25.0_8TeV-Pythia6Zstar-Summer12-"
-                              "START52_V9_FSIM-v1-SUSY_MR450.0_R0.316227766017"
-                              "_%s.0_25.0_%s.root" % (mass, box)):
+    if MODEL == 'T1tttt':
+        mass_range = range(400, 1425, 25)
+    elif MODEL == 'T2tt':
+        mass_range = range(150, 800, 25)
+
+    if box in ['Ele', 'Mu']:
+        mr_point = 'MR350.0_R0.387298334621'
+    else:
+        mr_point = 'MR450.0_R0.316227766017'
+
+    for mass in mass_range:
+
+        if MODEL == 'T1tttt' and not\
+            os.path.isfile("Datasets/T1tttt_complete/%s/mLSP_25/"
+                           "SMS-T1tttt_mGluino-"
+                           "Combo_mLSP_25.0_8TeV-Pythia6Zstar-Summer12-"
+                           "START52_V9_FSIM-v1-SUSY_%s"
+                           "_%s.0_25.0_%s.root" % (box, mr_point, mass, box)):
             continue
 
-        if MODEL != 'T1tttt':
-            susy_xsecs[mass] *= 1000.
+        elif MODEL == 'T2tt' and box in ['Ele', 'Mu'] and not\
+            os.path.isfile("%s/SMS-T2tt_mStop-Combo_mLSP_25.0_8TeV-Pythia6Z"
+                           "-Summer12-START52_V9_FSIM-v1-SUSY_"
+                           "%s_%s.0_25.0_%s.root" %
+                           (smsdir, mr_point, mass, box)):
+            continue
 
-        # os.system( "python prepareCombineWorkspace.py --box %s
-        # -i /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/FitResults/razor_Single%s3D_%s_%s_FULL.root
-        # --xsec %s -c /afs/cern.ch/user/l/lucieg/scratch1/Mar28_combine/CMSSW_6_1_2/src/RazorCombinedFit/config_summer2012/RazorMultiJet2013_3D_hybrid.config /afs/cern.ch/work/l/lucieg/private/MC/T2tt%s%s/mLSP25/SMS-T2tt_mStop-Combo_mLSP_25.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-v1-SUSY_MR350.0_R0.282842712475_%s.0_25.0_%s.root"%(name, box, njets, box, str(susy_xsecs[mass]), box, njets, mass, box))
-
+        elif MODEL == 'T2tt' and box in ['BJetHS', 'BJetLs'] and not\
+            os.path.isfile("tmp_Datasets_Aug11/mLSP_25/SMS-T2tt_mStop-Combo_"
+                           "mLSP_25.0_8TeV-Pythia6Z-Summer12-START52_V9_FSIM-"
+                           "v1-SUSY_%s_%s.0_25.0_%s.root"
+                           % (mr_point, mass, box)):
+            continue
 
         if MODEL == 'T1tttt':
-            os.system(("python scripts/prepareCombineWorkspace.py --box %s -i"
-                       "/home/uscms208/cms/RazorCombinedFit_Git/fit_results/"
-                       "fit_result_FULL_%s.root --xsec %s -c config_summer2012/"
-                       "RazorMultiJet2013_3D_hybrid.config -m T1tttt "
-                       "Datasets/T1tttt/mLSP25/"
+            os.system(("python scripts/prepareCombineSimple.py --box %s -i"
+                       "/home/uscms208/cms/CMSSW_6_1_2/src/"
+                       "RazorCombinedFit_lucieg_May29/fit_results/"
+                       "razor_output_Rsq_gte0.15_%s.root "
+                       "--refXsecFile ./gluino.root "
+                       "--fitmode=%s --pdfmode=%s "
+                       "Datasets/T1tttt_complete/%s/mLSP_25/"
                        "SMS-T1tttt_mGluino-Combo_mLSP_25.0_8TeV-Pythia6Zstar"
-                       "-Summer12-START52_V9_FSIM-v1-SUSY_MR450.0_R0.316227766017_%s.0_25.0_%s.root") \
-                      % (box, box, str(get_xsec(MODEL, mass)), mass, box))
+                       "-Summer12-START52_V9_FSIM-v1-SUSY_%s_"
+                       "%s.0_25.0_%s.root %s")
+                      % (box, box, fitMode, pdfMode, box, mr_point,
+                         mass, box, MODEL))
 
-        else:
-            os.system(("python scripts/prepareCombineWorkspace.py --box %s -i"
-                       "/home/uscms208/cms/RazorCombinedFit_Git/fit_results/"
-                       "fit_result_FULL_%s.root --xsec %s -c config_summer2012/"
-                       "RazorMultiJet2013_3D_hybrid.config Datasets/T2tt/mLSP25/"
-                       "SMS-T2tt_mStop-Combo_mLSP_25.0_8TeV-Pythia6Z-Summer12-"
-                       "START52_V9_FSIM-v1-SUSY_MR450.0_R0.316227766017_%s.0_25.0_"
-                       "%s.root") \
-                      % (box, box, str(susy_xsecs[mass]), mass, box))
+        elif MODEL == 'T2tt' and box in ['Ele', 'Mu']:
+            os.system(('python scripts/prepareCombineSimple.py --box %s -i '
+                       '/home/uscms208/cms/CMSSW_6_1_2/src/'
+                       'RazorCombinedFit_lucieg_May29/fit_results/'
+                       'razor_output_Rsq_gte0.15_%s.root '
+                       '--refXsecFile ./stop.root '
+                       '--fitmode=%s --pdfmode=%s --leptonic '
+                       '%s/SMS-T2tt_mStop-Combo_mLSP_25.0_8TeV-Pythia6Z-'
+                       'Summer12-START52_V9_FSIM-v1-SUSY_%s_%s.0_25.0_%s.root'
+                       ' %s')
+                      % (box, box, fitMode, pdfMode, smsdir, mr_point,
+                         mass, box, MODEL))
 
-        # os.system(" combine -M Asymptotic  razor_combine_%s_T2tt_MG_%s.000000_MCHI_25.000000.txt --rRelAcc 0.0001  -n T2tt_%s_25 --minimizerTolerance 0.0001"%(box, mass,mass))
+        elif MODEL == 'T2tt':
+            os.system(("python scripts/prepareCombineSimple.py --box %s -i"
+                       "/home/uscms208/cms/CMSSW_6_1_2/src/"
+                       "RazorCombinedFit_lucieg_May29/fit_results/"
+                       "razor_output_Rsq_gte0.15_%s.root "
+                       "--refXsecFile ./stop.root "
+                       "--fitmode=%s --pdfmode=%s "
+                       "tmp_Datasets_Aug11/mLSP_25/"
+                       "SMS-T2tt_mStop-Combo_mLSP_25.0_8TeV-Pythia6Z-"
+                       "Summer12-START52_V9_FSIM-v1-SUSY_%s_"
+                       "%s.0_25.0_%s.root %s")
+                      % (box, box, fitMode, pdfMode, mr_point,
+                         mass, box, MODEL))
 
-        if MODEL == 'T1tttt':
-            os.system("combine -M Asymptotic razor_combine_%s_%s_T1tttt_%s.0_25"
-                      ".0.txt -n T1tttt_%s_25_%s_%s" % (box, njets, mass, mass,\
-                                                        box, njets))
-        else:
-            os.system("combine -M Asymptotic  razor_combine_%s_%s_T2tt_%s.0_25.0.txt   -n T2tt_%s_25_%s_%s"%(box,njets, mass,mass, box, njets))
-        os.system(" mkdir -p combine_files_%s_%s"%(njets, box))
-        os.system(" mv razor_combine* combine_files_%s_%s"%(njets, box))
-        os.system(" mv higgsCombine* combine_files_%s_%s"%(njets, box))
-        os.system(" rm roostats*" )
+        if fitMode == '2D':
+            for nb in range(1, 4):
+                os.system("combine -M Asymptotic razor_combine_%s_%s_"
+                          "%s.0_25.0_%s.txt -n %s_%s_%s_25_%s" %
+                          (box, MODEL, mass, nb, box, MODEL, mass, nb))
+        elif fitMode == '3D':
+            os.system("combine -M Asymptotic razor_combine_%s_%s_"
+                      "%s.0_25.0.txt -n %s_%s_%s_25" %
+                      (box, MODEL, mass, box, MODEL, mass))
+
+    os.system(" mkdir -p Tests/Rsq_gte0.15/combine_files_%s_%s_%s_%s" %
+              (MODEL, box, fitMode, pdfMode))
+    os.system(" mv razor_combine* Tests/Rsq_gte0.15/combine_files_%s_%s_%s_%s" %
+              (MODEL, box, fitMode, pdfMode))
+    os.system(" mv higgsCombine* Tests/Rsq_gte0.15/combine_files_%s_%s_%s_%s" %
+              (MODEL, box, fitMode, pdfMode))
+    os.system(" rm roostats*")
