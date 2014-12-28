@@ -7,7 +7,8 @@ The module scripts/runPreparescript.py is what we use to run the asymptotic limi
 
 
 ## Asymptotic limit
-python scripts/runPreparescript.py <MODEL> <box> <directory with the SMS files>
+python scripts/runPreparescript.py MODEL box directory with the SMS files
+
 python scripts/runPreparescript.py T2tt Mu Leptonic/Dec2014/T2ttMu0p15
 
 
