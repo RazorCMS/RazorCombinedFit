@@ -3,43 +3,6 @@ import ROOT as rt
 from optparse import OptionParser
 
 
-def fillHistFromToy(my_histo, myTree):
-    """Fills the 2D histo with the content of the bins in myTree
-    my_histo must be a TH3"""
-    my_histo.Reset()
-    my_histo.Sumw2()
-    for mr in range(0, my_histo.GetNbinsX()-1):
-        for rsq in range(0, my_histo.GetNbinsY() - 1):
-            for nb in range(1, my_histo.GetNbinsZ()):
-                myTree.Draw("b%s_%s_%s" % (mr, rsq, nb))
-                htemp = rt.gPad.GetPrimitive('htemp')
-                mean = htemp.GetMean()
-                rms = htemp.GetRMS()
-                my_histo.SetBinContent(mr+1, rsq+1, nb, mean)
-                my_histo.SetBinError(mr+1, rsq+1, nb, rms)
-                print mean, rms, my_histo.GetBinContent(mr+1, rsq+1, nb)
-    print my_histo.Integral()
-    return my_histo
-
-
-def fill2DHistFromToy(my_histo, myTree, nb):
-    """Fills the 2D histo with the content of the bins in myTree
-    my_histo must be a TH2"""
-    my_histo.Reset()
-    my_histo.Sumw2()
-    for mr in range(0, my_histo.GetNbinsX()-1):
-        for rsq in range(0, my_histo.GetNbinsY() - 1):
-            myTree.Draw("b%s_%s_%s" % (mr, rsq, nb))
-            htemp = rt.gPad.GetPrimitive('htemp')
-            mean = htemp.GetMean()
-            rms = htemp.GetRMS()
-            my_histo.SetBinContent(mr+1, rsq+1, mean)
-            my_histo.SetBinError(mr+1, rsq+1, rms)
-            print mean, rms, my_histo.GetBinContent(mr+1, rsq+1)
-    print my_histo.Integral()
-    return my_histo
-
-
 def unroll_hist(hist_name):
     """Function to unroll TH3s into TH1s,
     it does all b-tags at the same time"""
@@ -196,7 +159,9 @@ def writeDataCardLeptonic(fileName, *args):
 
 
 if __name__ == '__main__':
-    parser = OptionParser()
+    usage = "usage: python scripts/prepareCombineSimple.py --box <box>"\
+        " -i <fitresult.root> --refXsec=<somevalue> SMSfile.root"
+    parser = OptionParser(usage=usage)
 
     parser.add_option('-f', '--refXsecFile', metavar='FILE',
                       default='./stop.root', help="susy xsec file")
@@ -307,12 +272,14 @@ if __name__ == '__main__':
         print 'Leptonic!!!'
         print 'Default case: all b-tags together, and split bkg PDF components'
         # Background pdf
-        TTj1b_pdf = inFile.Get('Mu/'
-                               'histo3DToyTTj1b_MRRsqBtag_FULL_ALLCOMPONENTS')
+        TTj1b_pdf = inFile.Get('%s/'
+                               'histo3DToyTTj1b_MRRsqBtag_FULL_ALLCOMPONENTS'
+                               % box)
         TTj1b_pdf.SetName('TTj1b')
         TTj1b_pdf.SetTitle('TTj1b')
-        TTj2b_pdf = inFile.Get('Mu/'
-                               'histo3DToyTTj2b_MRRsqBtag_FULL_ALLCOMPONENTS')
+        TTj2b_pdf = inFile.Get('%s/'
+                               'histo3DToyTTj2b_MRRsqBtag_FULL_ALLCOMPONENTS'
+                               % box)
         TTj2b_pdf.SetName('TTj2b')
         TTj2b_pdf.SetTitle('TTj2b')
 
@@ -356,16 +323,19 @@ if __name__ == '__main__':
     elif fitmode == '3D' and totalPDF == 'split':
         print 'Default case: all b-tags together, and split bkg PDF components'
         # Background pdf
-        TTj1b_pdf = inFile.Get('BJetHS/'
-                               'histo3DToyTTj1b_MRRsqBtag_FULL_ALLCOMPONENTS')
+        TTj1b_pdf = inFile.Get('%s/'
+                               'histo3DToyTTj1b_MRRsqBtag_FULL_ALLCOMPONENTS'
+                               % box)
         TTj1b_pdf.SetName('TTj1b')
         TTj1b_pdf.SetTitle('TTj1b')
-        TTj2b_pdf = inFile.Get('BJetHS/'
-                               'histo3DToyTTj2b_MRRsqBtag_FULL_ALLCOMPONENTS')
+        TTj2b_pdf = inFile.Get('%s/'
+                               'histo3DToyTTj2b_MRRsqBtag_FULL_ALLCOMPONENTS'
+                               % box)
         TTj2b_pdf.SetName('TTj2b')
         TTj2b_pdf.SetTitle('TTj2b')
-        Vpj_pdf = inFile.Get('BJetHS/'
-                             'histo3DToyVpj_MRRsqBtag_FULL_ALLCOMPONENTS')
+        Vpj_pdf = inFile.Get('%s/'
+                             'histo3DToyVpj_MRRsqBtag_FULL_ALLCOMPONENTS'
+                             % box)
         Vpj_pdf.SetName('Vpj')
         Vpj_pdf.SetTitle('Vpj')
 
