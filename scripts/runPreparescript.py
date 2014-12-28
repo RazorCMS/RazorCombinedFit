@@ -41,6 +41,7 @@ if __name__ == '__main__':
     smsdir = args[2]
     fitMode = options.fitMode
     pdfMode = options.pdfMode
+    current_dir = os.environ['PWD']
 
     if MODEL == 'T1tttt':
         mass_range = range(400, 1425, 25)
@@ -92,16 +93,15 @@ if __name__ == '__main__':
 
         elif MODEL == 'T2tt' and box in ['Ele', 'Mu']:
             os.system(('python scripts/prepareCombineSimple.py --box %s -i '
-                       '/home/uscms208/cms/CMSSW_6_1_2/src/'
-                       'RazorCombinedFit_lucieg_May29/fit_results/'
+                       '%s/fit_results/'
                        'razor_output_Rsq_gte0.15_%s.root '
                        '--refXsecFile ./stop.root '
                        '--fitmode=%s --pdfmode=%s --leptonic '
                        '%s/SMS-T2tt_mStop-Combo_mLSP_25.0_8TeV-Pythia6Z-'
                        'Summer12-START52_V9_FSIM-v1-SUSY_%s_%s.0_25.0_%s.root'
                        ' %s')
-                      % (box, box, fitMode, pdfMode, smsdir, mr_point,
-                         mass, box, MODEL))
+                      % (box, current_dir, box, fitMode, pdfMode, smsdir,
+                         mr_point, mass, box, MODEL))
 
         elif MODEL == 'T2tt':
             os.system(("python scripts/prepareCombineSimple.py --box %s -i"
