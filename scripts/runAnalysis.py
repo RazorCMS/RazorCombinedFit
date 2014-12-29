@@ -10,6 +10,7 @@ class Marker(object):
 def defineParser():
     parser = OptionParser()
     parser.add_option('-a', '--analysis', dest="analysis", type="string",
+                      default='SingleBoxFit',
                       help="Name of the analysis to run")
     parser.add_option('-c', '--config', dest="config", type="string",
                       default=None, help="Name of the config file to use")
@@ -57,7 +58,7 @@ def defineParser():
     parser.add_option('--bjet', dest="doBjet", default=False,
                       action='store_true',
                       help="Run the RazorB analysis")
-    parser.add_option('--multijet', dest="doMultijet", default=False,
+    parser.add_option('--multijet', dest="doMultijet", default=True,
                       action='store_true',
                       help="Run the Razor MultiJet analysis")
     parser.add_option('--fit-region', dest="fitregion", type="string",
@@ -101,13 +102,11 @@ if __name__ == '__main__':
 
     from SingleBoxFit import SingleBoxFit
 
-    analysis = "INCLUSIVE"
+    analysis = "MULTIJET"
     if options.doBjet:
         analysis = "BJET"
     if options.doMultijet:
         analysis = "MULTIJET"
-    if options.doBoost:
-        analysis = "BOOST"
 
     print options
     print args
