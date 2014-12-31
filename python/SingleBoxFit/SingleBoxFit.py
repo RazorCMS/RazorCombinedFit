@@ -259,9 +259,9 @@ class SingleBoxAnalysis(Analysis.Analysis):
                 print 'Workspace'
                 boxes[box].workspace.Print('V')
 
-        if self.options.model_independent_limit:
-            for box, fileName in fileIndex.iteritems():
-                boxes[box].predictBackground(boxes[box].workspace.obj('independentFR'), fileName)
+#        if self.options.model_independent_limit:
+#            for box, fileName in fileIndex.iteritems():
+#                boxes[box].predictBackground(boxes[box].workspace.obj('independentFR'), fileName)
 
         # skip saving the workspace if the option is set
         if not self.options.nosave_workspace:
