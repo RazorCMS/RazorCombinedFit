@@ -24,8 +24,8 @@ def getBinning(boxName, varName, btag):
             return [350, 450, 550, 700, 900, 1200, 1600, 2500, 4000]
         elif varName == "Rsq":
             # return [0.08, 0.10, 0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
-            return [0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
-            # return [0.08, 0.10, 0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
+            #return [0.15, 0.20, 0.30, 0.41, 0.52, 0.64, 0.80, 1.5]
+            return [0.08, 0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15]
 
 
 def FindLastBin(h):
@@ -62,7 +62,7 @@ class RazorBox(Box.Box):
         self.fitMode = fitMode
 
         # self.cut = 'MR>=450. && Rsq>=0.10 && Rsq<0.15 && nBtag>=1'
-        self.cut = 'MR>=350. && Rsq>=0.15 && nBtag>=1'
+        self.cut = 'Rsq>0.0'
 
     def addTailPdf(self, flavour, doSYS):
         label = '_%s' % flavour
